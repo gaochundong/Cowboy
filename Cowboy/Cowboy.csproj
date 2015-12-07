@@ -1,0 +1,132 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{8FB75B54-A8D7-42B0-8E14-80CB48B91497}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Cowboy</RootNamespace>
+    <AssemblyName>Cowboy</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Context.cs" />
+    <Compile Include="IHideObjectMembers.cs" />
+    <Compile Include="Module.cs" />
+    <Compile Include="Responses\Negotiation\ResponseProcessor.cs" />
+    <Compile Include="Routing\Constraints\AlphaRouteSegmentConstraint.cs" />
+    <Compile Include="Routing\Constraints\BoolRouteSegmentConstraint.cs" />
+    <Compile Include="Routing\Constraints\CustomDateTimeRouteSegmentConstraint.cs" />
+    <Compile Include="Routing\Constraints\DateTimeRouteSegmentConstraint.cs" />
+    <Compile Include="Routing\Constraints\DecimalRouteSegmentConstraint.cs" />
+    <Compile Include="Routing\Constraints\GuidRouteSegmentConstraint.cs" />
+    <Compile Include="Routing\Constraints\IntRouteSegmentConstraint.cs" />
+    <Compile Include="Routing\Constraints\IRouteSegmentConstraint.cs" />
+    <Compile Include="Routing\Constraints\LengthRouteSegmentConstraint.cs" />
+    <Compile Include="Routing\Constraints\LongRouteSegmentConstraint.cs" />
+    <Compile Include="Routing\Constraints\MaxLengthRouteSegmentConstraint.cs" />
+    <Compile Include="Routing\Constraints\MaxRouteSegmentConstraint.cs" />
+    <Compile Include="Routing\Constraints\MinLengthRouteSegmentConstraint.cs" />
+    <Compile Include="Routing\Constraints\MinRouteSegmentConstraint.cs" />
+    <Compile Include="Routing\Constraints\ParameterizedRouteSegmentConstraintBase.cs" />
+    <Compile Include="Routing\Constraints\RangeRouteSegmentConstraint.cs" />
+    <Compile Include="Routing\Constraints\RouteSegmentConstraintBase.cs" />
+    <Compile Include="Routing\Constraints\VersionRouteSegmentConstraint.cs" />
+    <Compile Include="Routing\IRouteCache.cs" />
+    <Compile Include="Routing\MethodNotAllowedRoute.cs" />
+    <Compile Include="Routing\ModuleBuilder.cs" />
+    <Compile Include="Routing\ModuleCatalog.cs" />
+    <Compile Include="Responses\Negotiation\ResponseNegotiator.cs" />
+    <Compile Include="Responses\Negotiation\MediaRange.cs" />
+    <Compile Include="Responses\Negotiation\MediaRangeParameters.cs" />
+    <Compile Include="Responses\Negotiation\MediaType.cs" />
+    <Compile Include="Responses\Negotiation\MatchResult.cs" />
+    <Compile Include="Responses\Negotiation\ProcessorMatch.cs" />
+    <Compile Include="Responses\Negotiation\IResponseProcessor.cs" />
+    <Compile Include="Routing\RouteCache.cs" />
+    <Compile Include="Routing\RouteDescriptionProvider.cs" />
+    <Compile Include="Routing\RouteInvoker.cs" />
+    <Compile Include="Routing\RouteMetadataProvider.cs" />
+    <Compile Include="Routing\RouteResolver.cs" />
+    <Compile Include="Routing\RequestDispatcher.cs" />
+    <Compile Include="Engine.cs" />
+    <Compile Include="NotFoundResponse.cs" />
+    <Compile Include="Routing\NotFoundRoute.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Request.cs" />
+    <Compile Include="RequestHeaders.cs" />
+    <Compile Include="RequestStream.cs" />
+    <Compile Include="Routing\ResolveResult.cs" />
+    <Compile Include="Response.cs" />
+    <Compile Include="Routing\Route.cs" />
+    <Compile Include="Routing\RouteDescription.cs" />
+    <Compile Include="Routing\RouteMetadata.cs" />
+    <Compile Include="Routing\RouteSegmentExtractor.cs" />
+    <Compile Include="Routing\Trie\IRouteResolverTrie.cs" />
+    <Compile Include="Routing\Trie\ITrieNodeFactory.cs" />
+    <Compile Include="Routing\Trie\MatchResult.cs" />
+    <Compile Include="Routing\Trie\NodeData.cs" />
+    <Compile Include="Routing\Trie\NodeDataExtensions.cs" />
+    <Compile Include="Routing\Trie\Nodes\CaptureNode.cs" />
+    <Compile Include="Routing\Trie\Nodes\CaptureNodeWithConstraint.cs" />
+    <Compile Include="Routing\Trie\Nodes\CaptureNodeWithDefaultValue.cs" />
+    <Compile Include="Routing\Trie\Nodes\CaptureNodeWithMultipleParameters.cs" />
+    <Compile Include="Routing\Trie\Nodes\GreedyCaptureNode.cs" />
+    <Compile Include="Routing\Trie\Nodes\GreedyRegExCaptureNode.cs" />
+    <Compile Include="Routing\Trie\Nodes\LiteralNode.cs" />
+    <Compile Include="Routing\Trie\Nodes\OptionalCaptureNode.cs" />
+    <Compile Include="Routing\Trie\Nodes\RegExNode.cs" />
+    <Compile Include="Routing\Trie\Nodes\RootNode.cs" />
+    <Compile Include="Routing\Trie\Nodes\TrieNode.cs" />
+    <Compile Include="Routing\Trie\RouteResolverTrie.cs" />
+    <Compile Include="Routing\Trie\SegmentMatch.cs" />
+    <Compile Include="Routing\Trie\TrieNodeFactory.cs" />
+    <Compile Include="Url.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Cowboy.Extensions\Cowboy.Extensions.csproj">
+      <Project>{aaf9f07e-921a-433f-b475-6988ecba754f}</Project>
+      <Name>Cowboy.Extensions</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Cowboy.Utilities\Cowboy.Utilities.csproj">
+      <Project>{d80d7951-9cb6-4f7d-b9ac-1566c173c950}</Project>
+      <Name>Cowboy.Utilities</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
