@@ -12,8 +12,9 @@ namespace Cowboy.Routing
     {
         private readonly ResponseNegotiator negotiator;
 
-        public RouteInvoker()
+        public RouteInvoker(ResponseNegotiator negotiator)
         {
+            this.negotiator = negotiator;
         }
 
         public async Task<Response> Invoke(Route route, CancellationToken cancellationToken, DynamicDictionary parameters, Context context)

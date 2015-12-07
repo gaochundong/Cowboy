@@ -17,12 +17,16 @@ namespace Cowboy.Hosting.Self
         private IList<Uri> _baseUriList;
         private HttpListener _listener;
         private bool _keepGoing = false;
-        private Engine _engine = new Engine();
+        private Engine _engine;
         private Semaphore _counter = new Semaphore(8, 8);
 
-        public SelfHost(params Uri[] baseUris)
+        public SelfHost(Engine engine, params Uri[] baseUris)
         {
-            this._baseUriList = baseUris;
+            if (engine == null)
+                throw new ArgumentNullException("engine");
+
+            _engine = engine;
+            _baseUriList = baseUris;
         }
 
         public void Start()
@@ -45,7 +49,6 @@ namespace Cowboy.Hosting.Self
                 _listener.Stop();
             }
         }
-
 
         private async Task StartProcess()
         {

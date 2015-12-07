@@ -11,12 +11,18 @@ namespace Cowboy.Routing
 {
     public class RequestDispatcher
     {
-        private readonly RouteResolver routeResolver = new RouteResolver();
-        private readonly IEnumerable<IResponseProcessor> responseProcessors = new List<IResponseProcessor>() { new ResponseProcessor() };
-        private readonly RouteInvoker routeInvoker = new RouteInvoker();
+        private readonly RouteResolver routeResolver;
+        private readonly IEnumerable<IResponseProcessor> responseProcessors;
+        private readonly RouteInvoker routeInvoker;
 
-        public RequestDispatcher()
+        public RequestDispatcher(
+            RouteResolver routeResolver,
+            IEnumerable<IResponseProcessor> responseProcessors,
+            RouteInvoker routeInvoker)
         {
+            this.routeResolver = routeResolver;
+            this.responseProcessors = responseProcessors;
+            this.routeInvoker = routeInvoker;
         }
 
         public async Task<Response> Dispatch(Context context, CancellationToken cancellationToken)

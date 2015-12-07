@@ -5,13 +5,14 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Cowboy.Extensions;
 using Cowboy.Routing;
 
 namespace Cowboy
 {
     public abstract class Module : IHideObjectMembers
     {
-        private readonly List<Route> routes;
+        private readonly List<Route> routes = new List<Route>();
 
         protected Module()
             : this(string.Empty)
@@ -20,12 +21,15 @@ namespace Cowboy
 
         protected Module(string modulePath)
         {
-            //this.After = new AfterPipeline();
-            //this.Before = new BeforePipeline();
-            //this.OnError = new ErrorPipeline();
-
             this.ModulePath = modulePath;
-            this.routes = new List<Route>();
+        }
+
+        public string ModulePath { get; protected set; }
+
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public virtual IEnumerable<Route> Routes
+        {
+            get { return this.routes.AsReadOnly(); }
         }
 
         //public dynamic ViewBag
@@ -40,57 +44,6 @@ namespace Cowboy
         //{
         //    get { return this.Context.Text; }
         //}
-
-        public RouteBuilder Delete
-        {
-            get { return new RouteBuilder("DELETE", this); }
-        }
-
-        public RouteBuilder Get
-        {
-            get { return new RouteBuilder("GET", this); }
-        }
-
-        public RouteBuilder Head
-        {
-            get
-            {
-                //if (!StaticConfiguration.EnableHeadRouting)
-                //{
-                //    throw new InvalidOperationException("Explicit HEAD routing is disabled. Set StaticConfiguration.EnableHeadRouting to enable.");
-                //}
-
-                return new RouteBuilder("HEAD", this);
-            }
-        }
-
-        public RouteBuilder Options
-        {
-            get { return new RouteBuilder("OPTIONS", this); }
-        }
-
-        public RouteBuilder Patch
-        {
-            get { return new RouteBuilder("PATCH", this); }
-        }
-
-        public RouteBuilder Post
-        {
-            get { return new RouteBuilder("POST", this); }
-        }
-
-        public RouteBuilder Put
-        {
-            get { return new RouteBuilder("PUT", this); }
-        }
-
-        public string ModulePath { get; protected set; }
-
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public virtual IEnumerable<Route> Routes
-        {
-            get { return this.routes.AsReadOnly(); }
-        }
 
         //public ISession Session
         //{
@@ -116,13 +69,6 @@ namespace Cowboy
             set { this.Context.Request = value; }
         }
 
-        //[EditorBrowsable(EditorBrowsableState.Never)]
-        //public IViewFactory ViewFactory { get; set; }
-
-        //public AfterPipeline After { get; set; }
-        //public BeforePipeline Before { get; set; }
-        //public ErrorPipeline OnError { get; set; }
-
         public Context Context { get; set; }
 
         //public IResponseFormatter Response { get; set; }
@@ -140,6 +86,43 @@ namespace Cowboy
         //        }
         //    }
         //}
+
+
+
+        public RouteBuilder Delete
+        {
+            get { return new RouteBuilder("DELETE", this); }
+        }
+
+        public RouteBuilder Get
+        {
+            get { return new RouteBuilder("GET", this); }
+        }
+
+        public RouteBuilder Head
+        {
+            get { return new RouteBuilder("HEAD", this); }
+        }
+
+        public RouteBuilder Options
+        {
+            get { return new RouteBuilder("OPTIONS", this); }
+        }
+
+        public RouteBuilder Patch
+        {
+            get { return new RouteBuilder("PATCH", this); }
+        }
+
+        public RouteBuilder Post
+        {
+            get { return new RouteBuilder("POST", this); }
+        }
+
+        public RouteBuilder Put
+        {
+            get { return new RouteBuilder("PUT", this); }
+        }
 
         public class RouteBuilder : IHideObjectMembers
         {

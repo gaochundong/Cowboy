@@ -10,6 +10,11 @@ namespace Cowboy.Testing
     {
         public TestModule()
         {
+            Get["/"] = parameters =>
+            {
+                return "hello world";
+            };
+
             Get["/greeting"] = parameters =>
             {
                 return "greeting";

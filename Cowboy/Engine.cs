@@ -11,11 +11,11 @@ namespace Cowboy
 {
     public class Engine
     {
-        private RequestDispatcher _dispatcher = new RequestDispatcher();
+        private RequestDispatcher _dispatcher;
 
-        public Engine()
+        public Engine(RequestDispatcher dispatcher)
         {
-
+            _dispatcher = dispatcher;
         }
 
         public async Task<Context> HandleRequest(Request request, CancellationToken cancellationToken)
@@ -26,9 +26,9 @@ namespace Cowboy
             }
 
             var context = new Context()
-                {
-                    Request = request,
-                };
+            {
+                Request = request,
+            };
 
             // var tcs = new TaskCompletionSource<Context>();
             //var staticContentResponse = this.staticContentProvider.GetContent(context);

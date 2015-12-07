@@ -11,13 +11,22 @@ namespace Cowboy.Routing
 {
     public class RouteResolver
     {
-        private readonly ModuleCatalog catalog = new ModuleCatalog();
-        private readonly ModuleBuilder moduleBuilder = new ModuleBuilder();
-        private readonly RouteCache routeCache = new RouteCache();
-        private readonly RouteResolverTrie trie = new RouteResolverTrie(new TrieNodeFactory(new List<IRouteSegmentConstraint>()));
+        private readonly ModuleCatalog catalog;
+        private readonly ModuleBuilder moduleBuilder;
+        private readonly RouteCache routeCache;
+        private readonly RouteResolverTrie trie;
 
-        public RouteResolver()
+        public RouteResolver(
+            ModuleCatalog catalog,
+            ModuleBuilder moduleBuilder,
+            RouteCache routeCache,
+            RouteResolverTrie trie)
         {
+            this.catalog = catalog;
+            this.moduleBuilder = moduleBuilder;
+            this.routeCache = routeCache;
+            this.trie = trie;
+
             this.BuildTrie();
         }
 
@@ -117,10 +126,10 @@ namespace Cowboy.Routing
 
         //private IModule GetModuleFromMatchResult(Context context, MatchResult result)
         //{
-            //var module =
-            //    this.catalog.GetModule(result.ModuleType, context);
+        //var module =
+        //    this.catalog.GetModule(result.ModuleType, context);
 
-            //return this.moduleBuilder.BuildModule(module, context);
+        //return this.moduleBuilder.BuildModule(module, context);
         //    return null;
         //}
 
