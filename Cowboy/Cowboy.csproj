@@ -9,8 +9,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Cowboy</RootNamespace>
     <AssemblyName>Cowboy</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -70,9 +71,8 @@
     <Compile Include="Responses\Negotiation\ProcessorMatch.cs" />
     <Compile Include="Responses\Negotiation\IResponseProcessor.cs" />
     <Compile Include="Routing\RouteCache.cs" />
-    <Compile Include="Routing\RouteDescriptionProvider.cs" />
+    <Compile Include="Routing\Description\RouteDescriptionProvider.cs" />
     <Compile Include="Routing\RouteInvoker.cs" />
-    <Compile Include="Routing\RouteMetadataProvider.cs" />
     <Compile Include="Routing\RouteResolver.cs" />
     <Compile Include="Routing\RequestDispatcher.cs" />
     <Compile Include="Engine.cs" />
@@ -85,10 +85,8 @@
     <Compile Include="Routing\ResolveResult.cs" />
     <Compile Include="Response.cs" />
     <Compile Include="Routing\Route.cs" />
-    <Compile Include="Routing\RouteDescription.cs" />
-    <Compile Include="Routing\RouteMetadata.cs" />
+    <Compile Include="Routing\Description\RouteDescription.cs" />
     <Compile Include="Routing\RouteSegmentExtractor.cs" />
-    <Compile Include="Routing\Trie\IRouteResolverTrie.cs" />
     <Compile Include="Routing\Trie\ITrieNodeFactory.cs" />
     <Compile Include="Routing\Trie\MatchResult.cs" />
     <Compile Include="Routing\Trie\NodeData.cs" />
@@ -119,7 +117,6 @@
       <Name>Cowboy.Utilities</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

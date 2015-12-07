@@ -1,14 +1,10 @@
+using System.Linq;
+using System.Collections.Generic;
+using Cowboy.Routing.Constraints;
+using Cowboy.Routing.Trie.Nodes;
+
 namespace Cowboy.Routing.Trie
 {
-    using System.Linq;
-    using System.Collections.Generic;
-
-    using Cowboy.Routing.Constraints;
-    using Cowboy.Routing.Trie.Nodes;
-
-    /// <summary>
-    /// Factory for creating the correct type of TrieNode
-    /// </summary>
     public class TrieNodeFactory : ITrieNodeFactory
     {
         private readonly IEnumerable<IRouteSegmentConstraint> routeSegmentConstraints;
@@ -18,12 +14,6 @@ namespace Cowboy.Routing.Trie
             this.routeSegmentConstraints = routeSegmentConstraints;
         }
 
-        /// <summary>
-        /// Gets the correct Trie node type for the given segment
-        /// </summary>
-        /// <param name="parent">Parent node</param>
-        /// <param name="segment">Segment</param>
-        /// <returns>TrieNode instance</returns>
         public virtual TrieNode GetNodeForSegment(TrieNode parent, string segment)
         {
             if (parent == null)

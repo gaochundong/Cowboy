@@ -18,10 +18,17 @@ namespace Cowboy.Testing
         static void Main(string[] args)
         {
             var moduleCatalog = new ModuleCatalog();
-            var moduleBuilder = new ModuleBuilder();
-            var routeCache = new RouteCache();
-            var trie = new RouteResolverTrie(new TrieNodeFactory(new List<IRouteSegmentConstraint>()));
+            moduleCatalog.RegisterModule(new TestModule());
 
+            var routeSegmentExtractor = new RouteSegmentExtractor();
+            var routeDescriptionProvider = new RouteDescriptionProvider();
+            var routeCache = new RouteCache(routeSegmentExtractor, routeDescriptionProvider, moduleCatalog);
+
+            var routeConstraints = new List<IRouteSegmentConstraint>();
+            var trieNodeFactory = new TrieNodeFactory(routeConstraints);
+            var trie = new RouteResolverTrie(trieNodeFactory);
+
+            var moduleBuilder = new ModuleBuilder();
             var routeResolver = new RouteResolver(moduleCatalog, moduleBuilder, routeCache, trie);
             var responseProcessors = new List<IResponseProcessor>() { new ResponseProcessor() };
 

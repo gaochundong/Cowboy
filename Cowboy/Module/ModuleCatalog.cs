@@ -7,13 +7,16 @@ namespace Cowboy.Routing
 {
     public class ModuleCatalog
     {
-        public IEnumerable<Module> GetAllModules(Context context)
+        private List<Module> _modules = new List<Module>();
+
+        public IEnumerable<Module> GetAllModules()
         {
             return _modules;
         }
 
-        //Module GetModule(Type moduleType, Context context);
-
-        public static List<Module> _modules = new List<Module>();
+        public void RegisterModule(Module module)
+        {
+            _modules.Add(module);
+        }
     }
 }

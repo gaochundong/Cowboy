@@ -7,21 +7,21 @@ namespace Cowboy.Routing
 {
     public class RouteCache : Dictionary<Type, List<Tuple<int, RouteDescription>>>, IRouteCache
     {
-        private readonly RouteSegmentExtractor routeSegmentExtractor = new RouteSegmentExtractor();
-        private readonly RouteDescriptionProvider routeDescriptionProvider = new RouteDescriptionProvider();
-        private readonly IEnumerable<IRouteMetadataProvider> routeMetadataProviders = new List<IRouteMetadataProvider>();
-        private ModuleCatalog moduleCatalog = new ModuleCatalog();
+        private readonly RouteSegmentExtractor routeSegmentExtractor;
+        private readonly RouteDescriptionProvider routeDescriptionProvider;
+        private readonly ModuleCatalog moduleCatalog;
 
-        public RouteCache()
+        public RouteCache(
+            RouteSegmentExtractor routeSegmentExtractor,
+            RouteDescriptionProvider routeDescriptionProvider,
+            ModuleCatalog moduleCatalog)
         {
-            var modules = moduleCatalog.GetAllModules(null);
+            this.routeSegmentExtractor = routeSegmentExtractor;
+            this.routeDescriptionProvider = routeDescriptionProvider;
+            this.moduleCatalog = moduleCatalog;
 
+            var modules = moduleCatalog.GetAllModules();
             this.BuildCache(modules);
-        }
-
-        public bool IsEmpty()
-        {
-            return !this.Values.SelectMany(r => r).Any();
         }
 
         private void BuildCache(IEnumerable<Module> modules)
@@ -30,36 +30,16 @@ namespace Cowboy.Routing
             {
                 var moduleType = module.GetType();
 
-                var routes =
-                    module.Routes.Select(r => r.Description).ToArray();
+                var routes = module.Routes.Select(r => r.Description).ToArray();
 
                 foreach (var routeDescription in routes)
                 {
                     routeDescription.Description = this.routeDescriptionProvider.GetDescription(module, routeDescription.Path);
                     routeDescription.Segments = this.routeSegmentExtractor.Extract(routeDescription.Path).ToArray();
-                    routeDescription.Metadata = this.GetRouteMetadata(module, routeDescription);
                 }
 
                 this.AddRoutesToCache(routes, moduleType);
             }
-        }
-
-        private RouteMetadata GetRouteMetadata(Module module, RouteDescription routeDescription)
-        {
-            var data = new Dictionary<Type, object>();
-
-            foreach (var provider in this.routeMetadataProviders)
-            {
-                var type = provider.GetMetadataType(module, routeDescription);
-                var metadata = provider.GetMetadata(module, routeDescription);
-
-                if (type != null && metadata != null)
-                {
-                    data.Add(type, metadata);
-                }
-            }
-
-            return new RouteMetadata(data);
         }
 
         private void AddRoutesToCache(IEnumerable<RouteDescription> routes, Type moduleType)
@@ -70,6 +50,11 @@ namespace Cowboy.Routing
             }
 
             this[moduleType].AddRange(routes.Select((r, i) => new Tuple<int, RouteDescription>(i, r)));
+        }
+
+        public bool IsEmpty()
+        {
+            return !this.Values.SelectMany(r => r).Any();
         }
     }
 }

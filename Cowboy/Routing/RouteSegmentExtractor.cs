@@ -15,8 +15,7 @@ namespace Cowboy.Routing
 
             for (var index = 0; index < path.Length; index++)
             {
-                var token =
-                    path[index];
+                var token = path[index];
 
                 if (token.Equals('('))
                 {

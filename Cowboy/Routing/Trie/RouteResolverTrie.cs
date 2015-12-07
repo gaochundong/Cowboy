@@ -1,31 +1,24 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using Cowboy.Routing.Trie.Nodes;
+
 namespace Cowboy.Routing.Trie
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using Nodes;
-
-    /// <summary>
-    /// The default route resolution trie
-    /// </summary>
-    public class RouteResolverTrie : IRouteResolverTrie
+    public class RouteResolverTrie
     {
-        private readonly ITrieNodeFactory nodeFactory;
+        private readonly TrieNodeFactory nodeFactory;
 
         private readonly IDictionary<string, TrieNode> routeTries = new Dictionary<string, TrieNode>();
 
         private static char[] splitSeparators = new[] {'/'};
 
-        public RouteResolverTrie(ITrieNodeFactory nodeFactory)
+        public RouteResolverTrie(TrieNodeFactory nodeFactory)
         {
             this.nodeFactory = nodeFactory;
         }
 
-        /// <summary>
-        /// Build the trie from the route cache
-        /// </summary>
-        /// <param name="cache">The route cache</param>
         public void BuildTrie(IRouteCache cache)
         {
             foreach (var cacheItem in cache)
@@ -53,13 +46,6 @@ namespace Cowboy.Routing.Trie
             }
         }
 
-        /// <summary>
-        /// Get all matches for the given method and path
-        /// </summary>
-        /// <param name="method">HTTP method</param>
-        /// <param name="path">Requested path</param>
-        /// <param name="context">Current Nancy context</param>
-        /// <returns>An array of <see cref="MatchResult"/> elements</returns>
         public MatchResult[] GetMatches(string method, string path, Context context)
         {
             if (string.IsNullOrEmpty(path))
@@ -77,12 +63,6 @@ namespace Cowboy.Routing.Trie
                                           .ToArray();
         }
 
-        /// <summary>
-        /// Get all method options for the given path
-        /// </summary>
-        /// <param name="path">Requested path</param>
-        /// <param name="context">Current Nancy context</param>
-        /// <returns>A collection of strings, each representing an allowed method</returns>
         public IEnumerable<string> GetOptions(string path, Context context)
         {
             foreach (var method in this.routeTries.Keys)
@@ -94,13 +74,6 @@ namespace Cowboy.Routing.Trie
             }
         }
 
-        /// <summary>
-        /// Returns a string that represents the current object.
-        /// </summary>
-        /// <returns>
-        /// A string that represents the current object.
-        /// </returns>
-        /// <filterpriority>2</filterpriority>
         public override string ToString()
         {
             var sb = new StringBuilder();
