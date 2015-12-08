@@ -11,10 +11,12 @@ namespace Cowboy
 {
     public class Engine
     {
+        private ContextFactory _contextFactory;
         private RequestDispatcher _dispatcher;
 
-        public Engine(RequestDispatcher dispatcher)
+        public Engine(ContextFactory contextFactory, RequestDispatcher dispatcher)
         {
+            _contextFactory = contextFactory;
             _dispatcher = dispatcher;
         }
 
@@ -25,23 +27,7 @@ namespace Cowboy
                 throw new ArgumentNullException("request", "The request parameter cannot be null.");
             }
 
-            var context = new Context()
-            {
-                Request = request,
-            };
-
-            // var tcs = new TaskCompletionSource<Context>();
-            //var staticContentResponse = this.staticContentProvider.GetContent(context);
-            //if (staticContentResponse != null)
-            //{
-            //    context.Response = staticContentResponse;
-            //    tcs.SetResult(context);
-            //    return tcs.Task;
-            //}
-
-            //var pipelines = this.RequestPipelinesFactory.Invoke(context);
-
-            //var lifeCycleTask = this.InvokeRequestLifeCycle(context, cancellationToken, pipelines);
+            var context = _contextFactory.Create(request);
             context.Response = await _dispatcher.Dispatch(context, cancellationToken);
 
             return context;

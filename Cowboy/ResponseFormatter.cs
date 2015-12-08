@@ -11,15 +11,15 @@ namespace Cowboy
 {
     public class ResponseFormatter
     {
-        private readonly RootPathProvider rootPathProvider;
-        private readonly IEnumerable<ISerializer> serializers;
         private readonly Context context;
+        private readonly IEnumerable<ISerializer> serializers;
+        private static ISerializer jsonSerializer;
+        private static ISerializer xmlSerializer;
 
-        public ResponseFormatter(RootPathProvider rootPathProvider, Context context, IEnumerable<ISerializer> serializers)
+        public ResponseFormatter(Context context, IEnumerable<ISerializer> serializers)
         {
-            this.serializers = serializers.ToArray();
-            this.rootPathProvider = rootPathProvider;
             this.context = context;
+            this.serializers = serializers.ToArray();
         }
 
         public IEnumerable<ISerializer> Serializers
@@ -34,15 +34,6 @@ namespace Cowboy
         {
             get { return this.context; }
         }
-
-        public string RootPath
-        {
-            get { return this.rootPathProvider.GetRootPath(); }
-        }
-
-        private static ISerializer jsonSerializer;
-
-        private static ISerializer xmlSerializer;
 
         public Response AsText(string contents, string contentType)
         {

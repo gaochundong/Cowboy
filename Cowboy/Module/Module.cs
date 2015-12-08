@@ -32,7 +32,7 @@ namespace Cowboy
         public string ModulePath { get; protected set; }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public virtual IEnumerable<Route> Routes
+        public IEnumerable<Route> Routes
         {
             get { return this.routes.AsReadOnly(); }
         }
@@ -50,41 +50,13 @@ namespace Cowboy
             return typeName;
         }
 
-        //public dynamic ViewBag
-        //{
-        //    get
-        //    {
-        //        return this.Context == null ? null : this.Context.ViewBag;
-        //    }
-        //}
+        public Context Context { get; set; }
 
-        //public dynamic Text
-        //{
-        //    get { return this.Context.Text; }
-        //}
-
-        //public ISession Session
-        //{
-        //    get { return this.Request.Session; }
-        //}
-
-        //public ViewRenderer View
-        //{
-        //    get { return new ViewRenderer(this); }
-        //}
-
-        //public Negotiator Negotiate
-        //{
-        //    get { return new Negotiator(this.Context); }
-        //}
-
-        public virtual Request Request
+        public Request Request
         {
             get { return this.Context.Request; }
             set { this.Context.Request = value; }
         }
-
-        public Context Context { get; set; }
 
         public ResponseFormatter Response { get; set; }
 

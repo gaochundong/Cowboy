@@ -28,9 +28,8 @@ namespace Cowboy.Testing
             var trieNodeFactory = new TrieNodeFactory(routeConstraints);
             var trie = new RouteResolverTrie(trieNodeFactory);
 
-            var rootPathProvider = new RootPathProvider();
             var serializers = new List<ISerializer>();
-            var responseFormatterFactory = new ResponseFormatterFactory(rootPathProvider, serializers);
+            var responseFormatterFactory = new ResponseFormatterFactory(serializers);
 
             var moduleBuilder = new ModuleBuilder(responseFormatterFactory);
             var routeResolver = new RouteResolver(moduleCatalog, moduleBuilder, routeCache, trie);
@@ -45,13 +44,14 @@ namespace Cowboy.Testing
             var negotiator = new ResponseNegotiator(responseProcessors, coercionConventions);
             var routeInvoker = new RouteInvoker(negotiator);
 
-            var dispatcher = new RequestDispatcher(routeResolver, responseProcessors, routeInvoker);
-            var engine = new Engine(dispatcher);
+            var contextFactory = new ContextFactory();
+            var dispatcher = new RequestDispatcher(routeResolver, routeInvoker);
+            var engine = new Engine(contextFactory, dispatcher);
 
-            var host = new SelfHost(engine, new Uri("http://localhost:8888/text/"));
+            var host = new SelfHost(engine, new Uri("http://localhost:8888/"));
             host.Start();
 
-            var navigateTo = "http://localhost:8888/text/";
+            var navigateTo = "http://localhost:8888/";
             Console.WriteLine("Server now listening - navigating to {0}.", navigateTo);
             try
             {

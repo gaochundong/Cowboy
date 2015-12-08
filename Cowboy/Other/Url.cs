@@ -8,9 +8,6 @@ using System.Threading.Tasks;
 
 namespace Cowboy
 {
-    /// <summary>
-    /// Represents a full Url of the form scheme://hostname:port/basepath/path?query
-    /// </summary>
     public sealed class Url : ICloneable
     {
         private string basePath;

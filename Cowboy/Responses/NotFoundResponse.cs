@@ -5,7 +5,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Cowboy
+namespace Cowboy.Responses
 {
     public class NotFoundResponse : Response
     {

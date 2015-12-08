@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Cowboy.Routing
+namespace Cowboy
 {
     public class ModuleCatalog
     {
