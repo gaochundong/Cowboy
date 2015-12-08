@@ -39,6 +39,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Context.cs" />
+    <Compile Include="ResponseFormatterFactory.cs" />
+    <Compile Include="Responses\Negotiation\AcceptHeaderCoercionConventions.cs" />
+    <Compile Include="Responses\Negotiation\BuiltInAcceptHeaderCoercions.cs" />
+    <Compile Include="Responses\Negotiation\NegotiationContext.cs" />
+    <Compile Include="Responses\Negotiation\Negotiator.cs" />
+    <Compile Include="Responses\NotAcceptableResponse.cs" />
+    <Compile Include="RootPathProvider.cs" />
+    <Compile Include="ISerializer.cs" />
+    <Compile Include="ResponseFormatter.cs" />
     <Compile Include="Module\Module.cs" />
     <Compile Include="Responses\Negotiation\ResponseProcessor.cs" />
     <Compile Include="Routing\Constraints\AlphaRouteSegmentConstraint.cs" />

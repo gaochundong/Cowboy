@@ -28,11 +28,21 @@ namespace Cowboy.Testing
             var trieNodeFactory = new TrieNodeFactory(routeConstraints);
             var trie = new RouteResolverTrie(trieNodeFactory);
 
-            var moduleBuilder = new ModuleBuilder();
+            var rootPathProvider = new RootPathProvider();
+            var serializers = new List<ISerializer>();
+            var responseFormatterFactory = new ResponseFormatterFactory(rootPathProvider, serializers);
+
+            var moduleBuilder = new ModuleBuilder(responseFormatterFactory);
             var routeResolver = new RouteResolver(moduleCatalog, moduleBuilder, routeCache, trie);
             var responseProcessors = new List<IResponseProcessor>() { new ResponseProcessor() };
+            var coercionConventions = new AcceptHeaderCoercionConventions(
+                new List<Func<IEnumerable<Tuple<string, decimal>>, Context, IEnumerable<Tuple<string, decimal>>>>(2)
+                {
+                    BuiltInAcceptHeaderCoercions.BoostHtml,
+                    BuiltInAcceptHeaderCoercions.CoerceBlankAcceptHeader,
+                });
 
-            var negotiator = new ResponseNegotiator();
+            var negotiator = new ResponseNegotiator(responseProcessors, coercionConventions);
             var routeInvoker = new RouteInvoker(negotiator);
 
             var dispatcher = new RequestDispatcher(routeResolver, responseProcessors, routeInvoker);

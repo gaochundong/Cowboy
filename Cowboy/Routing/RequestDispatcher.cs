@@ -37,29 +37,24 @@ namespace Cowboy.Routing
 
         private ResolveResult Resolve(Context context)
         {
-            var extension = context.Request.Path.IndexOfAny(Path.GetInvalidPathChars()) >= 0 ? null
-               : Path.GetExtension(context.Request.Path);
+            var extension = context.Request.Path.IndexOfAny(Path.GetInvalidPathChars()) >= 0 ? null : Path.GetExtension(context.Request.Path);
 
             var originalAcceptHeaders = context.Request.Headers.Accept;
             var originalRequestPath = context.Request.Path;
 
             if (!string.IsNullOrEmpty(extension))
             {
-                var mappedMediaRanges = this.GetMediaRangesForExtension(extension.Substring(1))
-                    .ToArray();
+                var mappedMediaRanges = this.GetMediaRangesForExtension(extension.Substring(1)).ToArray();
 
                 if (mappedMediaRanges.Any())
                 {
-                    var newMediaRanges =
-                        mappedMediaRanges.Where(x => !context.Request.Headers.Accept.Any(header => header.Equals(x)));
+                    var newMediaRanges = mappedMediaRanges.Where(x => !context.Request.Headers.Accept.Any(header => header.Equals(x)));
 
                     var index = context.Request.Path.LastIndexOf(extension, StringComparison.Ordinal);
 
-                    var modifiedRequestPath =
-                        context.Request.Path.Remove(index, extension.Length);
+                    var modifiedRequestPath = context.Request.Path.Remove(index, extension.Length);
 
-                    var match =
-                        this.InvokeRouteResolver(context, modifiedRequestPath, newMediaRanges);
+                    var match = this.InvokeRouteResolver(context, modifiedRequestPath, newMediaRanges);
 
                     if (!(match.Route is NotFoundRoute))
                     {

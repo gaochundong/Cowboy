@@ -7,16 +7,21 @@ namespace Cowboy.Routing
 {
     public class ModuleCatalog
     {
-        private List<Module> _modules = new List<Module>();
+        private Dictionary<string, Module> _modules = new Dictionary<string, Module>();
 
         public IEnumerable<Module> GetAllModules()
         {
-            return _modules;
+            return _modules.Values;
+        }
+
+        public Module GetModule(Type moduleType)
+        {
+            return _modules[moduleType.FullName];
         }
 
         public void RegisterModule(Module module)
         {
-            _modules.Add(module);
+            _modules.Add(module.GetType().FullName, module);
         }
     }
 }

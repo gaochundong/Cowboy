@@ -1,400 +1,286 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Cowboy.Responses.Negotiation
 {
-    /// <summary>
-    /// The default implementation for a response negotiator.
-    /// </summary>
     public class ResponseNegotiator
     {
-        //private readonly IEnumerable<IResponseProcessor> processors;
-        //private readonly AcceptHeaderCoercionConventions coercionConventions;
+        private readonly IEnumerable<IResponseProcessor> processors;
+        private readonly AcceptHeaderCoercionConventions coercionConventions;
 
-        ///// <summary>
-        ///// Initializes a new instance of the <see cref="DefaultResponseNegotiator"/> class.
-        ///// </summary>
-        ///// <param name="processors">The response processors.</param>
-        ///// <param name="coercionConventions">The Accept header coercion conventions.</param>
-        //public ResponseNegotiator(IEnumerable<IResponseProcessor> processors, AcceptHeaderCoercionConventions coercionConventions)
-        //{
-        //    this.processors = processors;
-        //    this.coercionConventions = coercionConventions;
-        //}
+        public ResponseNegotiator(IEnumerable<IResponseProcessor> processors, AcceptHeaderCoercionConventions coercionConventions)
+        {
+            this.processors = processors;
+            this.coercionConventions = coercionConventions;
+        }
 
-        ///// <summary>
-        ///// Negotiates the response based on the given result and context.
-        ///// </summary>
-        ///// <param name="routeResult">The route result.</param>
-        ///// <param name="context">The context.</param>
-        ///// <returns>A <see cref="Response" />.</returns>
-        //public Response NegotiateResponse(dynamic routeResult, Context context)
-        //{
-        //    Response response;
-        //    if (TryCastResultToResponse(routeResult, out response))
-        //    {
-        //        context.WriteTraceLog(sb =>
-        //            sb.AppendLine("[DefaultResponseNegotiator] Processing as real response"));
+        public Response NegotiateResponse(dynamic routeResult, Context context)
+        {
+            Response response;
+            if (TryCastResultToResponse(routeResult, out response))
+            {
+                return response;
+            }
 
-        //        return response;
-        //    }
+            NegotiationContext negotiationContext = GetNegotiationContext(routeResult, context);
 
-        //    context.WriteTraceLog(sb =>
-        //        sb.AppendLine("[DefaultResponseNegotiator] Processing as negotiation"));
+            var coercedAcceptHeaders = this.GetCoercedAcceptHeaders(context).ToArray();
 
-        //    NegotiationContext negotiationContext = GetNegotiationContext(routeResult, context);
+            var compatibleHeaders = this.GetCompatibleHeaders(coercedAcceptHeaders, negotiationContext, context).ToArray();
 
-        //    var coercedAcceptHeaders = this.GetCoercedAcceptHeaders(context).ToArray();
+            if (!compatibleHeaders.Any())
+            {
+                return new NotAcceptableResponse();
+            }
 
-        //    context.WriteTraceLog(sb => GetAccepHeaderTraceLog(context, negotiationContext, coercedAcceptHeaders, sb));
+            return CreateResponse(compatibleHeaders, negotiationContext, context);
+        }
 
-        //    var compatibleHeaders = this.GetCompatibleHeaders(coercedAcceptHeaders, negotiationContext, context).ToArray();
+        private static bool TryCastResultToResponse(dynamic routeResult, out Response response)
+        {
+            // This code has to be designed this way in order for the cast operator overloads
+            // to be called in the correct way. It cannot be replaced by the as-operator.
+            try
+            {
+                response = (Response)routeResult;
+                return true;
+            }
+            catch
+            {
+                response = null;
+                return false;
+            }
+        }
 
-        //    if (!compatibleHeaders.Any())
-        //    {
-        //        context.WriteTraceLog(sb =>
-        //            sb.AppendLine("[DefaultResponseNegotiator] Unable to negotiate response - no headers compatible"));
+        private static NegotiationContext GetNegotiationContext(object routeResult, Context context)
+        {
+            var negotiator = routeResult as Negotiator;
 
-        //        return new NotAcceptableResponse();
-        //    }
+            if (negotiator == null)
+            {
+                negotiator = new Negotiator(context).WithModel(routeResult);
+            }
 
-        //    return CreateResponse(compatibleHeaders, negotiationContext, context);
-        //}
+            return negotiator.NegotiationContext;
+        }
 
-        ///// <summary>
-        ///// Tries to cast the dynamic result to a <see cref="Response"/>.
-        ///// </summary>
-        ///// <param name="routeResult">The result.</param>
-        ///// <param name="response">The response.</param>
-        ///// <returns><c>true</c> if the result is a <see cref="Response"/>, <c>false</c> otherwise.</returns>
-        //private static bool TryCastResultToResponse(dynamic routeResult, out Response response)
-        //{
-        //    // This code has to be designed this way in order for the cast operator overloads
-        //    // to be called in the correct way. It cannot be replaced by the as-operator.
-        //    try
-        //    {
-        //        response = (Response)routeResult;
-        //        return true;
-        //    }
-        //    catch
-        //    {
-        //        response = null;
-        //        return false;
-        //    }
-        //}
+        private IEnumerable<Tuple<string, decimal>> GetCoercedAcceptHeaders(Context context)
+        {
+            return this.coercionConventions.Aggregate(context.Request.Headers.Accept, (current, coercion) => coercion.Invoke(current, context));
+        }
 
-        ///// <summary>
-        ///// Gets a <see cref="NegotiationContext"/> based on the given result and context.
-        ///// </summary>
-        ///// <param name="routeResult">The route result.</param>
-        ///// <param name="context">The context.</param>
-        ///// <returns>A <see cref="NegotiationContext"/>.</returns>
-        //private static NegotiationContext GetNegotiationContext(object routeResult, Context context)
-        //{
-        //    var negotiator = routeResult as Negotiator;
+        private static void GetAccepHeaderTraceLog(
+            Context context,
+            NegotiationContext negotiationContext,
+            Tuple<string, decimal>[] coercedAcceptHeaders,
+            StringBuilder sb)
+        {
+            var allowableFormats = negotiationContext.PermissableMediaRanges
+                .Select(mr => mr.ToString())
+                .Aggregate((t1, t2) => t1 + ", " + t2);
 
-        //    if (negotiator == null)
-        //    {
-        //        context.WriteTraceLog(sb =>
-        //            sb.AppendFormat("[DefaultResponseNegotiator] Wrapping result of type {0} in negotiator\n", routeResult.GetType()));
+            var originalAccept = context.Request.Headers["accept"].Any()
+                ? string.Join(", ", context.Request.Headers["accept"])
+                : "None";
 
-        //        negotiator = new Negotiator(context).WithModel(routeResult);
-        //    }
+            var coercedAccept = coercedAcceptHeaders.Any()
+                ? coercedAcceptHeaders.Select(h => h.Item1).Aggregate((t1, t2) => t1 + ", " + t2)
+                : "None";
 
-        //    return negotiator.NegotiationContext;
-        //}
+            sb.AppendFormat("[DefaultResponseNegotiator] Original accept header: {0}\n", originalAccept);
+            sb.AppendFormat("[DefaultResponseNegotiator] Coerced accept header: {0}\n", coercedAccept);
+            sb.AppendFormat("[DefaultResponseNegotiator] Acceptable media ranges: {0}\n", allowableFormats);
+        }
 
-        ///// <summary>
-        ///// Gets the coerced accept headers based on the <see cref="AcceptHeaderCoercionConventions"/>.
-        ///// </summary>
-        ///// <param name="context">The context.</param>
-        ///// <returns>IEnumerable{Tuple{System.String, System.Decimal}}.</returns>
-        //private IEnumerable<Tuple<string, decimal>> GetCoercedAcceptHeaders(Context context)
-        //{
-        //    return this.coercionConventions.Aggregate(context.Request.Headers.Accept, (current, coercion) => coercion.Invoke(current, context));
-        //}
+        private IEnumerable<CompatibleHeader> GetCompatibleHeaders(
+            IEnumerable<Tuple<string, decimal>> coercedAcceptHeaders,
+            NegotiationContext negotiationContext,
+            Context context)
+        {
+            var acceptHeaders = GetCompatibleHeaders(coercedAcceptHeaders, negotiationContext);
 
-        //private static void GetAccepHeaderTraceLog(
-        //    Context context,
-        //    NegotiationContext negotiationContext,
-        //    Tuple<string, decimal>[] coercedAcceptHeaders,
-        //    StringBuilder sb)
-        //{
-        //    var allowableFormats = negotiationContext.PermissableMediaRanges
-        //        .Select(mr => mr.ToString())
-        //        .Aggregate((t1, t2) => t1 + ", " + t2);
+            foreach (var header in acceptHeaders)
+            {
+                var mediaRangeModel = negotiationContext.GetModelForMediaRange(header.Item1);
 
-        //    var originalAccept = context.Request.Headers["accept"].Any()
-        //        ? string.Join(", ", context.Request.Headers["accept"])
-        //        : "None";
+                IEnumerable<Tuple<IResponseProcessor, ProcessorMatch>> compatibleProcessors =
+                    this.GetCompatibleProcessorsByHeader(header.Item1, mediaRangeModel, context);
 
-        //    var coercedAccept = coercedAcceptHeaders.Any()
-        //        ? coercedAcceptHeaders.Select(h => h.Item1).Aggregate((t1, t2) => t1 + ", " + t2)
-        //        : "None";
+                if (compatibleProcessors.Any())
+                {
+                    yield return new CompatibleHeader(header.Item1, compatibleProcessors);
+                }
+            }
+        }
 
-        //    sb.AppendFormat("[DefaultResponseNegotiator] Original accept header: {0}\n", originalAccept);
-        //    sb.AppendFormat("[DefaultResponseNegotiator] Coerced accept header: {0}\n", coercedAccept);
-        //    sb.AppendFormat("[DefaultResponseNegotiator] Acceptable media ranges: {0}\n", allowableFormats);
-        //}
+        private static IEnumerable<Tuple<string, decimal>> GetCompatibleHeaders(
+            IEnumerable<Tuple<string, decimal>> coercedAcceptHeaders,
+            NegotiationContext negotiationContext)
+        {
+            var permissableMediaRanges = negotiationContext.PermissableMediaRanges;
+            if (permissableMediaRanges.Any(mr => mr.IsWildcard))
+            {
+                return coercedAcceptHeaders.Where(header => header.Item2 > 0m);
+            }
 
-        //private IEnumerable<CompatibleHeader> GetCompatibleHeaders(
-        //    IEnumerable<Tuple<string, decimal>> coercedAcceptHeaders,
-        //    NegotiationContext negotiationContext,
-        //    Context context)
-        //{
-        //    var acceptHeaders = GetCompatibleHeaders(coercedAcceptHeaders, negotiationContext);
+            return coercedAcceptHeaders
+                .Where(header => header.Item2 > 0m)
+                .SelectMany(header => permissableMediaRanges
+                    .Where(mr => mr.Matches(header.Item1))
+                    .Select(mr => Tuple.Create(mr.ToString(), header.Item2)));
+        }
 
-        //    foreach (var header in acceptHeaders)
-        //    {
-        //        var mediaRangeModel = negotiationContext.GetModelForMediaRange(header.Item1);
+        private IEnumerable<Tuple<IResponseProcessor, ProcessorMatch>> GetCompatibleProcessorsByHeader(
+            string acceptHeader, dynamic model, Context context)
+        {
+            foreach (var processor in this.processors)
+            {
+                ProcessorMatch match = processor.CanProcess(acceptHeader, model, context);
 
-        //        IEnumerable<Tuple<IResponseProcessor, ProcessorMatch>> compatibleProcessors =
-        //            this.GetCompatibleProcessorsByHeader(header.Item1, mediaRangeModel, context);
+                if (match.ModelResult != MatchResult.NoMatch && match.RequestedContentTypeResult != MatchResult.NoMatch)
+                {
+                    yield return new Tuple<IResponseProcessor, ProcessorMatch>(processor, match);
+                }
+            }
+        }
 
-        //        if (compatibleProcessors.Any())
-        //        {
-        //            yield return new CompatibleHeader(header.Item1, compatibleProcessors);
-        //        }
-        //    }
-        //}
+        private static Response CreateResponse(
+            IList<CompatibleHeader> compatibleHeaders,
+            NegotiationContext negotiationContext,
+            Context context)
+        {
+            var response = NegotiateResponse(compatibleHeaders, negotiationContext, context);
 
-        //private static IEnumerable<Tuple<string, decimal>> GetCompatibleHeaders(
-        //    IEnumerable<Tuple<string, decimal>> coercedAcceptHeaders,
-        //    NegotiationContext negotiationContext)
-        //{
-        //    var permissableMediaRanges = negotiationContext.PermissableMediaRanges;
-        //    if (permissableMediaRanges.Any(mr => mr.IsWildcard))
-        //    {
-        //        return coercedAcceptHeaders.Where(header => header.Item2 > 0m);
-        //    }
+            if (response == null)
+            {
+                response = new NotAcceptableResponse();
+            }
 
-        //    return coercedAcceptHeaders
-        //        .Where(header => header.Item2 > 0m)
-        //        .SelectMany(header => permissableMediaRanges
-        //            .Where(mr => mr.Matches(header.Item1))
-        //            .Select(mr => Tuple.Create(mr.ToString(), header.Item2)));
-        //}
+            response.WithHeader("Vary", "Accept");
 
-        ///// <summary>
-        ///// Gets compatible response processors by header.
-        ///// </summary>
-        ///// <param name="acceptHeader">The accept header.</param>
-        ///// <param name="model">The model.</param>
-        ///// <param name="context">The context.</param>
-        ///// <returns>IEnumerable{Tuple{IResponseProcessor, ProcessorMatch}}.</returns>
-        //private IEnumerable<Tuple<IResponseProcessor, ProcessorMatch>> GetCompatibleProcessorsByHeader(
-        //    string acceptHeader, dynamic model, Context context)
-        //{
-        //    foreach (var processor in this.processors)
-        //    {
-        //        ProcessorMatch match = processor.CanProcess(acceptHeader, model, context);
+            AddLinkHeader(compatibleHeaders, response, context.Request.Url);
+            SetStatusCode(negotiationContext, response);
+            SetReasonPhrase(negotiationContext, response);
+            //AddCookies(negotiationContext, response);
 
-        //        if (match.ModelResult != MatchResult.NoMatch && match.RequestedContentTypeResult != MatchResult.NoMatch)
-        //        {
-        //            yield return new Tuple<IResponseProcessor, ProcessorMatch>(processor, match);
-        //        }
-        //    }
-        //}
+            if (response is NotAcceptableResponse)
+            {
+                return response;
+            }
 
-        ///// <summary>
-        ///// Creates a response from the compatible headers.
-        ///// </summary>
-        ///// <param name="compatibleHeaders">The compatible headers.</param>
-        ///// <param name="negotiationContext">The negotiation context.</param>
-        ///// <param name="context">The context.</param>
-        ///// <returns>A <see cref="Response"/>.</returns>
-        //private static Response CreateResponse(
-        //    IList<CompatibleHeader> compatibleHeaders,
-        //    NegotiationContext negotiationContext,
-        //    Context context)
-        //{
-        //    var response = NegotiateResponse(compatibleHeaders, negotiationContext, context);
+            AddContentTypeHeader(negotiationContext, response);
+            AddNegotiatedHeaders(negotiationContext, response);
 
-        //    if (response == null)
-        //    {
-        //        context.WriteTraceLog(sb =>
-        //            sb.AppendLine("[DefaultResponseNegotiator] Unable to negotiate response - no processors returned valid response"));
+            return response;
+        }
 
-        //        response = new NotAcceptableResponse();
-        //    }
+        private static Response NegotiateResponse(
+            IEnumerable<CompatibleHeader> compatibleHeaders,
+            NegotiationContext negotiationContext,
+            Context context)
+        {
+            foreach (var compatibleHeader in compatibleHeaders)
+            {
+                var prioritizedProcessors = compatibleHeader.Processors
+                    .OrderByDescending(x => x.Item2.ModelResult)
+                    .ThenByDescending(x => x.Item2.RequestedContentTypeResult);
 
-        //    response.WithHeader("Vary", "Accept");
+                foreach (var prioritizedProcessor in prioritizedProcessors)
+                {
+                    var processorType = prioritizedProcessor.Item1.GetType();
 
-        //    AddLinkHeader(compatibleHeaders, response, context.Request.Url);
-        //    SetStatusCode(negotiationContext, response);
-        //    SetReasonPhrase(negotiationContext, response);
-        //    AddCookies(negotiationContext, response);
+                    var mediaRangeModel = negotiationContext.GetModelForMediaRange(compatibleHeader.MediaRange);
 
-        //    if (response is NotAcceptableResponse)
-        //    {
-        //        return response;
-        //    }
+                    var response = prioritizedProcessor.Item1.Process(compatibleHeader.MediaRange, mediaRangeModel, context);
+                    if (response != null)
+                    {
+                        return response;
+                    }
+                }
+            }
 
-        //    AddContentTypeHeader(negotiationContext, response);
-        //    AddNegotiatedHeaders(negotiationContext, response);
+            return null;
+        }
 
-        //    return response;
-        //}
+        private static void AddLinkHeader(
+            IEnumerable<CompatibleHeader> compatibleHeaders,
+            Response response,
+            Url requestUrl)
+        {
+            var linkProcessors = GetLinkProcessors(compatibleHeaders, response.ContentType);
+            if (linkProcessors.Any())
+            {
+                response.Headers["Link"] = CreateLinkHeader(requestUrl, linkProcessors);
+            }
+        }
 
-        ///// <summary>
-        ///// Prioritizes the response processors and tries to negotiate a response.
-        ///// </summary>
-        ///// <param name="compatibleHeaders">The compatible headers.</param>
-        ///// <param name="negotiationContext">The negotiation context.</param>
-        ///// <param name="context">The context.</param>
-        ///// <returns>Response.</returns>
-        //private static Response NegotiateResponse(
-        //    IEnumerable<CompatibleHeader> compatibleHeaders,
-        //    NegotiationContext negotiationContext,
-        //    Context context)
-        //{
-        //    foreach (var compatibleHeader in compatibleHeaders)
-        //    {
-        //        var prioritizedProcessors = compatibleHeader.Processors
-        //            .OrderByDescending(x => x.Item2.ModelResult)
-        //            .ThenByDescending(x => x.Item2.RequestedContentTypeResult);
+        private static IDictionary<string, MediaRange> GetLinkProcessors(
+            IEnumerable<CompatibleHeader> compatibleHeaders,
+            string contentType)
+        {
+            var linkProcessors = new Dictionary<string, MediaRange>();
 
-        //        foreach (var prioritizedProcessor in prioritizedProcessors)
-        //        {
-        //            var processorType = prioritizedProcessor.Item1.GetType();
+            var compatibleHeaderMappings = compatibleHeaders
+                .SelectMany(header => header.Processors)
+                .SelectMany(processor => processor.Item1.ExtensionMappings)
+                .Where(mapping => !mapping.Item2.Matches(contentType));
 
-        //            context.WriteTraceLog(sb =>
-        //                sb.AppendFormat("[DefaultResponseNegotiator] Invoking processor: {0}\n", processorType));
+            foreach (var compatibleHeaderMapping in compatibleHeaderMappings)
+            {
+                linkProcessors[compatibleHeaderMapping.Item1] = compatibleHeaderMapping.Item2;
+            }
 
-        //            var mediaRangeModel = negotiationContext.GetModelForMediaRange(compatibleHeader.MediaRange);
+            return linkProcessors;
+        }
 
-        //            var response = prioritizedProcessor.Item1.Process(compatibleHeader.MediaRange, mediaRangeModel, context);
-        //            if (response != null)
-        //            {
-        //                return response;
-        //            }
-        //        }
-        //    }
+        private static string CreateLinkHeader(Url requestUrl, IEnumerable<KeyValuePair<string, MediaRange>> linkProcessors)
+        {
+            var fileName = Path.GetFileNameWithoutExtension(requestUrl.Path);
+            var baseUrl = string.Concat(requestUrl.BasePath, "/", fileName);
 
-        //    return null;
-        //}
+            var links = linkProcessors
+                .Select(lp => string.Format("<{0}.{1}>; rel=\"{2}\"", baseUrl, lp.Key, lp.Value));
 
-        ///// <summary>
-        ///// Adds a link header to the <see cref="Response"/>.
-        ///// </summary>
-        ///// <param name="compatibleHeaders">The compatible headers.</param>
-        ///// <param name="response">The response.</param>
-        ///// <param name="requestUrl">The request URL.</param>
-        //private static void AddLinkHeader(
-        //    IEnumerable<CompatibleHeader> compatibleHeaders,
-        //    Response response,
-        //    Url requestUrl)
-        //{
-        //    var linkProcessors = GetLinkProcessors(compatibleHeaders, response.ContentType);
-        //    if (linkProcessors.Any())
-        //    {
-        //        response.Headers["Link"] = CreateLinkHeader(requestUrl, linkProcessors);
-        //    }
-        //}
+            return string.Join(",", links);
+        }
 
-        ///// <summary>
-        ///// Gets the link processors based on the compatible headers and content-type.
-        ///// </summary>
-        ///// <param name="compatibleHeaders">The compatible headers.</param>
-        ///// <param name="contentType">The content-type of the response.</param>
-        ///// <returns>Dictionary{System.String, MediaRange}.</returns>
-        //private static IDictionary<string, MediaRange> GetLinkProcessors(
-        //    IEnumerable<CompatibleHeader> compatibleHeaders,
-        //    string contentType)
-        //{
-        //    var linkProcessors = new Dictionary<string, MediaRange>();
+        private static void AddContentTypeHeader(NegotiationContext negotiationContext, Response response)
+        {
+            if (negotiationContext.Headers.ContainsKey("Content-Type"))
+            {
+                response.ContentType = negotiationContext.Headers["Content-Type"];
+                negotiationContext.Headers.Remove("Content-Type");
+            }
+        }
 
-        //    var compatibleHeaderMappings = compatibleHeaders
-        //        .SelectMany(header => header.Processors)
-        //        .SelectMany(processor => processor.Item1.ExtensionMappings)
-        //        .Where(mapping => !mapping.Item2.Matches(contentType));
+        private static void AddNegotiatedHeaders(NegotiationContext negotiationContext, Response response)
+        {
+            foreach (var header in negotiationContext.Headers)
+            {
+                response.Headers[header.Key] = header.Value;
+            }
+        }
 
-        //    foreach (var compatibleHeaderMapping in compatibleHeaderMappings)
-        //    {
-        //        linkProcessors[compatibleHeaderMapping.Item1] = compatibleHeaderMapping.Item2;
-        //    }
+        private static void SetStatusCode(NegotiationContext negotiationContext, Response response)
+        {
+            if (negotiationContext.StatusCode.HasValue)
+            {
+                response.StatusCode = negotiationContext.StatusCode.Value;
+            }
+        }
 
-        //    return linkProcessors;
-        //}
+        private static void SetReasonPhrase(NegotiationContext negotiationContext, Response response)
+        {
+            if (negotiationContext.ReasonPhrase != null)
+            {
+                response.ReasonPhrase = negotiationContext.ReasonPhrase;
+            }
+        }
 
-        ///// <summary>
-        ///// Creates the link header with the different media ranges.
-        ///// </summary>
-        ///// <param name="requestUrl">The request URL.</param>
-        ///// <param name="linkProcessors">The link processors.</param>
-        ///// <returns>The link header.</returns>
-        //private static string CreateLinkHeader(Url requestUrl, IEnumerable<KeyValuePair<string, MediaRange>> linkProcessors)
-        //{
-        //    var fileName = Path.GetFileNameWithoutExtension(requestUrl.Path);
-        //    var baseUrl = string.Concat(requestUrl.BasePath, "/", fileName);
-
-        //    var links = linkProcessors
-        //        .Select(lp => string.Format("<{0}.{1}>; rel=\"{2}\"", baseUrl, lp.Key, lp.Value));
-
-        //    return string.Join(",", links);
-        //}
-
-        ///// <summary>
-        ///// Adds the content type header from the <see cref="NegotiationContext"/> to the <see cref="Response"/>.
-        ///// </summary>
-        ///// <param name="negotiationContext">The negotiation context.</param>
-        ///// <param name="response">The response.</param>
-        //private static void AddContentTypeHeader(NegotiationContext negotiationContext, Response response)
-        //{
-        //    if (negotiationContext.Headers.ContainsKey("Content-Type"))
-        //    {
-        //        response.ContentType = negotiationContext.Headers["Content-Type"];
-        //        negotiationContext.Headers.Remove("Content-Type");
-        //    }
-        //}
-
-        ///// <summary>
-        ///// Adds the negotiated headers from the <see cref="NegotiationContext"/> to the <see cref="Response"/>.
-        ///// </summary>
-        ///// <param name="negotiationContext">The negotiation context.</param>
-        ///// <param name="response">The response.</param>
-        //private static void AddNegotiatedHeaders(NegotiationContext negotiationContext, Response response)
-        //{
-        //    foreach (var header in negotiationContext.Headers)
-        //    {
-        //        response.Headers[header.Key] = header.Value;
-        //    }
-        //}
-
-        ///// <summary>
-        ///// Sets the status code from the <see cref="NegotiationContext"/> on the <see cref="Response"/>.
-        ///// </summary>
-        ///// <param name="negotiationContext">The negotiation context.</param>
-        ///// <param name="response">The response.</param>
-        //private static void SetStatusCode(NegotiationContext negotiationContext, Response response)
-        //{
-        //    if (negotiationContext.StatusCode.HasValue)
-        //    {
-        //        response.StatusCode = negotiationContext.StatusCode.Value;
-        //    }
-        //}
-
-        ///// <summary>
-        ///// Sets the reason phrase from the <see cref="NegotiationContext"/> on the <see cref="Response"/>.
-        ///// </summary>
-        ///// <param name="negotiationContext">The negotiation context.</param>
-        ///// <param name="response">The response.</param>
-        //private static void SetReasonPhrase(NegotiationContext negotiationContext, Response response)
-        //{
-        //    if (negotiationContext.ReasonPhrase != null)
-        //    {
-        //        response.ReasonPhrase = negotiationContext.ReasonPhrase;
-        //    }
-        //}
-
-        ///// <summary>
-        ///// Adds the cookies from the <see cref="NegotiationContext"/> to the <see cref="Response"/>.
-        ///// </summary>
-        ///// <param name="negotiationContext">The negotiation context.</param>
-        ///// <param name="response">The response.</param>
         //private static void AddCookies(NegotiationContext negotiationContext, Response response)
         //{
         //    foreach (var cookie in negotiationContext.Cookies)
@@ -403,19 +289,19 @@ namespace Cowboy.Responses.Negotiation
         //    }
         //}
 
-        //private class CompatibleHeader
-        //{
-        //    public CompatibleHeader(
-        //        string mediaRange,
-        //        IEnumerable<Tuple<IResponseProcessor, ProcessorMatch>> processors)
-        //    {
-        //        this.MediaRange = mediaRange;
-        //        this.Processors = processors;
-        //    }
+        private class CompatibleHeader
+        {
+            public CompatibleHeader(
+                string mediaRange,
+                IEnumerable<Tuple<IResponseProcessor, ProcessorMatch>> processors)
+            {
+                this.MediaRange = mediaRange;
+                this.Processors = processors;
+            }
 
-        //    public string MediaRange { get; private set; }
+            public string MediaRange { get; private set; }
 
-        //    public IEnumerable<Tuple<IResponseProcessor, ProcessorMatch>> Processors { get; private set; }
-        //}
+            public IEnumerable<Tuple<IResponseProcessor, ProcessorMatch>> Processors { get; private set; }
+        }
     }
 }

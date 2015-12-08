@@ -38,8 +38,7 @@ namespace Cowboy.Routing
 
             if (!results.Any())
             {
-                var allowedMethods =
-                    this.trie.GetOptions(pathDecoded, context).ToArray();
+                var allowedMethods = this.trie.GetOptions(pathDecoded, context).ToArray();
 
                 if (IsOptionsRequest(context))
                 {
@@ -91,8 +90,7 @@ namespace Cowboy.Routing
 
         private static ResolveResult BuildOptionsResult(IEnumerable<string> allowedMethods, Context context)
         {
-            var path =
-                context.Request.Path;
+            var path = context.Request.Path;
 
             //var optionsResult =
             //    new OptionsRoute(path, allowedMethods);
@@ -108,30 +106,25 @@ namespace Cowboy.Routing
 
         private ResolveResult BuildResult(Context context, MatchResult result)
         {
-            //var associatedModule = this.GetModuleFromMatchResult(context, result);
+            var associatedModule = this.GetModuleFromMatchResult(context, result);
 
             //context.NegotiationContext.SetModule(associatedModule);
 
-            //var route = associatedModule.Routes.ElementAt(result.RouteIndex);
-            //var parameters = DynamicDictionary.Create(result.Parameters);
+            var route = associatedModule.Routes.ElementAt(result.RouteIndex);
+            var parameters = DynamicDictionary.Create(result.Parameters);
 
-            //return new ResolveResult
-            //{
-            //    Route = route,
-            //    Parameters = parameters,
-            //    OnError = associatedModule.OnError
-            //};
-            return null;
+            return new ResolveResult
+            {
+                Route = route,
+                Parameters = parameters,
+            };
         }
 
-        //private IModule GetModuleFromMatchResult(Context context, MatchResult result)
-        //{
-        //var module =
-        //    this.catalog.GetModule(result.ModuleType, context);
-
-        //return this.moduleBuilder.BuildModule(module, context);
-        //    return null;
-        //}
+        private Module GetModuleFromMatchResult(Context context, MatchResult result)
+        {
+            var module = this.catalog.GetModule(result.ModuleType);
+            return this.moduleBuilder.BuildModule(module, context);
+        }
 
         private static ResolveResult GetNotFoundResult(Context context)
         {

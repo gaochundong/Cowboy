@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Cowboy.Responses.Negotiation;
 using Cowboy.Routing;
 
 namespace Cowboy
@@ -11,8 +12,10 @@ namespace Cowboy
     {
         public Context()
         {
-
+            this.NegotiationContext = new NegotiationContext();
         }
+
+        public NegotiationContext NegotiationContext { get; set; }
 
         public Request Request { get; set; }
 

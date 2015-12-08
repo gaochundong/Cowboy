@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Cowboy.Extensions;
@@ -12,6 +14,9 @@ namespace Cowboy
 {
     public abstract class Module : IHideObjectMembers
     {
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private static readonly Regex ModuleNameExpression = new Regex(@"(?<name>[\w]+)Module$", RegexOptions.Compiled);
+
         private readonly List<Route> routes = new List<Route>();
 
         protected Module()
@@ -30,6 +35,19 @@ namespace Cowboy
         public virtual IEnumerable<Route> Routes
         {
             get { return this.routes.AsReadOnly(); }
+        }
+
+        public string GetModuleName()
+        {
+            var typeName = this.GetType().Name;
+            var nameMatch = ModuleNameExpression.Match(typeName);
+
+            if (nameMatch.Success)
+            {
+                return nameMatch.Groups["name"].Value;
+            }
+
+            return typeName;
         }
 
         //public dynamic ViewBag
@@ -60,9 +78,6 @@ namespace Cowboy
         //    get { return new Negotiator(this.Context); }
         //}
 
-        //[EditorBrowsable(EditorBrowsableState.Never)]
-        //public IModelValidatorLocator ValidatorLocator { get; set; }
-
         public virtual Request Request
         {
             get { return this.Context.Request; }
@@ -71,23 +86,7 @@ namespace Cowboy
 
         public Context Context { get; set; }
 
-        //public IResponseFormatter Response { get; set; }
-
-        //[EditorBrowsable(EditorBrowsableState.Never)]
-        //public IModelBinderLocator ModelBinderLocator { get; set; }
-        //public virtual ModelValidationResult ModelValidationResult
-        //{
-        //    get { return this.Context == null ? null : this.Context.ModelValidationResult; }
-        //    set
-        //    {
-        //        if (this.Context != null)
-        //        {
-        //            this.Context.ModelValidationResult = value;
-        //        }
-        //    }
-        //}
-
-
+        public ResponseFormatter Response { get; set; }
 
         public RouteBuilder Delete
         {
