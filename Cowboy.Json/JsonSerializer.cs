@@ -115,10 +115,10 @@ namespace Cowboy.Json
                 obj = obj.ToString();
             }
 #else
-			if (obj.GetType().Name == "MonoType")
-			{
-				obj = obj.ToString();
-			}
+            if (obj.GetType().Name == "MonoType")
+            {
+                obj = obj.ToString();
+            }
 #endif
             Type valueType = obj.GetType();
             JavaScriptConverter jsc = serializer.GetConverter(valueType);

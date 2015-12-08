@@ -31,13 +31,13 @@ namespace Cowboy.Json
     using System;
     using System.Collections.Generic;
 
-	public abstract class JavaScriptConverter
-	{
-		protected JavaScriptConverter () { }
+    public abstract class JavaScriptConverter
+    {
+        protected JavaScriptConverter () { }
 
-		public abstract IEnumerable<Type> SupportedTypes { get; }
+        public abstract IEnumerable<Type> SupportedTypes { get; }
 
-		public abstract object Deserialize (IDictionary<string, object> dictionary, Type type, JavaScriptSerializer serializer);
-		public abstract IDictionary<string, object> Serialize (object obj, JavaScriptSerializer serializer);
-	}
+        public abstract object Deserialize (IDictionary<string, object> dictionary, Type type, JavaScriptSerializer serializer);
+        public abstract IDictionary<string, object> Serialize (object obj, JavaScriptSerializer serializer);
+    }
 }
