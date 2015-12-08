@@ -40,7 +40,6 @@
   <ItemGroup>
     <Compile Include="Context.cs" />
     <Compile Include="ContextFactory.cs" />
-    <Compile Include="Other\MimeTypes.cs" />
     <Compile Include="ResponseFormatterFactory.cs" />
     <Compile Include="Responses\Negotiation\Processors\JsonProcessor.cs" />
     <Compile Include="Responses\Negotiation\Processors\XmlProcessor.cs" />
@@ -122,7 +121,6 @@
     <Compile Include="Routing\Trie\RouteResolverTrie.cs" />
     <Compile Include="Routing\Trie\SegmentMatch.cs" />
     <Compile Include="Routing\Trie\TrieNodeFactory.cs" />
-    <Compile Include="Other\Url.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Cowboy.Extensions\Cowboy.Extensions.csproj">
