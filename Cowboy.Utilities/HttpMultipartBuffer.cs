@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Cowboy
+namespace Cowboy.Utilities
 {
     /// <summary>
     /// A buffer that is used to locate a HTTP multipart/form-data boundary in a stream.

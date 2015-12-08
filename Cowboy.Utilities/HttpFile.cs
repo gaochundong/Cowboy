@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Cowboy
+namespace Cowboy.Utilities
 {
     /// <summary>
     /// Represents a file that was captured in a HTTP multipart/form-data request

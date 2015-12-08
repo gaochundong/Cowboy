@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Cowboy
+namespace Cowboy.Utilities
 {
     /// <summary>
     /// A decorator stream that sits on top of an existing stream and appears as a unique stream.

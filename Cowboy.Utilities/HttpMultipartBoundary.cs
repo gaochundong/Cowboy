@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Cowboy
+namespace Cowboy.Utilities
 {
     /// <summary>
     /// Represents the content boundary of a HTTP multipart/form-data boundary in a stream.

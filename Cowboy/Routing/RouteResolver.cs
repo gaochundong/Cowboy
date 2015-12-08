@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Cowboy.Routing;
 using Cowboy.Routing.Constraints;
 using Cowboy.Routing.Trie;
+using Cowboy.Utilities;
 
 namespace Cowboy.Routing
 {

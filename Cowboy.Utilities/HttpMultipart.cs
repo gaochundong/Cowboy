@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Cowboy
+namespace Cowboy.Utilities
 {
     /// <summary>
     /// Retrieves <see cref="HttpMultipartBoundary"/> instances from a request stream.
