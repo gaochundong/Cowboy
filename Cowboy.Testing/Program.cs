@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Cowboy;
 using Cowboy.Hosting.Self;
+using Cowboy.Responses;
 using Cowboy.Responses.Negotiation;
 using Cowboy.Routing;
 using Cowboy.Routing.Constraints;
@@ -28,12 +29,21 @@ namespace Cowboy.Testing
             var trieNodeFactory = new TrieNodeFactory(routeConstraints);
             var trie = new RouteResolverTrie(trieNodeFactory);
 
-            var serializers = new List<ISerializer>();
+            var serializers = new List<ISerializer>()
+            {
+                new JsonSerializer(),
+                new XmlSerializer(),
+            };
             var responseFormatterFactory = new ResponseFormatterFactory(serializers);
 
             var moduleBuilder = new ModuleBuilder(responseFormatterFactory);
             var routeResolver = new RouteResolver(moduleCatalog, moduleBuilder, routeCache, trie);
-            var responseProcessors = new List<IResponseProcessor>() { new ResponseProcessor() };
+            var responseProcessors = new List<IResponseProcessor>()
+            {
+                new ResponseProcessor(),
+                new JsonProcessor(serializers),
+                new XmlProcessor(serializers),
+            };
             var coercionConventions = new AcceptHeaderCoercionConventions(
                 new List<Func<IEnumerable<Tuple<string, decimal>>, Context, IEnumerable<Tuple<string, decimal>>>>(2)
                 {

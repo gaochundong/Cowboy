@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Cowboy.Extensions
+namespace Cowboy
 {
     public static class TplExtensions
     {

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Cowboy.Extensions
+namespace Cowboy
 {
     [EditorBrowsable(EditorBrowsableState.Never)]
     public interface IHideObjectMembers
