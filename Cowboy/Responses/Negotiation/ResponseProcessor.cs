@@ -8,15 +8,7 @@ namespace Cowboy.Responses.Negotiation
 {
     public class ResponseProcessor : IResponseProcessor
     {
-        public IEnumerable<Tuple<string, MediaRange>> ExtensionMappings
-        {
-            get
-            {
-                return Enumerable.Empty<Tuple<string, MediaRange>>();
-            }
-        }
-
-        public ProcessorMatch CanProcess(MediaRange requestedMediaRange, dynamic model, Context context)
+        public ProcessorMatch CanProcess(dynamic model, Context context)
         {
             return new ProcessorMatch
             {
@@ -25,7 +17,7 @@ namespace Cowboy.Responses.Negotiation
             };
         }
 
-        public Response Process(MediaRange requestedMediaRange, dynamic model, Context context)
+        public Response Process(dynamic model, Context context)
         {
             return (Response)model;
         }
