@@ -21,12 +21,12 @@ namespace Cowboy.Testing
             };
 
             Get["/json"] = x => {
-                var model = new TestModel { FirstName = "Andy" };
+                var model = new TestModel { FirstName = "Hello Json" };
                 return this.Response.AsJson(model);
             };
 
             Get["/xml"] = x => {
-                var model = new TestModel { FirstName = "Andy" };
+                var model = new TestModel { FirstName = "Hello Xml" };
                 return this.Response.AsXml(model);
             };
 
