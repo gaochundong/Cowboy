@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Cowboy.Testing
+namespace Cowboy.TestServer
 {
     public class TestModule : Module
     {
@@ -20,12 +20,14 @@ namespace Cowboy.Testing
                 return "text";
             };
 
-            Get["/json"] = x => {
+            Get["/json"] = x =>
+            {
                 var model = new TestModel { FirstName = "Hello Json" };
                 return this.Response.AsJson(model);
             };
 
-            Get["/xml"] = x => {
+            Get["/xml"] = x =>
+            {
                 var model = new TestModel { FirstName = "Hello Xml" };
                 return this.Response.AsXml(model);
             };
@@ -35,7 +37,8 @@ namespace Cowboy.Testing
                 return (string)parameters.name;
             };
 
-            //Get["/session"] = x => {
+            //Get["/session"] = x => 
+            //{
             //    var value = Session["moo"] ?? "";
 
             //    var output = "Current session value is: " + value;
@@ -48,7 +51,8 @@ namespace Cowboy.Testing
             //    return output;
             //};
 
-            //Get["/sessionObject"] = x => {
+            //Get["/sessionObject"] = x => 
+            //{
             //    var value = Session["baa"] ?? "null";
 
             //    var output = "Current session value is: " + value;

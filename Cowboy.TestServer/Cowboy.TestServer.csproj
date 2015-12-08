@@ -7,8 +7,8 @@
     <ProjectGuid>{1DFCD593-8814-4DCE-82D8-7F7DC9BE5BD4}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Cowboy.Testing</RootNamespace>
-    <AssemblyName>Cowboy.Testing</AssemblyName>
+    <RootNamespace>Cowboy.TestServer</RootNamespace>
+    <AssemblyName>Cowboy.TestServer</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />

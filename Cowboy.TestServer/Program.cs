@@ -12,7 +12,7 @@ using Cowboy.Routing;
 using Cowboy.Routing.Constraints;
 using Cowboy.Routing.Trie;
 
-namespace Cowboy.Testing
+namespace Cowboy.TestServer
 {
     class Program
     {
