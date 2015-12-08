@@ -39,12 +39,18 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Context.cs" />
+    <Compile Include="MimeTypes.cs" />
     <Compile Include="ResponseFormatterFactory.cs" />
+    <Compile Include="Responses\GenericFileResponse.cs" />
+    <Compile Include="Responses\JsonResponse.cs" />
     <Compile Include="Responses\Negotiation\AcceptHeaderCoercionConventions.cs" />
     <Compile Include="Responses\Negotiation\BuiltInAcceptHeaderCoercions.cs" />
     <Compile Include="Responses\Negotiation\NegotiationContext.cs" />
     <Compile Include="Responses\Negotiation\Negotiator.cs" />
     <Compile Include="Responses\NotAcceptableResponse.cs" />
+    <Compile Include="Responses\StreamResponse.cs" />
+    <Compile Include="Responses\TextResponse.cs" />
+    <Compile Include="Responses\XmlResponse.cs" />
     <Compile Include="RootPathProvider.cs" />
     <Compile Include="ISerializer.cs" />
     <Compile Include="ResponseFormatter.cs" />

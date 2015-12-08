@@ -48,10 +48,10 @@ namespace Cowboy.Testing
             var dispatcher = new RequestDispatcher(routeResolver, responseProcessors, routeInvoker);
             var engine = new Engine(dispatcher);
 
-            var host = new SelfHost(engine, new Uri("http://localhost:8888/greeting/"));
+            var host = new SelfHost(engine, new Uri("http://localhost:8888/text/"));
             host.Start();
 
-            var navigateTo = "http://localhost:8888/greeting/";
+            var navigateTo = "http://localhost:8888/text/";
             Console.WriteLine("Server now listening - navigating to {0}.", navigateTo);
             try
             {
