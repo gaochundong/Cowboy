@@ -63,9 +63,8 @@ namespace Cowboy.Hosting.Self
                         {
                             await Process(context);
                         }
-                        catch (Exception ex)
+                        catch (Exception)
                         {
-
                             throw;
                         }
                     })
