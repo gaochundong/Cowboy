@@ -4,8 +4,9 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using Cowboy.Responses.Serialization;
 
-namespace Cowboy.Responses.Negotiation
+namespace Cowboy.Responses.Negotiation.Processors
 {
     public class XmlProcessor : IResponseProcessor
     {

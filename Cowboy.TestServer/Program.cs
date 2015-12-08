@@ -8,6 +8,8 @@ using Cowboy;
 using Cowboy.Hosting.Self;
 using Cowboy.Responses;
 using Cowboy.Responses.Negotiation;
+using Cowboy.Responses.Negotiation.Processors;
+using Cowboy.Responses.Serialization;
 using Cowboy.Routing;
 using Cowboy.Routing.Constraints;
 using Cowboy.Routing.Trie;

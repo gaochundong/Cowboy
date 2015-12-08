@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Cowboy.Responses
+namespace Cowboy.Responses.Serialization
 {
     /// <summary>
     /// To close the unclosable stream..

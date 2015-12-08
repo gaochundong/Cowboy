@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Cowboy.Responses.Negotiation
+namespace Cowboy.Responses.Negotiation.Processors
 {
     public class ResponseProcessor : IResponseProcessor
     {

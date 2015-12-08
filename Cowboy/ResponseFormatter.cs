@@ -6,6 +6,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Cowboy.Responses;
+using Cowboy.Responses.Serialization;
 
 namespace Cowboy
 {

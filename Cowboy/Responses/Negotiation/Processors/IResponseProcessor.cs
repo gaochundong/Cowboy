@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Cowboy.Responses.Negotiation
+namespace Cowboy.Responses.Negotiation.Processors
 {
     public interface IResponseProcessor
     {

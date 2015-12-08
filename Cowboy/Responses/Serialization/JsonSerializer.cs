@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Cowboy.Json;
 
-namespace Cowboy.Responses
+namespace Cowboy.Responses.Serialization
 {
     public class JsonSerializer : ISerializer
     {
