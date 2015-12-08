@@ -30,7 +30,7 @@ namespace Cowboy
             byte[] certificate = null,
             string protocolVersion = null)
         {
-            if (String.IsNullOrEmpty(method))
+            if (string.IsNullOrEmpty(method))
             {
                 throw new ArgumentOutOfRangeException("method");
             }
@@ -45,7 +45,7 @@ namespace Cowboy
                 throw new ArgumentNullException("url.Path");
             }
 
-            if (String.IsNullOrEmpty(url.Scheme))
+            if (string.IsNullOrEmpty(url.Scheme))
             {
                 throw new ArgumentOutOfRangeException("url.Scheme");
             }
