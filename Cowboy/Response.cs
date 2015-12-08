@@ -39,11 +39,6 @@ namespace Cowboy
 
         //public IList<INancyCookie> Cookies { get; private set; }
 
-        //public virtual Task PreExecute(NancyContext context)
-        //{
-        //    return null;//TaskHelpers.GetCompletedTask();
-        //}
-
         public static implicit operator Response(HttpStatusCode statusCode)
         {
             return new Response { StatusCode = statusCode };

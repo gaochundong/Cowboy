@@ -36,7 +36,7 @@
         /// <param name="segments">Requested route segments</param>
         /// <param name="currentIndex">Current index in the route segments</param>
         /// <param name="capturedParameters">Currently captured parameters</param>
-        /// <param name="context">Current Nancy context</param>
+        /// <param name="context">Current context</param>
         /// <returns>A collection of <see cref="MatchResult"/> objects</returns>
         public override IEnumerable<MatchResult> GetMatches(string[] segments, int currentIndex, IDictionary<string, object> capturedParameters, Context context)
         {

@@ -106,7 +106,7 @@ namespace Cowboy.Routing.Trie.Nodes
         /// Gets all matches for a given requested route
         /// </summary>
         /// <param name="segments">Requested route segments</param>
-        /// <param name="context">Current Nancy context</param>
+        /// <param name="context">Current context</param>
         /// <returns>A collection of <see cref="MatchResult"/> objects</returns>
         public virtual IEnumerable<MatchResult> GetMatches(string[] segments, Context context)
         {
@@ -119,7 +119,7 @@ namespace Cowboy.Routing.Trie.Nodes
         /// <param name="segments">Requested route segments</param>
         /// <param name="currentIndex">Current index in the route segments</param>
         /// <param name="capturedParameters">Currently captured parameters</param>
-        /// <param name="context">Current Nancy context</param>
+        /// <param name="context">Current context</param>
         /// <returns>A collection of <see cref="MatchResult"/> objects</returns>
         public virtual IEnumerable<MatchResult> GetMatches(string[] segments, int currentIndex, IDictionary<string, object> capturedParameters, Context context)
         {
@@ -237,7 +237,7 @@ namespace Cowboy.Routing.Trie.Nodes
         /// <param name="currentIndex">Current index</param>
         /// <param name="capturedParameters">Currently captured parameters</param>
         /// <param name="localCaptures">Parameters captured by the local matching</param>
-        /// <param name="context">Current Nancy context</param>
+        /// <param name="context">Current context</param>
         /// <returns>Collection of <see cref="MatchResult"/> objects</returns>
         protected IEnumerable<MatchResult> GetMatchingChildren(string[] segments, int currentIndex, IDictionary<string, object> capturedParameters, IDictionary<string, object> localCaptures, Context context)
         {

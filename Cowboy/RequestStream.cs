@@ -231,9 +231,6 @@ namespace Cowboy
 
             if (this.stream.Length >= this.thresholdLength)
             {
-                // Close the stream here as closing it every time we call
-                // MoveStreamContentsToFileStream causes an (ObjectDisposedException)
-                // in NancyWcfGenericService - webRequest.UriTemplateMatch
                 var old = this.stream;
                 this.MoveStreamContentsToFileStream();
                 old.Close();
