@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 using Cowboy.Utilities;
 
@@ -24,7 +23,6 @@ namespace Cowboy
             RequestStream body = null,
             IDictionary<string, IEnumerable<string>> headers = null,
             string ip = null,
-            byte[] certificate = null,
             string protocolVersion = null)
         {
             if (string.IsNullOrEmpty(method))
@@ -59,13 +57,6 @@ namespace Cowboy
 
             this.Headers = new RequestHeaders(headers ?? new Dictionary<string, IEnumerable<string>>());
 
-            //this.Session = new NullSessionProvider();
-
-            if (certificate != null && certificate.Length != 0)
-            {
-                this.ClientCertificate = new X509Certificate2(certificate);
-            }
-
             this.ProtocolVersion = protocolVersion ?? string.Empty;
 
             if (String.IsNullOrEmpty(this.Url.Path))
@@ -77,11 +68,14 @@ namespace Cowboy
             this.RewriteMethod();
         }
 
-        public X509Certificate ClientCertificate { get; private set; }
         public string ProtocolVersion { get; private set; }
+
         public string UserHostAddress { get; private set; }
+
         public string Method { get; private set; }
+
         public Url Url { get; private set; }
+
         public string Path
         {
             get
@@ -89,7 +83,9 @@ namespace Cowboy
                 return this.Url.Path;
             }
         }
+
         public dynamic Query { get; set; }
+
         public RequestStream Body { get; private set; }
 
         public IEnumerable<HttpFile> Files

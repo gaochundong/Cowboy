@@ -191,18 +191,6 @@ namespace Cowboy.Hosting.Self
                 Query = httpRequest.Url.Query,
             };
 
-            byte[] certificate = null;
-
-            //if (this.configuration.EnableClientCertificates)
-            //{
-            //    var x509Certificate = request.GetClientCertificate();
-
-            //    if (x509Certificate != null)
-            //    {
-            //        certificate = x509Certificate.RawData;
-            //    }
-            //}
-
             // NOTE: For HTTP/2 we want fieldCount = 1,
             // otherwise (HTTP/1.0 and HTTP/1.1) we want fieldCount = 2
             var fieldCount = httpRequest.ProtocolVersion.Major == 2 ? 1 : 2;
@@ -215,7 +203,6 @@ namespace Cowboy.Hosting.Self
                 RequestStream.FromStream(httpRequest.InputStream, expectedRequestLength, false),
                 httpRequest.Headers.ToDictionary(),
                 (httpRequest.RemoteEndPoint != null) ? httpRequest.RemoteEndPoint.Address.ToString() : null,
-                certificate,
                 protocolVersion);
         }
 
