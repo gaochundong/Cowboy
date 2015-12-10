@@ -59,13 +59,13 @@ namespace Cowboy
 
             this.ProtocolVersion = protocolVersion ?? string.Empty;
 
-            if (String.IsNullOrEmpty(this.Url.Path))
+            if (string.IsNullOrEmpty(this.Url.Path))
             {
                 this.Url.Path = "/";
             }
 
-            this.ParseFormData();
-            this.RewriteMethod();
+            ParseFormData();
+            RewriteMethod();
         }
 
         public string ProtocolVersion { get; private set; }
