@@ -18,6 +18,22 @@ namespace Cowboy.TestServer
                 return "text";
             };
 
+            Get["/html"] = x =>
+            {
+                string html =
+                    @"
+                    <html>
+                    <head>
+                      <title>Hi there</title>
+                    </head>
+                    <body>
+                        This is a page, a simple page.
+                    </body>
+                    </html>
+                    ";
+                return this.Response.AsHtml(html);
+            };
+
             Get["/json"] = x =>
             {
                 var model = new TestModel { Description = "Hello Json" };

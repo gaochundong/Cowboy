@@ -44,6 +44,7 @@
     <Compile Include="Context.cs" />
     <Compile Include="ContextFactory.cs" />
     <Compile Include="ResponseFormatterFactory.cs" />
+    <Compile Include="Responses\HtmlResponse.cs" />
     <Compile Include="Responses\RedirectResponse.cs" />
     <Compile Include="Responses\Serialization\JsonSerializer.cs" />
     <Compile Include="Responses\FileResponse.cs" />

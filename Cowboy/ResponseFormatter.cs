@@ -90,5 +90,16 @@ namespace Cowboy
         {
             return new RedirectResponse(this.Context.ToFullPath(location), type);
         }
+
+        public Response AsHtml(string html, HttpStatusCode statusCode = HttpStatusCode.OK)
+        {
+            return new HtmlResponse(statusCode,
+                stream =>
+                {
+                    var writer = new StreamWriter(stream);
+                    writer.Write(html);
+                    writer.Flush();
+                });
+        }
     }
 }
