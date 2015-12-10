@@ -246,8 +246,7 @@ namespace Cowboy.Hosting.Self
                 return 0;
             }
 
-            var headerValue =
-                incomingHeaders["Content-Length"].SingleOrDefault();
+            var headerValue = incomingHeaders["Content-Length"].SingleOrDefault();
 
             if (headerValue == null)
             {
@@ -257,8 +256,7 @@ namespace Cowboy.Hosting.Self
             long contentLength;
 
             return !long.TryParse(headerValue, NumberStyles.Any, CultureInfo.InvariantCulture, out contentLength) ?
-                0 :
-                contentLength;
+                0 : contentLength;
         }
     }
 }

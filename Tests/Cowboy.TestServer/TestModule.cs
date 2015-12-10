@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.IO;
 
 namespace Cowboy.TestServer
 {
@@ -18,20 +18,15 @@ namespace Cowboy.TestServer
                 return "text";
             };
 
-            Get["/html"] = x =>
+            Post["/post"] = x =>
             {
-                string html =
-                    @"
-                    <html>
-                    <head>
-                      <title>Hi there</title>
-                    </head>
-                    <body>
-                        This is a page, a simple page.
-                    </body>
-                    </html>
-                    ";
-                return this.Response.AsHtml(html);
+                return "";
+            };
+
+            Post["/post-something"] = x =>
+            {
+                var body = new StreamReader(this.Request.Body).ReadToEnd();
+                return body;
             };
 
             Get["/json"] = x =>
@@ -51,37 +46,20 @@ namespace Cowboy.TestServer
                 return (string)parameters.name;
             };
 
-            //Get["/session"] = x => 
-            //{
-            //    var value = Session["moo"] ?? "";
-
-            //    var output = "Current session value is: " + value;
-
-            //    if (String.IsNullOrEmpty(value.ToString()))
-            //    {
-            //        Session["moo"] = "I've created a session!";
-            //    }
-
-            //    return output;
-            //};
-
-            //Get["/sessionObject"] = x => 
-            //{
-            //    var value = Session["baa"] ?? "null";
-
-            //    var output = "Current session value is: " + value;
-
-            //    if (value.ToString() == "null")
-            //    {
-            //        Session["baa"] = new Payload(27, true, "some random string value");
-            //    }
-
-            //    return output;
-            //};
-
-            Get["/error"] = x =>
+            Get["/html"] = x =>
             {
-                throw new NotSupportedException("This is an exception thrown in a route.");
+                string html =
+                    @"
+                    <html>
+                    <head>
+                      <title>Hi there</title>
+                    </head>
+                    <body>
+                        This is a page, a simple page.
+                    </body>
+                    </html>
+                    ";
+                return this.Response.AsHtml(html);
             };
         }
     }

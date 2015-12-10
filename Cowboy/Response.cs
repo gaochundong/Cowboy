@@ -9,7 +9,6 @@ namespace Cowboy
     public class Response : IDisposable
     {
         public static Action<Stream> NoBody = s => { };
-
         private string contentType;
 
         public Response()
