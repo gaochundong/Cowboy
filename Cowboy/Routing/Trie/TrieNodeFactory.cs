@@ -1,17 +1,12 @@
-using System.Collections.Generic;
 using System.Linq;
-using Cowboy.Routing.Constraints;
 using Cowboy.Routing.Trie.Nodes;
 
 namespace Cowboy.Routing.Trie
 {
     public class TrieNodeFactory : ITrieNodeFactory
     {
-        private readonly IEnumerable<IRouteSegmentConstraint> routeSegmentConstraints;
-
-        public TrieNodeFactory(IEnumerable<IRouteSegmentConstraint> routeSegmentConstraints)
+        public TrieNodeFactory()
         {
-            this.routeSegmentConstraints = routeSegmentConstraints;
         }
 
         public virtual TrieNode GetNodeForSegment(TrieNode parent, string segment)
@@ -40,21 +35,11 @@ namespace Cowboy.Routing.Trie
                 return new GreedyRegExCaptureNode(parent, segment, this);
             }
 
-            if (CaptureNodeWithMultipleParameters.IsMatch(segment))
-            {
-                return new CaptureNodeWithMultipleParameters(parent, segment, this, routeSegmentConstraints);
-            }
-
             return new LiteralNode(parent, segment, this);
         }
 
         private TrieNode GetCaptureNode(TrieNode parent, string segment)
         {
-            if (segment.Contains(":"))
-            {
-                return new CaptureNodeWithConstraint(parent, segment, this, routeSegmentConstraints);
-            }
-
             if (segment.EndsWith("?}"))
             {
                 return new OptionalCaptureNode(parent, segment, this);

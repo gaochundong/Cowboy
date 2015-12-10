@@ -2,7 +2,6 @@
 using Cowboy.Responses;
 using Cowboy.Responses.Serialization;
 using Cowboy.Routing;
-using Cowboy.Routing.Constraints;
 using Cowboy.Routing.Trie;
 
 namespace Cowboy
@@ -29,25 +28,7 @@ namespace Cowboy
             var routeCache = new RouteCache(routeSegmentExtractor, routeDescriptionProvider);
             routeCache.BuildCache(moduleCatalog.GetAllModules());
 
-            var routeConstraints = new List<IRouteSegmentConstraint>()
-            {
-                new AlphaRouteSegmentConstraint(),
-                new BoolRouteSegmentConstraint(),
-                new CustomDateTimeRouteSegmentConstraint(),
-                new DateTimeRouteSegmentConstraint(),
-                new DecimalRouteSegmentConstraint(),
-                new GuidRouteSegmentConstraint(),
-                new IntRouteSegmentConstraint(),
-                new LengthRouteSegmentConstraint(),
-                new LongRouteSegmentConstraint(),
-                new MaxLengthRouteSegmentConstraint(),
-                new MaxRouteSegmentConstraint(),
-                new MinLengthRouteSegmentConstraint(),
-                new MinRouteSegmentConstraint(),
-                new RangeRouteSegmentConstraint(),
-                new VersionRouteSegmentConstraint(),
-            };
-            var trieNodeFactory = new TrieNodeFactory(routeConstraints);
+            var trieNodeFactory = new TrieNodeFactory();
             var routeTrie = new RouteResolverTrie(trieNodeFactory);
             routeTrie.BuildTrie(routeCache);
 
