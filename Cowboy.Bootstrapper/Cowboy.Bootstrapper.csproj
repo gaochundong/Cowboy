@@ -40,17 +40,13 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>SolutionVersion.cs</Link>
     </Compile>
-    <Compile Include="Class1.cs" />
+    <Compile Include="Bootstrapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Cowboy.Extensions\Cowboy.Extensions.csproj">
       <Project>{aaf9f07e-921a-433f-b475-6988ecba754f}</Project>
       <Name>Cowboy.Extensions</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Cowboy.Hosting.Self\Cowboy.Hosting.Self.csproj">
-      <Project>{4cc477f4-f78f-4c23-8449-ee00f0bbb557}</Project>
-      <Name>Cowboy.Hosting.Self</Name>
     </ProjectReference>
     <ProjectReference Include="..\Cowboy.Json\Cowboy.Json.csproj">
       <Project>{8bd24f66-03df-4e35-91da-3f145bbbe34f}</Project>

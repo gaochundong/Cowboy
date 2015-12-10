@@ -48,17 +48,13 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Cowboy.Extensions\Cowboy.Extensions.csproj">
-      <Project>{aaf9f07e-921a-433f-b475-6988ecba754f}</Project>
-      <Name>Cowboy.Extensions</Name>
+    <ProjectReference Include="..\..\Cowboy.Bootstrapper\Cowboy.Bootstrapper.csproj">
+      <Project>{554cc93e-6ee9-4ebe-8677-d95d83521ede}</Project>
+      <Name>Cowboy.Bootstrapper</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\Cowboy.Hosting.Self\Cowboy.Hosting.Self.csproj">
       <Project>{4cc477f4-f78f-4c23-8449-ee00f0bbb557}</Project>
       <Name>Cowboy.Hosting.Self</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Cowboy.Utilities\Cowboy.Utilities.csproj">
-      <Project>{d80d7951-9cb6-4f7d-b9ac-1566c173c950}</Project>
-      <Name>Cowboy.Utilities</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\Cowboy\Cowboy.csproj">
       <Project>{8fb75b54-a8d7-42b0-8e14-80cb48b91497}</Project>
