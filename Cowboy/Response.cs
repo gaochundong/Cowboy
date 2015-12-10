@@ -18,7 +18,6 @@ namespace Cowboy
             this.ContentType = "text/html";
             this.Headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             this.StatusCode = HttpStatusCode.OK;
-            //this.Cookies = new List<INancyCookie>(2);
         }
 
         public string ContentType
@@ -34,8 +33,6 @@ namespace Cowboy
         public HttpStatusCode StatusCode { get; set; }
 
         public string ReasonPhrase { get; set; }
-
-        //public IList<INancyCookie> Cookies { get; private set; }
 
         public static implicit operator Response(HttpStatusCode statusCode)
         {
@@ -74,28 +71,6 @@ namespace Cowboy
         public virtual void Dispose()
         {
         }
-
-        public Response WithCookie(string name, string value)
-        {
-            return this.WithCookie(name, value, null, null, null);
-        }
-
-        public Response WithCookie(string name, string value, DateTime? expires)
-        {
-            return this.WithCookie(name, value, expires, null, null);
-        }
-
-        public Response WithCookie(string name, string value, DateTime? expires, string domain, string path)
-        {
-            //return WithCookie(this, new NancyCookie(name, value) { Expires = expires, Domain = domain, Path = path });
-            return this;
-        }
-
-        //public Response WithCookie(INancyCookie nancyCookie)
-        //{
-        //    this.Cookies.Add(nancyCookie);
-        //    return this;
-        //}
 
         public Response WithHeader(string header, string value)
         {

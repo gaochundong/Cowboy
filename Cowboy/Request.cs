@@ -13,7 +13,6 @@ namespace Cowboy
     {
         private readonly List<HttpFile> files = new List<HttpFile>();
         private dynamic form = new DynamicDictionary();
-        private IDictionary<string, string> cookies;
 
         public Request(string method, string path, string scheme)
             : this(method, new Url { Path = path, Scheme = scheme })
@@ -92,42 +91,6 @@ namespace Cowboy
         }
         public dynamic Query { get; set; }
         public RequestStream Body { get; private set; }
-        public IDictionary<string, string> Cookies
-        {
-            get { return this.cookies ?? (this.cookies = this.GetCookieData()); }
-        }
-        //public ISession Session { get; set; }
-
-        private IDictionary<string, string> GetCookieData()
-        {
-            var cookieDictionary = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-            //if (!this.Headers.Cookie.Any())
-            //{
-            //    return cookieDictionary;
-            //}
-
-            var values = this.Headers["cookie"].First().TrimEnd(';').Split(';');
-            foreach (var parts in values.Select(c => c.Split(new[] { '=' }, 2)))
-            {
-                var cookieName = parts[0].Trim();
-                string cookieValue;
-
-                if (parts.Length == 1)
-                {
-                    //Cookie attribute
-                    cookieValue = string.Empty;
-                }
-                else
-                {
-                    cookieValue = parts[1];
-                }
-
-                cookieDictionary[cookieName] = cookieValue;
-            }
-
-            return cookieDictionary;
-        }
 
         public IEnumerable<HttpFile> Files
         {

@@ -229,11 +229,6 @@ namespace Cowboy.Hosting.Self
                 }
             }
 
-            //foreach (var nancyCookie in response.Cookies)
-            //{
-            //    httpResponse.Headers.Add(HttpResponseHeader.SetCookie, nancyCookie.ToString());
-            //}
-
             if (response.ReasonPhrase != null)
             {
                 httpResponse.StatusDescription = response.ReasonPhrase;

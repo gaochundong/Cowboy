@@ -54,11 +54,6 @@ namespace Cowboy
             set { this.SetHeaderValues("Cache-Control", value, x => x); }
         }
 
-        //public IEnumerable<INancyCookie> Cookie
-        //{
-        //    get { return this.GetValue("Cookie", GetNancyCookies); }
-        //}
-
         public string Connection
         {
             get { return this.GetValue("Connection", x => x.First()); }
@@ -239,27 +234,6 @@ namespace Cowboy
                 string.Empty :
                 null;
         }
-
-        //private static IEnumerable<INancyCookie> GetNancyCookies(IEnumerable<string> cookies)
-        //{
-        //    if (cookies == null)
-        //    {
-        //        yield break;
-        //    }
-
-        //    foreach (var cookie in cookies)
-        //    {
-        //        var cookieStrings = cookie.Split(';');
-        //        foreach (var cookieString in cookieStrings)
-        //        {
-        //            var equalPos = cookieString.IndexOf('=');
-        //            if (equalPos >= 0)
-        //            {
-        //                //yield return new NancyCookie(cookieString.Substring(0, equalPos).TrimStart(), cookieString.Substring(equalPos + 1).TrimEnd());
-        //            }
-        //        }
-        //    }
-        //}
 
         private IEnumerable<string> GetValue(string name)
         {
