@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Cowboy
@@ -44,7 +45,6 @@ namespace Cowboy
             if (!this.stream.CanSeek)
             {
                 var task = MoveToWritableStream();
-
                 task.Wait();
 
                 if (task.IsFaulted)
@@ -123,14 +123,88 @@ namespace Cowboy
             }
         }
 
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            return this.stream.Read(buffer, offset, count);
+        }
+
         public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
         {
             return this.stream.BeginRead(buffer, offset, count, callback, state);
         }
 
+        public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        {
+            return await this.stream.ReadAsync(buffer, offset, count, cancellationToken);
+        }
+
+        public override int EndRead(IAsyncResult asyncResult)
+        {
+            return this.stream.EndRead(asyncResult);
+        }
+
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            this.stream.Write(buffer, offset, count);
+
+            this.ShiftStreamToFileStreamIfNecessary();
+        }
+
         public override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
         {
             return this.stream.BeginWrite(buffer, offset, count, callback, state);
+        }
+
+        public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        {
+            await this.stream.WriteAsync(buffer, offset, count, cancellationToken);
+        }
+
+        public override void EndWrite(IAsyncResult asyncResult)
+        {
+            this.stream.EndWrite(asyncResult);
+
+            this.ShiftStreamToFileStreamIfNecessary();
+        }
+
+        public override async Task CopyToAsync(Stream destination, int bufferSize, CancellationToken cancellationToken)
+        {
+            await this.stream.CopyToAsync(destination, bufferSize, cancellationToken);
+        }
+
+        public override void Flush()
+        {
+            this.stream.Flush();
+        }
+
+        public override async Task FlushAsync(CancellationToken cancellationToken)
+        {
+            await this.stream.FlushAsync(cancellationToken);
+        }
+
+        public override int ReadByte()
+        {
+            return this.stream.ReadByte();
+        }
+
+        public override void WriteByte(byte value)
+        {
+            this.stream.WriteByte(value);
+        }
+
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            return this.stream.Seek(offset, origin);
+        }
+
+        public override void SetLength(long value)
+        {
+            throw new NotSupportedException();
+        }
+
+        public override void Close()
+        {
+            this.stream.Close();
         }
 
         protected override void Dispose(bool disposing)
@@ -147,75 +221,6 @@ namespace Cowboy
             }
 
             base.Dispose(disposing);
-        }
-
-        public override int EndRead(IAsyncResult asyncResult)
-        {
-            return this.stream.EndRead(asyncResult);
-        }
-
-        public override void EndWrite(IAsyncResult asyncResult)
-        {
-            this.stream.EndWrite(asyncResult);
-
-            this.ShiftStreamToFileStreamIfNecessary();
-        }
-
-        public override void Flush()
-        {
-            this.stream.Flush();
-        }
-
-        public static RequestStream FromStream(Stream stream)
-        {
-            return FromStream(stream, 0, DEFAULT_SWITCHOVER_THRESHOLD, false);
-        }
-
-        public static RequestStream FromStream(Stream stream, long expectedLength)
-        {
-            return FromStream(stream, expectedLength, DEFAULT_SWITCHOVER_THRESHOLD, false);
-        }
-
-        public static RequestStream FromStream(Stream stream, long expectedLength, long thresholdLength)
-        {
-            return FromStream(stream, expectedLength, thresholdLength, false);
-        }
-
-        public static RequestStream FromStream(Stream stream, long expectedLength, bool disableStreamSwitching)
-        {
-            return FromStream(stream, expectedLength, DEFAULT_SWITCHOVER_THRESHOLD, disableStreamSwitching);
-        }
-
-        public static RequestStream FromStream(Stream stream, long expectedLength, long thresholdLength, bool disableStreamSwitching)
-        {
-            return new RequestStream(stream, expectedLength, thresholdLength, disableStreamSwitching);
-        }
-
-        public override int Read(byte[] buffer, int offset, int count)
-        {
-            return this.stream.Read(buffer, offset, count);
-        }
-
-        public override int ReadByte()
-        {
-            return this.stream.ReadByte();
-        }
-
-        public override long Seek(long offset, SeekOrigin origin)
-        {
-            return this.stream.Seek(offset, origin);
-        }
-
-        public override void SetLength(long value)
-        {
-            throw new NotSupportedException();
-        }
-
-        public override void Write(byte[] buffer, int offset, int count)
-        {
-            this.stream.Write(buffer, offset, count);
-
-            this.ShiftStreamToFileStreamIfNecessary();
         }
 
         private void ShiftStreamToFileStreamIfNecessary()
@@ -345,6 +350,31 @@ namespace Cowboy
             {
                 throw new ArgumentOutOfRangeException("thresholdLength", thresholdLength, "The value of the threshHoldLength parameter cannot be less than zero.");
             }
+        }
+
+        public static RequestStream FromStream(Stream stream)
+        {
+            return FromStream(stream, 0, DEFAULT_SWITCHOVER_THRESHOLD, false);
+        }
+
+        public static RequestStream FromStream(Stream stream, long expectedLength)
+        {
+            return FromStream(stream, expectedLength, DEFAULT_SWITCHOVER_THRESHOLD, false);
+        }
+
+        public static RequestStream FromStream(Stream stream, long expectedLength, long thresholdLength)
+        {
+            return FromStream(stream, expectedLength, thresholdLength, false);
+        }
+
+        public static RequestStream FromStream(Stream stream, long expectedLength, bool disableStreamSwitching)
+        {
+            return FromStream(stream, expectedLength, DEFAULT_SWITCHOVER_THRESHOLD, disableStreamSwitching);
+        }
+
+        public static RequestStream FromStream(Stream stream, long expectedLength, long thresholdLength, bool disableStreamSwitching)
+        {
+            return new RequestStream(stream, expectedLength, thresholdLength, disableStreamSwitching);
         }
     }
 

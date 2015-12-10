@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 
 namespace Cowboy.Routing
 {
-    [DebuggerDisplay("{Description.DebuggerDisplay, nq}")]
     public class Route
     {
         public Route(RouteDescription description, Func<dynamic, CancellationToken, Task<dynamic>> action)
