@@ -43,6 +43,7 @@
     </Compile>
     <Compile Include="Context.cs" />
     <Compile Include="ContextFactory.cs" />
+    <Compile Include="Cookies\Cookie.cs" />
     <Compile Include="ResponseFormatterFactory.cs" />
     <Compile Include="Responses\HtmlResponse.cs" />
     <Compile Include="Responses\RedirectResponse.cs" />
@@ -115,6 +116,21 @@
     <Compile Include="Routing\Trie\RouteResolverTrie.cs" />
     <Compile Include="Routing\Trie\SegmentMatch.cs" />
     <Compile Include="Routing\Trie\TrieNodeFactory.cs" />
+    <Compile Include="Sessions\CookieBasedSession.cs" />
+    <Compile Include="Sessions\CookieBasedSessionConfiguration.cs" />
+    <Compile Include="Sessions\Cryptography\Base64Helpers.cs" />
+    <Compile Include="Sessions\Cryptography\CryptographyConfiguration.cs" />
+    <Compile Include="Sessions\Cryptography\DefaultHmacProvider.cs" />
+    <Compile Include="Sessions\Cryptography\HmacComparer.cs" />
+    <Compile Include="Sessions\Cryptography\IEncryptionProvider.cs" />
+    <Compile Include="Sessions\Cryptography\IHmacProvider.cs" />
+    <Compile Include="Sessions\Cryptography\IKeyGenerator.cs" />
+    <Compile Include="Sessions\Cryptography\NoEncryptionProvider.cs" />
+    <Compile Include="Sessions\Cryptography\RandomKeyGenerator.cs" />
+    <Compile Include="Sessions\Cryptography\RijndaelEncryptionProvider.cs" />
+    <Compile Include="Sessions\IObjectSerializer.cs" />
+    <Compile Include="Sessions\ISession.cs" />
+    <Compile Include="Sessions\Session.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Cowboy.Extensions\Cowboy.Extensions.csproj">
@@ -130,6 +146,7 @@
       <Name>Cowboy.Utilities</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
