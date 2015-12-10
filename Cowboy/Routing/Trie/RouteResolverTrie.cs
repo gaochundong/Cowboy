@@ -9,9 +9,7 @@ namespace Cowboy.Routing.Trie
     public class RouteResolverTrie
     {
         private readonly TrieNodeFactory nodeFactory;
-
         private readonly IDictionary<string, TrieNode> routeTries = new Dictionary<string, TrieNode>();
-
         private static char[] splitSeparators = new[] {'/'};
 
         public RouteResolverTrie(TrieNodeFactory nodeFactory)
@@ -19,7 +17,7 @@ namespace Cowboy.Routing.Trie
             this.nodeFactory = nodeFactory;
         }
 
-        public void BuildTrie(IRouteCache cache)
+        public void BuildTrie(RouteCache cache)
         {
             foreach (var cacheItem in cache)
             {

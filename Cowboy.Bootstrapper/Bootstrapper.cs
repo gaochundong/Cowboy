@@ -28,11 +28,29 @@ namespace Cowboy
 
             var routeSegmentExtractor = new RouteSegmentExtractor();
             var routeDescriptionProvider = new RouteDescriptionProvider();
-            var routeCache = new RouteCache(routeSegmentExtractor, routeDescriptionProvider, moduleCatalog);
+            var routeCache = new RouteCache(routeSegmentExtractor, routeDescriptionProvider);
+            routeCache.BuildCache(moduleCatalog.GetAllModules());
 
-            var routeConstraints = new List<IRouteSegmentConstraint>();
+            var routeConstraints = new List<IRouteSegmentConstraint>()
+            {
+                new AlphaRouteSegmentConstraint(),
+                new BoolRouteSegmentConstraint(),
+                new CustomDateTimeRouteSegmentConstraint(),
+                new DateTimeRouteSegmentConstraint(),
+                new DecimalRouteSegmentConstraint(),
+                new GuidRouteSegmentConstraint(),
+                new IntRouteSegmentConstraint(),
+                new LengthRouteSegmentConstraint(),
+                new LongRouteSegmentConstraint(),
+                new MaxLengthRouteSegmentConstraint(),
+                new MaxRouteSegmentConstraint(),
+                new MinLengthRouteSegmentConstraint(),
+                new MinRouteSegmentConstraint(),
+                new RangeRouteSegmentConstraint(),
+                new VersionRouteSegmentConstraint(),
+            };
             var trieNodeFactory = new TrieNodeFactory(routeConstraints);
-            var trie = new RouteResolverTrie(trieNodeFactory);
+            var routeTrie = new RouteResolverTrie(trieNodeFactory);
 
             var serializers = new List<ISerializer>()
             {
@@ -40,9 +58,10 @@ namespace Cowboy
                 new XmlSerializer(),
             };
             var responseFormatterFactory = new ResponseFormatterFactory(serializers);
-
             var moduleBuilder = new ModuleBuilder(responseFormatterFactory);
-            var routeResolver = new RouteResolver(moduleCatalog, moduleBuilder, routeCache, trie);
+
+            var routeResolver = new RouteResolver(moduleCatalog, moduleBuilder, routeCache, routeTrie);
+
             var responseProcessors = new List<IResponseProcessor>()
             {
                 new ResponseProcessor(),

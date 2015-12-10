@@ -4,26 +4,20 @@ using System.Linq;
 
 namespace Cowboy.Routing
 {
-    public class RouteCache : Dictionary<Type, List<Tuple<int, RouteDescription>>>, IRouteCache
+    public class RouteCache : Dictionary<Type, List<Tuple<int, RouteDescription>>>
     {
         private readonly RouteSegmentExtractor routeSegmentExtractor;
         private readonly RouteDescriptionProvider routeDescriptionProvider;
-        private readonly ModuleCatalog moduleCatalog;
 
         public RouteCache(
             RouteSegmentExtractor routeSegmentExtractor,
-            RouteDescriptionProvider routeDescriptionProvider,
-            ModuleCatalog moduleCatalog)
+            RouteDescriptionProvider routeDescriptionProvider)
         {
             this.routeSegmentExtractor = routeSegmentExtractor;
             this.routeDescriptionProvider = routeDescriptionProvider;
-            this.moduleCatalog = moduleCatalog;
-
-            var modules = moduleCatalog.GetAllModules();
-            this.BuildCache(modules);
         }
 
-        private void BuildCache(IEnumerable<Module> modules)
+        public void BuildCache(IEnumerable<Module> modules)
         {
             foreach (var module in modules)
             {

@@ -11,18 +11,18 @@ namespace Cowboy.Routing
         private readonly ModuleCatalog catalog;
         private readonly ModuleBuilder moduleBuilder;
         private readonly RouteCache routeCache;
-        private readonly RouteResolverTrie trie;
+        private readonly RouteResolverTrie routeTrie;
 
         public RouteResolver(
             ModuleCatalog catalog,
             ModuleBuilder moduleBuilder,
             RouteCache routeCache,
-            RouteResolverTrie trie)
+            RouteResolverTrie routeTrie)
         {
             this.catalog = catalog;
             this.moduleBuilder = moduleBuilder;
             this.routeCache = routeCache;
-            this.trie = trie;
+            this.routeTrie = routeTrie;
 
             this.BuildTrie();
         }
@@ -31,11 +31,11 @@ namespace Cowboy.Routing
         {
             var pathDecoded = HttpUtility.UrlDecode(context.Request.Path);
 
-            var results = this.trie.GetMatches(GetMethod(context), pathDecoded, context);
+            var results = this.routeTrie.GetMatches(GetMethod(context), pathDecoded, context);
 
             if (!results.Any())
             {
-                var allowedMethods = this.trie.GetOptions(pathDecoded, context).ToArray();
+                var allowedMethods = this.routeTrie.GetOptions(pathDecoded, context).ToArray();
 
                 if (IsOptionsRequest(context))
                 {
@@ -82,7 +82,7 @@ namespace Cowboy.Routing
 
         private void BuildTrie()
         {
-            this.trie.BuildTrie(this.routeCache);
+            this.routeTrie.BuildTrie(this.routeCache);
         }
 
         private static ResolveResult BuildOptionsResult(IEnumerable<string> allowedMethods, Context context)
