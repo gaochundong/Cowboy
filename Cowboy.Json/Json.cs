@@ -29,9 +29,9 @@
 namespace Cowboy.Json
 {
     using System;
+    using System.Globalization;
     using System.IO;
     using System.Text;
-    using System.Globalization;
 
     internal static class Json
     {

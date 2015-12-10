@@ -1,5 +1,5 @@
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using Cowboy.Routing.Constraints;
 using Cowboy.Routing.Trie.Nodes;
 

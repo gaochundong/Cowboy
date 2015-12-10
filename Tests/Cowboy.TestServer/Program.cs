@@ -1,12 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Cowboy;
 using Cowboy.Hosting.Self;
-using Cowboy.Responses;
 using Cowboy.Responses.Negotiation;
 using Cowboy.Responses.Negotiation.Processors;
 using Cowboy.Responses.Serialization;

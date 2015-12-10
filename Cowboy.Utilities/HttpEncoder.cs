@@ -9,7 +9,7 @@ namespace Cowboy.Utilities
 #if NET_4_0
 	public
 #endif
-	class HttpEncoder
+    class HttpEncoder
 	{
 		static char[] hexChars = "0123456789abcdef".ToCharArray();
 		static object entitiesLock = new object();

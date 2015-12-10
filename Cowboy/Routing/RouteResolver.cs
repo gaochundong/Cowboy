@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Cowboy.Routing;
-using Cowboy.Routing.Constraints;
 using Cowboy.Routing.Trie;
 using Cowboy.Utilities;
 

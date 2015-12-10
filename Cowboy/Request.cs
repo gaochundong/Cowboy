@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Cowboy.Utilities;
 
 namespace Cowboy
@@ -179,10 +176,8 @@ namespace Cowboy
             {
                 if (string.IsNullOrEmpty(httpMultipartBoundary.Filename))
                 {
-                    var reader =
-                        new StreamReader(httpMultipartBoundary.Value);
+                    var reader = new StreamReader(httpMultipartBoundary.Value);
                     formValues.Add(httpMultipartBoundary.Name, reader.ReadToEnd());
-
                 }
                 else
                 {
@@ -213,8 +208,7 @@ namespace Cowboy
                     Tuple.Create("X-HTTP-Method-Override header", this.Headers["X-HTTP-Method-Override"].FirstOrDefault())
                 };
 
-            var providedOverride =
-                overrides.Where(x => !string.IsNullOrEmpty(x.Item2));
+            var providedOverride = overrides.Where(x => !string.IsNullOrEmpty(x.Item2));
 
             if (!providedOverride.Any())
             {
@@ -223,12 +217,8 @@ namespace Cowboy
 
             if (providedOverride.Count() > 1)
             {
-                var overrideSources =
-                    string.Join(", ", providedOverride);
-
-                var errorMessage =
-                    string.Format("More than one HTTP method override was provided. The provided values where: {0}", overrideSources);
-
+                var overrideSources = string.Join(", ", providedOverride);
+                var errorMessage = string.Format("More than one HTTP method override was provided. The provided values where: {0}", overrideSources);
                 throw new InvalidOperationException(errorMessage);
             }
 

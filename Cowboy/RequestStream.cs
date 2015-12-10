@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Cowboy
@@ -46,8 +43,7 @@ namespace Cowboy
 
             if (!this.stream.CanSeek)
             {
-                var task =
-                    MoveToWritableStream();
+                var task = MoveToWritableStream();
 
                 task.Wait();
 
@@ -350,17 +346,15 @@ namespace Cowboy
                 throw new ArgumentOutOfRangeException("thresholdLength", thresholdLength, "The value of the threshHoldLength parameter cannot be less than zero.");
             }
         }
-
     }
 
-    public static class StreamExtensions
+    internal static class StreamExtensions
     {
         internal const int BufferSize = 4096;
 
         public static void CopyTo(this Stream source, Stream destination, Action<Stream, Stream, Exception> onComplete)
         {
-            var buffer =
-                new byte[BufferSize];
+            var buffer = new byte[BufferSize];
 
             Action<Exception> done = e =>
             {
@@ -376,8 +370,7 @@ namespace Cowboy
             {
                 try
                 {
-                    var read =
-                        source.EndRead(readResult);
+                    var read = source.EndRead(readResult);
 
                     if (read <= 0)
                     {

@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Cowboy.Responses.Negotiation.Processors;
 
 namespace Cowboy.Responses.Negotiation
