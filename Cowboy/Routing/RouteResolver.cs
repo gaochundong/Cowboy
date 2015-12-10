@@ -10,21 +10,16 @@ namespace Cowboy.Routing
     {
         private readonly ModuleCatalog catalog;
         private readonly ModuleBuilder moduleBuilder;
-        private readonly RouteCache routeCache;
         private readonly RouteResolverTrie routeTrie;
 
         public RouteResolver(
             ModuleCatalog catalog,
             ModuleBuilder moduleBuilder,
-            RouteCache routeCache,
             RouteResolverTrie routeTrie)
         {
             this.catalog = catalog;
             this.moduleBuilder = moduleBuilder;
-            this.routeCache = routeCache;
             this.routeTrie = routeTrie;
-
-            this.BuildTrie();
         }
 
         public ResolveResult Resolve(Context context)
@@ -80,11 +75,6 @@ namespace Cowboy.Routing
             return context.Request.Method.Equals("OPTIONS", StringComparison.Ordinal);
         }
 
-        private void BuildTrie()
-        {
-            this.routeTrie.BuildTrie(this.routeCache);
-        }
-
         private static ResolveResult BuildOptionsResult(IEnumerable<string> allowedMethods, Context context)
         {
             var path = context.Request.Path;
@@ -103,9 +93,9 @@ namespace Cowboy.Routing
 
         private ResolveResult BuildResult(Context context, MatchResult result)
         {
-            var associatedModule = this.GetModuleFromMatchResult(context, result);
+            var associatedModule = GetModuleFromMatchResult(context, result);
 
-            //context.NegotiationContext.SetModule(associatedModule);
+            context.NegotiationContext.SetModule(associatedModule);
 
             var route = associatedModule.Routes.ElementAt(result.RouteIndex);
             var parameters = DynamicDictionary.Create(result.Parameters);

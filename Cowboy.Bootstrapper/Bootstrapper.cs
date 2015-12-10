@@ -51,6 +51,7 @@ namespace Cowboy
             };
             var trieNodeFactory = new TrieNodeFactory(routeConstraints);
             var routeTrie = new RouteResolverTrie(trieNodeFactory);
+            routeTrie.BuildTrie(routeCache);
 
             var serializers = new List<ISerializer>()
             {
@@ -60,7 +61,7 @@ namespace Cowboy
             var responseFormatterFactory = new ResponseFormatterFactory(serializers);
             var moduleBuilder = new ModuleBuilder(responseFormatterFactory);
 
-            var routeResolver = new RouteResolver(moduleCatalog, moduleBuilder, routeCache, routeTrie);
+            var routeResolver = new RouteResolver(moduleCatalog, moduleBuilder, routeTrie);
 
             var responseProcessors = new List<IResponseProcessor>()
             {
