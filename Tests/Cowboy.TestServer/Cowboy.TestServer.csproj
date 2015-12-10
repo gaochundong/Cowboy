@@ -46,9 +46,6 @@
     <Compile Include="TestModule.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\..\Cowboy.Bootstrapper\Cowboy.Bootstrapper.csproj">
       <Project>{554cc93e-6ee9-4ebe-8677-d95d83521ede}</Project>
       <Name>Cowboy.Bootstrapper</Name>
