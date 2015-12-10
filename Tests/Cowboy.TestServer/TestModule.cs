@@ -18,13 +18,13 @@ namespace Cowboy.TestServer
 
             Get["/json"] = x =>
             {
-                var model = new TestModel { FirstName = "Hello Json" };
+                var model = new TestModel { Description = "Hello Json" };
                 return this.Response.AsJson(model);
             };
 
             Get["/xml"] = x =>
             {
-                var model = new TestModel { FirstName = "Hello Xml" };
+                var model = new TestModel { Description = "Hello Xml" };
                 return this.Response.AsXml(model);
             };
 
@@ -66,10 +66,5 @@ namespace Cowboy.TestServer
                 throw new NotSupportedException("This is an exception thrown in a route.");
             };
         }
-    }
-
-    public class TestModel
-    {
-        public string FirstName { get; set; }
     }
 }
