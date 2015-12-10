@@ -1,6 +1,6 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using Cowboy.Responses.Negotiation;
+using Cowboy.Responses;
 
 namespace Cowboy.Routing
 {

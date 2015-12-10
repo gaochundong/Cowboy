@@ -6,28 +6,28 @@ using Cowboy.Utilities;
 
 namespace Cowboy.Responses
 {
-    public class GenericFileResponse : Response
+    public class FileResponse : Response
     {
         public static IList<string> SafePaths { get; set; }
 
         public static int BufferSize = 4 * 1024 * 1024;
 
-        static GenericFileResponse()
+        static FileResponse()
         {
             SafePaths = new List<string>();
         }
 
-        public GenericFileResponse(string filePath) :
+        public FileResponse(string filePath) :
             this(filePath, MimeTypes.GetMimeType(filePath))
         {
         }
 
-        public GenericFileResponse(string filePath, Context context)
+        public FileResponse(string filePath, Context context)
             : this(filePath, MimeTypes.GetMimeType(filePath), context)
         {
         }
 
-        public GenericFileResponse(string filePath, string contentType, Context context = null)
+        public FileResponse(string filePath, string contentType, Context context = null)
         {
             InitializeGenericFileResponse(filePath, contentType, context);
         }

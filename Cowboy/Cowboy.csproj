@@ -44,15 +44,10 @@
     <Compile Include="Context.cs" />
     <Compile Include="ContextFactory.cs" />
     <Compile Include="ResponseFormatterFactory.cs" />
-    <Compile Include="Responses\Negotiation\Processors\JsonProcessor.cs" />
-    <Compile Include="Responses\Negotiation\Processors\XmlProcessor.cs" />
+    <Compile Include="Responses\RedirectResponse.cs" />
     <Compile Include="Responses\Serialization\JsonSerializer.cs" />
-    <Compile Include="Responses\GenericFileResponse.cs" />
+    <Compile Include="Responses\FileResponse.cs" />
     <Compile Include="Responses\JsonResponse.cs" />
-    <Compile Include="Responses\Negotiation\AcceptHeaderCoercionConventions.cs" />
-    <Compile Include="Responses\Negotiation\BuiltInAcceptHeaderCoercions.cs" />
-    <Compile Include="Responses\Negotiation\NegotiationContext.cs" />
-    <Compile Include="Responses\Negotiation\Negotiator.cs" />
     <Compile Include="Responses\NotAcceptableResponse.cs" />
     <Compile Include="Responses\Serialization\XmlSerializer.cs" />
     <Compile Include="Responses\StreamResponse.cs" />
@@ -62,7 +57,6 @@
     <Compile Include="Responses\Serialization\ISerializer.cs" />
     <Compile Include="ResponseFormatter.cs" />
     <Compile Include="Module\Module.cs" />
-    <Compile Include="Responses\Negotiation\Processors\ResponseProcessor.cs" />
     <Compile Include="Routing\Constraints\AlphaRouteSegmentConstraint.cs" />
     <Compile Include="Routing\Constraints\BoolRouteSegmentConstraint.cs" />
     <Compile Include="Routing\Constraints\CustomDateTimeRouteSegmentConstraint.cs" />
@@ -85,9 +79,6 @@
     <Compile Include="Module\ModuleBuilder.cs" />
     <Compile Include="Module\ModuleCatalog.cs" />
     <Compile Include="Responses\Negotiation\ResponseNegotiator.cs" />
-    <Compile Include="Responses\Negotiation\MatchResult.cs" />
-    <Compile Include="Responses\Negotiation\ProcessorMatch.cs" />
-    <Compile Include="Responses\Negotiation\Processors\IResponseProcessor.cs" />
     <Compile Include="Routing\Cache\RouteCache.cs" />
     <Compile Include="Routing\Cache\RouteDescriptionProvider.cs" />
     <Compile Include="Routing\RouteInvoker.cs" />

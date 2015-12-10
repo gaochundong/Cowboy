@@ -2,6 +2,9 @@
 
 namespace Cowboy.Responses
 {
+    /// <summary>
+    /// Response with status code 404 (Not Found).
+    /// </summary>
     public class NotFoundResponse : Response
     {
         public NotFoundResponse()

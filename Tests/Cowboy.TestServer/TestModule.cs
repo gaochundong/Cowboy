@@ -11,6 +11,8 @@ namespace Cowboy.TestServer
                 return "hello world";
             };
 
+            Get["/redirect"] = _ => this.Response.AsRedirect("~/text");
+
             Get["/text"] = x =>
             {
                 return "text";

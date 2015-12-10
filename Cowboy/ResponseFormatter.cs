@@ -34,6 +34,16 @@ namespace Cowboy
             get { return this.context; }
         }
 
+        public Response FromStream(Stream stream, string contentType)
+        {
+            return new StreamResponse(() => stream, contentType);
+        }
+
+        public Response FromStream(Func<Stream> streamDelegate, string contentType)
+        {
+            return new StreamResponse(streamDelegate, contentType);
+        }
+
         public Response AsText(string contents, string contentType)
         {
             return new TextResponse(contents, contentType);
@@ -51,12 +61,12 @@ namespace Cowboy
 
         public Response AsFile(string applicationRelativeFilePath, string contentType)
         {
-            return new GenericFileResponse(applicationRelativeFilePath, contentType);
+            return new FileResponse(applicationRelativeFilePath, contentType);
         }
 
         public Response AsFile(string applicationRelativeFilePath)
         {
-            return new GenericFileResponse(applicationRelativeFilePath);
+            return new FileResponse(applicationRelativeFilePath);
         }
 
         public Response AsJson<TModel>(TModel model, HttpStatusCode statusCode = HttpStatusCode.OK)
@@ -76,14 +86,9 @@ namespace Cowboy
             return new XmlResponse<TModel>(model, serializer);
         }
 
-        public Response FromStream(Stream stream, string contentType)
+        public Response AsRedirect(string location, RedirectResponse.RedirectType type = RedirectResponse.RedirectType.SeeOther)
         {
-            return new StreamResponse(() => stream, contentType);
-        }
-
-        public Response FromStream(Func<Stream> streamDelegate, string contentType)
-        {
-            return new StreamResponse(streamDelegate, contentType);
+            return new RedirectResponse(this.Context.ToFullPath(location), type);
         }
     }
 }

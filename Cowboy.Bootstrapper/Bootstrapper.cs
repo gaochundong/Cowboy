@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using Cowboy.Responses.Negotiation;
-using Cowboy.Responses.Negotiation.Processors;
+﻿using System.Collections.Generic;
+using Cowboy.Responses;
 using Cowboy.Responses.Serialization;
 using Cowboy.Routing;
 using Cowboy.Routing.Constraints;
@@ -63,20 +61,7 @@ namespace Cowboy
 
             var routeResolver = new RouteResolver(moduleCatalog, moduleBuilder, routeTrie);
 
-            var responseProcessors = new List<IResponseProcessor>()
-            {
-                new ResponseProcessor(),
-                new JsonProcessor(serializers),
-                new XmlProcessor(serializers),
-            };
-            var coercionConventions = new AcceptHeaderCoercionConventions(
-                new List<Func<IEnumerable<Tuple<string, decimal>>, Context, IEnumerable<Tuple<string, decimal>>>>(2)
-                {
-                    BuiltInAcceptHeaderCoercions.BoostHtml,
-                    BuiltInAcceptHeaderCoercions.CoerceBlankAcceptHeader,
-                });
-
-            var negotiator = new ResponseNegotiator(responseProcessors, coercionConventions);
+            var negotiator = new ResponseNegotiator();
             var routeInvoker = new RouteInvoker(negotiator);
 
             var contextFactory = new ContextFactory();
