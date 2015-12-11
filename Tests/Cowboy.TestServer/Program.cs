@@ -12,19 +12,25 @@ namespace Cowboy.TestServer
             bootstrapper.Modules.Add(new TestModule());
             var engine = bootstrapper.Boot();
 
-            var host = new SelfHost(engine, new Uri("http://localhost:8080/"));
+            string uriString = "http://localhost:8080/";
+            var host = new SelfHost(engine, new Uri(uriString));
             host.Start();
+            Console.WriteLine("Server is listening.");
 
-            var navigateTo = "http://localhost:8080/";
-            Console.WriteLine("Server is listening - navigating to {0}.", navigateTo);
-            try
-            {
-                Process.Start(navigateTo);
-            }
-            catch (Exception) { }
+            NavigateTo(uriString);
 
             Console.ReadKey();
             Console.WriteLine("Stopped. Goodbye!");
+        }
+
+        private static void NavigateTo(string uri)
+        {
+            Console.WriteLine("Navigating to {0}.", uri);
+            try
+            {
+                Process.Start(uri);
+            }
+            catch (Exception) { }
         }
     }
 }
