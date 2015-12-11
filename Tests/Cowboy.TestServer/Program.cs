@@ -17,13 +17,13 @@ namespace Cowboy.TestServer
             host.Start();
             Console.WriteLine("Server is listening.");
 
-            NavigateTo(uriString);
+            //AutoNavigateTo(uriString);
 
             Console.ReadKey();
             Console.WriteLine("Stopped. Goodbye!");
         }
 
-        private static void NavigateTo(string uri)
+        private static void AutoNavigateTo(string uri)
         {
             Console.WriteLine("Navigating to {0}.", uri);
             try
