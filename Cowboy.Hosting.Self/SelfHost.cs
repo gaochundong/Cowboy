@@ -61,9 +61,9 @@ namespace Cowboy.Hosting.Self
                         {
                             await Process(context);
                         }
-                        catch (Exception)
+                        finally
                         {
-                            throw;
+                            _counter.Release();
                         }
                     })
                     .Forget();
@@ -72,11 +72,17 @@ namespace Cowboy.Hosting.Self
 
         private async Task Process(HttpListenerContext httpContext)
         {
-            var cancellationToken = new CancellationToken();
-            var request = ConvertRequest(httpContext.Request);
-            var context = await _engine.HandleRequest(request, cancellationToken);
-            ConvertResponse(context.Response, httpContext.Response);
-            _counter.Release();
+            if (httpContext.Request.IsWebSocketRequest)
+            {
+                var webSocketContext = await httpContext.AcceptWebSocketAsync(null);
+            }
+            else
+            {
+                var cancellationToken = new CancellationToken();
+                var request = ConvertRequest(httpContext.Request);
+                var context = await _engine.HandleRequest(request, cancellationToken);
+                ConvertResponse(context.Response, httpContext.Response);
+            }
         }
 
         private void StartListener()
@@ -171,7 +177,6 @@ namespace Cowboy.Hosting.Self
         private Request ConvertRequest(HttpListenerRequest httpRequest)
         {
             var baseUri = GetBaseUri(httpRequest);
-
             if (baseUri == null)
             {
                 throw new InvalidOperationException(string.Format("Unable to locate base URI for request: {0}", httpRequest.Url));
@@ -191,10 +196,7 @@ namespace Cowboy.Hosting.Self
                 Query = httpRequest.Url.Query,
             };
 
-            // NOTE: For HTTP/2 we want fieldCount = 1,
-            // otherwise (HTTP/1.0 and HTTP/1.1) we want fieldCount = 2
             var fieldCount = httpRequest.ProtocolVersion.Major == 2 ? 1 : 2;
-
             var protocolVersion = string.Format("HTTP/{0}", httpRequest.ProtocolVersion.ToString(fieldCount));
 
             return new Request(
