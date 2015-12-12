@@ -16,7 +16,7 @@ namespace Cowboy.Hosting.Self
         private HttpListener _listener;
         private bool _keepGoing = false;
         private Engine _engine;
-        private Semaphore _counter = new Semaphore(8, 8);
+        private SemaphoreSlim _counter = new SemaphoreSlim(8, 8);
 
         public SelfHost(Engine engine, params Uri[] baseUris)
         {
@@ -52,7 +52,7 @@ namespace Cowboy.Hosting.Self
         {
             while (_keepGoing)
             {
-                _counter.WaitOne();
+                await _counter.WaitAsync();
 
                 var context = await _listener.GetContextAsync();
                 Task.Run(async () =>
