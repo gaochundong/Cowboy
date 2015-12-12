@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Cowboy.Responses;
 using Cowboy.Responses.Serialization;
 using Cowboy.Routing;
@@ -32,11 +33,7 @@ namespace Cowboy
             var routeTrie = new RouteResolverTrie(trieNodeFactory);
             routeTrie.BuildTrie(routeCache);
 
-            var serializers = new List<ISerializer>()
-            {
-                new JsonSerializer(),
-                new XmlSerializer(),
-            };
+            var serializers = new List<ISerializer>() { new JsonSerializer(), new XmlSerializer() };
             var responseFormatterFactory = new ResponseFormatterFactory(serializers);
             var moduleBuilder = new ModuleBuilder(responseFormatterFactory);
 
@@ -44,10 +41,18 @@ namespace Cowboy
 
             var negotiator = new ResponseNegotiator();
             var routeInvoker = new RouteInvoker(negotiator);
+            var dispatcher = new RequestDispatcher(routeResolver, routeInvoker);
+
+            var rootPathProvider = new RootPathProvider();
+            var staticContnetConventions = new StaticContentsConventions(new List<Func<Context, string, Response>>
+            {
+                StaticContentConventionBuilder.AddDirectory("Content")
+            });
+            var staticContentProvider = new StaticContentProvider(rootPathProvider, staticContnetConventions);
+            FileResponse.SafePaths.Add(rootPathProvider.GetRootPath());
 
             var contextFactory = new ContextFactory();
-            var dispatcher = new RequestDispatcher(routeResolver, routeInvoker);
-            var engine = new Engine(contextFactory, dispatcher);
+            var engine = new Engine(contextFactory, staticContentProvider, dispatcher);
 
             return engine;
         }

@@ -8,11 +8,13 @@ namespace Cowboy
     public class Engine
     {
         private ContextFactory _contextFactory;
+        private StaticContentProvider _staticContentProvider;
         private RequestDispatcher _dispatcher;
 
-        public Engine(ContextFactory contextFactory, RequestDispatcher dispatcher)
+        public Engine(ContextFactory contextFactory, StaticContentProvider staticContentProvider, RequestDispatcher dispatcher)
         {
             _contextFactory = contextFactory;
+            _staticContentProvider = staticContentProvider;
             _dispatcher = dispatcher;
         }
 
@@ -24,6 +26,14 @@ namespace Cowboy
             }
 
             var context = _contextFactory.Create(request);
+
+            var staticContentResponse = _staticContentProvider.GetContent(context);
+            if (staticContentResponse != null)
+            {
+                context.Response = staticContentResponse;
+                return context;
+            }
+
             context.Response = await _dispatcher.Dispatch(context, cancellationToken);
 
             return context;
