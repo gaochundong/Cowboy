@@ -41,7 +41,12 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>SolutionVersion.cs</Link>
     </Compile>
+    <Compile Include="IWebSocketSession.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="WebSocketBehavior.cs" />
+    <Compile Include="WebSocketServiceHost.cs" />
+    <Compile Include="WebSocketServiceManager.cs" />
+    <Compile Include="WebSocketSessionManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Cowboy\Cowboy.csproj">
