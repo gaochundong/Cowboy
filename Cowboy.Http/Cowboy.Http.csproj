@@ -68,7 +68,7 @@
     <Compile Include="Routing\Cache\RouteSegmentExtractor.cs" />
     <Compile Include="Routing\MethodNotAllowedRoute.cs" />
     <Compile Include="Routing\NotFoundRoute.cs" />
-    <Compile Include="Routing\RequestDispatcher.cs" />
+    <Compile Include="RequestDispatcher.cs" />
     <Compile Include="Routing\ResolveResult.cs" />
     <Compile Include="Routing\Route.cs" />
     <Compile Include="Routing\RouteInvoker.cs" />

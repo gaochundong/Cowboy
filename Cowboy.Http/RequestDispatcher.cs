@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Cowboy.Http.Routing;
 
-namespace Cowboy.Http.Routing
+namespace Cowboy.Http
 {
     public class RequestDispatcher
     {
