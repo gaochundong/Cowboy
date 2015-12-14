@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Cowboy.Http;
 
-namespace Cowboy.Http
+namespace Cowboy.StaticContent
 {
     public class StaticContentsConventions : IEnumerable<Func<Context, string, Response>>
     {

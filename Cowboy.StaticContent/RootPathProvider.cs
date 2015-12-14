@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Cowboy.Http
+namespace Cowboy.StaticContent
 {
     public class RootPathProvider
     {

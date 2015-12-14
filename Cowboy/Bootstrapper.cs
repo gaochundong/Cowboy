@@ -5,6 +5,7 @@ using Cowboy.Http.Responses;
 using Cowboy.Http.Routing;
 using Cowboy.Http.Routing.Trie;
 using Cowboy.Serialization;
+using Cowboy.StaticContent;
 using Cowboy.WebSockets;
 
 namespace Cowboy
@@ -19,6 +20,30 @@ namespace Cowboy
         public List<Module> Modules { get; set; }
 
         public Engine Boot()
+        {
+            var contextFactory = new ContextFactory();
+            var staticContentProvider = BuildStaticContentProvider();
+            var requestDispatcher = BuildRequestDispatcher();
+            var webSocketDispatcher = new WebSocketDispatcher();
+
+            return new Engine(contextFactory, staticContentProvider, requestDispatcher, webSocketDispatcher);
+        }
+
+        private StaticContentProvider BuildStaticContentProvider()
+        {
+            var rootPathProvider = new RootPathProvider();
+            var staticContnetConventions = new StaticContentsConventions(new List<Func<Context, string, Response>>
+            {
+                StaticContentConventionBuilder.AddDirectory("Content")
+            });
+            var staticContentProvider = new StaticContentProvider(rootPathProvider, staticContnetConventions);
+
+            FileResponse.SafePaths.Add(rootPathProvider.GetRootPath());
+
+            return staticContentProvider;
+        }
+
+        private RequestDispatcher BuildRequestDispatcher()
         {
             var moduleCatalog = new ModuleCatalog();
             foreach (var module in Modules)
@@ -45,20 +70,7 @@ namespace Cowboy
             var routeInvoker = new RouteInvoker(negotiator);
             var requestDispatcher = new RequestDispatcher(routeResolver, routeInvoker);
 
-            var rootPathProvider = new RootPathProvider();
-            var staticContnetConventions = new StaticContentsConventions(new List<Func<Context, string, Response>>
-            {
-                StaticContentConventionBuilder.AddDirectory("Content")
-            });
-            var staticContentProvider = new StaticContentProvider(rootPathProvider, staticContnetConventions);
-            FileResponse.SafePaths.Add(rootPathProvider.GetRootPath());
-
-            var webSocketDispatcher = new WebSocketDispatcher();
-
-            var contextFactory = new ContextFactory();
-            var engine = new Engine(contextFactory, staticContentProvider, requestDispatcher, webSocketDispatcher);
-
-            return engine;
+            return requestDispatcher;
         }
     }
 }

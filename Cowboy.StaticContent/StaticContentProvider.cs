@@ -1,4 +1,6 @@
-﻿namespace Cowboy.Http
+﻿using Cowboy.Http;
+
+namespace Cowboy.StaticContent
 {
     public class StaticContentProvider
     {

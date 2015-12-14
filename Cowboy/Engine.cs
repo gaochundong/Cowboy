@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Cowboy.Http;
 using Cowboy.Http.Routing;
+using Cowboy.StaticContent;
 using Cowboy.Utilities;
 using Cowboy.WebSockets;
 

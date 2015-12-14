@@ -3,10 +3,11 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Cowboy.Http;
 using Cowboy.Http.Responses;
 using Cowboy.Utilities;
 
-namespace Cowboy.Http
+namespace Cowboy.StaticContent
 {
     public class StaticContentConventionBuilder
     {
