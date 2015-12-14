@@ -4,6 +4,7 @@ using Cowboy.Responses;
 using Cowboy.Responses.Serialization;
 using Cowboy.Routing;
 using Cowboy.Routing.Trie;
+using Cowboy.WebSockets;
 
 namespace Cowboy
 {
@@ -41,7 +42,7 @@ namespace Cowboy
 
             var negotiator = new ResponseNegotiator();
             var routeInvoker = new RouteInvoker(negotiator);
-            var dispatcher = new RequestDispatcher(routeResolver, routeInvoker);
+            var requestDispatcher = new RequestDispatcher(routeResolver, routeInvoker);
 
             var rootPathProvider = new RootPathProvider();
             var staticContnetConventions = new StaticContentsConventions(new List<Func<Context, string, Response>>
@@ -51,8 +52,10 @@ namespace Cowboy
             var staticContentProvider = new StaticContentProvider(rootPathProvider, staticContnetConventions);
             FileResponse.SafePaths.Add(rootPathProvider.GetRootPath());
 
+            var webSocketDispatcher = new WebSocketDispatcher();
+
             var contextFactory = new ContextFactory();
-            var engine = new Engine(contextFactory, staticContentProvider, dispatcher);
+            var engine = new Engine(contextFactory, staticContentProvider, requestDispatcher, webSocketDispatcher);
 
             return engine;
         }

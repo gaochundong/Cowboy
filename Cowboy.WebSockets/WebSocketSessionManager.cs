@@ -1,8 +1,11 @@
 ﻿//using System;
+//using System.Collections;
 //using System.Collections.Generic;
 //using System.IO;
 //using System.Linq;
+//using System.Net.WebSockets;
 //using System.Text;
+//using System.Threading;
 //using System.Threading.Tasks;
 
 //namespace Cowboy.WebSockets
@@ -11,7 +14,6 @@
 //    {
 //        private volatile bool _clean;
 //        private object _forSweep;
-//        private Logger _logger;
 //        private Dictionary<string, IWebSocketSession> _sessions;
 //        private volatile ServerState _state;
 //        private volatile bool _sweeping;
@@ -20,14 +22,7 @@
 //        private TimeSpan _waitTime;
 
 //        internal WebSocketSessionManager()
-//          : this(new Logger())
 //        {
-//        }
-
-//        internal WebSocketSessionManager(Logger logger)
-//        {
-//            _logger = logger;
-
 //            _clean = true;
 //            _forSweep = new object();
 //            _sessions = new Dictionary<string, IWebSocketSession>();
@@ -38,52 +33,12 @@
 //            setSweepTimer(60000);
 //        }
 
-//        internal ServerState State
-//        {
-//            get
-//            {
-//                return _state;
-//            }
-//        }
-
-//        public IEnumerable<string> ActiveIDs
-//        {
-//            get
-//            {
-//                foreach (var res in Broadping(WebSocketFrame.EmptyPingBytes, _waitTime))
-//                    if (res.Value)
-//                        yield return res.Key;
-//            }
-//        }
-
 //        public int Count
 //        {
 //            get
 //            {
 //                lock (_sync)
 //                  return _sessions.Count;
-//            }
-//        }
-
-//        public IEnumerable<string> IDs
-//        {
-//            get
-//            {
-//                if (_state == ServerState.ShuttingDown)
-//                    return new string[0];
-
-//                lock (_sync)
-//                  return _sessions.Keys.ToList();
-//            }
-//        }
-
-//        public IEnumerable<string> InactiveIDs
-//        {
-//            get
-//            {
-//                foreach (var res in Broadping(WebSocketFrame.EmptyPingBytes, _waitTime))
-//                    if (!res.Value)
-//                        yield return res.Key;
 //            }
 //        }
 
@@ -144,6 +99,49 @@
 //                foreach (var session in Sessions)
 //                    session.Context.WebSocket.WaitTime = value;
 //            }
+//        }
+
+//        internal void Start()
+//        {
+//            lock (_sync)
+//            {
+//                _sweepTimer.Enabled = _clean;
+//                _state = ServerState.Start;
+//            }
+//        }
+
+//        internal void Stop(CloseEventArgs e, byte[] frameAsBytes, bool receive)
+//        {
+//            lock (_sync)
+//            {
+//                _state = ServerState.ShuttingDown;
+
+//                _sweepTimer.Enabled = false;
+//                foreach (var session in _sessions.Values.ToList())
+//                    session.Context.WebSocket.Close(e, frameAsBytes, receive);
+
+//                _state = ServerState.Stop;
+//            }
+//        }
+
+//        internal string Add(IWebSocketSession session)
+//        {
+//            lock (_sync)
+//            {
+//                if (_state != ServerState.Start)
+//                    return null;
+
+//                var id = createID();
+//                _sessions.Add(id, session);
+
+//                return id;
+//            }
+//        }
+
+//        internal bool Remove(string id)
+//        {
+//            lock (_sync)
+//              return _sessions.Remove(id);
 //        }
 
 //        private void broadcast(Opcode opcode, byte[] data, Action completed)
@@ -220,20 +218,6 @@
 //            return ret;
 //        }
 
-//        internal string Add(IWebSocketSession session)
-//        {
-//            lock (_sync)
-//            {
-//                if (_state != ServerState.Start)
-//                    return null;
-
-//                var id = createID();
-//                _sessions.Add(id, session);
-
-//                return id;
-//            }
-//        }
-
 //        internal void Broadcast(Opcode opcode, byte[] data, Dictionary<CompressionMethod, byte[]> cache)
 //        {
 //            foreach (var session in Sessions)
@@ -268,35 +252,6 @@
 //            }
 
 //            return ret;
-//        }
-
-//        internal bool Remove(string id)
-//        {
-//            lock (_sync)
-//              return _sessions.Remove(id);
-//        }
-
-//        internal void Start()
-//        {
-//            lock (_sync)
-//            {
-//                _sweepTimer.Enabled = _clean;
-//                _state = ServerState.Start;
-//            }
-//        }
-
-//        internal void Stop(CloseEventArgs e, byte[] frameAsBytes, bool receive)
-//        {
-//            lock (_sync)
-//            {
-//                _state = ServerState.ShuttingDown;
-
-//                _sweepTimer.Enabled = false;
-//                foreach (var session in _sessions.Values.ToList())
-//                    session.Context.WebSocket.Close(e, frameAsBytes, receive);
-
-//                _state = ServerState.Stop;
-//            }
 //        }
 
 //        public void Broadcast(byte[] data)

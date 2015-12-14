@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Cowboy.Responses;
 
@@ -10,6 +11,9 @@ namespace Cowboy.Routing
 
         public RouteInvoker(ResponseNegotiator negotiator)
         {
+            if (negotiator == null)
+                throw new ArgumentNullException("negotiator");
+
             this.negotiator = negotiator;
         }
 

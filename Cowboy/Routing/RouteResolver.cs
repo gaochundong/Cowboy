@@ -17,6 +17,13 @@ namespace Cowboy.Routing
             ModuleBuilder moduleBuilder,
             RouteResolverTrie routeTrie)
         {
+            if (catalog == null)
+                throw new ArgumentNullException("catalog");
+            if (moduleBuilder == null)
+                throw new ArgumentNullException("moduleBuilder");
+            if (routeTrie == null)
+                throw new ArgumentNullException("routeTrie");
+
             this.catalog = catalog;
             this.moduleBuilder = moduleBuilder;
             this.routeTrie = routeTrie;

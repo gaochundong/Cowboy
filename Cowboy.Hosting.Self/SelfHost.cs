@@ -14,24 +14,30 @@ namespace Cowboy.Hosting.Self
     {
         private IList<Uri> _baseUriList;
         private HttpListener _listener;
-        private bool _keepGoing = false;
+        private bool _keepProcessing = false;
         private Engine _engine;
-        private SemaphoreSlim _counter = new SemaphoreSlim(8, 8);
+        private SemaphoreSlim _concurrencyController;
 
         public SelfHost(Engine engine, params Uri[] baseUris)
+            : this(engine, Environment.ProcessorCount * 2, baseUris)
+        {
+        }
+
+        public SelfHost(Engine engine, int concurrentCount, params Uri[] baseUris)
         {
             if (engine == null)
                 throw new ArgumentNullException("engine");
 
             _engine = engine;
             _baseUriList = baseUris;
+            _concurrencyController = new SemaphoreSlim(concurrentCount, concurrentCount);
         }
 
         public void Start()
         {
             StartListener();
 
-            _keepGoing = true;
+            _keepProcessing = true;
             Task.Run(async () =>
                 {
                     await StartProcess();
@@ -41,7 +47,7 @@ namespace Cowboy.Hosting.Self
 
         public void Stop()
         {
-            _keepGoing = false;
+            _keepProcessing = false;
             if (_listener != null && _listener.IsListening)
             {
                 _listener.Stop();
@@ -50,9 +56,9 @@ namespace Cowboy.Hosting.Self
 
         private async Task StartProcess()
         {
-            while (_keepGoing)
+            while (_keepProcessing)
             {
-                await _counter.WaitAsync();
+                await _concurrencyController.WaitAsync();
 
                 var context = await _listener.GetContextAsync();
                 Task.Run(async () =>
@@ -63,7 +69,7 @@ namespace Cowboy.Hosting.Self
                         }
                         finally
                         {
-                            _counter.Release();
+                            _concurrencyController.Release();
                         }
                     })
                     .Forget();
@@ -72,16 +78,26 @@ namespace Cowboy.Hosting.Self
 
         private async Task Process(HttpListenerContext httpContext)
         {
-            if (httpContext.Request.IsWebSocketRequest)
-            {
-                var webSocketContext = await httpContext.AcceptWebSocketAsync(null);
-            }
-            else
+            try
             {
                 var cancellationToken = new CancellationToken();
-                var request = ConvertRequest(httpContext.Request);
-                var context = await _engine.HandleRequest(request, cancellationToken);
-                ConvertResponse(context.Response, httpContext.Response);
+
+                if (httpContext.Request.IsWebSocketRequest)
+                {
+                    var webSocketContext = await httpContext.AcceptWebSocketAsync(null);
+                    await _engine.HandleWebSocket(webSocketContext, cancellationToken);
+                }
+                else
+                {
+                    var request = ConvertRequest(httpContext.Request);
+                    var context = await _engine.HandleRequest(request, cancellationToken);
+                    ConvertResponse(context.Response, httpContext.Response);
+                }
+            }
+            catch
+            {
+                httpContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+                httpContext.Response.Close();
             }
         }
 
