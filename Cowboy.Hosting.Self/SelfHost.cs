@@ -83,11 +83,12 @@ namespace Cowboy.Hosting.Self
                 if (httpContext.Request.IsWebSocketRequest)
                 {
                     var webSocketContext = await httpContext.AcceptWebSocketAsync(null);
-                    await _engine.HandleWebSocket(webSocketContext, cancellationToken);
+                    var baseUri = GetBaseUri(webSocketContext.RequestUri);
+                    await _engine.HandleWebSocket(webSocketContext, baseUri, cancellationToken);
                 }
                 else
                 {
-                    var baseUri = GetBaseUri(httpContext.Request);
+                    var baseUri = GetBaseUri(httpContext.Request.Url);
                     await _engine.HandleHttp(httpContext, baseUri, cancellationToken);
                 }
             }
@@ -175,16 +176,16 @@ namespace Cowboy.Hosting.Self
             }
         }
 
-        private Uri GetBaseUri(HttpListenerRequest request)
+        private Uri GetBaseUri(Uri requestUri)
         {
-            var result = _baseUriList.FirstOrDefault(uri => uri.IsCaseInsensitiveBaseOf(request.Url));
+            var result = _baseUriList.FirstOrDefault(uri => uri.IsCaseInsensitiveBaseOf(requestUri));
 
             if (result != null)
             {
                 return result;
             }
 
-            return new Uri(request.Url.GetLeftPart(UriPartial.Authority));
+            return new Uri(requestUri.GetLeftPart(UriPartial.Authority));
         }
     }
 }

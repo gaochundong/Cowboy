@@ -65,8 +65,13 @@ namespace Cowboy
             ConvertResponse(context.Response, httpContext.Response);
         }
 
-        public async Task HandleWebSocket(WebSocketContext webSocketContext, CancellationToken cancellationToken)
+        public async Task HandleWebSocket(WebSocketContext webSocketContext, Uri baseUri, CancellationToken cancellationToken)
         {
+            if (webSocketContext == null)
+                throw new ArgumentNullException("webSocketContext");
+            if (baseUri == null)
+                throw new ArgumentNullException("baseUri", string.Format("Unable to locate base URI for request: {0}", webSocketContext.RequestUri));
+
             await _webSocketDispatcher.Dispatch(webSocketContext, cancellationToken);
         }
 
