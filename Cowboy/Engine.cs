@@ -15,19 +15,12 @@ namespace Cowboy
 {
     public class Engine
     {
-        private ContextFactory _contextFactory;
         private StaticContentProvider _staticContentProvider;
         private RequestDispatcher _requestDispatcher;
         private WebSocketDispatcher _webSocketDispatcher;
 
-        public Engine(
-            ContextFactory contextFactory,
-            StaticContentProvider staticContentProvider,
-            RequestDispatcher requestDispatcher,
-            WebSocketDispatcher webSocketDispatcher)
+        public Engine(StaticContentProvider staticContentProvider, RequestDispatcher requestDispatcher, WebSocketDispatcher webSocketDispatcher)
         {
-            if (contextFactory == null)
-                throw new ArgumentNullException("contextFactory");
             if (staticContentProvider == null)
                 throw new ArgumentNullException("staticContentProvider");
             if (requestDispatcher == null)
@@ -35,7 +28,6 @@ namespace Cowboy
             if (webSocketDispatcher == null)
                 throw new ArgumentNullException("webSocketDispatcher");
 
-            _contextFactory = contextFactory;
             _staticContentProvider = staticContentProvider;
             _requestDispatcher = requestDispatcher;
             _webSocketDispatcher = webSocketDispatcher;
@@ -50,7 +42,10 @@ namespace Cowboy
 
             var request = ConvertRequest(baseUri, httpContext.Request);
 
-            var context = _contextFactory.Create(request);
+            var context = new Context()
+            {
+                Request = request,
+            };
 
             var staticContentResponse = _staticContentProvider.GetContent(context);
             if (staticContentResponse != null)

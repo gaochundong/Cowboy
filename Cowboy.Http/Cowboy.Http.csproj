@@ -41,7 +41,6 @@
       <Link>SolutionVersion.cs</Link>
     </Compile>
     <Compile Include="Context.cs" />
-    <Compile Include="ContextFactory.cs" />
     <Compile Include="Module\Module.cs" />
     <Compile Include="Module\ModuleBuilder.cs" />
     <Compile Include="Module\ModuleCatalog.cs" />

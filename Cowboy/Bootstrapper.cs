@@ -21,12 +21,11 @@ namespace Cowboy
 
         public Engine Boot()
         {
-            var contextFactory = new ContextFactory();
             var staticContentProvider = BuildStaticContentProvider();
             var requestDispatcher = BuildRequestDispatcher();
             var webSocketDispatcher = new WebSocketDispatcher();
 
-            return new Engine(contextFactory, staticContentProvider, requestDispatcher, webSocketDispatcher);
+            return new Engine(staticContentProvider, requestDispatcher, webSocketDispatcher);
         }
 
         private StaticContentProvider BuildStaticContentProvider()
