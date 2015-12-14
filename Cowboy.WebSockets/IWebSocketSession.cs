@@ -1,22 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.WebSockets;
-using System.Text;
-using System.Threading.Tasks;
+﻿//using System;
+//using System.Collections.Generic;
+//using System.Linq;
+//using System.Net.WebSockets;
+//using System.Text;
+//using System.Threading.Tasks;
 
-namespace Cowboy.WebSockets
-{
-    public interface IWebSocketSession
-    {
-        WebSocketContext Context { get; }
+//namespace Cowboy.WebSockets
+//{
+//    public interface IWebSocketSession
+//    {
+//        WebSocketContext Context { get; }
 
-        string ID { get; }
+//        string ID { get; }
 
-        string Protocol { get; }
+//        string Protocol { get; }
 
-        DateTime StartTime { get; }
+//        DateTime StartTime { get; }
 
-        WebSocketState State { get; }
-    }
-}
+//        WebSocketState State { get; }
+//    }
+//}
