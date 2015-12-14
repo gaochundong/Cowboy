@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using Cowboy.Http;
 
 namespace Cowboy.TestServer
 {

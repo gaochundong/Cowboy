@@ -46,13 +46,17 @@
     <Compile Include="TestModule.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Cowboy.Bootstrapper\Cowboy.Bootstrapper.csproj">
-      <Project>{554cc93e-6ee9-4ebe-8677-d95d83521ede}</Project>
-      <Name>Cowboy.Bootstrapper</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\Cowboy.Hosting.Self\Cowboy.Hosting.Self.csproj">
       <Project>{4cc477f4-f78f-4c23-8449-ee00f0bbb557}</Project>
       <Name>Cowboy.Hosting.Self</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Cowboy.Http\Cowboy.Http.csproj">
+      <Project>{7eb615ae-71b7-4d75-8e43-1cef143e0b33}</Project>
+      <Name>Cowboy.Http</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Cowboy.WebSockets\Cowboy.WebSockets.csproj">
+      <Project>{47e06681-38e9-46c0-8aae-00535845d42d}</Project>
+      <Name>Cowboy.WebSockets</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\Cowboy\Cowboy.csproj">
       <Project>{8fb75b54-a8d7-42b0-8e14-80cb48b91497}</Project>

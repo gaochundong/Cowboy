@@ -41,7 +41,6 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>SolutionVersion.cs</Link>
     </Compile>
-    <Compile Include="Bootstrapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -49,9 +48,17 @@
       <Project>{aaf9f07e-921a-433f-b475-6988ecba754f}</Project>
       <Name>Cowboy.Extensions</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Cowboy.Http\Cowboy.Http.csproj">
+      <Project>{7eb615ae-71b7-4d75-8e43-1cef143e0b33}</Project>
+      <Name>Cowboy.Http</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Cowboy.Json\Cowboy.Json.csproj">
       <Project>{8bd24f66-03df-4e35-91da-3f145bbbe34f}</Project>
       <Name>Cowboy.Json</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Cowboy.Serialization\Cowboy.Serialization.csproj">
+      <Project>{505d35f3-9835-45b6-9e30-4e4d6a7ffdb7}</Project>
+      <Name>Cowboy.Serialization</Name>
     </ProjectReference>
     <ProjectReference Include="..\Cowboy.Utilities\Cowboy.Utilities.csproj">
       <Project>{d80d7951-9cb6-4f7d-b9ac-1566c173c950}</Project>
