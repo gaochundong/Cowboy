@@ -15,15 +15,17 @@ namespace Cowboy
         public Bootstrapper()
         {
             this.Modules = new List<Module>();
+            this.WebSocketModules = new List<WebSocketModule>();
         }
 
         public List<Module> Modules { get; set; }
+        public List<WebSocketModule> WebSocketModules { get; set; }
 
         public Engine Boot()
         {
             var staticContentProvider = BuildStaticContentProvider();
             var requestDispatcher = BuildRequestDispatcher();
-            var webSocketDispatcher = new WebSocketDispatcher();
+            var webSocketDispatcher = BuildWebSocketDispatcher();
 
             return new Engine(staticContentProvider, requestDispatcher, webSocketDispatcher);
         }
@@ -70,6 +72,19 @@ namespace Cowboy
             var requestDispatcher = new RequestDispatcher(routeResolver, routeInvoker);
 
             return requestDispatcher;
+        }
+
+        private WebSocketDispatcher BuildWebSocketDispatcher()
+        {
+            var moduleCatalog = new WebSocketModuleCatalog();
+            foreach (var module in WebSocketModules)
+            {
+                moduleCatalog.RegisterModule(module);
+            }
+
+            var routeResolver = new WebSocketRouteResolver(moduleCatalog);
+
+            return new WebSocketDispatcher(routeResolver);
         }
     }
 }

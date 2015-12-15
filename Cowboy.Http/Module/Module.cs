@@ -26,13 +26,13 @@ namespace Cowboy.Http
             this.ModulePath = modulePath;
         }
 
-        public string ModulePath { get; protected set; }
-
         [EditorBrowsable(EditorBrowsableState.Never)]
         public IEnumerable<Route> Routes
         {
             get { return this.routes.AsReadOnly(); }
         }
+
+        public string ModulePath { get; protected set; }
 
         public string GetModuleName()
         {

@@ -69,12 +69,12 @@ namespace Cowboy.Http.Routing
             var route =
                 new MethodNotAllowedRoute(context.Request.Path, context.Request.Method, allowedMethods);
 
-            return new ResolveResult(route, new DynamicDictionary(), null);
+            return new ResolveResult(route, new DynamicDictionary());
         }
 
         private static bool IsMethodNotAllowed(IEnumerable<string> allowedMethods)
         {
-            return allowedMethods.Any();// && !StaticConfiguration.DisableMethodNotAllowedResponses;
+            return allowedMethods.Any();
         }
 
         private static bool IsOptionsRequest(Context context)
@@ -86,16 +86,9 @@ namespace Cowboy.Http.Routing
         {
             var path = context.Request.Path;
 
-            //var optionsResult =
-            //    new OptionsRoute(path, allowedMethods);
+            var optionsResult = new OptionsRoute(path, allowedMethods);
 
-            //return new ResolveResult(
-            //    optionsResult,
-            //    new DynamicDictionary(),
-            //    null,
-            //    null,
-            //    null);
-            return null;
+            return new ResolveResult(optionsResult, new DynamicDictionary());
         }
 
         private ResolveResult BuildResult(Context context, MatchResult result)
@@ -124,21 +117,12 @@ namespace Cowboy.Http.Routing
             {
                 Route = new NotFoundRoute(context.Request.Method, context.Request.Path),
                 Parameters = DynamicDictionary.Empty,
-                OnError = null
             };
         }
 
         private static string GetMethod(Context context)
         {
             var requestedMethod = context.Request.Method;
-
-            //if (!StaticConfiguration.EnableHeadRouting)
-            //{
-            //    return requestedMethod.Equals("HEAD", StringComparison.Ordinal) ?
-            //        "GET" :
-            //        requestedMethod;
-            //}
-
             return requestedMethod;
         }
     }
