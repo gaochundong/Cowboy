@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -13,6 +15,8 @@ namespace Cowboy.WebSockets
     {
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private static readonly Regex ModuleNameExpression = new Regex(@"(?<name>[\w]+)Module$", RegexOptions.Compiled);
+
+        private ConcurrentDictionary<IPEndPoint, WebSocketSession> _sessions = new ConcurrentDictionary<IPEndPoint, WebSocketSession>();
 
         protected WebSocketModule()
             : this(string.Empty)
@@ -41,7 +45,12 @@ namespace Cowboy.WebSockets
 
         public async Task AcceptSession(WebSocketSession session)
         {
-            await session.Start();
+            if (_sessions.TryAdd(session.RemoteEndPoint, session))
+            {
+                await session.Start();
+
+                _sessions.TryRemove(session.RemoteEndPoint, out session);
+            }
         }
     }
 }

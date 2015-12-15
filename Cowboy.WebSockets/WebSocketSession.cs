@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -8,19 +9,42 @@ namespace Cowboy.WebSockets
 {
     public class WebSocketSession
     {
-        public WebSocketSession(WebSocketContext context, CancellationToken cancellationToken)
-        {
-            if (context == null)
-                throw new ArgumentNullException("context");
+        private HttpListenerContext _httpContext;
 
-            this.Context = context;
+        public WebSocketSession(
+            HttpListenerContext httpContext,
+            HttpListenerWebSocketContext webSocketContext,
+            CancellationToken cancellationToken)
+        {
+            if (httpContext == null)
+                throw new ArgumentNullException("httpContext");
+            if (webSocketContext == null)
+                throw new ArgumentNullException("webSocketContext");
+
+            _httpContext = httpContext;
+            this.Context = webSocketContext;
             this.CancellationToken = cancellationToken;
             this.StartTime = DateTime.UtcNow;
         }
 
-        public DateTime StartTime { get; }
-        public WebSocketContext Context { get; }
+        public IPEndPoint RemoteEndPoint
+        {
+            get
+            {
+                return _httpContext.Request.RemoteEndPoint;
+            }
+        }
+        public IPEndPoint LocalEndPoint
+        {
+            get
+            {
+                return _httpContext.Request.LocalEndPoint;
+            }
+        }
+
+        public HttpListenerWebSocketContext Context { get; }
         public CancellationToken CancellationToken { get; }
+        public DateTime StartTime { get; }
 
         public async Task Start()
         {

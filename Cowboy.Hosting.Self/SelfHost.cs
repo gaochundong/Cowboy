@@ -15,20 +15,34 @@ namespace Cowboy.Hosting.Self
         private bool _keepProcessing = false;
         private Engine _engine;
         private SemaphoreSlim _concurrencyController;
+        private string _webSocketSubProtocol;
 
         public SelfHost(Engine engine, params Uri[] baseUris)
-            : this(engine, Environment.ProcessorCount * 2, baseUris)
+            : this(engine, Environment.ProcessorCount * 2, null, baseUris)
         {
         }
 
         public SelfHost(Engine engine, int concurrentCount, params Uri[] baseUris)
+            : this(engine, concurrentCount, null, baseUris)
+        {
+        }
+
+        public SelfHost(Engine engine, string webSocketSubProtocol, params Uri[] baseUris)
+            : this(engine, Environment.ProcessorCount * 2, webSocketSubProtocol, baseUris)
+        {
+        }
+
+        public SelfHost(Engine engine, int concurrentCount, string webSocketSubProtocol, params Uri[] baseUris)
         {
             if (engine == null)
                 throw new ArgumentNullException("engine");
+            if (concurrentCount < 1)
+                throw new ArgumentException("Invalid concurrent control.", "concurrentCount");
 
             _engine = engine;
-            _baseUriList = baseUris;
             _concurrencyController = new SemaphoreSlim(concurrentCount, concurrentCount);
+            _webSocketSubProtocol = webSocketSubProtocol;
+            _baseUriList = baseUris;
         }
 
         public void Start()
@@ -82,9 +96,9 @@ namespace Cowboy.Hosting.Self
 
                 if (httpContext.Request.IsWebSocketRequest)
                 {
-                    var webSocketContext = await httpContext.AcceptWebSocketAsync(null);
+                    var webSocketContext = await httpContext.AcceptWebSocketAsync(_webSocketSubProtocol);
                     var baseUri = GetBaseUri(webSocketContext.RequestUri);
-                    await _engine.HandleWebSocket(webSocketContext, baseUri, cancellationToken);
+                    await _engine.HandleWebSocket(httpContext, webSocketContext, baseUri, cancellationToken);
                 }
                 else
                 {

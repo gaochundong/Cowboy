@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,12 +17,12 @@ namespace Cowboy.WebSockets
             _routeResolver = routeResolver;
         }
 
-        public async Task Dispatch(WebSocketContext context, CancellationToken cancellationToken)
+        public async Task Dispatch(HttpListenerContext httpContext, HttpListenerWebSocketContext webSocketContext, CancellationToken cancellationToken)
         {
-            var module = _routeResolver.Resolve(context);
+            var module = _routeResolver.Resolve(webSocketContext);
             if (module != null)
             {
-                var session = new WebSocketSession(context, cancellationToken);
+                var session = new WebSocketSession(httpContext, webSocketContext, cancellationToken);
                 await module.AcceptSession(session);
             }
         }
