@@ -50,6 +50,7 @@ namespace Cowboy.WebSockets
         }
 
         public abstract Task ReceiveTextMessage(WebSocketTextMessage message);
+
         public abstract Task ReceiveBinaryMessage(WebSocketBinaryMessage message);
 
         public async Task Broadcast(string text)

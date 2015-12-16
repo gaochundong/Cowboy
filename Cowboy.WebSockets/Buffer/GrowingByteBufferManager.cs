@@ -33,7 +33,9 @@ namespace Cowboy.WebSockets
         }
 
         public bool AutoExpand { get; set; }
+
         public double AutoExpandScale { get; set; }
+
         public int BufferRemaning
         {
             get
