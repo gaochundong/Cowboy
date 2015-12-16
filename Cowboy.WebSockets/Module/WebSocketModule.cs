@@ -49,14 +49,7 @@ namespace Cowboy.WebSockets
             }
         }
 
-        public async Task ReceiveTextMessage(WebSocketTextMessage message)
-        {
-            await message.Session.Send(message.Text);
-        }
-
-        public async Task ReceiveBinaryMessage(WebSocketBinaryMessage message)
-        {
-            await message.Session.Send(message.Buffer, message.Offset, message.Count);
-        }
+        public abstract Task ReceiveTextMessage(WebSocketTextMessage message);
+        public abstract Task ReceiveBinaryMessage(WebSocketBinaryMessage message);
     }
 }
