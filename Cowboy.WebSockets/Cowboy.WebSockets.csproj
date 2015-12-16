@@ -40,6 +40,10 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>SolutionVersion.cs</Link>
     </Compile>
+    <Compile Include="Message\WebSocketBinaryMessage.cs" />
+    <Compile Include="Message\WebSocketTextMessage.cs" />
+    <Compile Include="Buffer\GrowingByteBufferManager.cs" />
+    <Compile Include="Buffer\IBufferManager.cs" />
     <Compile Include="Module\WebSocketModuleCatalog.cs" />
     <Compile Include="Module\WebSocketModule.cs" />
     <Compile Include="WebSocketDispatcher.cs" />
@@ -53,6 +57,7 @@
       <Name>Cowboy.Extensions</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

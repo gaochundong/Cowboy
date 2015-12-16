@@ -22,7 +22,7 @@ namespace Cowboy.WebSockets
             var module = _routeResolver.Resolve(webSocketContext);
             if (module != null)
             {
-                var session = new WebSocketSession(httpContext, webSocketContext, cancellationToken);
+                var session = new WebSocketSession(module, httpContext, webSocketContext, cancellationToken);
                 await module.AcceptSession(session);
             }
         }

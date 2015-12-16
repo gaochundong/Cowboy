@@ -10,50 +10,46 @@ namespace Cowboy.WebSockets
     public class WebSocketSession
     {
         private HttpListenerContext _httpContext;
+        private IBufferManager _bufferManager;
 
         public WebSocketSession(
+            WebSocketModule module,
             HttpListenerContext httpContext,
-            HttpListenerWebSocketContext webSocketContext,
+            WebSocketContext webSocketContext,
             CancellationToken cancellationToken)
         {
+            if (module == null)
+                throw new ArgumentNullException("module");
             if (httpContext == null)
                 throw new ArgumentNullException("httpContext");
             if (webSocketContext == null)
                 throw new ArgumentNullException("webSocketContext");
 
             _httpContext = httpContext;
+            this.Module = module;
             this.Context = webSocketContext;
             this.CancellationToken = cancellationToken;
             this.StartTime = DateTime.UtcNow;
+
+            _bufferManager = new GrowingByteBufferManager(100, 1024);
         }
 
-        public IPEndPoint RemoteEndPoint
-        {
-            get
-            {
-                return _httpContext.Request.RemoteEndPoint;
-            }
-        }
-        public IPEndPoint LocalEndPoint
-        {
-            get
-            {
-                return _httpContext.Request.LocalEndPoint;
-            }
-        }
-
-        public HttpListenerWebSocketContext Context { get; }
-        public CancellationToken CancellationToken { get; }
-        public DateTime StartTime { get; }
+        public WebSocketModule Module { get; private set; }
+        public WebSocketContext Context { get; private set; }
+        public CancellationToken CancellationToken { get; private set; }
+        public DateTime StartTime { get; private set; }
+        public IPEndPoint RemoteEndPoint { get { return _httpContext.Request.RemoteEndPoint; } }
+        public IPEndPoint LocalEndPoint { get { return _httpContext.Request.LocalEndPoint; } }
 
         public async Task Start()
         {
             var webSocket = this.Context.WebSocket;
+            byte[] receiveBuffer = _bufferManager.BorrowBuffer();
+            byte[] sessionBuffer = _bufferManager.BorrowBuffer();
+            int sessionBufferLength = 0;
 
             try
             {
-                byte[] receiveBuffer = new byte[1024];
-
                 while (webSocket.State == WebSocketState.Open)
                 {
                     var receiveResult = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), this.CancellationToken);
@@ -61,16 +57,36 @@ namespace Cowboy.WebSockets
                     switch (receiveResult.MessageType)
                     {
                         case WebSocketMessageType.Text:
+                            {
+                                var message = new WebSocketTextMessage(this, Encoding.UTF8.GetString(receiveBuffer, 0, receiveResult.Count));
+                                await this.Module.ReceiveTextMessage(message);
+                            }
                             break;
                         case WebSocketMessageType.Binary:
                             {
-                                Console.WriteLine("Binary Received: {0}", Encoding.UTF8.GetString(receiveBuffer, 0, receiveResult.Count));
-                                await webSocket.SendAsync(new ArraySegment<byte>(receiveBuffer, 0, receiveResult.Count), WebSocketMessageType.Binary, receiveResult.EndOfMessage, this.CancellationToken);
+                                while (sessionBufferLength + receiveResult.Count > sessionBuffer.Length)
+                                {
+                                    byte[] autoExpandedBuffer = new byte[sessionBuffer.Length * 2];
+                                    Array.Copy(sessionBuffer, 0, autoExpandedBuffer, 0, sessionBufferLength);
+                                    sessionBuffer = autoExpandedBuffer;
+                                }
+
+                                Array.Copy(receiveBuffer, 0, sessionBuffer, sessionBufferLength, receiveResult.Count);
+                                sessionBufferLength = sessionBufferLength + receiveResult.Count;
+
+                                if (receiveResult.EndOfMessage)
+                                {
+                                    var message = new WebSocketBinaryMessage(this, sessionBuffer, 0, sessionBufferLength);
+                                    await this.Module.ReceiveBinaryMessage(message);
+                                    sessionBufferLength = 0;
+                                }
                             }
                             break;
                         case WebSocketMessageType.Close:
                             {
-                                await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", this.CancellationToken);
+                                await Close(
+                                    receiveResult.CloseStatus.HasValue ? receiveResult.CloseStatus.Value : WebSocketCloseStatus.NormalClosure,
+                                    receiveResult.CloseStatusDescription);
                             }
                             break;
                     }
@@ -78,9 +94,32 @@ namespace Cowboy.WebSockets
             }
             finally
             {
+                _bufferManager.ReturnBuffer(receiveBuffer);
+                _bufferManager.ReturnBuffer(sessionBuffer);
+
                 if (webSocket != null)
                     webSocket.Dispose();
             }
+        }
+
+        public async Task Send(string text)
+        {
+            await this.Context.WebSocket.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(text)), WebSocketMessageType.Text, true, this.CancellationToken);
+        }
+
+        public async Task Send(byte[] binary)
+        {
+            await Send(binary, 0, binary.Length);
+        }
+
+        public async Task Send(byte[] binary, int offset, int count)
+        {
+            await this.Context.WebSocket.SendAsync(new ArraySegment<byte>(binary, offset, count), WebSocketMessageType.Binary, true, this.CancellationToken);
+        }
+
+        public async Task Close(WebSocketCloseStatus closeStatus, string closeStatusDescription)
+        {
+            await this.Context.WebSocket.CloseAsync(closeStatus, closeStatusDescription, this.CancellationToken);
         }
     }
 }

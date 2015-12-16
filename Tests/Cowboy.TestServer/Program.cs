@@ -10,9 +10,11 @@ namespace Cowboy.TestServer
         {
             var bootstrapper = new Bootstrapper();
             bootstrapper.Modules.Add(new TestModule());
+            bootstrapper.WebSocketModules.Add(new TestWebSocketModule());
+
             var engine = bootstrapper.Boot();
 
-            string uriString = "http://localhost:8080/";
+            string uriString = "http://localhost:3202/";
             var host = new SelfHost(engine, new Uri(uriString));
             host.Start();
             Console.WriteLine("Server is listening.");

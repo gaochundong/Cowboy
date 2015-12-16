@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
-using System.Net.WebSockets;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -49,8 +44,19 @@ namespace Cowboy.WebSockets
             {
                 await session.Start();
 
-                _sessions.TryRemove(session.RemoteEndPoint, out session);
+                WebSocketSession throwAway;
+                _sessions.TryRemove(session.RemoteEndPoint, out throwAway);
             }
+        }
+
+        public async Task ReceiveTextMessage(WebSocketTextMessage message)
+        {
+            await message.Session.Send(message.Text);
+        }
+
+        public async Task ReceiveBinaryMessage(WebSocketBinaryMessage message)
+        {
+            await message.Session.Send(message.Buffer, message.Offset, message.Count);
         }
     }
 }

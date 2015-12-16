@@ -18,8 +18,8 @@ namespace Cowboy
             this.WebSocketModules = new List<WebSocketModule>();
         }
 
-        public List<Module> Modules { get; set; }
-        public List<WebSocketModule> WebSocketModules { get; set; }
+        public List<Module> Modules { get; private set; }
+        public List<WebSocketModule> WebSocketModules { get; private set; }
 
         public Engine Boot()
         {

@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Cowboy.WebSockets
 {
@@ -21,11 +18,7 @@ namespace Cowboy.WebSockets
         public WebSocketModule Resolve(WebSocketContext context)
         {
             var modules = _moduleCatalog.GetAllModules();
-            //if (modules.Any(m => m.ModulePath == context.RequestUri))
-
-            var module = modules.First();
-
-            return module;
+            return modules.FirstOrDefault(m => m.ModulePath == context.RequestUri.AbsolutePath);
         }
     }
 }
