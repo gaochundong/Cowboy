@@ -10,7 +10,11 @@ namespace Cowboy.Http.Responses
     /// </summary>
     public class HtmlResponse : Response
     {
-        public HtmlResponse(HttpStatusCode statusCode = HttpStatusCode.OK, Action<Stream> contents = null, IDictionary<string, string> headers = null)
+        public HtmlResponse(
+            HttpStatusCode statusCode = HttpStatusCode.OK, 
+            Action<Stream> contents = null, 
+            IDictionary<string, string> headers = null, 
+            IEnumerable<Cookie> cookies = null)
         {
             this.ContentType = "text/html";
             this.StatusCode = statusCode;
@@ -23,6 +27,14 @@ namespace Cowboy.Http.Responses
             if (headers != null)
             {
                 this.Headers = headers;
+            }
+
+            if (cookies != null)
+            {
+                foreach (var cookie in cookies)
+                {
+                    this.Cookies.Add(cookie);
+                }
             }
         }
     }

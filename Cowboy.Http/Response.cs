@@ -17,6 +17,8 @@ namespace Cowboy.Http
             this.ContentType = "text/html";
             this.Headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             this.StatusCode = HttpStatusCode.OK;
+
+            this.Cookies = new List<Cookie>(2);
         }
 
         public string ContentType
@@ -137,6 +139,35 @@ namespace Cowboy.Http
             return Tuple.Create(
                 (string)headerProperty.GetValue(header, null),
                 (string)valueProperty.GetValue(header, null));
+        }
+
+        public IList<Cookie> Cookies { get; private set; }
+
+        public Response WithCookie(string name, string value)
+        {
+            return WithCookie(name, value, null, null, null);
+        }
+
+        public Response WithCookie(string name, string value, DateTime? expires)
+        {
+            return WithCookie(name, value, expires, null, null);
+        }
+
+        public Response WithCookie(string name, string value, DateTime? expires, string domain, string path)
+        {
+            return WithCookie(
+                new Cookie(name, value)
+                {
+                    Expires = expires.HasValue ? expires.Value : DateTime.MaxValue,
+                    Domain = domain,
+                    Path = path,
+                });
+        }
+
+        public Response WithCookie(Cookie cookie)
+        {
+            this.Cookies.Add(cookie);
+            return this;
         }
     }
 }

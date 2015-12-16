@@ -26,7 +26,12 @@ namespace Cowboy.Http.Responses
             }
         }
 
-        public TextResponse(HttpStatusCode statusCode = HttpStatusCode.OK, string contents = null, Encoding encoding = null, IDictionary<string, string> headers = null)
+        public TextResponse(
+            HttpStatusCode statusCode = HttpStatusCode.OK,
+            string contents = null,
+            Encoding encoding = null,
+            IDictionary<string, string> headers = null,
+            IEnumerable<Cookie> cookies = null)
         {
             if (encoding == null)
             {
@@ -48,6 +53,14 @@ namespace Cowboy.Http.Responses
             if (headers != null)
             {
                 this.Headers = headers;
+            }
+
+            if (cookies != null)
+            {
+                foreach (var cookie in cookies)
+                {
+                    this.Cookies.Add(cookie);
+                }
             }
         }
     }

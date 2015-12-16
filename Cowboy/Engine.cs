@@ -110,6 +110,11 @@ namespace Cowboy
                 }
             }
 
+            foreach (var cookie in response.Cookies)
+            {
+                httpResponse.Headers.Add(HttpResponseHeader.SetCookie, cookie.ToString());
+            }
+
             if (response.ReasonPhrase != null)
             {
                 httpResponse.StatusDescription = response.ReasonPhrase;

@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net;
 
 namespace Cowboy.Http
 {
@@ -292,6 +293,32 @@ namespace Cowboy.Http
         {
             IEnumerable<Tuple<string, decimal>> values;
             this.cache.TryRemove(header, out values);
+        }
+
+        public IEnumerable<Cookie> Cookie
+        {
+            get { return this.GetValue("Cookie", GetCookies); }
+        }
+
+        private static IEnumerable<Cookie> GetCookies(IEnumerable<string> cookies)
+        {
+            if (cookies == null)
+            {
+                yield break;
+            }
+
+            foreach (var cookie in cookies)
+            {
+                var cookieStrings = cookie.Split(';');
+                foreach (var cookieString in cookieStrings)
+                {
+                    var equalPos = cookieString.IndexOf('=');
+                    if (equalPos >= 0)
+                    {
+                        yield return new Cookie(cookieString.Substring(0, equalPos).TrimStart(), cookieString.Substring(equalPos + 1).TrimEnd());
+                    }
+                }
+            }
         }
     }
 }
