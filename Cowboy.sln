@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Serialization", "Cow
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.StaticContent", "Cowboy.StaticContent\Cowboy.StaticContent.csproj", "{B37CA69A-0796-4E46-B1FF-83DA39374FF8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.TestClient", "Tests\Cowboy.TestClient\Cowboy.TestClient.csproj", "{3231D52B-1EE7-4CD5-B72D-96E8DC267E68}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,11 +73,16 @@ Global
 		{B37CA69A-0796-4E46-B1FF-83DA39374FF8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B37CA69A-0796-4E46-B1FF-83DA39374FF8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B37CA69A-0796-4E46-B1FF-83DA39374FF8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3231D52B-1EE7-4CD5-B72D-96E8DC267E68}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3231D52B-1EE7-4CD5-B72D-96E8DC267E68}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3231D52B-1EE7-4CD5-B72D-96E8DC267E68}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3231D52B-1EE7-4CD5-B72D-96E8DC267E68}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{1DFCD593-8814-4DCE-82D8-7F7DC9BE5BD4} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
+		{3231D52B-1EE7-4CD5-B72D-96E8DC267E68} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
 	EndGlobalSection
 EndGlobal
