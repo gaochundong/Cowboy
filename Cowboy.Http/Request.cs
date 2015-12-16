@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 using Cowboy.Utilities;
 
@@ -23,7 +24,8 @@ namespace Cowboy.Http
             RequestStream body = null,
             IDictionary<string, IEnumerable<string>> headers = null,
             string ip = null,
-            string protocolVersion = null)
+            string protocolVersion = null,
+            byte[] certificate = null)
         {
             if (string.IsNullOrEmpty(method))
             {
@@ -59,6 +61,11 @@ namespace Cowboy.Http
 
             this.ProtocolVersion = protocolVersion ?? string.Empty;
 
+            if (certificate != null && certificate.Length != 0)
+            {
+                this.ClientCertificate = new X509Certificate2(certificate);
+            }
+
             if (string.IsNullOrEmpty(this.Url.Path))
             {
                 this.Url.Path = "/";
@@ -71,6 +78,8 @@ namespace Cowboy.Http
         public string ProtocolVersion { get; private set; }
 
         public string UserHostAddress { get; private set; }
+
+        public X509Certificate ClientCertificate { get; private set; }
 
         public string Method { get; private set; }
 

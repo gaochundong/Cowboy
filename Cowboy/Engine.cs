@@ -91,13 +91,24 @@ namespace Cowboy
             var fieldCount = httpRequest.ProtocolVersion.Major == 2 ? 1 : 2;
             var protocolVersion = string.Format("HTTP/{0}", httpRequest.ProtocolVersion.ToString(fieldCount));
 
+            byte[] certificate = null;
+            if (httpRequest.IsSecureConnection)
+            {
+                var x509Certificate = httpRequest.GetClientCertificate();
+                if (x509Certificate != null)
+                {
+                    certificate = x509Certificate.RawData;
+                }
+            }
+
             return new Request(
                 httpRequest.HttpMethod,
                 url,
                 RequestStream.FromStream(httpRequest.InputStream, expectedRequestLength, false),
                 httpRequest.Headers.ToDictionary(),
                 (httpRequest.RemoteEndPoint != null) ? httpRequest.RemoteEndPoint.Address.ToString() : null,
-                protocolVersion);
+                protocolVersion,
+                certificate);
         }
 
         private void ConvertResponse(Response response, HttpListenerResponse httpResponse)
