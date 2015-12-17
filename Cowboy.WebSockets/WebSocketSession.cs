@@ -132,9 +132,15 @@ namespace Cowboy.WebSockets
 
         private void AppendBuffer(byte[] receiveBuffer, int receiveCount, ref byte[] sessionBuffer, ref int sessionBufferCount)
         {
-            while (sessionBufferCount + receiveCount > sessionBuffer.Length)
+            if (sessionBuffer.Length < (sessionBufferCount + receiveCount))
             {
-                byte[] autoExpandedBuffer = new byte[sessionBuffer.Length * 2];
+                byte[] autoExpandedBuffer = _bufferManager.BorrowBuffer();
+                if (autoExpandedBuffer.Length < (sessionBufferCount + receiveCount) * 2)
+                {
+                    _bufferManager.ReturnBuffer(autoExpandedBuffer);
+                    autoExpandedBuffer = new byte[(sessionBufferCount + receiveCount) * 2];
+                }
+
                 Array.Copy(sessionBuffer, 0, autoExpandedBuffer, 0, sessionBufferCount);
 
                 var discardBuffer = sessionBuffer;
