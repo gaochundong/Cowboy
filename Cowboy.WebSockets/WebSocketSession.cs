@@ -13,11 +13,16 @@ namespace Cowboy.WebSockets
         private IBufferManager _bufferManager;
 
         public WebSocketSession(
-            WebSocketModule module,
-            HttpListenerContext httpContext,
-            WebSocketContext webSocketContext,
-            CancellationToken cancellationToken,
-            IBufferManager bufferManager)
+            WebSocketModule module, HttpListenerContext httpContext, WebSocketContext webSocketContext,
+            CancellationToken cancellationToken, IBufferManager bufferManager)
+            : this(module, httpContext, webSocketContext,
+                  cancellationToken, bufferManager, Encoding.UTF8)
+        {
+        }
+
+        public WebSocketSession(
+            WebSocketModule module, HttpListenerContext httpContext, WebSocketContext webSocketContext,
+            CancellationToken cancellationToken, IBufferManager bufferManager, Encoding encoding)
         {
             if (module == null)
                 throw new ArgumentNullException("module");
@@ -27,17 +32,22 @@ namespace Cowboy.WebSockets
                 throw new ArgumentNullException("webSocketContext");
             if (bufferManager == null)
                 throw new ArgumentNullException("bufferManager");
+            if (encoding == null)
+                throw new ArgumentNullException("encoding");
 
             _httpContext = httpContext;
             this.Module = module;
             this.Context = webSocketContext;
             this.CancellationToken = cancellationToken;
-            this.StartTime = DateTime.UtcNow;
             _bufferManager = bufferManager;
+            this.Encoding = encoding;
+
+            this.StartTime = DateTime.UtcNow;
         }
 
         public WebSocketModule Module { get; private set; }
         public WebSocketContext Context { get; private set; }
+        public Encoding Encoding { get; private set; }
         public CancellationToken CancellationToken { get; private set; }
         public DateTime StartTime { get; private set; }
         public IPEndPoint RemoteEndPoint { get { return _httpContext.Request.RemoteEndPoint; } }
@@ -62,7 +72,7 @@ namespace Cowboy.WebSockets
                             {
                                 if (receiveResult.EndOfMessage && sessionBufferCount == 0)
                                 {
-                                    var message = new WebSocketTextMessage(this, Encoding.UTF8.GetString(receiveBuffer, 0, receiveResult.Count));
+                                    var message = new WebSocketTextMessage(this, this.Encoding.GetString(receiveBuffer, 0, receiveResult.Count));
                                     await this.Module.ReceiveTextMessage(message);
                                 }
                                 else
@@ -71,7 +81,7 @@ namespace Cowboy.WebSockets
 
                                     if (receiveResult.EndOfMessage)
                                     {
-                                        var message = new WebSocketTextMessage(this, Encoding.UTF8.GetString(sessionBuffer, 0, sessionBufferCount));
+                                        var message = new WebSocketTextMessage(this, this.Encoding.GetString(sessionBuffer, 0, sessionBufferCount));
                                         await this.Module.ReceiveTextMessage(message);
                                         sessionBufferCount = 0;
                                     }
