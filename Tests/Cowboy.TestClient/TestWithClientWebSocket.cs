@@ -12,7 +12,7 @@ namespace Cowboy.TestClient
 
         public static async Task Connect()
         {
-            string uri = "ws://localhost:3202/";
+            string uri = "ws://localhost:3202/test";
 
             ClientWebSocket webSocket = null;
 
@@ -50,7 +50,7 @@ namespace Cowboy.TestClient
                 string text = Console.ReadLine();
                 var buffer = Encoding.UTF8.GetBytes(text);
 
-                await webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Binary, false, CancellationToken.None);
+                await webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Binary, true, CancellationToken.None);
                 Log(false, buffer, buffer.Length);
 
                 await Task.Delay(TimeSpan.FromMilliseconds(1000));
