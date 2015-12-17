@@ -64,6 +64,8 @@ namespace Cowboy.WebSockets
             {
                 while (webSocket.State == WebSocketState.Open)
                 {
+                    this.CancellationToken.ThrowIfCancellationRequested();
+
                     var receiveResult = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), this.CancellationToken);
 
                     switch (receiveResult.MessageType)
