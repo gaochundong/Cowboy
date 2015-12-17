@@ -48,7 +48,7 @@ namespace Cowboy.WebSockets
             var webSocket = this.Context.WebSocket;
             byte[] receiveBuffer = _bufferManager.BorrowBuffer();
             byte[] sessionBuffer = _bufferManager.BorrowBuffer();
-            int sessionBufferLength = 0;
+            int sessionBufferCount = 0;
 
             try
             {
@@ -60,25 +60,41 @@ namespace Cowboy.WebSockets
                     {
                         case WebSocketMessageType.Text:
                             {
-                                AppendBuffer(receiveBuffer, receiveResult, ref sessionBuffer, ref sessionBufferLength);
-
-                                if (receiveResult.EndOfMessage)
+                                if (receiveResult.EndOfMessage && sessionBufferCount == 0)
                                 {
-                                    var message = new WebSocketTextMessage(this, Encoding.UTF8.GetString(sessionBuffer, 0, sessionBufferLength));
+                                    var message = new WebSocketTextMessage(this, Encoding.UTF8.GetString(receiveBuffer, 0, receiveResult.Count));
                                     await this.Module.ReceiveTextMessage(message);
-                                    sessionBufferLength = 0;
+                                }
+                                else
+                                {
+                                    AppendBuffer(receiveBuffer, receiveResult.Count, ref sessionBuffer, ref sessionBufferCount);
+
+                                    if (receiveResult.EndOfMessage)
+                                    {
+                                        var message = new WebSocketTextMessage(this, Encoding.UTF8.GetString(sessionBuffer, 0, sessionBufferCount));
+                                        await this.Module.ReceiveTextMessage(message);
+                                        sessionBufferCount = 0;
+                                    }
                                 }
                             }
                             break;
                         case WebSocketMessageType.Binary:
                             {
-                                AppendBuffer(receiveBuffer, receiveResult, ref sessionBuffer, ref sessionBufferLength);
-
-                                if (receiveResult.EndOfMessage)
+                                if (receiveResult.EndOfMessage && sessionBufferCount == 0)
                                 {
-                                    var message = new WebSocketBinaryMessage(this, sessionBuffer, 0, sessionBufferLength);
+                                    var message = new WebSocketBinaryMessage(this, receiveBuffer, 0, receiveResult.Count);
                                     await this.Module.ReceiveBinaryMessage(message);
-                                    sessionBufferLength = 0;
+                                }
+                                else
+                                {
+                                    AppendBuffer(receiveBuffer, receiveResult.Count, ref sessionBuffer, ref sessionBufferCount);
+
+                                    if (receiveResult.EndOfMessage)
+                                    {
+                                        var message = new WebSocketBinaryMessage(this, sessionBuffer, 0, sessionBufferCount);
+                                        await this.Module.ReceiveBinaryMessage(message);
+                                        sessionBufferCount = 0;
+                                    }
                                 }
                             }
                             break;
@@ -102,20 +118,20 @@ namespace Cowboy.WebSockets
             }
         }
 
-        private void AppendBuffer(byte[] receiveBuffer, WebSocketReceiveResult receiveResult, ref byte[] sessionBuffer, ref int sessionBufferLength)
+        private void AppendBuffer(byte[] receiveBuffer, int receiveCount, ref byte[] sessionBuffer, ref int sessionBufferCount)
         {
-            while (sessionBufferLength + receiveResult.Count > sessionBuffer.Length)
+            while (sessionBufferCount + receiveCount > sessionBuffer.Length)
             {
                 byte[] autoExpandedBuffer = new byte[sessionBuffer.Length * 2];
-                Array.Copy(sessionBuffer, 0, autoExpandedBuffer, 0, sessionBufferLength);
+                Array.Copy(sessionBuffer, 0, autoExpandedBuffer, 0, sessionBufferCount);
 
-                var referenceToBuffer = sessionBuffer;
+                var discardBuffer = sessionBuffer;
                 sessionBuffer = autoExpandedBuffer;
-                _bufferManager.ReturnBuffer(referenceToBuffer);
+                _bufferManager.ReturnBuffer(discardBuffer);
             }
 
-            Array.Copy(receiveBuffer, 0, sessionBuffer, sessionBufferLength, receiveResult.Count);
-            sessionBufferLength = sessionBufferLength + receiveResult.Count;
+            Array.Copy(receiveBuffer, 0, sessionBuffer, sessionBufferCount, receiveCount);
+            sessionBufferCount = sessionBufferCount + receiveCount;
         }
 
         public async Task Send(string text)
