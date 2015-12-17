@@ -48,8 +48,11 @@ namespace Cowboy.TestClient
             while (webSocket.State == WebSocketState.Open)
             {
                 string text = Console.ReadLine();
+                if (text == "x")
+                {
+                    text = new string('x', 10240);
+                }
                 var buffer = Encoding.UTF8.GetBytes(text);
-
                 await webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Binary, true, CancellationToken.None);
                 Log(false, buffer, buffer.Length);
 
@@ -59,7 +62,7 @@ namespace Cowboy.TestClient
 
         private static async Task Receive(ClientWebSocket webSocket)
         {
-            byte[] buffer = new byte[64];
+            byte[] buffer = new byte[1024];
             while (webSocket.State == WebSocketState.Open)
             {
                 var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);

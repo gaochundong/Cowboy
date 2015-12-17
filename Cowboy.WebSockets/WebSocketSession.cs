@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Net;
 using System.Net.WebSockets;
 using System.Text;
@@ -58,8 +59,22 @@ namespace Cowboy.WebSockets
                     {
                         case WebSocketMessageType.Text:
                             {
-                                var message = new WebSocketTextMessage(this, Encoding.UTF8.GetString(receiveBuffer, 0, receiveResult.Count));
-                                await this.Module.ReceiveTextMessage(message);
+                                while (sessionBufferLength + receiveResult.Count > sessionBuffer.Length)
+                                {
+                                    byte[] autoExpandedBuffer = new byte[sessionBuffer.Length * 2];
+                                    Array.Copy(sessionBuffer, 0, autoExpandedBuffer, 0, sessionBufferLength);
+                                    sessionBuffer = autoExpandedBuffer;
+                                }
+
+                                Array.Copy(receiveBuffer, 0, sessionBuffer, sessionBufferLength, receiveResult.Count);
+                                sessionBufferLength = sessionBufferLength + receiveResult.Count;
+
+                                if (receiveResult.EndOfMessage)
+                                {
+                                    var message = new WebSocketTextMessage(this, Encoding.UTF8.GetString(sessionBuffer, 0, sessionBufferLength));
+                                    await this.Module.ReceiveTextMessage(message);
+                                    sessionBufferLength = 0;
+                                }
                             }
                             break;
                         case WebSocketMessageType.Binary:
