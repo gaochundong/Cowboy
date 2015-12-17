@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Net;
 using System.Net.WebSockets;
 using System.Text;
@@ -17,7 +16,8 @@ namespace Cowboy.WebSockets
             WebSocketModule module,
             HttpListenerContext httpContext,
             WebSocketContext webSocketContext,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            IBufferManager bufferManager)
         {
             if (module == null)
                 throw new ArgumentNullException("module");
@@ -25,14 +25,15 @@ namespace Cowboy.WebSockets
                 throw new ArgumentNullException("httpContext");
             if (webSocketContext == null)
                 throw new ArgumentNullException("webSocketContext");
+            if (bufferManager == null)
+                throw new ArgumentNullException("bufferManager");
 
             _httpContext = httpContext;
             this.Module = module;
             this.Context = webSocketContext;
             this.CancellationToken = cancellationToken;
             this.StartTime = DateTime.UtcNow;
-
-            _bufferManager = new GrowingByteBufferManager(100, 1024);
+            _bufferManager = bufferManager;
         }
 
         public WebSocketModule Module { get; private set; }

@@ -9,12 +9,16 @@ namespace Cowboy.WebSockets
     public class WebSocketDispatcher
     {
         private WebSocketRouteResolver _routeResolver;
+        private IBufferManager _bufferManager;
 
-        public WebSocketDispatcher(WebSocketRouteResolver routeResolver)
+        public WebSocketDispatcher(WebSocketRouteResolver routeResolver, IBufferManager bufferManager)
         {
             if (routeResolver == null)
                 throw new ArgumentNullException("routeResolver");
+            if (routeResolver == null)
+                throw new ArgumentNullException("routeResolver");
             _routeResolver = routeResolver;
+            _bufferManager = bufferManager;
         }
 
         public async Task Dispatch(HttpListenerContext httpContext, HttpListenerWebSocketContext webSocketContext, CancellationToken cancellationToken)
@@ -22,7 +26,7 @@ namespace Cowboy.WebSockets
             var module = _routeResolver.Resolve(webSocketContext);
             if (module != null)
             {
-                var session = new WebSocketSession(module, httpContext, webSocketContext, cancellationToken);
+                var session = new WebSocketSession(module, httpContext, webSocketContext, cancellationToken, _bufferManager);
                 await module.AcceptSession(session);
             }
         }

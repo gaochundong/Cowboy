@@ -83,8 +83,9 @@ namespace Cowboy
             }
 
             var routeResolver = new WebSocketRouteResolver(moduleCatalog);
+            var bufferManager = new GrowingByteBufferManager(100, 64);
 
-            return new WebSocketDispatcher(routeResolver);
+            return new WebSocketDispatcher(routeResolver, bufferManager);
         }
     }
 }
