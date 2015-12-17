@@ -59,7 +59,7 @@ namespace Cowboy.WebSockets
                     {
                         case WebSocketMessageType.Text:
                             {
-                                ShiftBuffer(receiveBuffer, receiveResult, ref sessionBuffer, ref sessionBufferLength);
+                                AppendBuffer(receiveBuffer, receiveResult, ref sessionBuffer, ref sessionBufferLength);
 
                                 if (receiveResult.EndOfMessage)
                                 {
@@ -71,7 +71,7 @@ namespace Cowboy.WebSockets
                             break;
                         case WebSocketMessageType.Binary:
                             {
-                                ShiftBuffer(receiveBuffer, receiveResult, ref sessionBuffer, ref sessionBufferLength);
+                                AppendBuffer(receiveBuffer, receiveResult, ref sessionBuffer, ref sessionBufferLength);
 
                                 if (receiveResult.EndOfMessage)
                                 {
@@ -101,7 +101,7 @@ namespace Cowboy.WebSockets
             }
         }
 
-        private void ShiftBuffer(byte[] receiveBuffer, WebSocketReceiveResult receiveResult, ref byte[] sessionBuffer, ref int sessionBufferLength)
+        private void AppendBuffer(byte[] receiveBuffer, WebSocketReceiveResult receiveResult, ref byte[] sessionBuffer, ref int sessionBufferLength)
         {
             while (sessionBufferLength + receiveResult.Count > sessionBuffer.Length)
             {
