@@ -66,7 +66,7 @@ namespace Cowboy.WebSockets
         {
             lock (_sync)
             {
-                if (_bufferStack.Peek() != null)
+                if (_bufferStack.Count > 0)
                     return _bufferStack.Pop();
 
                 if (AutoExpand)
