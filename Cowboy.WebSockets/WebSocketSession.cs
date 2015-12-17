@@ -59,15 +59,7 @@ namespace Cowboy.WebSockets
                     {
                         case WebSocketMessageType.Text:
                             {
-                                while (sessionBufferLength + receiveResult.Count > sessionBuffer.Length)
-                                {
-                                    byte[] autoExpandedBuffer = new byte[sessionBuffer.Length * 2];
-                                    Array.Copy(sessionBuffer, 0, autoExpandedBuffer, 0, sessionBufferLength);
-                                    sessionBuffer = autoExpandedBuffer;
-                                }
-
-                                Array.Copy(receiveBuffer, 0, sessionBuffer, sessionBufferLength, receiveResult.Count);
-                                sessionBufferLength = sessionBufferLength + receiveResult.Count;
+                                ShiftBuffer(receiveBuffer, receiveResult, ref sessionBuffer, ref sessionBufferLength);
 
                                 if (receiveResult.EndOfMessage)
                                 {
@@ -79,15 +71,7 @@ namespace Cowboy.WebSockets
                             break;
                         case WebSocketMessageType.Binary:
                             {
-                                while (sessionBufferLength + receiveResult.Count > sessionBuffer.Length)
-                                {
-                                    byte[] autoExpandedBuffer = new byte[sessionBuffer.Length * 2];
-                                    Array.Copy(sessionBuffer, 0, autoExpandedBuffer, 0, sessionBufferLength);
-                                    sessionBuffer = autoExpandedBuffer;
-                                }
-
-                                Array.Copy(receiveBuffer, 0, sessionBuffer, sessionBufferLength, receiveResult.Count);
-                                sessionBufferLength = sessionBufferLength + receiveResult.Count;
+                                ShiftBuffer(receiveBuffer, receiveResult, ref sessionBuffer, ref sessionBufferLength);
 
                                 if (receiveResult.EndOfMessage)
                                 {
@@ -115,6 +99,22 @@ namespace Cowboy.WebSockets
                 if (webSocket != null)
                     webSocket.Dispose();
             }
+        }
+
+        private void ShiftBuffer(byte[] receiveBuffer, WebSocketReceiveResult receiveResult, ref byte[] sessionBuffer, ref int sessionBufferLength)
+        {
+            while (sessionBufferLength + receiveResult.Count > sessionBuffer.Length)
+            {
+                byte[] autoExpandedBuffer = new byte[sessionBuffer.Length * 2];
+                Array.Copy(sessionBuffer, 0, autoExpandedBuffer, 0, sessionBufferLength);
+
+                var referenceToBuffer = sessionBuffer;
+                sessionBuffer = autoExpandedBuffer;
+                _bufferManager.ReturnBuffer(referenceToBuffer);
+            }
+
+            Array.Copy(receiveBuffer, 0, sessionBuffer, sessionBufferLength, receiveResult.Count);
+            sessionBufferLength = sessionBufferLength + receiveResult.Count;
         }
 
         public async Task Send(string text)
