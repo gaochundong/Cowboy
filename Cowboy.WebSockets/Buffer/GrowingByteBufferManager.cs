@@ -89,12 +89,23 @@ namespace Cowboy.WebSockets
 
         public void ReturnBuffers(IEnumerable<byte[]> buffers)
         {
-            if (buffers == null)
-                throw new ArgumentNullException("buffers");
-
-            foreach (var buffer in buffers)
+            if (buffers != null)
             {
-                ReturnBuffer(buffer);
+                foreach (var buffer in buffers)
+                {
+                    ReturnBuffer(buffer);
+                }
+            }
+        }
+
+        public void ReturnBuffers(params byte[][] buffers)
+        {
+            if (buffers != null)
+            {
+                foreach (var buffer in buffers)
+                {
+                    ReturnBuffer(buffer);
+                }
             }
         }
     }
