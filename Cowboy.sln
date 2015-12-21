@@ -27,6 +27,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.StaticContent", "Cow
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.TestClient", "Tests\Cowboy.TestClient\Cowboy.TestClient.csproj", "{3231D52B-1EE7-4CD5-B72D-96E8DC267E68}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Logging", "Cowboy.Logging\Cowboy.Logging.csproj", "{7ADA144A-A176-437B-812E-889B6AA2536E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Logging.NLogIntegration", "Cowboy.Logging.NLogIntegration\Cowboy.Logging.NLogIntegration.csproj", "{BE0E384E-A89C-4CC1-AE7C-E390AC8349F3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -77,6 +81,14 @@ Global
 		{3231D52B-1EE7-4CD5-B72D-96E8DC267E68}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3231D52B-1EE7-4CD5-B72D-96E8DC267E68}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3231D52B-1EE7-4CD5-B72D-96E8DC267E68}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7ADA144A-A176-437B-812E-889B6AA2536E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7ADA144A-A176-437B-812E-889B6AA2536E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7ADA144A-A176-437B-812E-889B6AA2536E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7ADA144A-A176-437B-812E-889B6AA2536E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BE0E384E-A89C-4CC1-AE7C-E390AC8349F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE0E384E-A89C-4CC1-AE7C-E390AC8349F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BE0E384E-A89C-4CC1-AE7C-E390AC8349F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BE0E384E-A89C-4CC1-AE7C-E390AC8349F3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
