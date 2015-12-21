@@ -14,33 +14,20 @@ namespace Cowboy.Hosting.Self
         private HttpListener _listener;
         private bool _keepProcessing = false;
         private Engine _engine;
-        private SemaphoreSlim _concurrencyController;
         private string _webSocketSubProtocol;
 
         public SelfHost(Engine engine, params Uri[] baseUris)
-            : this(engine, Environment.ProcessorCount * 2, null, baseUris)
-        {
-        }
-
-        public SelfHost(Engine engine, int concurrentCount, params Uri[] baseUris)
-            : this(engine, concurrentCount, null, baseUris)
+            : this(engine, null, baseUris)
         {
         }
 
         public SelfHost(Engine engine, string webSocketSubProtocol, params Uri[] baseUris)
-            : this(engine, Environment.ProcessorCount * 2, webSocketSubProtocol, baseUris)
-        {
-        }
-
-        public SelfHost(Engine engine, int concurrentCount, string webSocketSubProtocol, params Uri[] baseUris)
         {
             if (engine == null)
                 throw new ArgumentNullException("engine");
-            if (concurrentCount < 1)
-                throw new ArgumentException("Invalid concurrent control.", "concurrentCount");
-
+            if (baseUris == null || baseUris.Length == 0)
+                throw new ArgumentNullException("baseUris");
             _engine = engine;
-            _concurrencyController = new SemaphoreSlim(concurrentCount, concurrentCount);
             _webSocketSubProtocol = webSocketSubProtocol;
             _baseUriList = baseUris;
         }
@@ -70,19 +57,10 @@ namespace Cowboy.Hosting.Self
         {
             while (_keepProcessing)
             {
-                await _concurrencyController.WaitAsync();
-
                 var context = await _listener.GetContextAsync();
                 Task.Run(async () =>
                     {
-                        try
-                        {
-                            await Process(context);
-                        }
-                        finally
-                        {
-                            _concurrencyController.Release();
-                        }
+                        await Process(context);
                     })
                     .Forget();
             }
