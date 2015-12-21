@@ -47,10 +47,16 @@ namespace Cowboy.WebSockets
             string sessionKey = session.RemoteEndPoint.ToString();
             if (_sessions.TryAdd(sessionKey, session))
             {
-                await session.Start();
+                try
+                {
+                    await session.Start();
 
-                WebSocketSession throwAway;
-                _sessions.TryRemove(sessionKey, out throwAway);
+                }
+                finally
+                {
+                    WebSocketSession throwAway;
+                    _sessions.TryRemove(sessionKey, out throwAway);
+                }
             }
         }
 
