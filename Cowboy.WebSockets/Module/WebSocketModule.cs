@@ -1,6 +1,5 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -21,11 +20,10 @@ namespace Cowboy.WebSockets
         protected WebSocketModule(string modulePath)
         {
             this.ModulePath = modulePath;
+            this.ModuleName = GetModuleName();
         }
 
-        public string ModulePath { get; protected set; }
-
-        public string GetModuleName()
+        private string GetModuleName()
         {
             var typeName = this.GetType().Name;
             var nameMatch = ModuleNameExpression.Match(typeName);
@@ -38,14 +36,21 @@ namespace Cowboy.WebSockets
             return typeName;
         }
 
+        public string ModuleName { get; protected set; }
+
+        public string ModulePath { get; protected set; }
+
+        public int SessionCount { get { return _sessions.Count; } }
+
         public async Task AcceptSession(WebSocketSession session)
         {
-            if (_sessions.TryAdd(session.RemoteEndPoint.ToString(), session))
+            string sessionKey = session.RemoteEndPoint.ToString();
+            if (_sessions.TryAdd(sessionKey, session))
             {
                 await session.Start();
 
                 WebSocketSession throwAway;
-                _sessions.TryRemove(session.RemoteEndPoint.ToString(), out throwAway);
+                _sessions.TryRemove(sessionKey, out throwAway);
             }
         }
 

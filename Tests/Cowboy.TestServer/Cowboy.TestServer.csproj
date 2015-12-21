@@ -55,6 +55,14 @@
       <Project>{7eb615ae-71b7-4d75-8e43-1cef143e0b33}</Project>
       <Name>Cowboy.Http</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\Cowboy.Logging.NLogIntegration\Cowboy.Logging.NLogIntegration.csproj">
+      <Project>{be0e384e-a89c-4cc1-ae7c-e390ac8349f3}</Project>
+      <Name>Cowboy.Logging.NLogIntegration</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Cowboy.Logging\Cowboy.Logging.csproj">
+      <Project>{7ada144a-a176-437b-812e-889b6aa2536e}</Project>
+      <Name>Cowboy.Logging</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\Cowboy.WebSockets\Cowboy.WebSockets.csproj">
       <Project>{47e06681-38e9-46c0-8aae-00535845d42d}</Project>
       <Name>Cowboy.WebSockets</Name>

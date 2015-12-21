@@ -53,6 +53,16 @@
   <ItemGroup>
     <None Include="app.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Cowboy.Logging.NLogIntegration\Cowboy.Logging.NLogIntegration.csproj">
+      <Project>{be0e384e-a89c-4cc1-ae7c-e390ac8349f3}</Project>
+      <Name>Cowboy.Logging.NLogIntegration</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Cowboy.Logging\Cowboy.Logging.csproj">
+      <Project>{7ada144a-a176-437b-812e-889b6aa2536e}</Project>
+      <Name>Cowboy.Logging</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

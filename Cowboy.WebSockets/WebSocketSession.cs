@@ -4,11 +4,13 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Cowboy.Logging;
 
 namespace Cowboy.WebSockets
 {
     public class WebSocketSession
     {
+        private ILog _log = Logger.Get<WebSocketSession>();
         private HttpListenerContext _httpContext;
         private IBufferManager _bufferManager;
 
@@ -60,6 +62,11 @@ namespace Cowboy.WebSockets
             byte[] sessionBuffer = _bufferManager.BorrowBuffer();
             int sessionBufferCount = 0;
 
+            _log.DebugFormat("Session started for [{0}] on [{1}] in module [{2}] with session count [{3}].",
+                this.RemoteEndPoint,
+                this.StartTime.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"),
+                this.Module.ModuleName,
+                this.Module.SessionCount);
             try
             {
                 while (webSocket.State == WebSocketState.Open)
@@ -120,10 +127,17 @@ namespace Cowboy.WebSockets
                     }
                 }
             }
+            catch (WebSocketException) { }
             finally
             {
                 _bufferManager.ReturnBuffer(receiveBuffer);
                 _bufferManager.ReturnBuffer(sessionBuffer);
+
+                _log.DebugFormat("Session closed for [{0}] on [{1}] in module [{2}] with session count [{3}].",
+                    this.RemoteEndPoint,
+                    DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"),
+                    this.Module.ModuleName,
+                    this.Module.SessionCount - 1);
 
                 if (webSocket != null)
                     webSocket.Dispose();
