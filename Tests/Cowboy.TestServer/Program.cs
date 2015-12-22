@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using Cowboy.Hosting.Self;
-using Cowboy.Logging;
 using Cowboy.Logging.NLogIntegration;
 
 namespace Cowboy.TestServer
@@ -11,7 +10,6 @@ namespace Cowboy.TestServer
         static void Main(string[] args)
         {
             NLogLogger.Use();
-            var log = Logger.Get("Cowboy.TestServer");
 
             var bootstrapper = new Bootstrapper();
             bootstrapper.Modules.Add(new TestModule());
@@ -22,12 +20,12 @@ namespace Cowboy.TestServer
             string uriString = "http://localhost:3202/";
             var host = new SelfHost(engine, new Uri(uriString));
             host.Start();
-            log.DebugFormat("Server is listening.");
+            Console.WriteLine("Server is listening.");
 
             //AutoNavigateTo(uriString);
 
             Console.ReadKey();
-            log.DebugFormat("Stopped. Goodbye!");
+            Console.WriteLine("Stopped. Goodbye!");
         }
 
         private static void AutoNavigateTo(string uri)

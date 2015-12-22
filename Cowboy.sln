@@ -44,6 +44,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Buffer", "Cowboy.Buf
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Sockets", "Cowboy.Sockets\Cowboy.Sockets.csproj", "{39D916FE-2C09-47AB-A5A2-1A23787F20BA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Sockets.TestServer", "Tests\Cowboy.Sockets.TestServer\Cowboy.Sockets.TestServer.csproj", "{B07B5EB4-1892-465E-BC17-150EDC281EB5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Sockets.TestClient", "Tests\Cowboy.Sockets.TestClient\Cowboy.Sockets.TestClient.csproj", "{4A35D220-0CD3-4514-86E1-E55B8F517E24}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -110,6 +114,14 @@ Global
 		{39D916FE-2C09-47AB-A5A2-1A23787F20BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{39D916FE-2C09-47AB-A5A2-1A23787F20BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{39D916FE-2C09-47AB-A5A2-1A23787F20BA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B07B5EB4-1892-465E-BC17-150EDC281EB5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B07B5EB4-1892-465E-BC17-150EDC281EB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B07B5EB4-1892-465E-BC17-150EDC281EB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B07B5EB4-1892-465E-BC17-150EDC281EB5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4A35D220-0CD3-4514-86E1-E55B8F517E24}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A35D220-0CD3-4514-86E1-E55B8F517E24}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4A35D220-0CD3-4514-86E1-E55B8F517E24}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4A35D220-0CD3-4514-86E1-E55B8F517E24}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -117,5 +129,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{1DFCD593-8814-4DCE-82D8-7F7DC9BE5BD4} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
 		{3231D52B-1EE7-4CD5-B72D-96E8DC267E68} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
+		{B07B5EB4-1892-465E-BC17-150EDC281EB5} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
+		{4A35D220-0CD3-4514-86E1-E55B8F517E24} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
 	EndGlobalSection
 EndGlobal
