@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Cowboy.Buffer;
 using Cowboy.Http;
 using Cowboy.Http.Responses;
 using Cowboy.Http.Routing;

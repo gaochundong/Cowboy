@@ -43,8 +43,6 @@
     </Compile>
     <Compile Include="Message\WebSocketBinaryMessage.cs" />
     <Compile Include="Message\WebSocketTextMessage.cs" />
-    <Compile Include="Buffer\GrowingByteBufferManager.cs" />
-    <Compile Include="Buffer\IBufferManager.cs" />
     <Compile Include="Module\WebSocketModuleCatalog.cs" />
     <Compile Include="Module\WebSocketModule.cs" />
     <Compile Include="WebSocketDispatcher.cs" />
@@ -53,6 +51,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Cowboy.Buffer\Cowboy.Buffer.csproj">
+      <Project>{555192b1-c597-4279-bf19-00ca30c6df8d}</Project>
+      <Name>Cowboy.Buffer</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Cowboy.Extensions\Cowboy.Extensions.csproj">
       <Project>{aaf9f07e-921a-433f-b475-6988ecba754f}</Project>
       <Name>Cowboy.Extensions</Name>
