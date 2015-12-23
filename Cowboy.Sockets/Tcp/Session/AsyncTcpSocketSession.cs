@@ -46,7 +46,6 @@ namespace Cowboy.Sockets
                 while (Connected)
                 {
                     int receiveCount = await _tcpClient.GetStream().ReadAsync(receiveBuffer, 0, receiveBuffer.Length);
-                    if (receiveCount == 0) continue;
 
                     if (!_configuration.IsPackingEnabled)
                     {
