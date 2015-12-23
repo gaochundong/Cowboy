@@ -1,15 +1,17 @@
 ﻿using System;
+using System.Net;
 using System.Net.Sockets;
 using Cowboy.Buffer;
 using Cowboy.Logging;
 
 namespace Cowboy.Sockets
 {
-    internal sealed class TcpSocketSession : ISession
+    public sealed class TcpSocketSession
     {
         private static readonly ILog _log = Logger.Get<TcpSocketSession>();
         private readonly object _sync = new object();
         private readonly IBufferManager _bufferManager;
+        private readonly string _sessionKey;
 
         public TcpSocketSession(TcpClient tcpClient, IBufferManager bufferManager)
         {
@@ -25,17 +27,18 @@ namespace Cowboy.Sockets
             this.SessionBuffer = _bufferManager.BorrowBuffer();
             this.SessionBufferCount = 0;
 
-            this.SessionId = Guid.NewGuid();
-            if (this.TcpClient.Client.Connected)
-            {
-                this.SessionKey = this.TcpClient.Client.RemoteEndPoint.ToString();
-            }
+            var remoteEndPoint = this.RemoteEndPoint.ToString();
+            _sessionKey = !string.IsNullOrEmpty(remoteEndPoint) ? remoteEndPoint : Guid.NewGuid().ToString();
         }
 
-        public Guid SessionId { get; private set; }
         public string SessionKey { get; private set; }
 
         public TcpClient TcpClient { get; private set; }
+        public NetworkStream Stream { get { return this.TcpClient.GetStream(); } }
+        public EndPoint RemoteEndPoint { get { return this.TcpClient.Client.RemoteEndPoint; } }
+        public EndPoint LocalEndPoint { get { return this.TcpClient.Client.LocalEndPoint; } }
+        public bool Connected { get { return this.TcpClient.Client.Connected; } }
+
         public byte[] ReceiveBuffer { get; private set; }
         public byte[] SessionBuffer { get; private set; }
         public int SessionBufferCount { get; private set; }
@@ -94,22 +97,6 @@ namespace Cowboy.Sockets
             }
         }
 
-        public NetworkStream Stream
-        {
-            get
-            {
-                return this.TcpClient.GetStream();
-            }
-        }
-
-        public bool Connected
-        {
-            get
-            {
-                return this.TcpClient.Client.Connected;
-            }
-        }
-
         public void Close()
         {
             try
@@ -124,7 +111,7 @@ namespace Cowboy.Sockets
 
         public override string ToString()
         {
-            return string.Format("SessionKey[{0}], SessionBufferLength[{1}]", SessionKey, SessionBufferCount);
+            return _sessionKey;
         }
     }
 }

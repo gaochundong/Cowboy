@@ -4,7 +4,7 @@ namespace Cowboy.Sockets
 {
     public class TcpClientDisconnectedEventArgs : EventArgs
     {
-        public TcpClientDisconnectedEventArgs(ISession session)
+        public TcpClientDisconnectedEventArgs(TcpSocketSession session)
         {
             if (session == null)
                 throw new ArgumentNullException("session");
@@ -12,7 +12,7 @@ namespace Cowboy.Sockets
             this.Session = session;
         }
 
-        public ISession Session { get; private set; }
+        public TcpSocketSession Session { get; private set; }
 
         public override string ToString()
         {

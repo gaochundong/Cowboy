@@ -16,39 +16,48 @@ namespace Cowboy.Sockets
         private TcpClient _tcpClient;
         private TcpSocketSession _session;
         private bool _disposed = false;
+        private TcpSocketClientConfiguration _configuration;
+        private IPEndPoint _remoteEndPoint;
+        private IPEndPoint _localEndPoint;
 
         #endregion
 
         #region Constructors
 
-        public TcpSocketClient(IPAddress remoteIPAddress, int remotePort, IPAddress localIPAddress, int localPort)
+        public TcpSocketClient(IPAddress remoteIPAddress, int remotePort, IPAddress localIPAddress, int localPort, TcpSocketClientConfiguration configuration = null)
             : this(new IPEndPoint(remoteIPAddress, remotePort), new IPEndPoint(localIPAddress, localPort))
         {
         }
 
-        public TcpSocketClient(IPAddress remoteIPAddress, int remotePort, IPEndPoint localEP = null)
+        public TcpSocketClient(IPAddress remoteIPAddress, int remotePort, IPEndPoint localEP = null, TcpSocketClientConfiguration configuration = null)
             : this(new IPEndPoint(remoteIPAddress, remotePort), localEP)
         {
         }
 
-        public TcpSocketClient(IPEndPoint remoteEP, IPEndPoint localEP = null)
+        public TcpSocketClient(IPEndPoint remoteEP, IPEndPoint localEP = null, TcpSocketClientConfiguration configuration = null)
         {
             if (remoteEP == null)
                 throw new ArgumentNullException("remoteEP");
 
-            RemoteEndPoint = remoteEP;
-            LocalEndPoint = localEP;
+            _remoteEndPoint = remoteEP;
+            _localEndPoint = localEP;
+            _configuration = configuration ?? new TcpSocketClientConfiguration();
 
-            if (LocalEndPoint != null)
+            Initialize();
+        }
+
+        private void Initialize()
+        {
+            if (_localEndPoint != null)
             {
-                _tcpClient = new TcpClient(LocalEndPoint);
+                _tcpClient = new TcpClient(_localEndPoint);
             }
             else
             {
                 _tcpClient = new TcpClient();
             }
 
-            _bufferManager = new GrowingByteBufferManager(4, _tcpClient.ReceiveBufferSize);
+            _bufferManager = new GrowingByteBufferManager(_configuration.InitialBufferAllocationCount, _configuration.ReceiveBufferSize);
             _session = new TcpSocketSession(_tcpClient, _bufferManager);
         }
 
@@ -57,10 +66,8 @@ namespace Cowboy.Sockets
         #region Properties
 
         public bool Connected { get { return _session != null && _session.Connected; } }
-        public IPEndPoint RemoteEndPoint { get; private set; }
-        public IPEndPoint LocalEndPoint { get; private set; }
-        public bool IsPackingEnabled { get; set; }
-        public ISession Session { get { return _session; } }
+        public EndPoint RemoteEndPoint { get { return _session.RemoteEndPoint; } }
+        public EndPoint LocalEndPoint { get { return _session.LocalEndPoint; } }
 
         #endregion
 
@@ -176,7 +183,7 @@ namespace Cowboy.Sockets
 
         private void ReceiveBuffer(TcpSocketSession session, int receivedBufferLength)
         {
-            if (!IsPackingEnabled)
+            if (!_configuration.IsPackingEnabled)
             {
                 // in the scenario, actually we don't know the length of the message packet, so just guess.
                 byte[] receivedBytes = new byte[receivedBufferLength];
@@ -244,7 +251,7 @@ namespace Cowboy.Sockets
 
             try
             {
-                if (!IsPackingEnabled)
+                if (!_configuration.IsPackingEnabled)
                 {
                     _session.Stream.BeginWrite(data, 0, data.Length, HandleDataWritten, _session);
                 }
@@ -298,7 +305,6 @@ namespace Cowboy.Sockets
 
         public event EventHandler<TcpServerConnectedEventArgs> ServerConnected;
         public event EventHandler<TcpServerDisconnectedEventArgs> ServerDisconnected;
-        public event EventHandler<TcpServerExceptionOccurredEventArgs> ServerExceptionOccurred;
         public event EventHandler<TcpDataReceivedEventArgs> DataReceived;
 
         private void RaiseServerConnected()
@@ -307,7 +313,7 @@ namespace Cowboy.Sockets
             {
                 if (ServerConnected != null)
                 {
-                    ServerConnected(this, new TcpServerConnectedEventArgs(this.RemoteEndPoint));
+                    ServerConnected(this, new TcpServerConnectedEventArgs(this.RemoteEndPoint, this.LocalEndPoint));
                 }
             }
             catch (Exception ex)
@@ -322,7 +328,7 @@ namespace Cowboy.Sockets
             {
                 if (ServerDisconnected != null)
                 {
-                    ServerDisconnected(this, new TcpServerDisconnectedEventArgs(this.RemoteEndPoint));
+                    ServerDisconnected(this, new TcpServerDisconnectedEventArgs(this.RemoteEndPoint, this.LocalEndPoint));
                 }
             }
             catch (Exception ex)
@@ -331,22 +337,7 @@ namespace Cowboy.Sockets
             }
         }
 
-        private void RaiseServerExceptionOccurred(IPAddress[] ipAddresses, int port, Exception innerException)
-        {
-            try
-            {
-                if (ServerExceptionOccurred != null)
-                {
-                    ServerExceptionOccurred(this, new TcpServerExceptionOccurredEventArgs(ipAddresses, port, innerException));
-                }
-            }
-            catch (Exception ex)
-            {
-                HandleUserSideError(ex);
-            }
-        }
-
-        private void RaiseDataReceived(ISession session, byte[] data, int dataOffset, int dataLength)
+        private void RaiseDataReceived(TcpSocketSession session, byte[] data, int dataOffset, int dataLength)
         {
             try
             {
@@ -370,22 +361,12 @@ namespace Cowboy.Sockets
 
         #region IDisposable Members
 
-        /// <summary>
-        /// Performs application-defined tasks associated with freeing, 
-        /// releasing, or resetting unmanaged resources.
-        /// </summary>
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
 
-        /// <summary>
-        /// Releases unmanaged and - optionally - managed resources
-        /// </summary>
-        /// <param name="disposing">
-        /// <c>true</c> to release both managed and unmanaged resources; 
-        /// <c>false</c> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
             if (!this._disposed)

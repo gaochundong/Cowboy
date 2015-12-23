@@ -24,32 +24,17 @@ namespace Cowboy.Sockets
 
         #region Constructors
 
-        public TcpSocketServer(int listenedPort)
-            : this(IPAddress.Any, listenedPort, null)
-        {
-        }
-
-        public TcpSocketServer(int listenedPort, TcpSocketServerConfiguration configuration)
+        public TcpSocketServer(int listenedPort, TcpSocketServerConfiguration configuration = null)
             : this(IPAddress.Any, listenedPort, configuration)
         {
         }
 
-        public TcpSocketServer(IPAddress listenedAddress, int listenedPort)
-            : this(new IPEndPoint(listenedAddress, listenedPort), null)
-        {
-        }
-
-        public TcpSocketServer(IPAddress listenedAddress, int listenedPort, TcpSocketServerConfiguration configuration)
+        public TcpSocketServer(IPAddress listenedAddress, int listenedPort, TcpSocketServerConfiguration configuration = null)
             : this(new IPEndPoint(listenedAddress, listenedPort), configuration)
         {
         }
 
-        public TcpSocketServer(IPEndPoint listenedEndPoint)
-            : this(listenedEndPoint, null)
-        {
-        }
-
-        public TcpSocketServer(IPEndPoint listenedEndPoint, TcpSocketServerConfiguration configuration)
+        public TcpSocketServer(IPEndPoint listenedEndPoint, TcpSocketServerConfiguration configuration = null)
         {
             if (listenedEndPoint == null)
                 throw new ArgumentNullException("listenedEndPoint");
@@ -328,7 +313,7 @@ namespace Cowboy.Sockets
                 throw new InvalidProgramException("This TCP server has not been started yet.");
         }
 
-        public void SendTo(ISession session, byte[] data)
+        public void SendTo(TcpSocketSession session, byte[] data)
         {
             GuardRunning();
 
@@ -412,7 +397,7 @@ namespace Cowboy.Sockets
         public event EventHandler<TcpClientDisconnectedEventArgs> ClientDisconnected;
         public event EventHandler<TcpDataReceivedEventArgs> DataReceived;
 
-        private void RaiseClientConnected(ISession session)
+        private void RaiseClientConnected(TcpSocketSession session)
         {
             try
             {
@@ -427,7 +412,7 @@ namespace Cowboy.Sockets
             }
         }
 
-        private void RaiseClientDisconnected(ISession session)
+        private void RaiseClientDisconnected(TcpSocketSession session)
         {
             try
             {
@@ -442,7 +427,7 @@ namespace Cowboy.Sockets
             }
         }
 
-        private void RaiseDataReceived(ISession sender, byte[] data, int dataOffset, int dataLength)
+        private void RaiseDataReceived(TcpSocketSession sender, byte[] data, int dataOffset, int dataLength)
         {
             try
             {
@@ -466,21 +451,12 @@ namespace Cowboy.Sockets
 
         #region IDisposable Members
 
-        /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-        /// </summary>
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
 
-        /// <summary>
-        /// Releases unmanaged and - optionally - managed resources
-        /// </summary>
-        /// <param name="disposing">
-        /// <c>true</c> to release both managed and unmanaged resources; 
-        /// <c>false</c> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
             if (!this._disposed)

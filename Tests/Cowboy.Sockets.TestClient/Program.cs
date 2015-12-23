@@ -16,8 +16,6 @@ namespace Cowboy.Sockets.TestClient
             IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 22222);
             IPEndPoint localEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 22221);
             client = new TcpSocketClient(remoteEP, localEP);
-            client.IsPackingEnabled = true;
-            client.ServerExceptionOccurred += client_ServerExceptionOccurred;
             client.ServerConnected += client_ServerConnected;
             client.ServerDisconnected += client_ServerDisconnected;
             client.DataReceived += client_DataReceived;
@@ -37,11 +35,6 @@ namespace Cowboy.Sockets.TestClient
                     Console.WriteLine(ex.Message);
                 }
             }
-        }
-
-        static void client_ServerExceptionOccurred(object sender, TcpServerExceptionOccurredEventArgs e)
-        {
-            Console.WriteLine(string.Format("TCP server {0} exception occurred, {1}.", e.ToString(), e.Exception.Message));
         }
 
         static void client_ServerConnected(object sender, TcpServerConnectedEventArgs e)

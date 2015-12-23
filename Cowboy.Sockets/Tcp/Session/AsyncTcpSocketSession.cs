@@ -7,7 +7,7 @@ using Cowboy.Logging;
 
 namespace Cowboy.Sockets
 {
-    internal sealed class AsyncTcpSocketSession
+    public sealed class AsyncTcpSocketSession
     {
         private static readonly ILog _log = Logger.Get<AsyncTcpSocketSession>();
         private readonly TcpClient _tcpClient;
@@ -34,6 +34,7 @@ namespace Cowboy.Sockets
 
         public bool Connected { get { return _tcpClient.Connected; } }
         public EndPoint RemoteEndPoint { get { return _tcpClient.Client.RemoteEndPoint; } }
+        public EndPoint LocalEndPoint { get { return _tcpClient.Client.LocalEndPoint; } }
 
         public async Task Start()
         {

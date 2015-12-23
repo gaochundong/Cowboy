@@ -24,32 +24,17 @@ namespace Cowboy.Sockets
 
         #region Constructors
 
-        public AsyncTcpSocketServer(int listenedPort)
-            : this(IPAddress.Any, listenedPort, null)
-        {
-        }
-
-        public AsyncTcpSocketServer(int listenedPort, TcpSocketServerConfiguration configuration)
+        public AsyncTcpSocketServer(int listenedPort, TcpSocketServerConfiguration configuration = null)
             : this(IPAddress.Any, listenedPort, configuration)
         {
         }
 
-        public AsyncTcpSocketServer(IPAddress listenedAddress, int listenedPort)
-            : this(new IPEndPoint(listenedAddress, listenedPort), null)
-        {
-        }
-
-        public AsyncTcpSocketServer(IPAddress listenedAddress, int listenedPort, TcpSocketServerConfiguration configuration)
+        public AsyncTcpSocketServer(IPAddress listenedAddress, int listenedPort, TcpSocketServerConfiguration configuration = null)
             : this(new IPEndPoint(listenedAddress, listenedPort), configuration)
         {
         }
 
-        public AsyncTcpSocketServer(IPEndPoint listenedEndPoint)
-            : this(listenedEndPoint, null)
-        {
-        }
-
-        public AsyncTcpSocketServer(IPEndPoint listenedEndPoint, TcpSocketServerConfiguration configuration)
+        public AsyncTcpSocketServer(IPEndPoint listenedEndPoint, TcpSocketServerConfiguration configuration = null)
         {
             if (listenedEndPoint == null)
                 throw new ArgumentNullException("listenedEndPoint");
