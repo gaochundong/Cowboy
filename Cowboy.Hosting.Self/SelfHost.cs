@@ -38,10 +38,10 @@ namespace Cowboy.Hosting.Self
 
             _keepProcessing = true;
             Task.Run(async () =>
-                {
-                    await StartProcess();
-                })
-                .Forget();
+            {
+                await StartProcess();
+            })
+            .Forget();
         }
 
         public void Stop()
@@ -59,10 +59,10 @@ namespace Cowboy.Hosting.Self
             {
                 var context = await _listener.GetContextAsync();
                 Task.Run(async () =>
-                    {
-                        await Process(context);
-                    })
-                    .Forget();
+                {
+                    await Process(context);
+                })
+                .Forget();
             }
         }
 

@@ -50,7 +50,6 @@ namespace Cowboy.WebSockets
                 try
                 {
                     await session.Start();
-
                 }
                 finally
                 {

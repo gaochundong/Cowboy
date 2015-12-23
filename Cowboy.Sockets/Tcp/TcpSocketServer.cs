@@ -17,115 +17,124 @@ namespace Cowboy.Sockets
         private TcpListener _listener;
         private ConcurrentDictionary<string, TcpSocketSession> _sessions = new ConcurrentDictionary<string, TcpSocketSession>();
         private bool _disposed = false;
+        private readonly object _opsLock = new object();
+        private readonly TcpSocketServerConfiguration _configuration;
 
         #endregion
 
         #region Constructors
 
-        public TcpSocketServer(int listenPort)
-            : this(IPAddress.Any, listenPort)
+        public TcpSocketServer(int listenedPort)
+            : this(IPAddress.Any, listenedPort, null)
         {
         }
 
-        public TcpSocketServer(IPAddress localIPAddress, int listenPort)
-            : this(new IPEndPoint(localIPAddress, listenPort))
+        public TcpSocketServer(int listenedPort, TcpSocketServerConfiguration configuration)
+            : this(IPAddress.Any, listenedPort, configuration)
         {
         }
 
-        public TcpSocketServer(IPEndPoint localEP)
+        public TcpSocketServer(IPAddress listenedAddress, int listenedPort)
+            : this(new IPEndPoint(listenedAddress, listenedPort), null)
         {
-            if (localEP == null)
-                throw new ArgumentNullException("localEP");
-
-            LocalEndPoint = localEP;
-
-            _bufferManager = new GrowingByteBufferManager(100, 64);
-
-            _listener = new TcpListener(LocalEndPoint);
-            _listener.AllowNatTraversal(true);
-
-            SetOptions();
         }
 
-        private void SetOptions()
+        public TcpSocketServer(IPAddress listenedAddress, int listenedPort, TcpSocketServerConfiguration configuration)
+            : this(new IPEndPoint(listenedAddress, listenedPort), configuration)
         {
-            _listener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ExclusiveAddressUse, true);
-            _listener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, false);
-            _listener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.NoDelay, 1);
+        }
+
+        public TcpSocketServer(IPEndPoint listenedEndPoint)
+            : this(listenedEndPoint, null)
+        {
+        }
+
+        public TcpSocketServer(IPEndPoint listenedEndPoint, TcpSocketServerConfiguration configuration)
+        {
+            if (listenedEndPoint == null)
+                throw new ArgumentNullException("listenedEndPoint");
+
+            this.ListenedEndPoint = listenedEndPoint;
+            _configuration = configuration ?? new TcpSocketServerConfiguration();
+
+            Initialize();
+        }
+
+        private void Initialize()
+        {
+            _bufferManager = new GrowingByteBufferManager(_configuration.InitialBufferAllocationCount, _configuration.ReceiveBufferSize);
+
+            _listener = new TcpListener(this.ListenedEndPoint);
+            _listener.AllowNatTraversal(_configuration.AllowNatTraversal);
+            _listener.ExclusiveAddressUse = _configuration.ExclusiveAddressUse;
         }
 
         #endregion
 
         #region Properties
 
-        public bool IsListening { get; private set; }
-        public IPEndPoint LocalEndPoint { get; private set; }
-        public bool IsPackingEnabled { get; set; }
+        public IPEndPoint ListenedEndPoint { get; private set; }
+        public bool Active { get; private set; }
         public int SessionCount { get { return _sessions.Count; } }
 
         #endregion
 
         #region Server
 
-        public TcpSocketServer Start()
+        public void Start()
         {
-            // default 200 pending connections are waiting in the backlog
-            return Start(200);
+            lock (_opsLock)
+            {
+                if (Active)
+                    return;
+
+                Active = true;
+                _listener.Start(_configuration.PendingConnectionBacklog);
+
+                ContinueAcceptSession(_listener);
+            }
         }
 
-        public TcpSocketServer Start(int backlog)
+        public void Stop()
         {
-            if (backlog > (int)SocketOptionName.MaxConnections || backlog < 0)
+            lock (_opsLock)
             {
-                throw new ArgumentOutOfRangeException("backlog");
-            }
+                if (!Active)
+                    return;
 
-            if (IsListening) return this;
-
-            IsListening = true;
-
-            _listener.Start(backlog);
-            ContinueAcceptSession(_listener);
-
-            return this;
-        }
-
-        public TcpSocketServer Stop()
-        {
-            if (!IsListening) return this;
-
-            try
-            {
-                _listener.Stop();
-
-                foreach (var session in _sessions.Values)
+                try
                 {
-                    session.Close();
+                    Active = false;
+                    _listener.Stop();
+
+                    foreach (var session in _sessions.Values)
+                    {
+                        CloseSession(session);
+                    }
+                    _sessions.Clear();
                 }
-                _sessions.Clear();
-            }
-            catch (Exception ex)
-            {
-                if (ex is ObjectDisposedException
-                    || ex is SocketException)
+                catch (Exception ex)
                 {
-                    _log.Error(ex.Message, ex);
+                    if (ex is ObjectDisposedException
+                        || ex is SocketException)
+                    {
+                        _log.Error(ex.Message, ex);
+                    }
+                    else throw;
                 }
-                else throw;
             }
-
-            IsListening = false;
-
-            return this;
         }
 
         public bool Pending()
         {
-            if (!IsListening)
-                throw new InvalidOperationException("The TCP server is not running.");
+            lock (_opsLock)
+            {
+                if (!Active)
+                    throw new InvalidOperationException("The TCP server is not active.");
 
-            // determine if there are pending connection requests.
-            return _listener.Server.Poll(0, SelectMode.SelectRead);
+                // determine if there are pending connection requests.
+                return _listener.Pending();
+            }
         }
 
         private void ContinueAcceptSession(TcpListener listener)
@@ -168,17 +177,12 @@ namespace Cowboy.Sockets
 
         private void HandleTcpClientAccepted(IAsyncResult ar)
         {
-            if (!IsListening) return;
+            if (!Active) return;
 
             TcpListener listener = (TcpListener)ar.AsyncState;
 
             TcpClient tcpClient = listener.EndAcceptTcpClient(ar);
             if (!tcpClient.Connected) return;
-
-            // set port reuse
-            tcpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ExclusiveAddressUse, true);
-            tcpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, false);
-            tcpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.NoDelay, 1);
 
             // create session
             var session = new TcpSocketSession(tcpClient, _bufferManager);
@@ -214,7 +218,7 @@ namespace Cowboy.Sockets
 
         private void HandleDataReceived(IAsyncResult ar)
         {
-            if (!IsListening) return;
+            if (!Active) return;
 
             try
             {
@@ -263,7 +267,7 @@ namespace Cowboy.Sockets
 
         private void ReceiveBuffer(TcpSocketSession session, int receivedBufferCount)
         {
-            if (!IsPackingEnabled)
+            if (!_configuration.IsPackingEnabled)
             {
                 // in the scenario, actually we don't know the length of the message packet, so just guess.
                 byte[] receivedBytes = new byte[receivedBufferCount];
@@ -320,7 +324,7 @@ namespace Cowboy.Sockets
 
         private void GuardRunning()
         {
-            if (!IsListening)
+            if (!Active)
                 throw new InvalidProgramException("This TCP server has not been started yet.");
         }
 
@@ -341,7 +345,7 @@ namespace Cowboy.Sockets
             {
                 if (writeSession.Stream.CanWrite)
                 {
-                    if (!IsPackingEnabled)
+                    if (!_configuration.IsPackingEnabled)
                     {
                         writeSession.Stream.BeginWrite(data, 0, data.Length, HandleDataWritten, session);
                     }

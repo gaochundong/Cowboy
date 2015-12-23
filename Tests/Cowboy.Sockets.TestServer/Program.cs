@@ -6,26 +6,30 @@ namespace Cowboy.Sockets.TestServer
 {
     class Program
     {
-        static TcpSocketServer server;
+        static TcpSocketServer _server;
 
         static void Main(string[] args)
         {
             NLogLogger.Use();
 
-            server = new TcpSocketServer(22222);
-            server.IsPackingEnabled = true;
-            server.ClientConnected += server_ClientConnected;
-            server.ClientDisconnected += server_ClientDisconnected;
-            server.DataReceived += server_DataReceived;
-            server.Start();
+            StartServer();
 
             Console.WriteLine("TCP server has been started.");
             Console.WriteLine("Type something to send to client...");
             while (true)
             {
                 string text = Console.ReadLine();
-                server.SendToAll(Encoding.UTF8.GetBytes(text));
+                _server.SendToAll(Encoding.UTF8.GetBytes(text));
             }
+        }
+
+        private static void StartServer()
+        {
+            _server = new TcpSocketServer(22222);
+            _server.ClientConnected += server_ClientConnected;
+            _server.ClientDisconnected += server_ClientDisconnected;
+            _server.DataReceived += server_DataReceived;
+            _server.Start();
         }
 
         static void server_ClientConnected(object sender, TcpClientConnectedEventArgs e)
@@ -43,7 +47,7 @@ namespace Cowboy.Sockets.TestServer
             var text = Encoding.UTF8.GetString(e.Data, e.DataOffset, e.DataLength);
             Console.Write(string.Format("Client : {0} --> ", e.Session.SessionKey));
             Console.WriteLine(string.Format("{0}", text));
-            server.SendToAll(Encoding.UTF8.GetBytes(text));
+            _server.SendToAll(Encoding.UTF8.GetBytes(text));
         }
     }
 }

@@ -48,17 +48,8 @@ namespace Cowboy.Sockets
                 _tcpClient = new TcpClient();
             }
 
-            SetOptions();
-
             _bufferManager = new GrowingByteBufferManager(4, _tcpClient.ReceiveBufferSize);
             _session = new TcpSocketSession(_tcpClient, _bufferManager);
-        }
-
-        private void SetOptions()
-        {
-            _tcpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ExclusiveAddressUse, true);
-            _tcpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, false);
-            _tcpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.NoDelay, 1);
         }
 
         #endregion
