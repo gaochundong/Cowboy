@@ -16,9 +16,9 @@ namespace Cowboy.Sockets
         private TcpClient _tcpClient;
         private TcpSocketSession _session;
         private bool _disposed = false;
-        private TcpSocketClientConfiguration _configuration;
-        private IPEndPoint _remoteEndPoint;
-        private IPEndPoint _localEndPoint;
+        private readonly TcpSocketClientConfiguration _configuration;
+        private readonly IPEndPoint _remoteEndPoint;
+        private readonly IPEndPoint _localEndPoint;
 
         #endregion
 

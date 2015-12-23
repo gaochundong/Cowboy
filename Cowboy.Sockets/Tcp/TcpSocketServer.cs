@@ -15,10 +15,10 @@ namespace Cowboy.Sockets
         private static readonly ILog _log = Logger.Get<TcpSocketServer>();
         private IBufferManager _bufferManager;
         private TcpListener _listener;
-        private ConcurrentDictionary<string, TcpSocketSession> _sessions = new ConcurrentDictionary<string, TcpSocketSession>();
-        private bool _disposed = false;
+        private readonly ConcurrentDictionary<string, TcpSocketSession> _sessions = new ConcurrentDictionary<string, TcpSocketSession>();
         private readonly object _opsLock = new object();
         private readonly TcpSocketServerConfiguration _configuration;
+        private bool _disposed = false;
 
         #endregion
 

@@ -15,7 +15,7 @@ namespace Cowboy.Sockets
         private static readonly ILog _log = Logger.Get<AsyncTcpSocketServer>();
         private IBufferManager _bufferManager;
         private TcpListener _listener;
-        private ConcurrentDictionary<string, AsyncTcpSocketSession> _sessions = new ConcurrentDictionary<string, AsyncTcpSocketSession>();
+        private readonly ConcurrentDictionary<string, AsyncTcpSocketSession> _sessions = new ConcurrentDictionary<string, AsyncTcpSocketSession>();
         private readonly object _opsLock = new object();
         private readonly TcpSocketServerConfiguration _configuration;
 
