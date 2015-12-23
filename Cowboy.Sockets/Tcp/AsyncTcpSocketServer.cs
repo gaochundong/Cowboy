@@ -8,7 +8,7 @@ using Cowboy.Logging;
 
 namespace Cowboy.Sockets
 {
-    public class AsyncTcpSocketServer : IDisposable
+    public class AsyncTcpSocketServer
     {
         #region Fields
 
@@ -16,7 +16,6 @@ namespace Cowboy.Sockets
         private IBufferManager _bufferManager;
         private TcpListener _listener;
         private ConcurrentDictionary<string, AsyncTcpSocketSession> _sessions = new ConcurrentDictionary<string, AsyncTcpSocketSession>();
-        private bool _disposed = false;
         private readonly object _opsLock = new object();
         private readonly TcpSocketServerConfiguration _configuration;
 
@@ -106,6 +105,7 @@ namespace Cowboy.Sockets
                 {
                     Active = false;
                     _listener.Stop();
+                    _listener = null;
                 }
                 catch (Exception ex)
                 {
@@ -158,41 +158,6 @@ namespace Cowboy.Sockets
                     AsyncTcpSocketSession throwAway;
                     _sessions.TryRemove(sessionKey, out throwAway);
                 }
-            }
-        }
-
-        #endregion
-
-        #region IDisposable Members
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!this._disposed)
-            {
-                if (disposing)
-                {
-                    try
-                    {
-                        Stop();
-
-                        if (_listener != null)
-                        {
-                            _listener = null;
-                        }
-                    }
-                    catch (SocketException ex)
-                    {
-                        _log.Error(ex.Message, ex);
-                    }
-                }
-
-                _disposed = true;
             }
         }
 
