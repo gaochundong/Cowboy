@@ -28,8 +28,7 @@ namespace Cowboy.Sockets
             _configuration = configuration;
             _bufferManager = bufferManager;
 
-            var remoteEndPoint = this.RemoteEndPoint.ToString();
-            _sessionKey = !string.IsNullOrEmpty(remoteEndPoint) ? remoteEndPoint : Guid.NewGuid().ToString();
+            _sessionKey = Guid.NewGuid().ToString();
         }
 
         public string SessionKey { get { return _sessionKey; } }

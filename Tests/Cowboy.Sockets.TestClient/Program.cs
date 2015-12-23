@@ -7,19 +7,13 @@ namespace Cowboy.Sockets.TestClient
 {
     class Program
     {
-        static TcpSocketClient client;
+        static TcpSocketClient _client;
 
         static void Main(string[] args)
         {
             NLogLogger.Use();
 
-            IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 22222);
-            IPEndPoint localEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 22221);
-            client = new TcpSocketClient(remoteEP, localEP);
-            client.ServerConnected += client_ServerConnected;
-            client.ServerDisconnected += client_ServerDisconnected;
-            client.DataReceived += client_DataReceived;
-            client.Connect();
+            ConnectToServer();
 
             Console.WriteLine("TCP client has connected to server.");
             Console.WriteLine("Type something to send to server...");
@@ -28,7 +22,7 @@ namespace Cowboy.Sockets.TestClient
                 try
                 {
                     string text = Console.ReadLine();
-                    client.Send(Encoding.UTF8.GetBytes(text));
+                    _client.Send(Encoding.UTF8.GetBytes(text));
                 }
                 catch (Exception ex)
                 {
@@ -37,20 +31,31 @@ namespace Cowboy.Sockets.TestClient
             }
         }
 
+        private static void ConnectToServer()
+        {
+            IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 22222);
+            IPEndPoint localEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 22221);
+            _client = new TcpSocketClient(remoteEP, localEP);
+            _client.ServerConnected += client_ServerConnected;
+            _client.ServerDisconnected += client_ServerDisconnected;
+            _client.DataReceived += client_DataReceived;
+            _client.Connect();
+        }
+
         static void client_ServerConnected(object sender, TcpServerConnectedEventArgs e)
         {
-            Console.WriteLine(string.Format("TCP server {0} has connected.", e.ToString()));
+            Console.WriteLine(string.Format("TCP server {0} has connected.", e.RemoteEndPoint.ToString()));
         }
 
         static void client_ServerDisconnected(object sender, TcpServerDisconnectedEventArgs e)
         {
-            Console.WriteLine(string.Format("TCP server {0} has disconnected.", e.ToString()));
+            Console.WriteLine(string.Format("TCP server {0} has disconnected.", e.RemoteEndPoint.ToString()));
         }
 
         static void client_DataReceived(object sender, TcpDataReceivedEventArgs e)
         {
             var text = Encoding.UTF8.GetString(e.Data, e.DataOffset, e.DataLength);
-            Console.Write(string.Format("Server : {0} --> ", e.Session.SessionKey));
+            Console.Write(string.Format("Server : {0} --> ", e.Session.RemoteEndPoint.ToString()));
             Console.WriteLine(string.Format("{0}", text));
         }
     }

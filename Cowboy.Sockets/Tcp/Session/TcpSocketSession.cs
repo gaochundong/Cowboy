@@ -27,8 +27,7 @@ namespace Cowboy.Sockets
             this.SessionBuffer = _bufferManager.BorrowBuffer();
             this.SessionBufferCount = 0;
 
-            var remoteEndPoint = this.RemoteEndPoint.ToString();
-            _sessionKey = !string.IsNullOrEmpty(remoteEndPoint) ? remoteEndPoint : Guid.NewGuid().ToString();
+            _sessionKey = Guid.NewGuid().ToString();
         }
 
         public string SessionKey { get { return _sessionKey; } }

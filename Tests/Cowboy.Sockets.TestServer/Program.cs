@@ -18,8 +18,15 @@ namespace Cowboy.Sockets.TestServer
             Console.WriteLine("Type something to send to client...");
             while (true)
             {
-                string text = Console.ReadLine();
-                _server.SendToAll(Encoding.UTF8.GetBytes(text));
+                try
+                {
+                    string text = Console.ReadLine();
+                    _server.SendToAll(Encoding.UTF8.GetBytes(text));
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
             }
         }
 
@@ -34,18 +41,18 @@ namespace Cowboy.Sockets.TestServer
 
         static void server_ClientConnected(object sender, TcpClientConnectedEventArgs e)
         {
-            Console.WriteLine(string.Format("TCP client {0} has connected.", e.Session.SessionKey));
+            Console.WriteLine(string.Format("TCP client {0} has connected.", e.Session.RemoteEndPoint.ToString()));
         }
 
         static void server_ClientDisconnected(object sender, TcpClientDisconnectedEventArgs e)
         {
-            Console.WriteLine(string.Format("TCP client {0} has disconnected.", e.Session.SessionKey));
+            Console.WriteLine(string.Format("TCP client {0} has disconnected.", e.Session.RemoteEndPoint.ToString()));
         }
 
         static void server_DataReceived(object sender, TcpDataReceivedEventArgs e)
         {
             var text = Encoding.UTF8.GetString(e.Data, e.DataOffset, e.DataLength);
-            Console.Write(string.Format("Client : {0} --> ", e.Session.SessionKey));
+            Console.Write(string.Format("Client : {0} --> ", e.Session.RemoteEndPoint.ToString()));
             Console.WriteLine(string.Format("{0}", text));
             _server.SendToAll(Encoding.UTF8.GetBytes(text));
         }

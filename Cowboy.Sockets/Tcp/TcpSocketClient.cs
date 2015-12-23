@@ -77,7 +77,7 @@ namespace Cowboy.Sockets
         {
             if (!Connected)
             {
-                _session.TcpClient.Client.BeginConnect(RemoteEndPoint, HandleTcpServerConnected, _session);
+                _session.TcpClient.Client.BeginConnect(_remoteEndPoint, HandleTcpServerConnected, _session);
             }
 
             return this;
