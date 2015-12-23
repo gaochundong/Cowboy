@@ -50,10 +50,7 @@ namespace Cowboy.Sockets
 
                     if (!_configuration.IsPackingEnabled)
                     {
-                        //byte[] receivedBytes = new byte[receiveCount];
-                        //System.Buffer.BlockCopy(receiveBuffer, 0, receivedBytes, 0, receiveCount);
-
-                        //RaiseDataReceived(session, receivedBytes, 0, receiveCount);
+                        //await ReceiveBinaryMessage(this, receiveBuffer, 0, receiveCount);
                     }
                     else
                     {
@@ -64,9 +61,7 @@ namespace Cowboy.Sockets
                             var packetHeader = TcpPacketHeader.ReadHeader(sessionBuffer);
                             if (TcpPacketHeader.HEADER_SIZE + packetHeader.PayloadSize <= sessionBufferCount)
                             {
-                                //RaiseReceivedBuffer(session, packetHeader.PayloadSize);
-                                //RaiseDataReceived(session, session.SessionBuffer, TcpPacketHeader.HEADER_SIZE, payloadLength);
-
+                                //await ReceiveBinaryMessage(this, sessionBuffer, TcpPacketHeader.HEADER_SIZE, packetHeader.PayloadSize);
                                 ShiftBuffer(TcpPacketHeader.HEADER_SIZE + packetHeader.PayloadSize, ref sessionBuffer, ref sessionBufferCount);
                             }
                             else
