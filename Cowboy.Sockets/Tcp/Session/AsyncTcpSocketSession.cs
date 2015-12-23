@@ -32,6 +32,7 @@ namespace Cowboy.Sockets
             _sessionKey = !string.IsNullOrEmpty(remoteEndPoint) ? remoteEndPoint : Guid.NewGuid().ToString();
         }
 
+        public string SessionKey { get { return _sessionKey; } }
         public bool Connected { get { return _tcpClient.Connected; } }
         public EndPoint RemoteEndPoint { get { return _tcpClient.Client.RemoteEndPoint; } }
         public EndPoint LocalEndPoint { get { return _tcpClient.Client.LocalEndPoint; } }

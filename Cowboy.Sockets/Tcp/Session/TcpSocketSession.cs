@@ -31,7 +31,7 @@ namespace Cowboy.Sockets
             _sessionKey = !string.IsNullOrEmpty(remoteEndPoint) ? remoteEndPoint : Guid.NewGuid().ToString();
         }
 
-        public string SessionKey { get; private set; }
+        public string SessionKey { get { return _sessionKey; } }
 
         public TcpClient TcpClient { get; private set; }
         public NetworkStream Stream { get { return this.TcpClient.GetStream(); } }
