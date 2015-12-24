@@ -14,13 +14,15 @@ namespace Cowboy.Sockets
         private readonly TcpSocketServerConfiguration _configuration;
         private readonly IBufferManager _bufferManager;
         private readonly IAsyncTcpSocketServerMessageDispatcher _dispatcher;
+        private readonly AsyncTcpSocketServer _server;
         private readonly string _sessionKey;
 
         public AsyncTcpSocketSession(
             TcpClient tcpClient,
             TcpSocketServerConfiguration configuration,
             IBufferManager bufferManager,
-            IAsyncTcpSocketServerMessageDispatcher dispatcher)
+            IAsyncTcpSocketServerMessageDispatcher dispatcher,
+            AsyncTcpSocketServer server)
         {
             if (tcpClient == null)
                 throw new ArgumentNullException("tcpClient");
@@ -30,25 +32,37 @@ namespace Cowboy.Sockets
                 throw new ArgumentNullException("bufferManager");
             if (dispatcher == null)
                 throw new ArgumentNullException("dispatcher");
+            if (server == null)
+                throw new ArgumentNullException("server");
 
             _tcpClient = tcpClient;
             _configuration = configuration;
             _bufferManager = bufferManager;
             _dispatcher = dispatcher;
+            _server = server;
 
             _sessionKey = Guid.NewGuid().ToString();
+            this.StartTime = DateTime.UtcNow;
         }
 
         public string SessionKey { get { return _sessionKey; } }
+        public DateTime StartTime { get; private set; }
         public bool Connected { get { return _tcpClient.Connected; } }
         public EndPoint RemoteEndPoint { get { return _tcpClient.Client.RemoteEndPoint; } }
         public EndPoint LocalEndPoint { get { return _tcpClient.Client.LocalEndPoint; } }
+        public AsyncTcpSocketServer Server { get { return _server; } }
 
         public async Task Start()
         {
             byte[] receiveBuffer = _bufferManager.BorrowBuffer();
             byte[] sessionBuffer = _bufferManager.BorrowBuffer();
             int sessionBufferCount = 0;
+
+            _log.DebugFormat("Session started for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
+                this.RemoteEndPoint,
+                this.StartTime.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"),
+                _dispatcher.GetType().Name,
+                this.Server.SessionCount);
 
             try
             {
@@ -85,6 +99,12 @@ namespace Cowboy.Sockets
             {
                 _bufferManager.ReturnBuffer(receiveBuffer);
                 _bufferManager.ReturnBuffer(sessionBuffer);
+
+                _log.DebugFormat("Session closed for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
+                    this.RemoteEndPoint,
+                    DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"),
+                    _dispatcher.GetType().Name,
+                    this.Server.SessionCount - 1);
 
                 if (_tcpClient != null)
                     _tcpClient.Dispose();

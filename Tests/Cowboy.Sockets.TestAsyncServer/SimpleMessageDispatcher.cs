@@ -16,6 +16,7 @@ namespace Cowboy.Sockets.TestAsyncServer
             var text = Encoding.UTF8.GetString(data, dataOffset, dataLength);
             Console.Write(string.Format("Client : {0} --> ", session.RemoteEndPoint));
             Console.WriteLine(string.Format("{0}", text));
+
             await session.Send(Encoding.UTF8.GetBytes("Echo -> " + text));
         }
     }

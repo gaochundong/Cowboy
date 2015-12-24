@@ -16,8 +16,8 @@ namespace Cowboy.Sockets.TestAsyncServer
             _server = new AsyncTcpSocketServer(22222, new SimpleMessageDispatcher());
             _server.Start();
 
-            Console.WriteLine("TCP server has been started.");
-            Console.WriteLine("Type something to send to client...");
+            Console.WriteLine("TCP server has been started on [{0}].", _server.ListenedEndPoint);
+            Console.WriteLine("Type something to send to clients...");
             while (true)
             {
                 try

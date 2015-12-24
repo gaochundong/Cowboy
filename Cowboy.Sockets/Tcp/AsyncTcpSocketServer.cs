@@ -139,7 +139,7 @@ namespace Cowboy.Sockets
             while (Active)
             {
                 var tcpClient = await _listener.AcceptTcpClientAsync();
-                var session = new AsyncTcpSocketSession(tcpClient, _configuration, _bufferManager, _dispatcher);
+                var session = new AsyncTcpSocketSession(tcpClient, _configuration, _bufferManager, _dispatcher, this);
                 Task.Run(async () =>
                 {
                     await Process(session);
