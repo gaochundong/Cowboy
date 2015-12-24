@@ -53,9 +53,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tcp\Session\AsyncTcpSocketSession.cs" />
     <Compile Include="Tcp\Session\TcpSocketSession.cs" />
-    <Compile Include="Tcp\Client\TcpSocketClient.cs" />
-    <Compile Include="Tcp\Server\AsyncTcpSocketServer.cs" />
-    <Compile Include="Tcp\Server\TcpSocketServer.cs" />
+    <Compile Include="TcpSocketClient.cs" />
+    <Compile Include="AsyncTcpSocketServer.cs" />
+    <Compile Include="TcpSocketServer.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Cowboy.Buffer\Cowboy.Buffer.csproj">
@@ -70,6 +70,10 @@
       <Project>{7ada144a-a176-437b-812e-889b6aa2536e}</Project>
       <Name>Cowboy.Logging</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Tcp\Client\" />
+    <Folder Include="Tcp\Server\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
