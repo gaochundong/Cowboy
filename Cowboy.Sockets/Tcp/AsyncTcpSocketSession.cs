@@ -69,6 +69,8 @@ namespace Cowboy.Sockets
                 while (Connected)
                 {
                     int receiveCount = await _tcpClient.GetStream().ReadAsync(receiveBuffer, 0, receiveBuffer.Length);
+                    if (receiveCount == 0)
+                        break;
 
                     if (!_configuration.IsPackingEnabled)
                     {
@@ -118,7 +120,16 @@ namespace Cowboy.Sockets
 
         public async Task Send(byte[] data, int offset, int count)
         {
-            await _tcpClient.GetStream().WriteAsync(data, offset, count);
+            if (!_configuration.IsPackingEnabled)
+            {
+                await _tcpClient.GetStream().WriteAsync(data, offset, count);
+            }
+            else
+            {
+                var packet = TcpPacket.FromPayload(data, offset, count);
+                var packetArray = packet.ToArray();
+                await _tcpClient.GetStream().WriteAsync(packetArray, 0, packetArray.Length);
+            }
         }
 
         public void Close()

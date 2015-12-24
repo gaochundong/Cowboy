@@ -26,6 +26,7 @@ namespace Cowboy.Sockets.TestAsyncServer
                     Task.Run(async () =>
                     {
                         await _server.Broadcast(Encoding.UTF8.GetBytes(text));
+                        Console.WriteLine("Server [{0}] broadcasts data -> [{1}].", _server.ListenedEndPoint, text);
                     });
                 }
                 catch (Exception ex)

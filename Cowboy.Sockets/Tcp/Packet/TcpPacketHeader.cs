@@ -16,12 +16,14 @@ namespace Cowboy.Sockets
 
         private byte[] _header;
 
-        public TcpPacketHeader() { }
+        public TcpPacketHeader()
+        {
+        }
 
-        public TcpPacketHeader(byte[] header)
+        public TcpPacketHeader(byte[] fromHeader)
             : this()
         {
-            _header = header;
+            _header = fromHeader;
 
             this.PayloadSize = UnsignedInt(_header[3])
                 + 256 * UnsignedInt(_header[2])
@@ -29,8 +31,18 @@ namespace Cowboy.Sockets
                 + 16777216 * UnsignedInt(_header[0]);
         }
 
-        public int Size { get { return HEADER_SIZE; } }
+        public int HeaderSize { get { return HEADER_SIZE; } }
         public int PayloadSize { get; set; }
+
+        public byte[] ToArray()
+        {
+            if (_header == null)
+            {
+                Reset();
+            }
+
+            return _header;
+        }
 
         public TcpPacketHeader Reset()
         {
@@ -42,16 +54,6 @@ namespace Cowboy.Sockets
             }
 
             return this;
-        }
-
-        public byte[] ToArray()
-        {
-            if (_header == null)
-            {
-                Reset();
-            }
-
-            return _header;
         }
 
         public static TcpPacketHeader ReadHeader(byte[] buffer)
@@ -80,8 +82,7 @@ namespace Cowboy.Sockets
 
         public override string ToString()
         {
-            return string.Format("PayloadSize[{0}]",
-                this.PayloadSize);
+            return string.Format("HeaderSize[{0}], PayloadSize[{1}]", this.HeaderSize, this.PayloadSize);
         }
     }
 }
