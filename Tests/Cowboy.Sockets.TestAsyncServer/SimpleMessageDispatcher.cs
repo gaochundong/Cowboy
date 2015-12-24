@@ -6,14 +6,9 @@ namespace Cowboy.Sockets.TestAsyncServer
 {
     public class SimpleMessageDispatcher : IAsyncTcpSocketServerMessageDispatcher
     {
-        public async Task Dispatch(AsyncTcpSocketSession session, byte[] data)
+        public async Task Dispatch(AsyncTcpSocketSession session, byte[] data, int offset, int count)
         {
-            await Dispatch(session, data, 0, data.Length);
-        }
-
-        public async Task Dispatch(AsyncTcpSocketSession session, byte[] data, int dataOffset, int dataLength)
-        {
-            var text = Encoding.UTF8.GetString(data, dataOffset, dataLength);
+            var text = Encoding.UTF8.GetString(data, offset, count);
             Console.Write(string.Format("Client : {0} --> ", session.RemoteEndPoint));
             Console.WriteLine(string.Format("{0}", text));
 
