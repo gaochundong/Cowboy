@@ -9,8 +9,7 @@ namespace Cowboy.TestClient
         {
             NLogLogger.Use();
 
-            TestWithWebSocketClient.Connect().Wait();
-            //TestWithClientWebSocket.Connect().Wait();
+            TestWithClientWebSocket.Connect().Wait();
 
             Console.WriteLine("Waiting...");
             Console.ReadKey();
