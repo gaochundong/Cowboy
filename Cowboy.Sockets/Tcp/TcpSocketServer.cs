@@ -314,13 +314,39 @@ namespace Cowboy.Sockets
             if (data == null)
                 throw new ArgumentNullException("data");
 
+            SendTo(sessionKey, data, 0, data.Length);
+        }
+
+        public void SendTo(string sessionKey, byte[] data, int offset, int count)
+        {
+            GuardRunning();
+
+            if (string.IsNullOrEmpty(sessionKey))
+                throw new ArgumentNullException("sessionKey");
+
+            if (data == null)
+                throw new ArgumentNullException("data");
+
             TcpSocketSession session = null;
             if (!_sessions.TryGetValue(sessionKey, out session)) return;
 
-            SendTo(session, data);
+            SendTo(session, data, offset, count);
         }
 
         public void SendTo(TcpSocketSession session, byte[] data)
+        {
+            GuardRunning();
+
+            if (session == null)
+                throw new ArgumentNullException("session");
+
+            if (data == null)
+                throw new ArgumentNullException("data");
+
+            SendTo(session, data, 0, data.Length);
+        }
+
+        public void SendTo(TcpSocketSession session, byte[] data, int offset, int count)
         {
             GuardRunning();
 
@@ -339,11 +365,11 @@ namespace Cowboy.Sockets
                 {
                     if (!_configuration.IsPackingEnabled)
                     {
-                        writeSession.Stream.BeginWrite(data, 0, data.Length, HandleDataWritten, writeSession);
+                        writeSession.Stream.BeginWrite(data, offset, count, HandleDataWritten, writeSession);
                     }
                     else
                     {
-                        var packet = TcpPacket.FromPayload(data);
+                        var packet = TcpPacket.FromPayload(data, offset, count);
                         var packetArray = packet.ToArray();
                         writeSession.Stream.BeginWrite(packetArray, 0, packetArray.Length, HandleDataWritten, writeSession);
                     }
@@ -360,9 +386,22 @@ namespace Cowboy.Sockets
         {
             GuardRunning();
 
+            if (data == null)
+                throw new ArgumentNullException("data");
+
+            Broadcast(data, 0, data.Length);
+        }
+
+        public void Broadcast(byte[] data, int offset, int count)
+        {
+            GuardRunning();
+
+            if (data == null)
+                throw new ArgumentNullException("data");
+
             foreach (var session in _sessions.Values)
             {
-                SendTo(session, data);
+                SendTo(session, data, offset, count);
             }
         }
 

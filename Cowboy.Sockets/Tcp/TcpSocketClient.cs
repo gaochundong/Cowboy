@@ -285,6 +285,14 @@ namespace Cowboy.Sockets
             if (data == null)
                 throw new ArgumentNullException("data");
 
+            Send(data, 0, data.Length);
+        }
+
+        public void Send(byte[] data, int offset, int count)
+        {
+            if (data == null)
+                throw new ArgumentNullException("data");
+
             if (!Connected)
             {
                 RaiseServerDisconnected();
@@ -295,11 +303,11 @@ namespace Cowboy.Sockets
             {
                 if (!_configuration.IsPackingEnabled)
                 {
-                    _tcpClient.GetStream().BeginWrite(data, 0, data.Length, HandleDataWritten, _tcpClient);
+                    _tcpClient.GetStream().BeginWrite(data, offset, count, HandleDataWritten, _tcpClient);
                 }
                 else
                 {
-                    var packet = TcpPacket.FromPayload(data);
+                    var packet = TcpPacket.FromPayload(data, offset, count);
                     var packetArray = packet.ToArray();
                     _tcpClient.GetStream().BeginWrite(packetArray, 0, packetArray.Length, HandleDataWritten, _tcpClient);
                 }
