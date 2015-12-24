@@ -254,12 +254,8 @@ namespace Cowboy.Sockets
         {
             if (!_configuration.IsPackingEnabled)
             {
-                // in the scenario, actually we don't know the length of the message packet, so just guess.
-                byte[] receivedBytes = new byte[receivedBufferCount];
-                System.Buffer.BlockCopy(session.ReceiveBuffer, 0, receivedBytes, 0, receivedBufferCount);
-
                 // yeah, we received the buffer and then raise it to user side to handle.
-                RaiseClientDataReceived(session, receivedBytes, 0, receivedBufferCount);
+                RaiseClientDataReceived(session, session.ReceiveBuffer, 0, receivedBufferCount);
             }
             else
             {
@@ -284,7 +280,11 @@ namespace Cowboy.Sockets
                     var packetHeader = TcpPacketHeader.ReadHeader(session.SessionBuffer);
                     if (TcpPacketHeader.HEADER_SIZE + packetHeader.PayloadSize <= session.SessionBufferCount)
                     {
-                        RaiseReceivedBuffer(session, packetHeader.PayloadSize);
+                        // yeah, we received the buffer and then raise it to user side to handle.
+                        RaiseClientDataReceived(session, session.SessionBuffer, TcpPacketHeader.HEADER_SIZE, packetHeader.PayloadSize);
+
+                        // remove the received packet from buffer
+                        session.ShiftBuffer(TcpPacketHeader.HEADER_SIZE + packetHeader.PayloadSize);
                     }
                     else
                     {
@@ -292,15 +292,6 @@ namespace Cowboy.Sockets
                     }
                 }
             }
-        }
-
-        private void RaiseReceivedBuffer(TcpSocketSession session, int payloadLength)
-        {
-            // yeah, we received the buffer and then raise it to user side to handle.
-            RaiseClientDataReceived(session, session.SessionBuffer, TcpPacketHeader.HEADER_SIZE, payloadLength);
-
-            // remove the received packet from buffer
-            session.ShiftBuffer(TcpPacketHeader.HEADER_SIZE + payloadLength);
         }
 
         #endregion
