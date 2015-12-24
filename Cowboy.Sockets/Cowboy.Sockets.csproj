@@ -53,9 +53,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tcp\Session\AsyncTcpSocketSession.cs" />
     <Compile Include="Tcp\Session\TcpSocketSession.cs" />
-    <Compile Include="TcpSocketClient.cs" />
-    <Compile Include="AsyncTcpSocketServer.cs" />
-    <Compile Include="TcpSocketServer.cs" />
+    <Compile Include="Tcp\TcpSocketClient.cs" />
+    <Compile Include="Tcp\AsyncTcpSocketServer.cs" />
+    <Compile Include="Tcp\TcpSocketServer.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Cowboy.Buffer\Cowboy.Buffer.csproj">
