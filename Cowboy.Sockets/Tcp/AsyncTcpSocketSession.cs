@@ -13,9 +13,14 @@ namespace Cowboy.Sockets
         private readonly TcpClient _tcpClient;
         private readonly TcpSocketServerConfiguration _configuration;
         private readonly IBufferManager _bufferManager;
+        private readonly IAsyncTcpSocketServerMessageDispatcher _dispatcher;
         private readonly string _sessionKey;
 
-        public AsyncTcpSocketSession(TcpClient tcpClient, TcpSocketServerConfiguration configuration, IBufferManager bufferManager)
+        public AsyncTcpSocketSession(
+            TcpClient tcpClient,
+            TcpSocketServerConfiguration configuration,
+            IBufferManager bufferManager,
+            IAsyncTcpSocketServerMessageDispatcher dispatcher)
         {
             if (tcpClient == null)
                 throw new ArgumentNullException("tcpClient");
@@ -23,10 +28,13 @@ namespace Cowboy.Sockets
                 throw new ArgumentNullException("configuration");
             if (bufferManager == null)
                 throw new ArgumentNullException("bufferManager");
+            if (dispatcher == null)
+                throw new ArgumentNullException("dispatcher");
 
             _tcpClient = tcpClient;
             _configuration = configuration;
             _bufferManager = bufferManager;
+            _dispatcher = dispatcher;
 
             _sessionKey = Guid.NewGuid().ToString();
         }
@@ -50,7 +58,7 @@ namespace Cowboy.Sockets
 
                     if (!_configuration.IsPackingEnabled)
                     {
-                        //await ReceiveBinaryMessage(this, receiveBuffer, 0, receiveCount);
+                        await _dispatcher.Dispatch(this, receiveBuffer, 0, receiveCount);
                     }
                     else
                     {
@@ -61,7 +69,7 @@ namespace Cowboy.Sockets
                             var packetHeader = TcpPacketHeader.ReadHeader(sessionBuffer);
                             if (TcpPacketHeader.HEADER_SIZE + packetHeader.PayloadSize <= sessionBufferCount)
                             {
-                                //await ReceiveBinaryMessage(this, sessionBuffer, TcpPacketHeader.HEADER_SIZE, packetHeader.PayloadSize);
+                                await _dispatcher.Dispatch(this, sessionBuffer, TcpPacketHeader.HEADER_SIZE, packetHeader.PayloadSize);
                                 ShiftBuffer(TcpPacketHeader.HEADER_SIZE + packetHeader.PayloadSize, ref sessionBuffer, ref sessionBufferCount);
                             }
                             else
@@ -83,9 +91,19 @@ namespace Cowboy.Sockets
             }
         }
 
+        public async Task Send(byte[] data)
+        {
+            await Send(data, 0, data.Length);
+        }
+
+        public async Task Send(byte[] data, int offset, int count)
+        {
+            await _tcpClient.GetStream().WriteAsync(data, offset, count);
+        }
+
         public void Close()
         {
-            _tcpClient.Client.Disconnect(false);
+            _tcpClient.Close();
         }
 
         private void AppendBuffer(byte[] receiveBuffer, int receiveCount, ref byte[] sessionBuffer, ref int sessionBufferCount)

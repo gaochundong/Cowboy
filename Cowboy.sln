@@ -48,6 +48,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Sockets.TestServer",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Sockets.TestClient", "Tests\Cowboy.Sockets.TestClient\Cowboy.Sockets.TestClient.csproj", "{4A35D220-0CD3-4514-86E1-E55B8F517E24}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Sockets.TestAsyncServer", "Tests\Cowboy.Sockets.TestAsyncServer\Cowboy.Sockets.TestAsyncServer.csproj", "{A1E6F527-386A-46C0-9A04-92CD0129662F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -122,6 +124,10 @@ Global
 		{4A35D220-0CD3-4514-86E1-E55B8F517E24}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4A35D220-0CD3-4514-86E1-E55B8F517E24}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4A35D220-0CD3-4514-86E1-E55B8F517E24}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1E6F527-386A-46C0-9A04-92CD0129662F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1E6F527-386A-46C0-9A04-92CD0129662F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1E6F527-386A-46C0-9A04-92CD0129662F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1E6F527-386A-46C0-9A04-92CD0129662F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -131,5 +137,6 @@ Global
 		{3231D52B-1EE7-4CD5-B72D-96E8DC267E68} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
 		{B07B5EB4-1892-465E-BC17-150EDC281EB5} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
 		{4A35D220-0CD3-4514-86E1-E55B8F517E24} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
+		{A1E6F527-386A-46C0-9A04-92CD0129662F} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
 	EndGlobalSection
 EndGlobal

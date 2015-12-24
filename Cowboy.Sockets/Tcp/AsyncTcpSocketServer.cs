@@ -18,27 +18,31 @@ namespace Cowboy.Sockets
         private readonly ConcurrentDictionary<string, AsyncTcpSocketSession> _sessions = new ConcurrentDictionary<string, AsyncTcpSocketSession>();
         private readonly object _opsLock = new object();
         private readonly TcpSocketServerConfiguration _configuration;
+        private readonly IAsyncTcpSocketServerMessageDispatcher _dispatcher;
 
         #endregion
 
         #region Constructors
 
-        public AsyncTcpSocketServer(int listenedPort, TcpSocketServerConfiguration configuration = null)
-            : this(IPAddress.Any, listenedPort, configuration)
+        public AsyncTcpSocketServer(int listenedPort, IAsyncTcpSocketServerMessageDispatcher dispatcher, TcpSocketServerConfiguration configuration = null)
+            : this(IPAddress.Any, listenedPort, dispatcher, configuration)
         {
         }
 
-        public AsyncTcpSocketServer(IPAddress listenedAddress, int listenedPort, TcpSocketServerConfiguration configuration = null)
-            : this(new IPEndPoint(listenedAddress, listenedPort), configuration)
+        public AsyncTcpSocketServer(IPAddress listenedAddress, int listenedPort, IAsyncTcpSocketServerMessageDispatcher dispatcher, TcpSocketServerConfiguration configuration = null)
+            : this(new IPEndPoint(listenedAddress, listenedPort), dispatcher, configuration)
         {
         }
 
-        public AsyncTcpSocketServer(IPEndPoint listenedEndPoint, TcpSocketServerConfiguration configuration = null)
+        public AsyncTcpSocketServer(IPEndPoint listenedEndPoint, IAsyncTcpSocketServerMessageDispatcher dispatcher, TcpSocketServerConfiguration configuration = null)
         {
             if (listenedEndPoint == null)
                 throw new ArgumentNullException("listenedEndPoint");
+            if (dispatcher == null)
+                throw new ArgumentNullException("dispatcher");
 
             this.ListenedEndPoint = listenedEndPoint;
+            _dispatcher = dispatcher;
             _configuration = configuration ?? new TcpSocketServerConfiguration();
 
             Initialize();
@@ -135,7 +139,7 @@ namespace Cowboy.Sockets
             while (Active)
             {
                 var tcpClient = await _listener.AcceptTcpClientAsync();
-                var session = new AsyncTcpSocketSession(tcpClient, _configuration, _bufferManager);
+                var session = new AsyncTcpSocketSession(tcpClient, _configuration, _bufferManager, _dispatcher);
                 Task.Run(async () =>
                 {
                     await Process(session);
@@ -158,6 +162,51 @@ namespace Cowboy.Sockets
                     AsyncTcpSocketSession throwAway;
                     _sessions.TryRemove(sessionKey, out throwAway);
                 }
+            }
+        }
+
+        #endregion
+
+        #region Send
+
+        public async Task SendTo(string sessionKey, byte[] data)
+        {
+            await SendTo(sessionKey, data, 0, data.Length);
+        }
+
+        public async Task SendTo(string sessionKey, byte[] data, int offset, int count)
+        {
+            AsyncTcpSocketSession sessionFound;
+            if (_sessions.TryGetValue(sessionKey, out sessionFound))
+            {
+                await sessionFound.Send(data, offset, count);
+            }
+        }
+
+        public async Task SendTo(AsyncTcpSocketSession session, byte[] data)
+        {
+            await SendTo(session, data, 0, data.Length);
+        }
+
+        public async Task SendTo(AsyncTcpSocketSession session, byte[] data, int offset, int count)
+        {
+            AsyncTcpSocketSession sessionFound;
+            if (_sessions.TryGetValue(session.SessionKey, out sessionFound))
+            {
+                await sessionFound.Send(data, offset, count);
+            }
+        }
+
+        public async Task Broadcast(byte[] data)
+        {
+            await Broadcast(data, 0, data.Length);
+        }
+
+        public async Task Broadcast(byte[] data, int offset, int count)
+        {
+            foreach (var session in _sessions.Values)
+            {
+                await session.Send(data, offset, count);
             }
         }
 
