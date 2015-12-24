@@ -38,7 +38,7 @@ namespace Cowboy.Sockets.TestClient
             _client = new TcpSocketClient(remoteEP, localEP);
             _client.ServerConnected += client_ServerConnected;
             _client.ServerDisconnected += client_ServerDisconnected;
-            _client.DataReceived += client_DataReceived;
+            _client.ServerDataReceived += client_ServerDataReceived;
             _client.Connect();
         }
 
@@ -52,10 +52,10 @@ namespace Cowboy.Sockets.TestClient
             Console.WriteLine(string.Format("TCP server {0} has disconnected.", e.RemoteEndPoint.ToString()));
         }
 
-        static void client_DataReceived(object sender, TcpDataReceivedEventArgs e)
+        static void client_ServerDataReceived(object sender, TcpServerDataReceivedEventArgs e)
         {
             var text = Encoding.UTF8.GetString(e.Data, e.DataOffset, e.DataLength);
-            Console.Write(string.Format("Server : {0} --> ", e.Session.RemoteEndPoint.ToString()));
+            Console.Write(string.Format("Server : {0} --> ", e.Client.RemoteEndPoint.ToString()));
             Console.WriteLine(string.Format("{0}", text));
         }
     }

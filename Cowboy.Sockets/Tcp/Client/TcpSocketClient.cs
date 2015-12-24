@@ -7,18 +7,20 @@ using Cowboy.Logging;
 
 namespace Cowboy.Sockets
 {
-    public class TcpSocketClient : IDisposable
+    public class TcpSocketClient
     {
         #region Fields
 
         private static readonly ILog _log = Logger.Get<TcpSocketClient>();
         private IBufferManager _bufferManager;
         private TcpClient _tcpClient;
-        private TcpSocketSession _session;
-        private bool _disposed = false;
+        private readonly object _opsLock = new object();
         private readonly TcpSocketClientConfiguration _configuration;
         private readonly IPEndPoint _remoteEndPoint;
         private readonly IPEndPoint _localEndPoint;
+        private byte[] _receiveBuffer;
+        private byte[] _sessionBuffer;
+        private int _sessionBufferCount = 0;
 
         #endregion
 
@@ -58,41 +60,46 @@ namespace Cowboy.Sockets
             }
 
             _bufferManager = new GrowingByteBufferManager(_configuration.InitialBufferAllocationCount, _configuration.ReceiveBufferSize);
-            _session = new TcpSocketSession(_tcpClient, _bufferManager);
+
+            _receiveBuffer = _bufferManager.BorrowBuffer();
+            _sessionBuffer = _bufferManager.BorrowBuffer();
+            _sessionBufferCount = 0;
         }
 
         #endregion
 
         #region Properties
 
-        public bool Connected { get { return _session != null && _session.Connected; } }
-        public EndPoint RemoteEndPoint { get { return _session.RemoteEndPoint; } }
-        public EndPoint LocalEndPoint { get { return _session.LocalEndPoint; } }
+        public bool Connected { get { return _tcpClient.Client.Connected; } }
+        public EndPoint RemoteEndPoint { get { return _tcpClient.Client.RemoteEndPoint; } }
+        public EndPoint LocalEndPoint { get { return _tcpClient.Client.LocalEndPoint; } }
 
         #endregion
 
         #region Connect
 
-        public TcpSocketClient Connect()
+        public void Connect()
         {
-            if (!Connected)
+            lock (_opsLock)
             {
-                _session.TcpClient.Client.BeginConnect(_remoteEndPoint, HandleTcpServerConnected, _session);
+                if (!Connected)
+                {
+                    _tcpClient.BeginConnect(_remoteEndPoint.Address, _remoteEndPoint.Port, HandleTcpServerConnected, _tcpClient);
+                }
             }
-
-            return this;
         }
 
-        public TcpSocketClient Close()
+        public void Close()
         {
-            if (Connected)
+            lock (_opsLock)
             {
-                _session.Close();
+                if (Connected)
+                {
+                    _tcpClient.Close();
+                }
+
+                RaiseServerDisconnected();
             }
-
-            RaiseServerDisconnected();
-
-            return this;
         }
 
         #endregion
@@ -103,12 +110,11 @@ namespace Cowboy.Sockets
         {
             try
             {
-                var session = (TcpSocketSession)ar.AsyncState;
-                session.TcpClient.Client.EndConnect(ar);
+                _tcpClient.EndConnect(ar);
                 RaiseServerConnected();
 
                 // we are connected successfully and start async read operation.
-                ContinueReadBuffer(session);
+                ContinueReadBuffer();
             }
             catch (Exception ex)
             {
@@ -116,7 +122,7 @@ namespace Cowboy.Sockets
             }
         }
 
-        private void ContinueReadBuffer(TcpSocketSession session)
+        private void ContinueReadBuffer()
         {
             try
             {
@@ -125,7 +131,7 @@ namespace Cowboy.Sockets
                 // size : The number of bytes to read from the NetworkStream.
                 // callback : The AsyncCallback delegate that is executed when BeginRead completes.
                 // state : An object that contains any additional user-defined data.
-                session.Stream.BeginRead(session.ReceiveBuffer, 0, session.ReceiveBuffer.Length, HandleDataReceived, session);
+                _tcpClient.GetStream().BeginRead(_receiveBuffer, 0, _receiveBuffer.Length, HandleDataReceived, _tcpClient);
             }
             catch (Exception ex)
             {
@@ -138,9 +144,6 @@ namespace Cowboy.Sockets
         {
             try
             {
-                var session = (TcpSocketSession)ar.AsyncState;
-                if (!session.Connected) return;
-
                 int numberOfReadBytes = 0;
                 try
                 {
@@ -149,7 +152,7 @@ namespace Cowboy.Sockets
                     // parameter of the BeginRead method. If the remote host shuts down the Socket 
                     // connection and all available data has been received, the EndRead method 
                     // completes immediately and returns zero bytes.
-                    numberOfReadBytes = session.Stream.EndRead(ar);
+                    numberOfReadBytes = _tcpClient.GetStream().EndRead(ar);
                 }
                 catch (Exception ex)
                 {
@@ -169,10 +172,10 @@ namespace Cowboy.Sockets
                 }
 
                 // received bytes and trigger notifications
-                ReceiveBuffer(session, numberOfReadBytes);
+                ReceiveBuffer(numberOfReadBytes);
 
                 // then start reading from the network again
-                ContinueReadBuffer(session);
+                ContinueReadBuffer();
             }
             catch (Exception ex)
             {
@@ -181,16 +184,12 @@ namespace Cowboy.Sockets
             }
         }
 
-        private void ReceiveBuffer(TcpSocketSession session, int receivedBufferLength)
+        private void ReceiveBuffer(int receivedBufferLength)
         {
             if (!_configuration.IsPackingEnabled)
             {
-                // in the scenario, actually we don't know the length of the message packet, so just guess.
-                byte[] receivedBytes = new byte[receivedBufferLength];
-                System.Buffer.BlockCopy(session.ReceiveBuffer, 0, receivedBytes, 0, receivedBufferLength);
-
                 // yeah, we received the buffer and then raise it to user side to handle.
-                RaiseDataReceived(session, receivedBytes, 0, receivedBufferLength);
+                RaiseServerDataReceived(_receiveBuffer, 0, receivedBufferLength);
             }
             else
             {
@@ -209,13 +208,17 @@ namespace Cowboy.Sockets
                 //   2. use a fixed length header that indicates the length of the body
                 //   3. using a delimiter; for example many text-based protocols append
                 //      a newline (or CR LF pair) after every message.
-                session.AppendBuffer(receivedBufferLength);
+                AppendBuffer(receivedBufferLength);
                 while (true)
                 {
-                    var packetHeader = TcpPacketHeader.ReadHeader(session.SessionBuffer);
-                    if (TcpPacketHeader.HEADER_SIZE + packetHeader.PayloadSize <= session.SessionBufferCount)
+                    var packetHeader = TcpPacketHeader.ReadHeader(_sessionBuffer);
+                    if (TcpPacketHeader.HEADER_SIZE + packetHeader.PayloadSize <= _sessionBufferCount)
                     {
-                        RaiseReceivedBuffer(session, packetHeader.PayloadSize);
+                        // yeah, we received the buffer and then raise it to user side to handle.
+                        RaiseServerDataReceived(_sessionBuffer, TcpPacketHeader.HEADER_SIZE, packetHeader.PayloadSize);
+
+                        // remove the received packet from buffer
+                        ShiftBuffer(TcpPacketHeader.HEADER_SIZE + packetHeader.PayloadSize);
                     }
                     else
                     {
@@ -225,13 +228,52 @@ namespace Cowboy.Sockets
             }
         }
 
-        private void RaiseReceivedBuffer(TcpSocketSession session, int payloadLength)
+        private void AppendBuffer(int appendedCount)
         {
-            // yeah, we received the buffer and then raise it to user side to handle.
-            RaiseDataReceived(session, session.SessionBuffer, TcpPacketHeader.HEADER_SIZE, payloadLength);
+            if (appendedCount <= 0) return;
 
-            // remove the received packet from buffer
-            session.ShiftBuffer(TcpPacketHeader.HEADER_SIZE + payloadLength);
+            if (_sessionBuffer.Length < (_sessionBufferCount + appendedCount))
+            {
+                byte[] autoExpandedBuffer = _bufferManager.BorrowBuffer();
+                if (autoExpandedBuffer.Length < (_sessionBufferCount + appendedCount) * 2)
+                {
+                    _bufferManager.ReturnBuffer(autoExpandedBuffer);
+                    autoExpandedBuffer = new byte[(_sessionBufferCount + appendedCount) * 2];
+                }
+
+                Array.Copy(_sessionBuffer, 0, autoExpandedBuffer, 0, _sessionBufferCount);
+
+                var discardBuffer = _sessionBuffer;
+                _sessionBuffer = autoExpandedBuffer;
+                _bufferManager.ReturnBuffer(discardBuffer);
+            }
+
+            Array.Copy(_receiveBuffer, 0, _sessionBuffer, _sessionBufferCount, appendedCount);
+            _sessionBufferCount = _sessionBufferCount + appendedCount;
+        }
+
+        private void ShiftBuffer(int shiftStart)
+        {
+            if ((_sessionBufferCount - shiftStart) < shiftStart)
+            {
+                Array.Copy(_sessionBuffer, shiftStart, _sessionBuffer, 0, _sessionBufferCount - shiftStart);
+                _sessionBufferCount = _sessionBufferCount - shiftStart;
+            }
+            else
+            {
+                byte[] copyBuffer = _bufferManager.BorrowBuffer();
+                if (copyBuffer.Length < (_sessionBufferCount - shiftStart))
+                {
+                    _bufferManager.ReturnBuffer(copyBuffer);
+                    copyBuffer = new byte[_sessionBufferCount - shiftStart];
+                }
+
+                Array.Copy(_sessionBuffer, shiftStart, copyBuffer, 0, _sessionBufferCount - shiftStart);
+                Array.Copy(copyBuffer, 0, _sessionBuffer, 0, _sessionBufferCount - shiftStart);
+                _sessionBufferCount = _sessionBufferCount - shiftStart;
+
+                _bufferManager.ReturnBuffer(copyBuffer);
+            }
         }
 
         #endregion
@@ -253,13 +295,13 @@ namespace Cowboy.Sockets
             {
                 if (!_configuration.IsPackingEnabled)
                 {
-                    _session.Stream.BeginWrite(data, 0, data.Length, HandleDataWritten, _session);
+                    _tcpClient.GetStream().BeginWrite(data, 0, data.Length, HandleDataWritten, _tcpClient);
                 }
                 else
                 {
                     var packet = TcpPacket.FromPayload(data);
                     var packetArray = packet.ToArray();
-                    _session.Stream.BeginWrite(packetArray, 0, packetArray.Length, HandleDataWritten, _session);
+                    _tcpClient.GetStream().BeginWrite(packetArray, 0, packetArray.Length, HandleDataWritten, _tcpClient);
                 }
             }
             catch (Exception ex)
@@ -273,7 +315,7 @@ namespace Cowboy.Sockets
         {
             try
             {
-                ((TcpSocketSession)ar.AsyncState).Stream.EndWrite(ar);
+                _tcpClient.GetStream().EndWrite(ar);
             }
             catch (Exception ex)
             {
@@ -305,7 +347,7 @@ namespace Cowboy.Sockets
 
         public event EventHandler<TcpServerConnectedEventArgs> ServerConnected;
         public event EventHandler<TcpServerDisconnectedEventArgs> ServerDisconnected;
-        public event EventHandler<TcpDataReceivedEventArgs> DataReceived;
+        public event EventHandler<TcpServerDataReceivedEventArgs> ServerDataReceived;
 
         private void RaiseServerConnected()
         {
@@ -337,13 +379,13 @@ namespace Cowboy.Sockets
             }
         }
 
-        private void RaiseDataReceived(TcpSocketSession session, byte[] data, int dataOffset, int dataLength)
+        private void RaiseServerDataReceived(byte[] data, int dataOffset, int dataLength)
         {
             try
             {
-                if (DataReceived != null)
+                if (ServerDataReceived != null)
                 {
-                    DataReceived(this, new TcpDataReceivedEventArgs(session, data, dataOffset, dataLength));
+                    ServerDataReceived(this, new TcpServerDataReceivedEventArgs(this, data, dataOffset, dataLength));
                 }
             }
             catch (Exception ex)
@@ -355,46 +397,6 @@ namespace Cowboy.Sockets
         private static void HandleUserSideError(Exception ex)
         {
             _log.Error(string.Format("Error occurred in user side [{0}].", ex.Message), ex);
-        }
-
-        #endregion
-
-        #region IDisposable Members
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!this._disposed)
-            {
-                if (disposing)
-                {
-                    try
-                    {
-                        Close();
-
-                        if (_tcpClient != null)
-                        {
-                            _tcpClient = null;
-                        }
-
-                        if (_session != null)
-                        {
-                            _session = null;
-                        }
-                    }
-                    catch (SocketException ex)
-                    {
-                        _log.Error(ex.Message, ex);
-                    }
-                }
-
-                _disposed = true;
-            }
         }
 
         #endregion

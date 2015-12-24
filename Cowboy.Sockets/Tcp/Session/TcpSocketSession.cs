@@ -11,6 +11,7 @@ namespace Cowboy.Sockets
         private static readonly ILog _log = Logger.Get<TcpSocketSession>();
         private readonly object _sync = new object();
         private readonly IBufferManager _bufferManager;
+        private readonly TcpClient _tcpClient;
         private readonly string _sessionKey;
 
         public TcpSocketSession(TcpClient tcpClient, IBufferManager bufferManager)
@@ -20,7 +21,7 @@ namespace Cowboy.Sockets
             if (bufferManager == null)
                 throw new ArgumentNullException("bufferManager");
 
-            this.TcpClient = tcpClient;
+            _tcpClient = tcpClient;
             _bufferManager = bufferManager;
 
             this.ReceiveBuffer = _bufferManager.BorrowBuffer();
@@ -32,11 +33,10 @@ namespace Cowboy.Sockets
 
         public string SessionKey { get { return _sessionKey; } }
 
-        public TcpClient TcpClient { get; private set; }
-        public NetworkStream Stream { get { return this.TcpClient.GetStream(); } }
-        public EndPoint RemoteEndPoint { get { return this.TcpClient.Client.RemoteEndPoint; } }
-        public EndPoint LocalEndPoint { get { return this.TcpClient.Client.LocalEndPoint; } }
-        public bool Connected { get { return this.TcpClient.Client.Connected; } }
+        public NetworkStream Stream { get { return _tcpClient.GetStream(); } }
+        public EndPoint RemoteEndPoint { get { return _tcpClient.Client.RemoteEndPoint; } }
+        public EndPoint LocalEndPoint { get { return _tcpClient.Client.LocalEndPoint; } }
+        public bool Connected { get { return _tcpClient.Client.Connected; } }
 
         public byte[] ReceiveBuffer { get; private set; }
         public byte[] SessionBuffer { get; private set; }
@@ -100,7 +100,7 @@ namespace Cowboy.Sockets
         {
             try
             {
-                this.TcpClient.Client.Disconnect(false);
+                _tcpClient.Client.Disconnect(false);
             }
             finally
             {

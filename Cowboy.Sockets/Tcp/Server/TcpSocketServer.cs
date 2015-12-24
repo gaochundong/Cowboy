@@ -259,7 +259,7 @@ namespace Cowboy.Sockets
                 System.Buffer.BlockCopy(session.ReceiveBuffer, 0, receivedBytes, 0, receivedBufferCount);
 
                 // yeah, we received the buffer and then raise it to user side to handle.
-                RaiseDataReceived(session, receivedBytes, 0, receivedBufferCount);
+                RaiseClientDataReceived(session, receivedBytes, 0, receivedBufferCount);
             }
             else
             {
@@ -297,7 +297,7 @@ namespace Cowboy.Sockets
         private void RaiseReceivedBuffer(TcpSocketSession session, int payloadLength)
         {
             // yeah, we received the buffer and then raise it to user side to handle.
-            RaiseDataReceived(session, session.SessionBuffer, TcpPacketHeader.HEADER_SIZE, payloadLength);
+            RaiseClientDataReceived(session, session.SessionBuffer, TcpPacketHeader.HEADER_SIZE, payloadLength);
 
             // remove the received packet from buffer
             session.ShiftBuffer(TcpPacketHeader.HEADER_SIZE + payloadLength);
@@ -395,7 +395,7 @@ namespace Cowboy.Sockets
 
         public event EventHandler<TcpClientConnectedEventArgs> ClientConnected;
         public event EventHandler<TcpClientDisconnectedEventArgs> ClientDisconnected;
-        public event EventHandler<TcpDataReceivedEventArgs> DataReceived;
+        public event EventHandler<TcpClientDataReceivedEventArgs> ClientDataReceived;
 
         private void RaiseClientConnected(TcpSocketSession session)
         {
@@ -427,13 +427,13 @@ namespace Cowboy.Sockets
             }
         }
 
-        private void RaiseDataReceived(TcpSocketSession sender, byte[] data, int dataOffset, int dataLength)
+        private void RaiseClientDataReceived(TcpSocketSession sender, byte[] data, int dataOffset, int dataLength)
         {
             try
             {
-                if (DataReceived != null)
+                if (ClientDataReceived != null)
                 {
-                    DataReceived(this, new TcpDataReceivedEventArgs(sender, data, dataOffset, dataLength));
+                    ClientDataReceived(this, new TcpClientDataReceivedEventArgs(sender, data, dataOffset, dataLength));
                 }
             }
             catch (Exception ex)

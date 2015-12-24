@@ -35,7 +35,7 @@ namespace Cowboy.Sockets.TestServer
             _server = new TcpSocketServer(22222);
             _server.ClientConnected += server_ClientConnected;
             _server.ClientDisconnected += server_ClientDisconnected;
-            _server.DataReceived += server_DataReceived;
+            _server.ClientDataReceived += server_ClientDataReceived;
             _server.Start();
         }
 
@@ -49,7 +49,7 @@ namespace Cowboy.Sockets.TestServer
             Console.WriteLine(string.Format("TCP client {0} has disconnected.", e.Session.RemoteEndPoint.ToString()));
         }
 
-        static void server_DataReceived(object sender, TcpDataReceivedEventArgs e)
+        static void server_ClientDataReceived(object sender, TcpClientDataReceivedEventArgs e)
         {
             var text = Encoding.UTF8.GetString(e.Data, e.DataOffset, e.DataLength);
             Console.Write(string.Format("Client : {0} --> ", e.Session.RemoteEndPoint.ToString()));

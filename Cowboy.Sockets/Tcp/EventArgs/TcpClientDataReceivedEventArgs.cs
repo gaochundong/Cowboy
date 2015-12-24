@@ -2,14 +2,14 @@
 
 namespace Cowboy.Sockets
 {
-    public class TcpDataReceivedEventArgs : EventArgs
+    public class TcpClientDataReceivedEventArgs : EventArgs
     {
-        public TcpDataReceivedEventArgs(TcpSocketSession session, byte[] data)
+        public TcpClientDataReceivedEventArgs(TcpSocketSession session, byte[] data)
             : this(session, data, 0, data.Length)
         {
         }
 
-        public TcpDataReceivedEventArgs(TcpSocketSession session, byte[] data, int dataOffset, int dataLength)
+        public TcpClientDataReceivedEventArgs(TcpSocketSession session, byte[] data, int dataOffset, int dataLength)
         {
             Session = session;
             Data = data;
