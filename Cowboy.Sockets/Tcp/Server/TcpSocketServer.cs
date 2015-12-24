@@ -304,6 +304,22 @@ namespace Cowboy.Sockets
                 throw new InvalidProgramException("This TCP server has not been started yet.");
         }
 
+        public void SendTo(string sessionKey, byte[] data)
+        {
+            GuardRunning();
+
+            if (string.IsNullOrEmpty(sessionKey))
+                throw new ArgumentNullException("sessionKey");
+
+            if (data == null)
+                throw new ArgumentNullException("data");
+
+            TcpSocketSession session = null;
+            if (!_sessions.TryGetValue(sessionKey, out session)) return;
+
+            SendTo(session, data);
+        }
+
         public void SendTo(TcpSocketSession session, byte[] data)
         {
             GuardRunning();
@@ -323,13 +339,13 @@ namespace Cowboy.Sockets
                 {
                     if (!_configuration.IsPackingEnabled)
                     {
-                        writeSession.Stream.BeginWrite(data, 0, data.Length, HandleDataWritten, session);
+                        writeSession.Stream.BeginWrite(data, 0, data.Length, HandleDataWritten, writeSession);
                     }
                     else
                     {
                         var packet = TcpPacket.FromPayload(data);
                         var packetArray = packet.ToArray();
-                        writeSession.Stream.BeginWrite(packetArray, 0, packetArray.Length, HandleDataWritten, session);
+                        writeSession.Stream.BeginWrite(packetArray, 0, packetArray.Length, HandleDataWritten, writeSession);
                     }
                 }
             }
@@ -340,7 +356,7 @@ namespace Cowboy.Sockets
             }
         }
 
-        public void SendToAll(byte[] data)
+        public void Broadcast(byte[] data)
         {
             GuardRunning();
 

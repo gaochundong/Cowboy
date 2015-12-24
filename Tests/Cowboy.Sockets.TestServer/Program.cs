@@ -21,7 +21,7 @@ namespace Cowboy.Sockets.TestServer
                 try
                 {
                     string text = Console.ReadLine();
-                    _server.SendToAll(Encoding.UTF8.GetBytes(text));
+                    _server.Broadcast(Encoding.UTF8.GetBytes(text));
                 }
                 catch (Exception ex)
                 {
@@ -54,7 +54,7 @@ namespace Cowboy.Sockets.TestServer
             var text = Encoding.UTF8.GetString(e.Data, e.DataOffset, e.DataLength);
             Console.Write(string.Format("Client : {0} --> ", e.Session.RemoteEndPoint.ToString()));
             Console.WriteLine(string.Format("{0}", text));
-            _server.SendToAll(Encoding.UTF8.GetBytes(text));
+            _server.Broadcast(Encoding.UTF8.GetBytes(text));
         }
     }
 }
