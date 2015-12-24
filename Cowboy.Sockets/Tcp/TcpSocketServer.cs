@@ -8,7 +8,7 @@ using Cowboy.Logging;
 
 namespace Cowboy.Sockets
 {
-    public class TcpSocketServer : IDisposable
+    public class TcpSocketServer
     {
         #region Fields
 
@@ -18,7 +18,6 @@ namespace Cowboy.Sockets
         private readonly ConcurrentDictionary<string, TcpSocketSession> _sessions = new ConcurrentDictionary<string, TcpSocketSession>();
         private readonly object _opsLock = new object();
         private readonly TcpSocketServerConfiguration _configuration;
-        private bool _disposed = false;
 
         #endregion
 
@@ -97,6 +96,7 @@ namespace Cowboy.Sockets
                         CloseSession(session);
                     }
                     _sessions.Clear();
+                    _listener = null;
                 }
                 catch (Exception ex)
                 {
@@ -452,41 +452,6 @@ namespace Cowboy.Sockets
         private static void HandleUserSideError(Exception ex)
         {
             _log.Error(string.Format("Error occurred in user side [{0}].", ex.Message), ex);
-        }
-
-        #endregion
-
-        #region IDisposable Members
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!this._disposed)
-            {
-                if (disposing)
-                {
-                    try
-                    {
-                        Stop();
-
-                        if (_listener != null)
-                        {
-                            _listener = null;
-                        }
-                    }
-                    catch (SocketException ex)
-                    {
-                        _log.Error(ex.Message, ex);
-                    }
-                }
-
-                _disposed = true;
-            }
         }
 
         #endregion
