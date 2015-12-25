@@ -1,6 +1,9 @@
 ﻿using System;
+using System.IO;
 using System.Net;
+using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Cowboy.Buffer;
 using Cowboy.Logging;
@@ -15,9 +18,10 @@ namespace Cowboy.Sockets
         private IBufferManager _bufferManager;
         private TcpClient _tcpClient;
         private readonly IAsyncTcpSocketClientMessageDispatcher _dispatcher;
-        private readonly TcpSocketClientConfiguration _configuration;
+        private readonly AsyncTcpSocketClientConfiguration _configuration;
         private readonly IPEndPoint _remoteEndPoint;
         private readonly IPEndPoint _localEndPoint;
+        private Stream _stream;
         private byte[] _receiveBuffer;
         private byte[] _sessionBuffer;
         private int _sessionBufferCount = 0;
@@ -26,27 +30,27 @@ namespace Cowboy.Sockets
 
         #region Constructors
 
-        public AsyncTcpSocketClient(IPAddress remoteIPAddress, int remotePort, IPAddress localIPAddress, int localPort, IAsyncTcpSocketClientMessageDispatcher dispatcher, TcpSocketClientConfiguration configuration = null)
+        public AsyncTcpSocketClient(IPAddress remoteIPAddress, int remotePort, IPAddress localIPAddress, int localPort, IAsyncTcpSocketClientMessageDispatcher dispatcher, AsyncTcpSocketClientConfiguration configuration = null)
             : this(new IPEndPoint(remoteIPAddress, remotePort), new IPEndPoint(localIPAddress, localPort), dispatcher, configuration)
         {
         }
 
-        public AsyncTcpSocketClient(IPAddress remoteIPAddress, int remotePort, IPEndPoint localEP, IAsyncTcpSocketClientMessageDispatcher dispatcher, TcpSocketClientConfiguration configuration = null)
+        public AsyncTcpSocketClient(IPAddress remoteIPAddress, int remotePort, IPEndPoint localEP, IAsyncTcpSocketClientMessageDispatcher dispatcher, AsyncTcpSocketClientConfiguration configuration = null)
             : this(new IPEndPoint(remoteIPAddress, remotePort), localEP, dispatcher, configuration)
         {
         }
 
-        public AsyncTcpSocketClient(IPAddress remoteIPAddress, int remotePort, IAsyncTcpSocketClientMessageDispatcher dispatcher, TcpSocketClientConfiguration configuration = null)
+        public AsyncTcpSocketClient(IPAddress remoteIPAddress, int remotePort, IAsyncTcpSocketClientMessageDispatcher dispatcher, AsyncTcpSocketClientConfiguration configuration = null)
             : this(new IPEndPoint(remoteIPAddress, remotePort), dispatcher, configuration)
         {
         }
 
-        public AsyncTcpSocketClient(IPEndPoint remoteEP, IAsyncTcpSocketClientMessageDispatcher dispatcher, TcpSocketClientConfiguration configuration = null)
+        public AsyncTcpSocketClient(IPEndPoint remoteEP, IAsyncTcpSocketClientMessageDispatcher dispatcher, AsyncTcpSocketClientConfiguration configuration = null)
             : this(remoteEP, null, dispatcher, configuration)
         {
         }
 
-        public AsyncTcpSocketClient(IPEndPoint remoteEP, IPEndPoint localEP, IAsyncTcpSocketClientMessageDispatcher dispatcher, TcpSocketClientConfiguration configuration = null)
+        public AsyncTcpSocketClient(IPEndPoint remoteEP, IPEndPoint localEP, IAsyncTcpSocketClientMessageDispatcher dispatcher, AsyncTcpSocketClientConfiguration configuration = null)
         {
             if (remoteEP == null)
                 throw new ArgumentNullException("remoteEP");
@@ -56,7 +60,7 @@ namespace Cowboy.Sockets
             _remoteEndPoint = remoteEP;
             _localEndPoint = localEP;
             _dispatcher = dispatcher;
-            _configuration = configuration ?? new TcpSocketClientConfiguration();
+            _configuration = configuration ?? new AsyncTcpSocketClientConfiguration();
 
             Initialize();
         }
@@ -111,9 +115,11 @@ namespace Cowboy.Sockets
 
             try
             {
+                _stream = await NegotiateStream(_tcpClient.GetStream());
+
                 while (Connected)
                 {
-                    int receiveCount = await _tcpClient.GetStream().ReadAsync(_receiveBuffer, 0, _receiveBuffer.Length);
+                    int receiveCount = await _stream.ReadAsync(_receiveBuffer, 0, _receiveBuffer.Length);
                     if (receiveCount == 0)
                         break;
 
@@ -141,7 +147,12 @@ namespace Cowboy.Sockets
                     }
                 }
             }
-            catch (SocketException) { }
+            catch (Exception ex)
+            {
+                _log.Error(ex.Message, ex);
+                if (!(ex is SocketException))
+                    throw;
+            }
             finally
             {
                 _bufferManager.ReturnBuffer(_receiveBuffer);
@@ -161,6 +172,44 @@ namespace Cowboy.Sockets
             {
                 _tcpClient.Close();
             }
+        }
+
+        private async Task<Stream> NegotiateStream(Stream stream)
+        {
+            if (!_configuration.UseSsl)
+                return stream;
+
+            var validateRemoteCertificate = new RemoteCertificateValidationCallback(
+                (object sender,
+                X509Certificate certificate,
+                X509Chain chain,
+                SslPolicyErrors sslPolicyErrors)
+                =>
+                {
+                    if (sslPolicyErrors == SslPolicyErrors.None)
+                        return true;
+
+                    if (_configuration.SslPolicyErrorsBypassed)
+                        return true;
+                    else
+                        _log.ErrorFormat("Error occurred when validating remote certificate: [{0}], [{1}].", this.RemoteEndPoint, sslPolicyErrors);
+
+                    return false;
+                });
+            var sslStream = new SslStream(
+                stream,
+                false,
+                validateRemoteCertificate,
+                null,
+                _configuration.SslEncryptionPolicy);
+
+            await sslStream.AuthenticateAsClientAsync(
+                _remoteEndPoint.Address.ToString(),
+                _configuration.SslClientCertificates,
+                _configuration.SslEnabledProtocols,
+                _configuration.SslCheckCertificateRevocation);
+
+            return sslStream;
         }
 
         private void AppendBuffer(byte[] receiveBuffer, int receiveCount, ref byte[] sessionBuffer, ref int sessionBufferCount)
@@ -222,13 +271,13 @@ namespace Cowboy.Sockets
         {
             if (!_configuration.IsPackingEnabled)
             {
-                await _tcpClient.GetStream().WriteAsync(data, offset, count);
+                await _stream.WriteAsync(data, offset, count);
             }
             else
             {
                 var packet = TcpPacket.FromPayload(data, offset, count);
                 var packetArray = packet.ToArray();
-                await _tcpClient.GetStream().WriteAsync(packetArray, 0, packetArray.Length);
+                await _stream.WriteAsync(packetArray, 0, packetArray.Length);
             }
         }
 

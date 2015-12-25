@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using Cowboy.Logging.NLogIntegration;
@@ -13,7 +15,12 @@ namespace Cowboy.Sockets.TestAsyncServer
         {
             NLogLogger.Use();
 
-            _server = new AsyncTcpSocketServer(22222, new SimpleMessageDispatcher());
+            var config = new AsyncTcpSocketServerConfiguration();
+            config.UseSsl = true;
+            config.SslServerCertificate = new X509Certificate2(@"D:\\Cowboy.pfx", "Cowboy");
+            config.SslPolicyErrorsBypassed = true;
+
+            _server = new AsyncTcpSocketServer(22222, new SimpleMessageDispatcher(), config);
             _server.Start();
 
             Console.WriteLine("TCP server has been started on [{0}].", _server.ListenedEndPoint);

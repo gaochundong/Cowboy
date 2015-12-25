@@ -1,6 +1,10 @@
 ﻿using System;
+using System.IO;
 using System.Net;
+using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Cowboy.Buffer;
 using Cowboy.Logging;
@@ -11,15 +15,16 @@ namespace Cowboy.Sockets
     {
         private static readonly ILog _log = Logger.Get<AsyncTcpSocketSession>();
         private readonly TcpClient _tcpClient;
-        private readonly TcpSocketServerConfiguration _configuration;
+        private readonly AsyncTcpSocketServerConfiguration _configuration;
         private readonly IBufferManager _bufferManager;
         private readonly IAsyncTcpSocketServerMessageDispatcher _dispatcher;
         private readonly AsyncTcpSocketServer _server;
         private readonly string _sessionKey;
+        private Stream _stream;
 
         public AsyncTcpSocketSession(
             TcpClient tcpClient,
-            TcpSocketServerConfiguration configuration,
+            AsyncTcpSocketServerConfiguration configuration,
             IBufferManager bufferManager,
             IAsyncTcpSocketServerMessageDispatcher dispatcher,
             AsyncTcpSocketServer server)
@@ -66,9 +71,11 @@ namespace Cowboy.Sockets
 
             try
             {
+                _stream = await NegotiateStream(_tcpClient.GetStream());
+
                 while (Connected)
                 {
-                    int receiveCount = await _tcpClient.GetStream().ReadAsync(receiveBuffer, 0, receiveBuffer.Length);
+                    int receiveCount = await _stream.ReadAsync(receiveBuffer, 0, receiveBuffer.Length);
                     if (receiveCount == 0)
                         break;
 
@@ -96,7 +103,12 @@ namespace Cowboy.Sockets
                     }
                 }
             }
-            catch (SocketException) { }
+            catch (Exception ex)
+            {
+                _log.Error(ex.Message, ex);
+                if (!(ex is SocketException))
+                    throw;
+            }
             finally
             {
                 _bufferManager.ReturnBuffer(receiveBuffer);
@@ -122,22 +134,64 @@ namespace Cowboy.Sockets
         {
             if (!_configuration.IsPackingEnabled)
             {
-                await _tcpClient.GetStream().WriteAsync(data, offset, count);
+                await _stream.WriteAsync(data, offset, count);
             }
             else
             {
                 var packet = TcpPacket.FromPayload(data, offset, count);
                 var packetArray = packet.ToArray();
-                await _tcpClient.GetStream().WriteAsync(packetArray, 0, packetArray.Length);
+                await _stream.WriteAsync(packetArray, 0, packetArray.Length);
             }
         }
 
         public void Close()
         {
+            if (_stream != null)
+            {
+                _stream.Close();
+            }
             if (_tcpClient != null && _tcpClient.Connected)
             {
                 _tcpClient.Close();
             }
+        }
+
+        private async Task<Stream> NegotiateStream(Stream stream)
+        {
+            if (!_configuration.UseSsl)
+                return stream;
+
+            var validateRemoteCertificate = new RemoteCertificateValidationCallback(
+                (object sender,
+                X509Certificate certificate,
+                X509Chain chain,
+                SslPolicyErrors sslPolicyErrors)
+                =>
+                {
+                    if (sslPolicyErrors == SslPolicyErrors.None)
+                        return true;
+
+                    if (_configuration.SslPolicyErrorsBypassed)
+                        return true;
+                    else
+                        _log.ErrorFormat("Error occurred when validating remote certificate: [{0}], [{1}].", this.RemoteEndPoint, sslPolicyErrors);
+
+                    return false;
+                });
+            var sslStream = new SslStream(
+                stream,
+                false,
+                validateRemoteCertificate,
+                null,
+                _configuration.SslEncryptionPolicy);
+
+            await sslStream.AuthenticateAsServerAsync(
+                _configuration.SslServerCertificate,
+                _configuration.SslClientCertificateRequired,
+                _configuration.SslEnabledProtocols,
+                _configuration.SslCheckCertificateRevocation);
+
+            return sslStream;
         }
 
         private void AppendBuffer(byte[] receiveBuffer, int receiveCount, ref byte[] sessionBuffer, ref int sessionBufferCount)

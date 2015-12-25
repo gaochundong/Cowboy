@@ -17,24 +17,24 @@ namespace Cowboy.Sockets
         private TcpListener _listener;
         private readonly ConcurrentDictionary<string, AsyncTcpSocketSession> _sessions = new ConcurrentDictionary<string, AsyncTcpSocketSession>();
         private readonly object _opsLock = new object();
-        private readonly TcpSocketServerConfiguration _configuration;
+        private readonly AsyncTcpSocketServerConfiguration _configuration;
         private readonly IAsyncTcpSocketServerMessageDispatcher _dispatcher;
 
         #endregion
 
         #region Constructors
 
-        public AsyncTcpSocketServer(int listenedPort, IAsyncTcpSocketServerMessageDispatcher dispatcher, TcpSocketServerConfiguration configuration = null)
+        public AsyncTcpSocketServer(int listenedPort, IAsyncTcpSocketServerMessageDispatcher dispatcher, AsyncTcpSocketServerConfiguration configuration = null)
             : this(IPAddress.Any, listenedPort, dispatcher, configuration)
         {
         }
 
-        public AsyncTcpSocketServer(IPAddress listenedAddress, int listenedPort, IAsyncTcpSocketServerMessageDispatcher dispatcher, TcpSocketServerConfiguration configuration = null)
+        public AsyncTcpSocketServer(IPAddress listenedAddress, int listenedPort, IAsyncTcpSocketServerMessageDispatcher dispatcher, AsyncTcpSocketServerConfiguration configuration = null)
             : this(new IPEndPoint(listenedAddress, listenedPort), dispatcher, configuration)
         {
         }
 
-        public AsyncTcpSocketServer(IPEndPoint listenedEndPoint, IAsyncTcpSocketServerMessageDispatcher dispatcher, TcpSocketServerConfiguration configuration = null)
+        public AsyncTcpSocketServer(IPEndPoint listenedEndPoint, IAsyncTcpSocketServerMessageDispatcher dispatcher, AsyncTcpSocketServerConfiguration configuration = null)
         {
             if (listenedEndPoint == null)
                 throw new ArgumentNullException("listenedEndPoint");
@@ -43,7 +43,7 @@ namespace Cowboy.Sockets
 
             this.ListenedEndPoint = listenedEndPoint;
             _dispatcher = dispatcher;
-            _configuration = configuration ?? new TcpSocketServerConfiguration();
+            _configuration = configuration ?? new AsyncTcpSocketServerConfiguration();
 
             Initialize();
         }
