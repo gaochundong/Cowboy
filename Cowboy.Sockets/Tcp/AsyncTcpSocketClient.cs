@@ -204,7 +204,7 @@ namespace Cowboy.Sockets
                 _configuration.SslEncryptionPolicy);
 
             await sslStream.AuthenticateAsClientAsync(
-                _remoteEndPoint.Address.ToString(),
+                "Cowboy",
                 _configuration.SslClientCertificates,
                 _configuration.SslEnabledProtocols,
                 _configuration.SslCheckCertificateRevocation);

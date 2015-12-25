@@ -17,8 +17,8 @@ namespace Cowboy.Sockets.TestAsyncClient
 
             var config = new AsyncTcpSocketClientConfiguration();
             config.UseSsl = true;
-            config.SslClientCertificates.Add(new X509Certificate2(@"D:\\CowboyClient.cer"));
-            config.SslPolicyErrorsBypassed = true;
+            config.SslClientCertificates.Add(new X509Certificate2(@"D:\\Cowboy.cer"));
+            config.SslPolicyErrorsBypassed = false;
 
             IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 22222);
             IPEndPoint localEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 22221);
