@@ -16,10 +16,10 @@ namespace Cowboy.Sockets.TestAsyncClient
             NLogLogger.Use();
 
             var config = new AsyncTcpSocketClientConfiguration();
-            config.UseSsl = true;
-            config.SslTargetHost = "Cowboy";
-            config.SslClientCertificates.Add(new X509Certificate2(@"D:\\Cowboy.cer"));
-            config.SslPolicyErrorsBypassed = false;
+            //config.UseSsl = true;
+            //config.SslTargetHost = "Cowboy";
+            //config.SslClientCertificates.Add(new X509Certificate2(@"D:\\Cowboy.cer"));
+            //config.SslPolicyErrorsBypassed = false;
 
             IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 22222);
             IPEndPoint localEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 22221);
