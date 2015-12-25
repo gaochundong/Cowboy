@@ -14,7 +14,7 @@ Import Certificates
 
 Help Links
 ------------
-- [DownloadPVK Digital Certificate Files Importer](https://www.microsoft.com/en-us/download/details.aspx?id=6563)
+- [Download PVK Digital Certificate Files Importer](https://www.microsoft.com/en-us/download/details.aspx?id=6563)
 - [SSLStream example - how do I get certificates that work?](http://stackoverflow.com/questions/9982865/sslstream-example-how-do-i-get-certificates-that-work)
 - [The MakeCert tool creates an X.509 certificate](https://msdn.microsoft.com/library/windows/desktop/aa386968.aspx)
 - [Working with Certificates](https://msdn.microsoft.com/en-us/library/ms731899(v=vs.110).aspx)
