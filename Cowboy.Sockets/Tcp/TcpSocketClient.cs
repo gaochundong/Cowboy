@@ -27,12 +27,12 @@ namespace Cowboy.Sockets
         #region Constructors
 
         public TcpSocketClient(IPAddress remoteIPAddress, int remotePort, IPAddress localIPAddress, int localPort, TcpSocketClientConfiguration configuration = null)
-            : this(new IPEndPoint(remoteIPAddress, remotePort), new IPEndPoint(localIPAddress, localPort))
+            : this(new IPEndPoint(remoteIPAddress, remotePort), new IPEndPoint(localIPAddress, localPort), configuration)
         {
         }
 
         public TcpSocketClient(IPAddress remoteIPAddress, int remotePort, IPEndPoint localEP = null, TcpSocketClientConfiguration configuration = null)
-            : this(new IPEndPoint(remoteIPAddress, remotePort), localEP)
+            : this(new IPEndPoint(remoteIPAddress, remotePort), localEP, configuration)
         {
         }
 
@@ -50,27 +50,14 @@ namespace Cowboy.Sockets
 
         private void Initialize()
         {
-            if (_localEndPoint != null)
-            {
-                _tcpClient = new TcpClient(_localEndPoint);
-            }
-            else
-            {
-                _tcpClient = new TcpClient();
-            }
-
             _bufferManager = new GrowingByteBufferManager(_configuration.InitialBufferAllocationCount, _configuration.ReceiveBufferSize);
-
-            _receiveBuffer = _bufferManager.BorrowBuffer();
-            _sessionBuffer = _bufferManager.BorrowBuffer();
-            _sessionBufferCount = 0;
         }
 
         #endregion
 
         #region Properties
 
-        public bool Connected { get { return _tcpClient.Client.Connected; } }
+        public bool Connected { get { return _tcpClient != null && _tcpClient.Client.Connected; } }
         public EndPoint RemoteEndPoint { get { return _tcpClient.Client.RemoteEndPoint; } }
         public EndPoint LocalEndPoint { get { return _tcpClient.Client.LocalEndPoint; } }
 
@@ -84,6 +71,19 @@ namespace Cowboy.Sockets
             {
                 if (!Connected)
                 {
+                    if (_localEndPoint != null)
+                    {
+                        _tcpClient = new TcpClient(_localEndPoint);
+                    }
+                    else
+                    {
+                        _tcpClient = new TcpClient();
+                    }
+
+                    _receiveBuffer = _bufferManager.BorrowBuffer();
+                    _sessionBuffer = _bufferManager.BorrowBuffer();
+                    _sessionBufferCount = 0;
+
                     _tcpClient.BeginConnect(_remoteEndPoint.Address, _remoteEndPoint.Port, HandleTcpServerConnected, _tcpClient);
                 }
             }
@@ -95,10 +95,18 @@ namespace Cowboy.Sockets
             {
                 if (Connected)
                 {
-                    _tcpClient.Close();
-                }
+                    try
+                    {
+                        _tcpClient.Close();
 
-                RaiseServerDisconnected();
+                        RaiseServerDisconnected();
+                    }
+                    finally
+                    {
+                        _bufferManager.ReturnBuffer(_receiveBuffer);
+                        _bufferManager.ReturnBuffer(_sessionBuffer);
+                    }
+                }
             }
         }
 

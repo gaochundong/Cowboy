@@ -134,7 +134,10 @@ namespace Cowboy.Sockets
 
         public void Close()
         {
-            _tcpClient.Close();
+            if (_tcpClient != null && _tcpClient.Connected)
+            {
+                _tcpClient.Close();
+            }
         }
 
         private void AppendBuffer(byte[] receiveBuffer, int receiveCount, ref byte[] sessionBuffer, ref int sessionBufferCount)
