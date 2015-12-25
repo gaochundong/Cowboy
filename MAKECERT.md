@@ -7,10 +7,10 @@ Generate Certificates
 
 Import Certificates
 ------------
-- Open Windows Certificate Manager by run "certmgr.msc".
-- Import "RootCowboy.cer" into your Computer store's Trusted Root Certification Authorities (on both the server and client). Notice that the certificate is issued to "Cowboy". This must match the server name that the client expects: sslStream.AuthenticateAsClient(targetHost), where "targetHost" is the value of "Cowboy".
-- When your client connects, the server presents a certificate that tells the client "I'm Cowboy". The client will accept this claim if the client machine trusts the CA that issued the certificate, which is achieved by importing "RootCowboy.cer" into the client's Trusted Root Certification Authorities.
-- Finally, you need to import the private key that the server is going to use into the server machine's Personal store. This step is important because it addresses the server mode SSL must use a certificate with the associated private key. This is achieved by importing the "Cowboy.pfx" file that you generated earlier. Make sure that you change the file type filter to "all files" so that you can see the "Cowboy.pfx" file that you generated.
+- Open Windows Certificate Manager by run **"certmgr.msc"**.
+- Import **"RootCowboy.cer"** into your Computer store's Trusted Root Certification Authorities (on both the server and client). Notice that the certificate is issued to **"Cowboy"**. This must match the server name that the client expects: sslStream.AuthenticateAsClient(targetHost), where "targetHost" is the value of **"Cowboy"**.
+- When your client connects, the server presents a certificate that tells the client **"I'm Cowboy"**. The client will accept this claim if the client machine trusts the CA that issued the certificate, which is achieved by importing **"RootCowboy.cer"** into the client's Trusted Root Certification Authorities.
+- Finally, you need to import the private key that the server is going to use into the server machine's Personal store. This step is important because it addresses the server mode SSL must use a certificate with the associated private key. This is achieved by importing the **"Cowboy.pfx"** file that you generated earlier. Make sure that you change the file type filter to "all files" so that you can see the **"Cowboy.pfx"** file that you generated.
 
 Help Links
 ------------
