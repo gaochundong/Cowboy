@@ -1,9 +1,9 @@
 Generate Certificates
 ------------
-makecert -n "CN=Cowboy" -a "SHA1" -pe -r -sv RootCowboy.pvk RootCowboy.cer
-makecert -n "CN=Cowboy" -a "SHA1" -pe -ic RootCowboy.cer -iv RootCowboy.pvk -sv Cowboy.pvk -sky Exchange Cowboy.cer
-cert2spc Cowboy.cer Cowboy.spc
-pvkimprt -pfx Cowboy.spc Cowboy.pvk
+- makecert -n "CN=Cowboy" -a "SHA1" -pe -r -sv RootCowboy.pvk RootCowboy.cer
+- makecert -n "CN=Cowboy" -a "SHA1" -pe -ic RootCowboy.cer -iv RootCowboy.pvk -sv Cowboy.pvk -sky Exchange Cowboy.cer
+- cert2spc Cowboy.cer Cowboy.spc
+- pvkimprt -pfx Cowboy.spc Cowboy.pvk
 
 Import Certificates
 ------------
@@ -17,7 +17,7 @@ Finally, you need to import the private key that the server is going to use into
 
 Help Links
 ------------
-[DownloadPVK Digital Certificate Files Importer](https://www.microsoft.com/en-us/download/details.aspx?id=6563)
-[SSLStream example - how do I get certificates that work?](http://stackoverflow.com/questions/9982865/sslstream-example-how-do-i-get-certificates-that-work)
-[The MakeCert tool creates an X.509 certificate](https://msdn.microsoft.com/library/windows/desktop/aa386968.aspx)
-[Working with Certificates](https://msdn.microsoft.com/en-us/library/ms731899(v=vs.110).aspx)
+- [DownloadPVK Digital Certificate Files Importer](https://www.microsoft.com/en-us/download/details.aspx?id=6563)
+- [SSLStream example - how do I get certificates that work?](http://stackoverflow.com/questions/9982865/sslstream-example-how-do-i-get-certificates-that-work)
+- [The MakeCert tool creates an X.509 certificate](https://msdn.microsoft.com/library/windows/desktop/aa386968.aspx)
+- [Working with Certificates](https://msdn.microsoft.com/en-us/library/ms731899(v=vs.110).aspx)
