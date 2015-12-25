@@ -17,6 +17,7 @@ namespace Cowboy.Sockets.TestAsyncClient
 
             var config = new AsyncTcpSocketClientConfiguration();
             config.UseSsl = true;
+            config.SslTargetHost = "Cowboy";
             config.SslClientCertificates.Add(new X509Certificate2(@"D:\\Cowboy.cer"));
             config.SslPolicyErrorsBypassed = false;
 

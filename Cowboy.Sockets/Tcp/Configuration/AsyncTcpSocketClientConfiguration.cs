@@ -13,6 +13,7 @@ namespace Cowboy.Sockets
             IsPackingEnabled = true;
 
             UseSsl = false;
+            SslTargetHost = null;
             SslClientCertificates = new X509CertificateCollection();
             SslEncryptionPolicy = EncryptionPolicy.RequireEncryption;
             SslEnabledProtocols = SslProtocols.Ssl3 | SslProtocols.Tls;
@@ -25,6 +26,7 @@ namespace Cowboy.Sockets
         public bool IsPackingEnabled { get; set; }
 
         public bool UseSsl { get; set; }
+        public string SslTargetHost { get; set; }
         public X509CertificateCollection SslClientCertificates { get; set; }
         public EncryptionPolicy SslEncryptionPolicy { get; set; }
         public SslProtocols SslEnabledProtocols { get; set; }
