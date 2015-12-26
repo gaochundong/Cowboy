@@ -89,11 +89,12 @@ namespace Cowboy.Sockets
                 }
                 catch (Exception ex)
                 {
-                    if (ex is SocketException)
+                    if (!(ex is ObjectDisposedException))
                     {
                         _log.Error(ex.Message, ex);
+                        if (!(ex is SocketException))
+                            throw;
                     }
-                    else throw;
                 }
             }
         }
@@ -110,14 +111,20 @@ namespace Cowboy.Sockets
                     Active = false;
                     _listener.Stop();
                     _listener = null;
+
+                    foreach (var session in _sessions.Values)
+                    {
+                        session.Close();
+                    }
                 }
                 catch (Exception ex)
                 {
-                    if (ex is SocketException)
+                    if (!(ex is ObjectDisposedException))
                     {
                         _log.Error(ex.Message, ex);
+                        if (!(ex is SocketException))
+                            throw;
                     }
-                    else throw;
                 }
             }
         }

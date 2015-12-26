@@ -33,6 +33,8 @@ namespace Cowboy.Sockets.TestAsyncClient
                 try
                 {
                     string text = Console.ReadLine();
+                    if (text == "quit")
+                        break;
                     Task.Run(async () =>
                     {
                         await _client.Send(Encoding.UTF8.GetBytes(text));
@@ -44,6 +46,11 @@ namespace Cowboy.Sockets.TestAsyncClient
                     Console.WriteLine(ex.Message);
                 }
             }
+
+            _client.Close();
+            Console.WriteLine("TCP client has disconnected from server [{0}].", remoteEP);
+
+            Console.ReadKey();
         }
     }
 }

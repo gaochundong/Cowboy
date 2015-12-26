@@ -29,6 +29,8 @@ namespace Cowboy.Sockets.TestAsyncServer
                 try
                 {
                     string text = Console.ReadLine();
+                    if (text == "quit")
+                        break;
                     Task.Run(async () =>
                     {
                         await _server.Broadcast(Encoding.UTF8.GetBytes(text));
@@ -40,6 +42,11 @@ namespace Cowboy.Sockets.TestAsyncServer
                     Console.WriteLine(ex.Message);
                 }
             }
+
+            _server.Stop();
+            Console.WriteLine("TCP server has been stopped on [{0}].", _server.ListenedEndPoint);
+
+            Console.ReadKey();
         }
     }
 }

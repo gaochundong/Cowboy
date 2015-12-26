@@ -105,9 +105,12 @@ namespace Cowboy.Sockets
             }
             catch (Exception ex)
             {
-                _log.Error(ex.Message, ex);
-                if (!(ex is SocketException))
-                    throw;
+                if (!(ex is ObjectDisposedException))
+                {
+                    _log.Error(ex.Message, ex);
+                    if (!(ex is SocketException))
+                        throw;
+                }
             }
             finally
             {
