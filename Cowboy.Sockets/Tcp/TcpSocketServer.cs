@@ -49,6 +49,11 @@ namespace Cowboy.Sockets
             _bufferManager = new GrowingByteBufferManager(_configuration.InitialBufferAllocationCount, _configuration.ReceiveBufferSize);
 
             _listener = new TcpListener(this.ListenedEndPoint);
+            ConfigureListener();
+        }
+
+        private void ConfigureListener()
+        {
             _listener.AllowNatTraversal(_configuration.AllowNatTraversal);
             _listener.ExclusiveAddressUse = _configuration.ExclusiveAddressUse;
         }
@@ -169,6 +174,8 @@ namespace Cowboy.Sockets
             TcpClient tcpClient = listener.EndAcceptTcpClient(ar);
             if (!tcpClient.Connected) return;
 
+            ConfigureClient(tcpClient);
+
             // create session
             var session = new TcpSocketSession(tcpClient, _bufferManager);
 
@@ -181,6 +188,16 @@ namespace Cowboy.Sockets
 
             // keep listening to accept next connection
             ContinueAcceptSession(listener);
+        }
+
+        private void ConfigureClient(TcpClient tcpClient)
+        {
+            tcpClient.ReceiveBufferSize = _configuration.ReceiveBufferSize;
+            tcpClient.SendBufferSize = _configuration.SendBufferSize;
+            tcpClient.ReceiveTimeout = (int)_configuration.ReceiveTimeout.TotalMilliseconds;
+            tcpClient.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
+            tcpClient.ExclusiveAddressUse = _configuration.ExclusiveAddressUse;
+            tcpClient.NoDelay = _configuration.NoDelay;
         }
 
         private void ContinueReadBuffer(TcpSocketSession session)

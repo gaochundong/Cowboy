@@ -79,6 +79,7 @@ namespace Cowboy.Sockets
                     {
                         _tcpClient = new TcpClient();
                     }
+                    ConfigureClient();
 
                     _receiveBuffer = _bufferManager.BorrowBuffer();
                     _sessionBuffer = _bufferManager.BorrowBuffer();
@@ -87,6 +88,16 @@ namespace Cowboy.Sockets
                     _tcpClient.BeginConnect(_remoteEndPoint.Address, _remoteEndPoint.Port, HandleTcpServerConnected, _tcpClient);
                 }
             }
+        }
+
+        private void ConfigureClient()
+        {
+            _tcpClient.ReceiveBufferSize = _configuration.ReceiveBufferSize;
+            _tcpClient.SendBufferSize = _configuration.SendBufferSize;
+            _tcpClient.ReceiveTimeout = (int)_configuration.ReceiveTimeout.TotalMilliseconds;
+            _tcpClient.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
+            _tcpClient.ExclusiveAddressUse = _configuration.ExclusiveAddressUse;
+            _tcpClient.NoDelay = _configuration.NoDelay;
         }
 
         public void Close()

@@ -1,4 +1,5 @@
-﻿using System.Net.Security;
+﻿using System;
+using System.Net.Security;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 
@@ -8,9 +9,14 @@ namespace Cowboy.Sockets
     {
         public AsyncTcpSocketClientConfiguration()
         {
+            IsPackingEnabled = true;
             InitialBufferAllocationCount = 4;
             ReceiveBufferSize = 8192;
-            IsPackingEnabled = true;
+            SendBufferSize = 8192;
+            ReceiveTimeout = TimeSpan.Zero;
+            SendTimeout = TimeSpan.Zero;
+            ExclusiveAddressUse = true;
+            NoDelay = true;
 
             UseSsl = false;
             SslTargetHost = null;
@@ -21,9 +27,14 @@ namespace Cowboy.Sockets
             SslPolicyErrorsBypassed = false;
         }
 
+        public bool IsPackingEnabled { get; set; }
         public int InitialBufferAllocationCount { get; set; }
         public int ReceiveBufferSize { get; set; }
-        public bool IsPackingEnabled { get; set; }
+        public int SendBufferSize { get; set; }
+        public TimeSpan ReceiveTimeout { get; set; }
+        public TimeSpan SendTimeout { get; set; }
+        public bool ExclusiveAddressUse { get; set; }
+        public bool NoDelay { get; set; }
 
         public bool UseSsl { get; set; }
         public string SslTargetHost { get; set; }

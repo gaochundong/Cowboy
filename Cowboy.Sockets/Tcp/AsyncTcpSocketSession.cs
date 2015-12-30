@@ -3,7 +3,6 @@ using System.IO;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
-using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Cowboy.Buffer;
@@ -48,6 +47,8 @@ namespace Cowboy.Sockets
 
             _sessionKey = Guid.NewGuid().ToString();
             this.StartTime = DateTime.UtcNow;
+
+            ConfigureClient();
         }
 
         public string SessionKey { get { return _sessionKey; } }
@@ -56,6 +57,16 @@ namespace Cowboy.Sockets
         public EndPoint RemoteEndPoint { get { return _tcpClient.Client.RemoteEndPoint; } }
         public EndPoint LocalEndPoint { get { return _tcpClient.Client.LocalEndPoint; } }
         public AsyncTcpSocketServer Server { get { return _server; } }
+
+        private void ConfigureClient()
+        {
+            _tcpClient.ReceiveBufferSize = _configuration.ReceiveBufferSize;
+            _tcpClient.SendBufferSize = _configuration.SendBufferSize;
+            _tcpClient.ReceiveTimeout = (int)_configuration.ReceiveTimeout.TotalMilliseconds;
+            _tcpClient.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
+            _tcpClient.ExclusiveAddressUse = _configuration.ExclusiveAddressUse;
+            _tcpClient.NoDelay = _configuration.NoDelay;
+        }
 
         public async Task Start()
         {

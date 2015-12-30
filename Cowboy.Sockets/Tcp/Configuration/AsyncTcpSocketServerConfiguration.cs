@@ -1,4 +1,5 @@
-﻿using System.Net.Security;
+﻿using System;
+using System.Net.Security;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 
@@ -8,10 +9,16 @@ namespace Cowboy.Sockets
     {
         public AsyncTcpSocketServerConfiguration()
         {
-            InitialBufferAllocationCount = 100;
-            ReceiveBufferSize = 64;
-            PendingConnectionBacklog = 200;
             IsPackingEnabled = true;
+            InitialBufferAllocationCount = 100;
+            ReceiveBufferSize = 8192;
+            SendBufferSize = 8192;
+            ReceiveTimeout = TimeSpan.Zero;
+            SendTimeout = TimeSpan.Zero;
+            ExclusiveAddressUse = true;
+            NoDelay = true;
+
+            PendingConnectionBacklog = 200;
             AllowNatTraversal = true;
             ExclusiveAddressUse = true;
 
@@ -24,10 +31,15 @@ namespace Cowboy.Sockets
             SslPolicyErrorsBypassed = false;
         }
 
+        public bool IsPackingEnabled { get; set; }
         public int InitialBufferAllocationCount { get; set; }
         public int ReceiveBufferSize { get; set; }
+        public int SendBufferSize { get; set; }
+        public TimeSpan ReceiveTimeout { get; set; }
+        public TimeSpan SendTimeout { get; set; }
+        public bool NoDelay { get; set; }
+
         public int PendingConnectionBacklog { get; set; }
-        public bool IsPackingEnabled { get; set; }
         public bool AllowNatTraversal { get; set; }
         public bool ExclusiveAddressUse { get; set; }
 

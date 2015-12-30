@@ -103,6 +103,7 @@ namespace Cowboy.Sockets
             {
                 _tcpClient = new TcpClient();
             }
+            ConfigureClient();
 
             await _tcpClient.ConnectAsync(_remoteEndPoint.Address, _remoteEndPoint.Port);
 
@@ -167,6 +168,16 @@ namespace Cowboy.Sockets
                 if (_tcpClient != null)
                     _tcpClient.Dispose();
             }
+        }
+
+        private void ConfigureClient()
+        {
+            _tcpClient.ReceiveBufferSize = _configuration.ReceiveBufferSize;
+            _tcpClient.SendBufferSize = _configuration.SendBufferSize;
+            _tcpClient.ReceiveTimeout = (int)_configuration.ReceiveTimeout.TotalMilliseconds;
+            _tcpClient.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
+            _tcpClient.ExclusiveAddressUse = _configuration.ExclusiveAddressUse;
+            _tcpClient.NoDelay = _configuration.NoDelay;
         }
 
         public void Close()

@@ -1,16 +1,28 @@
-﻿namespace Cowboy.Sockets
+﻿using System;
+
+namespace Cowboy.Sockets
 {
     public sealed class TcpSocketClientConfiguration
     {
         public TcpSocketClientConfiguration()
         {
+            IsPackingEnabled = true;
             InitialBufferAllocationCount = 4;
             ReceiveBufferSize = 8192;
-            IsPackingEnabled = true;
+            SendBufferSize = 8192;
+            ReceiveTimeout = TimeSpan.Zero;
+            SendTimeout = TimeSpan.Zero;
+            ExclusiveAddressUse = true;
+            NoDelay = true;
         }
 
+        public bool IsPackingEnabled { get; set; }
         public int InitialBufferAllocationCount { get; set; }
         public int ReceiveBufferSize { get; set; }
-        public bool IsPackingEnabled { get; set; }
+        public int SendBufferSize { get; set; }
+        public TimeSpan ReceiveTimeout { get; set; }
+        public TimeSpan SendTimeout { get; set; }
+        public bool ExclusiveAddressUse { get; set; }
+        public bool NoDelay { get; set; }
     }
 }

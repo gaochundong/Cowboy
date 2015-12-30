@@ -75,8 +75,7 @@ namespace Cowboy.Sockets
                 try
                 {
                     _listener = new TcpListener(this.ListenedEndPoint);
-                    _listener.AllowNatTraversal(_configuration.AllowNatTraversal);
-                    _listener.ExclusiveAddressUse = _configuration.ExclusiveAddressUse;
+                    ConfigureListener();
 
                     _listener.Start(_configuration.PendingConnectionBacklog);
                     Active = true;
@@ -97,6 +96,12 @@ namespace Cowboy.Sockets
                     }
                 }
             }
+        }
+
+        private void ConfigureListener()
+        {
+            _listener.AllowNatTraversal(_configuration.AllowNatTraversal);
+            _listener.ExclusiveAddressUse = _configuration.ExclusiveAddressUse;
         }
 
         public void Stop()
