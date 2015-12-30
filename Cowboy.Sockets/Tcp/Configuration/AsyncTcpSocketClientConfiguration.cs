@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net.Security;
+using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 
@@ -17,6 +18,7 @@ namespace Cowboy.Sockets
             SendTimeout = TimeSpan.Zero;
             ExclusiveAddressUse = true;
             NoDelay = true;
+            LingerState = new LingerOption(false, 0);
 
             UseSsl = false;
             SslTargetHost = null;
@@ -35,6 +37,7 @@ namespace Cowboy.Sockets
         public TimeSpan SendTimeout { get; set; }
         public bool ExclusiveAddressUse { get; set; }
         public bool NoDelay { get; set; }
+        public LingerOption LingerState { get; set; }
 
         public bool UseSsl { get; set; }
         public string SslTargetHost { get; set; }

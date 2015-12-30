@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.Sockets;
 
 namespace Cowboy.Sockets
 {
@@ -14,6 +15,7 @@ namespace Cowboy.Sockets
             SendTimeout = TimeSpan.Zero;
             ExclusiveAddressUse = true;
             NoDelay = true;
+            LingerState = new LingerOption(false, 0);
         }
 
         public bool IsPackingEnabled { get; set; }
@@ -24,5 +26,6 @@ namespace Cowboy.Sockets
         public TimeSpan SendTimeout { get; set; }
         public bool ExclusiveAddressUse { get; set; }
         public bool NoDelay { get; set; }
+        public LingerOption LingerState { get; set; }
     }
 }

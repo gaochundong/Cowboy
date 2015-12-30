@@ -198,6 +198,7 @@ namespace Cowboy.Sockets
             tcpClient.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
             tcpClient.ExclusiveAddressUse = _configuration.ExclusiveAddressUse;
             tcpClient.NoDelay = _configuration.NoDelay;
+            tcpClient.LingerState = _configuration.LingerState;
         }
 
         private void ContinueReadBuffer(TcpSocketSession session)
