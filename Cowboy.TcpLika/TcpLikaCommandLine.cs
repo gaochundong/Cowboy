@@ -82,6 +82,9 @@ namespace Cowboy.TcpLika
                                 if (!int.TryParse(commandLineOptions.Arguments[arg], out threads))
                                     throw new CommandLineException(string.Format(CultureInfo.CurrentCulture,
                                         "Invalid formats of threads option -- {0}.", commandLineOptions.Arguments[arg]));
+                                if (threads < 1)
+                                    throw new CommandLineException(string.Format(CultureInfo.CurrentCulture,
+                                        "Invalid formats of threads option -- {0}.", commandLineOptions.Arguments[arg]));
                                 options.Threads = threads;
                             }
                             break;
@@ -102,6 +105,9 @@ namespace Cowboy.TcpLika
                                 if (!int.TryParse(commandLineOptions.Arguments[arg], out bufferSize))
                                     throw new CommandLineException(string.Format(CultureInfo.CurrentCulture,
                                         "Invalid formats of receive buffer size option -- {0}.", commandLineOptions.Arguments[arg]));
+                                if (bufferSize < 1)
+                                    throw new CommandLineException(string.Format(CultureInfo.CurrentCulture,
+                                        "Invalid formats of receive buffer size option -- {0}.", commandLineOptions.Arguments[arg]));
                                 options.ReceiveBufferSize = bufferSize;
                             }
                             break;
@@ -110,6 +116,9 @@ namespace Cowboy.TcpLika
                                 options.IsSetSendBufferSize = true;
                                 int bufferSize;
                                 if (!int.TryParse(commandLineOptions.Arguments[arg], out bufferSize))
+                                    throw new CommandLineException(string.Format(CultureInfo.CurrentCulture,
+                                        "Invalid formats of send buffer size option -- {0}.", commandLineOptions.Arguments[arg]));
+                                if (bufferSize < 1)
                                     throw new CommandLineException(string.Format(CultureInfo.CurrentCulture,
                                         "Invalid formats of send buffer size option -- {0}.", commandLineOptions.Arguments[arg]));
                                 options.SendBufferSize = bufferSize;
@@ -122,6 +131,9 @@ namespace Cowboy.TcpLika
                                 if (!int.TryParse(commandLineOptions.Arguments[arg], out connections))
                                     throw new CommandLineException(string.Format(CultureInfo.CurrentCulture,
                                         "Invalid formats of connections option -- {0}.", commandLineOptions.Arguments[arg]));
+                                if (connections < 1)
+                                    throw new CommandLineException(string.Format(CultureInfo.CurrentCulture,
+                                        "Invalid formats of connections option -- {0}.", commandLineOptions.Arguments[arg]));
                                 options.Connections = connections;
                             }
                             break;
@@ -130,6 +142,9 @@ namespace Cowboy.TcpLika
                                 options.IsSetConnectRate = true;
                                 int rate;
                                 if (!int.TryParse(commandLineOptions.Arguments[arg], out rate))
+                                    throw new CommandLineException(string.Format(CultureInfo.CurrentCulture,
+                                        "Invalid formats of connect rate option -- {0}.", commandLineOptions.Arguments[arg]));
+                                if (rate < 1)
                                     throw new CommandLineException(string.Format(CultureInfo.CurrentCulture,
                                         "Invalid formats of connect rate option -- {0}.", commandLineOptions.Arguments[arg]));
                                 options.ConnectRate = rate;
