@@ -60,9 +60,23 @@ namespace Cowboy.TcpLika
             for (int i = 0; i < connections; i++)
             {
                 var client = new AsyncTcpSocketClient(remoteEP, this, config);
-                await client.ConnectAsync();
+                if (!_options.IsSetConnectTimeout)
+                {
+                    await client.ConnectAsync();
+                }
+                else
+                {
+                    var task = client.ConnectAsync();
+                    if (!task.Wait(_options.ConnectTimeout))
+                    {
+                        client.Close();
+                    }
+                }
                 channels.Add(client);
             }
+
+            if (_options.IsSetChannelLifetime)
+                await Task.Delay(_options.ChannelLifetime);
 
             foreach (var client in channels)
             {

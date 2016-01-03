@@ -15,8 +15,8 @@ namespace Cowboy.TcpLika
 
         Connections,        // Connections to keep open to the destinations
         ConnectRate,        // Limit number of new connections per second
-        ConnectTimeout,     // Limit time spent in a connection attempt
-        ChannelLifetime,    // Shut down each connection after Time seconds
+        ConnectTimeout,     // Limit time milliseconds spent in a connection attempt
+        ChannelLifetime,    // Shut down each connection after time milliseconds
 
         WebSocket,          // Use RFC6455 WebSocket transport
 

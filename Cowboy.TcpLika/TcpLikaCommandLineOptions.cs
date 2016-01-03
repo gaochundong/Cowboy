@@ -28,9 +28,9 @@ namespace Cowboy.TcpLika
         public bool IsSetConnectRate { get; set; }
         public int ConnectRate { get; set; }             // Limit number of new connections per second
         public bool IsSetConnectTimeout { get; set; }
-        public TimeSpan ConnectTimeout { get; set; }     // Limit time spent in a connection attempt
+        public TimeSpan ConnectTimeout { get; set; }     // Limit time milliseconds spent in a connection attempt
         public bool IsSetChannelLifetime { get; set; }
-        public TimeSpan ChannelLifetime { get; set; }    // Shut down each connection after Time seconds
+        public TimeSpan ChannelLifetime { get; set; }    // Shut down each connection after time milliseconds
 
         public bool IsSetWebSocket { get; set; }         // Use RFC6455 WebSocket transport
 
