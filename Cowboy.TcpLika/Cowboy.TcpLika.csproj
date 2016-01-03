@@ -43,11 +43,13 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>SolutionVersion.cs</Link>
     </Compile>
+    <Compile Include="TcpLikaCommandLine.cs" />
+    <Compile Include="TcpLikaCommandLineOptions.cs" />
+    <Compile Include="TcpLikaEngine.cs" />
+    <Compile Include="TcpLikaOptions.cs" />
+    <Compile Include="TcpLikaOptionType.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Cowboy.CommandLines\Cowboy.CommandLines.csproj">
