@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Net;
 using System.Threading.Tasks;
 using Cowboy.Sockets;
 
@@ -20,14 +19,40 @@ namespace Cowboy.TcpLika
 
         public void Start()
         {
-            var config = GetClientConfiguration();
+            var config = BuildClientConfiguration();
             var remoteEP = _options.RemoteEndPoints.First();
 
-            var client = new AsyncTcpSocketClient(remoteEP, this, config);
-            client.Connect();
+            int threads = 1;
+            int connections = 1;
+            int connectionsPerThread = 1;
+
+            if (_options.IsSetThreads)
+                threads = _options.Threads;
+            if (threads > Environment.ProcessorCount)
+                threads = Environment.ProcessorCount;
+
+            if (_options.IsSetConnections)
+                connections = _options.Connections;
+
+            connectionsPerThread = connections / threads;
+
+            for (int p = 0; p < threads; p++)
+            {
+                Task.Run(async () =>
+                {
+                    await Load(config, remoteEP, connectionsPerThread);
+                })
+                .Forget();
+            }
         }
 
-        private AsyncTcpSocketClientConfiguration GetClientConfiguration()
+        private async Task Load(AsyncTcpSocketClientConfiguration config, IPEndPoint remoteEP, int connections)
+        {
+            var client = new AsyncTcpSocketClient(remoteEP, this, config);
+            await client.ConnectAsync();
+        }
+
+        private AsyncTcpSocketClientConfiguration BuildClientConfiguration()
         {
             var config = new AsyncTcpSocketClientConfiguration();
 
@@ -45,7 +70,7 @@ namespace Cowboy.TcpLika
 
         public async Task Dispatch(AsyncTcpSocketClient client, byte[] data, int offset, int count)
         {
-            await Task.Yield();
+            await Task.CompletedTask;
         }
     }
 }

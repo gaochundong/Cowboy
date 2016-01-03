@@ -50,6 +50,7 @@
     <Compile Include="TcpLikaOptionType.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TplExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Cowboy.CommandLines\Cowboy.CommandLines.csproj">

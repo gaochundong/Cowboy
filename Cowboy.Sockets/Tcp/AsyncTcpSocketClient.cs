@@ -93,6 +93,14 @@ namespace Cowboy.Sockets
             });
         }
 
+        public async Task ConnectAsync()
+        {
+            if (Connected)
+                return;
+
+            await Process();
+        }
+
         private async Task Process()
         {
             if (_localEndPoint != null)
