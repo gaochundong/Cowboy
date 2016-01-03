@@ -125,14 +125,17 @@ namespace Cowboy.CommandLines
 
                 sb.AppendLine();
 
-                sb.AppendLine(string.Format(CultureInfo.CurrentCulture, "Company  : {0}",
-                  VersionHelper.GetExecutingAssemblyCompanyName()));
+                if (!string.IsNullOrEmpty(VersionHelper.GetExecutingAssemblyCompanyName()))
+                    sb.AppendLine(string.Format(CultureInfo.CurrentCulture, "Company  : {0}",
+                      VersionHelper.GetExecutingAssemblyCompanyName()));
 
-                sb.AppendLine(string.Format(CultureInfo.CurrentCulture, "Product  : {0}",
-                  VersionHelper.GetExecutingAssemblyProductName()));
+                if (!string.IsNullOrEmpty(VersionHelper.GetExecutingAssemblyProductName()))
+                    sb.AppendLine(string.Format(CultureInfo.CurrentCulture, "Product  : {0}",
+                        VersionHelper.GetExecutingAssemblyProductName()));
 
-                sb.AppendLine(string.Format(CultureInfo.CurrentCulture, "Copyright: {0}",
-                  VersionHelper.GetExecutingAssemblyCopyright()));
+                if (!string.IsNullOrEmpty(VersionHelper.GetExecutingAssemblyCopyright()))
+                    sb.AppendLine(string.Format(CultureInfo.CurrentCulture, "Copyright: {0}",
+                        VersionHelper.GetExecutingAssemblyCopyright()));
 
                 return sb.ToString();
             }

@@ -19,7 +19,7 @@ namespace Cowboy.TcpLika
 
         public void Start()
         {
-            throw new NotImplementedException();
+            
         }
     }
 }
