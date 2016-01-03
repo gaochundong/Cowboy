@@ -4,17 +4,15 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{0ED6CD14-9182-486B-8AF3-1D9770449046}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <ProjectGuid>{E7A41D23-4F6B-4BE2-A311-0D3D25BFE6E7}</ProjectGuid>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Cowboy.TcpLika</RootNamespace>
-    <AssemblyName>tcplika</AssemblyName>
+    <RootNamespace>Cowboy.CommandLines</RootNamespace>
+    <AssemblyName>Cowboy.CommandLines</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -24,7 +22,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -43,17 +40,19 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>SolutionVersion.cs</Link>
     </Compile>
-    <Compile Include="Program.cs" />
+    <Compile Include="CommandLine.cs" />
+    <Compile Include="CommandLineBootstrap.cs" />
+    <Compile Include="CommandLineConsole.cs" />
+    <Compile Include="CommandLineDataChangedEventArgs.cs" />
+    <Compile Include="CommandLineException.cs" />
+    <Compile Include="CommandLineExceptionEventArgs.cs" />
+    <Compile Include="CommandLineOptions.cs" />
+    <Compile Include="CommandLineParser.cs" />
+    <Compile Include="CommandLineUsageEventArgs.cs" />
+    <Compile Include="ICommandLine.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Cowboy.CommandLines\Cowboy.CommandLines.csproj">
-      <Project>{e7a41d23-4f6b-4be2-a311-0d3d25bfe6e7}</Project>
-      <Name>Cowboy.CommandLines</Name>
-    </ProjectReference>
+    <Compile Include="VersionHelper.cs" />
+    <Compile Include="WildcardCharacterHelper.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
