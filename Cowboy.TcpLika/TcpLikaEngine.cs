@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -34,22 +35,39 @@ namespace Cowboy.TcpLika
             if (_options.IsSetConnections)
                 connections = _options.Connections;
 
+            if (connections < threads)
+                threads = connections;
+
             connectionsPerThread = connections / threads;
 
+            var tasks = new List<Task>();
             for (int p = 0; p < threads; p++)
             {
-                Task.Run(async () =>
+                var task = Task.Run(async () =>
                 {
                     await Load(config, remoteEP, connectionsPerThread);
-                })
-                .Forget();
+                });
+                tasks.Add(task);
             }
+
+            Task.WaitAll(tasks.ToArray());
         }
 
         private async Task Load(AsyncTcpSocketClientConfiguration config, IPEndPoint remoteEP, int connections)
         {
-            var client = new AsyncTcpSocketClient(remoteEP, this, config);
-            await client.ConnectAsync();
+            var channels = new List<AsyncTcpSocketClient>();
+
+            for (int i = 0; i < connections; i++)
+            {
+                var client = new AsyncTcpSocketClient(remoteEP, this, config);
+                await client.ConnectAsync();
+                channels.Add(client);
+            }
+
+            foreach (var client in channels)
+            {
+                client.Close();
+            }
         }
 
         private AsyncTcpSocketClientConfiguration BuildClientConfiguration()
