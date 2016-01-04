@@ -68,8 +68,14 @@ namespace Cowboy.TcpLika
                     {
                         _logger(string.Format("Connecting to [{0}].", remoteEP));
                         client.Connect(remoteEP);
+
+                        if (_options.IsSetWebSocket)
+                        {
+                            HandshakeWebSocket(client, remoteEP);
+                        }
+
                         channels.Add(client);
-                        _logger(string.Format("Connected to [{0}].", remoteEP));
+                        _logger(string.Format("Connected to [{0}] from [{1}].", remoteEP, client.Client.LocalEndPoint));
                     }
                     else
                     {
@@ -77,8 +83,13 @@ namespace Cowboy.TcpLika
                         var task = client.ConnectAsync(remoteEP.Address, remoteEP.Port);
                         if (task.Wait(_options.ConnectTimeout))
                         {
+                            if (_options.IsSetWebSocket)
+                            {
+                                HandshakeWebSocket(client, remoteEP);
+                            }
+
                             channels.Add(client);
-                            _logger(string.Format("Connected to [{0}].", remoteEP));
+                            _logger(string.Format("Connected to [{0}] from [{1}].", remoteEP, client.Client.LocalEndPoint));
                         }
                         else
                         {
@@ -94,7 +105,9 @@ namespace Cowboy.TcpLika
             }
 
             if (_options.IsSetChannelLifetime)
+            {
                 await Task.Delay(_options.ChannelLifetime);
+            }
 
             foreach (var client in channels)
             {
@@ -110,21 +123,35 @@ namespace Cowboy.TcpLika
             }
         }
 
-        private void ConfigureClient(TcpClient tcpClient)
+        private void HandshakeWebSocket(TcpClient client, IPEndPoint remoteEP)
         {
-            tcpClient.ReceiveBufferSize = 32;
-            tcpClient.SendBufferSize = 32;
-            tcpClient.ExclusiveAddressUse = true;
-            tcpClient.NoDelay = true;
+            var context = WebSocketHandshake.BuildHandeshakeContext(remoteEP.Address.ToString(), "/");
+            client.GetStream().Write(context.RequestBuffer, context.RequestBufferOffset, context.RequestBufferCount);
+
+            var receiveBuffer = new byte[8192];
+            var count = client.GetStream().Read(receiveBuffer, 0, receiveBuffer.Length);
+
+            context.ResponseBuffer = receiveBuffer;
+            context.ResponseBufferOffset = 0;
+            context.ResponseBufferCount = count;
+            var passedVerification = WebSocketHandshake.VerifyHandshake(context);
+        }
+
+        private void ConfigureClient(TcpClient client)
+        {
+            client.ReceiveBufferSize = 32;
+            client.SendBufferSize = 32;
+            client.ExclusiveAddressUse = true;
+            client.NoDelay = true;
 
             if (_options.IsSetNagle)
-                tcpClient.NoDelay = _options.Nagle;
+                client.NoDelay = _options.Nagle;
 
             if (_options.IsSetReceiveBufferSize)
-                tcpClient.ReceiveBufferSize = _options.ReceiveBufferSize;
+                client.ReceiveBufferSize = _options.ReceiveBufferSize;
 
             if (_options.IsSetSendBufferSize)
-                tcpClient.SendBufferSize = _options.SendBufferSize;
+                client.SendBufferSize = _options.SendBufferSize;
         }
     }
 }
