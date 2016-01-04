@@ -59,21 +59,33 @@ namespace Cowboy.TcpLika
             // applies the SHA-1 hashing function, and encodes the result using base64.
             sb.AppendFormatWithCrCf("Sec-WebSocket-Key: {0}", key);
 
+            // The |Sec-WebSocket-Version| header field in the client's
+            // handshake includes the version of the WebSocket Protocol with
+            // which the client is attempting to communicate.  If this
+            // version does not match a version understood by the server, the
+            // server MUST abort the WebSocket handshake described in this
+            // section and instead send an appropriate HTTP error code(such
+            // as 426 Upgrade Required) and a |Sec-WebSocket-Version| header
+            // field indicating the version(s)the server is capable of understanding.
+            if (!string.IsNullOrEmpty(version))
+                sb.AppendFormatWithCrCf("Sec-WebSocket-Version: {0}", version);
+            else
+                sb.AppendFormatWithCrCf("Sec-WebSocket-Version: {0}", 13);
+
+            // Optionally
             // The |Sec-WebSocket-Protocol| request-header field can be
             // used to indicate what subprotocols(application - level protocols
             // layered over the WebSocket Protocol) are acceptable to the client.
             if (!string.IsNullOrEmpty(protocol))
                 sb.AppendFormatWithCrCf("Sec-WebSocket-Protocol: {0}", protocol);
 
-            if (!string.IsNullOrEmpty(version))
-                sb.AppendFormatWithCrCf("Sec-WebSocket-Version: {0}", version);
-            else
-                sb.AppendFormatWithCrCf("Sec-WebSocket-Version: {0}", 13);
-
-            // List of extensions support by the client.
+            // Optionally
+            // A (possibly empty) list representing the protocol-level
+            // extensions the server is ready to use.
             if (!string.IsNullOrEmpty(extensions))
                 sb.AppendFormatWithCrCf("Sec-WebSocket-Extensions: {0}", extensions);
 
+            // Optionally
             // The |Origin| header field is used to protect against
             // unauthorized cross-origin use of a WebSocket server by scripts using         
             // the WebSocket API in a web browser.
@@ -198,6 +210,15 @@ namespace Cowboy.TcpLika
                         headers.Add("Sec-WebSocket-Accept", value.Trim());
                     }
                 }
+                else if (line.StartsWith(@"Sec-WebSocket-Version:"))
+                {
+                    var index = line.IndexOf(':');
+                    if (index != -1)
+                    {
+                        var value = line.Substring(index + 1);
+                        headers.Add("Sec-WebSocket-Version", value.Trim());
+                    }
+                }
                 else if (line.StartsWith(@"Sec-WebSocket-Protocol:"))
                 {
                     var index = line.IndexOf(':');
@@ -205,6 +226,15 @@ namespace Cowboy.TcpLika
                     {
                         var value = line.Substring(index + 1);
                         headers.Add("Sec-WebSocket-Protocol", value.Trim());
+                    }
+                }
+                else if (line.StartsWith(@"Sec-WebSocket-Extensions:"))
+                {
+                    var index = line.IndexOf(':');
+                    if (index != -1)
+                    {
+                        var value = line.Substring(index + 1);
+                        headers.Add("Sec-WebSocket-Extensions", value.Trim());
                     }
                 }
                 else if (line.StartsWith(@"Origin:"))
