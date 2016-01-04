@@ -12,7 +12,6 @@ namespace Cowboy.TcpLika
         public static readonly ReadOnlyCollection<string> ReceiveBufferSizeOptions;
         public static readonly ReadOnlyCollection<string> SendBufferSizeOptions;
         public static readonly ReadOnlyCollection<string> ConnectionsOptions;
-        public static readonly ReadOnlyCollection<string> ConnectTimeoutOptions;
         public static readonly ReadOnlyCollection<string> ConnectionLifetimeOptions;
         public static readonly ReadOnlyCollection<string> WebSocketOptions;
 
@@ -29,7 +28,6 @@ namespace Cowboy.TcpLika
             ReceiveBufferSizeOptions = new ReadOnlyCollection<string>(new string[] { "rcvbuf", "receive-buffer-size" });
             SendBufferSizeOptions = new ReadOnlyCollection<string>(new string[] { "sndbuf", "send-buffer-size" });
             ConnectionsOptions = new ReadOnlyCollection<string>(new string[] { "c", "connections" });
-            ConnectTimeoutOptions = new ReadOnlyCollection<string>(new string[] { "connect-timeout" });
             ConnectionLifetimeOptions = new ReadOnlyCollection<string>(new string[] { "l", "connection-lifetime" });
             WebSocketOptions = new ReadOnlyCollection<string>(new string[] { "ws", "websocket" });
 
@@ -43,7 +41,6 @@ namespace Cowboy.TcpLika
             Options.Add(TcpLikaOptionType.ReceiveBufferSize, ReceiveBufferSizeOptions);
             Options.Add(TcpLikaOptionType.SendBufferSize, SendBufferSizeOptions);
             Options.Add(TcpLikaOptionType.Connections, ConnectionsOptions);
-            Options.Add(TcpLikaOptionType.ConnectTimeout, ConnectTimeoutOptions);
             Options.Add(TcpLikaOptionType.ConnectionLifetime, ConnectionLifetimeOptions);
             Options.Add(TcpLikaOptionType.WebSocket, WebSocketOptions);
 
@@ -109,8 +106,6 @@ OPTIONS
     {0}{0}Set TCP send buffer size.
     -c, --connections
     {0}{0}Connections to keep open to the destinations.
-    --connect-timeout
-    {0}{0}Limit time milliseconds spent in a connection attempt.
     -l, --connection-lifetime
     {0}{0}Shut down each connection after time milliseconds.
     -ws, --websocket

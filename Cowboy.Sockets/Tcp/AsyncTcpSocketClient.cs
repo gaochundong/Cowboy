@@ -211,6 +211,7 @@ namespace Cowboy.Sockets
 
                     return false;
                 });
+
             var sslStream = new SslStream(
                 stream,
                 false,

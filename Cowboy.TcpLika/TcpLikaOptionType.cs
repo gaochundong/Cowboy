@@ -14,7 +14,6 @@ namespace Cowboy.TcpLika
         SendBufferSize,     // Set TCP send buffers (set SO_SNDBUF)
 
         Connections,        // Connections to keep open to the destinations
-        ConnectTimeout,     // Limit time milliseconds spent in a connection attempt
         ConnectionLifetime, // Shut down each connection after time milliseconds
 
         WebSocket,          // Use RFC6455 WebSocket transport

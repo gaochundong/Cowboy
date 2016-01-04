@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Cowboy.Buffer;
 
@@ -70,52 +73,36 @@ namespace Cowboy.TcpLika
 
             for (int c = 0; c < connections; c++)
             {
+                var client = new TcpClient();
+                Stream stream = null;
                 try
                 {
-                    var client = new TcpClient();
-                    if (!_options.IsSetConnectTimeout)
+                    _logger(string.Format("Connecting to [{0}].", remoteEP));
+                    await client.ConnectAsync(remoteEP.Address, remoteEP.Port);
+
+                    stream = await NegotiateStream(client.GetStream(), remoteEP);
+
+                    if (_options.IsSetWebSocket)
                     {
-                        _logger(string.Format("Connecting to [{0}].", remoteEP));
-                        client.Connect(remoteEP);
-
-                        if (_options.IsSetWebSocket)
+                        if (!await HandshakeWebSocket(stream, remoteEP.Address.ToString(), "/"))
                         {
-                            if (!HandshakeWebSocket(client.GetStream(), remoteEP.Address.ToString(), "/"))
-                            {
-                                _logger(string.Format("Handshake failed with [{0}] from [{1}].", remoteEP, client.Client.LocalEndPoint));
-                            }
-                        }
-
-                        channels.Add(client);
-                        _logger(string.Format("Connected to [{0}] from [{1}].", remoteEP, client.Client.LocalEndPoint));
-                    }
-                    else
-                    {
-                        _logger(string.Format("Connecting to [{0}].", remoteEP));
-                        var task = client.ConnectAsync(remoteEP.Address, remoteEP.Port);
-                        if (task.Wait(_options.ConnectTimeout))
-                        {
-                            if (_options.IsSetWebSocket)
-                            {
-                                if (!HandshakeWebSocket(client.GetStream(), remoteEP.Address.ToString(), "/"))
-                                {
-                                    _logger(string.Format("Handshake failed with [{0}] from [{1}].", remoteEP, client.Client.LocalEndPoint));
-                                }
-                            }
-
-                            channels.Add(client);
-                            _logger(string.Format("Connected to [{0}] from [{1}].", remoteEP, client.Client.LocalEndPoint));
-                        }
-                        else
-                        {
-                            _logger(string.Format("Connect to [{0}] timeout [{1}].", remoteEP, _options.ConnectTimeout));
-                            client.Close();
+                            _logger(string.Format("Handshake failed with [{0}] from [{1}].", remoteEP, client.Client.LocalEndPoint));
                         }
                     }
+
+                    channels.Add(client);
+                    _logger(string.Format("Connected to [{0}] from [{1}].", remoteEP, client.Client.LocalEndPoint));
                 }
                 catch (Exception ex) when (ex is SocketException || ex is IOException)
                 {
                     _logger(string.Format("Connect to [{0}] error occurred [{1}].", remoteEP, ex.Message));
+                }
+                finally
+                {
+                    if (stream != null)
+                        stream.Close();
+                    if (client != null && client.Connected)
+                        client.Dispose();
                 }
             }
 
@@ -138,13 +125,13 @@ namespace Cowboy.TcpLika
             }
         }
 
-        private bool HandshakeWebSocket(Stream stream, string host, string path)
+        private async Task<bool> HandshakeWebSocket(Stream stream, string host, string path)
         {
             var context = WebSocketHandshake.BuildHandeshakeContext(host, path);
-            stream.Write(context.RequestBuffer, context.RequestBufferOffset, context.RequestBufferCount);
+            await stream.WriteAsync(context.RequestBuffer, context.RequestBufferOffset, context.RequestBufferCount);
 
             var receiveBuffer = _bufferManager.BorrowBuffer();
-            var count = stream.Read(receiveBuffer, 0, receiveBuffer.Length);
+            var count = await stream.ReadAsync(receiveBuffer, 0, receiveBuffer.Length);
 
             context.ResponseBuffer = receiveBuffer;
             context.ResponseBufferOffset = 0;
@@ -171,6 +158,50 @@ namespace Cowboy.TcpLika
 
             if (_options.IsSetSendBufferSize)
                 client.SendBufferSize = _options.SendBufferSize;
+        }
+
+        private async Task<Stream> NegotiateStream(Stream stream, IPEndPoint remoteEP)
+        {
+            _options.IsSetSsl = true;
+            _options.SslTargetHost = "WebSocketServer";
+            _options.SslClientCertificates.Add(new X509Certificate2(@"D:\\Cowboy.cer"));
+            _options.IsSetSslPolicyErrorsBypassed = false;
+
+            if (!_options.IsSetSsl)
+                return stream;
+
+            var validateRemoteCertificate = new RemoteCertificateValidationCallback(
+                (object sender,
+                X509Certificate certificate,
+                X509Chain chain,
+                SslPolicyErrors sslPolicyErrors)
+                =>
+                {
+                    if (sslPolicyErrors == SslPolicyErrors.None)
+                        return true;
+
+                    if (_options.IsSetSslPolicyErrorsBypassed)
+                        return true;
+                    else
+                        _logger(string.Format("Error occurred when validating remote certificate: [{0}], [{1}].",
+                            remoteEP, sslPolicyErrors));
+
+                    return false;
+                });
+            var sslStream = new SslStream(
+                stream,
+                false,
+                validateRemoteCertificate,
+                null,
+                EncryptionPolicy.RequireEncryption);
+
+            await sslStream.AuthenticateAsClientAsync(
+                _options.SslTargetHost,
+                _options.SslClientCertificates,
+                SslProtocols.Ssl3 | SslProtocols.Tls,
+                false);
+
+            return sslStream;
         }
     }
 }

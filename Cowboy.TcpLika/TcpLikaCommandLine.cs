@@ -146,19 +146,6 @@ namespace Cowboy.TcpLika
                                 options.Connections = connections;
                             }
                             break;
-                        case TcpLikaOptionType.ConnectTimeout:
-                            {
-                                options.IsSetConnectTimeout = true;
-                                int milliseconds;
-                                if (!int.TryParse(commandLineOptions.Arguments[arg], out milliseconds))
-                                    throw new CommandLineException(string.Format(CultureInfo.CurrentCulture,
-                                        "Invalid formats of connect timeout [milliseconds] option -- {0}.", commandLineOptions.Arguments[arg]));
-                                if (milliseconds < 1)
-                                    throw new CommandLineException(string.Format(CultureInfo.CurrentCulture,
-                                        "Invalid formats of connect timeout [milliseconds] option -- {0}.", commandLineOptions.Arguments[arg]));
-                                options.ConnectTimeout = TimeSpan.FromMilliseconds(milliseconds);
-                            }
-                            break;
                         case TcpLikaOptionType.ConnectionLifetime:
                             {
                                 options.IsSetChannelLifetime = true;

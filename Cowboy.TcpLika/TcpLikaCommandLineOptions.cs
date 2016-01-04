@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Security;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Cowboy.TcpLika
 {
@@ -9,6 +12,7 @@ namespace Cowboy.TcpLika
         public TcpLikaCommandLineOptions()
         {
             this.RemoteEndPoints = new List<IPEndPoint>();
+            this.SslClientCertificates = new X509CertificateCollection();
         }
 
         public List<IPEndPoint> RemoteEndPoints { get; set; }    // Remote addresses to connect
@@ -25,12 +29,15 @@ namespace Cowboy.TcpLika
 
         public bool IsSetConnections { get; set; }
         public int Connections { get; set; }             // Connections to keep open to the destinations
-        public bool IsSetConnectTimeout { get; set; }
-        public TimeSpan ConnectTimeout { get; set; }     // Limit time milliseconds spent in a connection attempt
         public bool IsSetChannelLifetime { get; set; }
         public TimeSpan ChannelLifetime { get; set; }    // Shut down each connection after time milliseconds
 
         public bool IsSetWebSocket { get; set; }         // Use RFC6455 WebSocket transport
+
+        public bool IsSetSsl { get; set; }
+        public string SslTargetHost { get; set; }
+        public X509CertificateCollection SslClientCertificates { get; set; }
+        public bool IsSetSslPolicyErrorsBypassed { get; set; }
 
         public bool IsSetHelp { get; set; }
         public bool IsSetVersion { get; set; }
