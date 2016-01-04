@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using Cowboy.CommandLines;
 
 namespace Cowboy.TcpLika
@@ -46,7 +47,14 @@ namespace Cowboy.TcpLika
             try
             {
                 var engine = new TcpLikaEngine(_options,
-                    (string log) => OutputText(string.Format("{0}|{1}", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fffffff"), log)));
+                    (string log)
+                    =>
+                        OutputText(
+                            string.Format("{0}|MTID[{1}]|STID[{2}]|{3}",
+                            DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fffffff"),
+                            Thread.CurrentThread.ManagedThreadId,
+                            Thread.CurrentThread.GetUnmanagedThreadId(),
+                            log)));
                 engine.Start();
             }
             catch (CommandLineException ex)

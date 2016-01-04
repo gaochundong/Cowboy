@@ -66,30 +66,30 @@ namespace Cowboy.TcpLika
                     var client = new TcpClient();
                     if (!_options.IsSetConnectTimeout)
                     {
-                        _logger(string.Format("Connecting to [{0}] on [{1}].", remoteEP, Thread.CurrentThread.GetDescription()));
+                        _logger(string.Format("Connecting to [{0}].", remoteEP));
                         client.Connect(remoteEP);
                         channels.Add(client);
-                        _logger(string.Format(" Connected to [{0}] on [{1}].", remoteEP, Thread.CurrentThread.GetDescription()));
+                        _logger(string.Format("Connected to [{0}].", remoteEP));
                     }
                     else
                     {
-                        _logger(string.Format("Connecting to [{0}] on [{1}].", remoteEP, Thread.CurrentThread.GetDescription()));
+                        _logger(string.Format("Connecting to [{0}].", remoteEP));
                         var task = client.ConnectAsync(remoteEP.Address, remoteEP.Port);
                         if (task.Wait(_options.ConnectTimeout))
                         {
                             channels.Add(client);
-                            _logger(string.Format(" Connected to [{0}] on [{1}].", remoteEP, Thread.CurrentThread.GetDescription()));
+                            _logger(string.Format("Connected to [{0}].", remoteEP));
                         }
                         else
                         {
-                            _logger(string.Format("   Connect to [{0}] timeout [{1}] on [{2}].", remoteEP, _options.ConnectTimeout, Thread.CurrentThread.GetDescription()));
+                            _logger(string.Format("Connect to [{0}] timeout [{1}].", remoteEP, _options.ConnectTimeout));
                             client.Close();
                         }
                     }
                 }
                 catch (SocketException ex)
                 {
-                    _logger(string.Format("   Connect to [{0}] on [{1}] error occurred [{2}].", remoteEP, Thread.CurrentThread.GetDescription(), ex));
+                    _logger(string.Format("Connect to [{0}] error occurred [{1}].", remoteEP, ex.Message));
                 }
             }
 
@@ -100,12 +100,12 @@ namespace Cowboy.TcpLika
             {
                 try
                 {
-                    _logger(string.Format("Closed to [{0}] from [{1}] on [{2}].", remoteEP, client.Client.LocalEndPoint, Thread.CurrentThread.GetDescription()));
+                    _logger(string.Format("Closed to [{0}] from [{1}].", remoteEP, client.Client.LocalEndPoint));
                     client.Close();
                 }
                 catch (SocketException ex)
                 {
-                    _logger(string.Format("Closed to [{0}] on [{1}] error occurred [{2}].", remoteEP, Thread.CurrentThread.GetDescription(), ex));
+                    _logger(string.Format("Closed to [{0}] error occurred [{1}].", remoteEP, ex.Message));
                 }
             }
         }
