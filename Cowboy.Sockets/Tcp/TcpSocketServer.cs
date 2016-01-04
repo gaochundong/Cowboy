@@ -169,25 +169,37 @@ namespace Cowboy.Sockets
         {
             if (!Active) return;
 
-            TcpListener listener = (TcpListener)ar.AsyncState;
+            try
+            {
+                TcpListener listener = (TcpListener)ar.AsyncState;
 
-            TcpClient tcpClient = listener.EndAcceptTcpClient(ar);
-            if (!tcpClient.Connected) return;
+                TcpClient tcpClient = listener.EndAcceptTcpClient(ar);
+                if (!tcpClient.Connected) return;
 
-            ConfigureClient(tcpClient);
+                ConfigureClient(tcpClient);
 
-            // create session
-            var session = new TcpSocketSession(tcpClient, _bufferManager);
+                // create session
+                var session = new TcpSocketSession(tcpClient, _bufferManager);
 
-            // add client connection to cache
-            _sessions.AddOrUpdate(session.SessionKey, session, (n, o) => { return o; });
-            RaiseClientConnected(session);
+                // add client connection to cache
+                _sessions.AddOrUpdate(session.SessionKey, session, (n, o) => { return o; });
+                RaiseClientConnected(session);
 
-            // begin to read data
-            ContinueReadBuffer(session);
+                // begin to read data
+                ContinueReadBuffer(session);
 
-            // keep listening to accept next connection
-            ContinueAcceptSession(listener);
+                // keep listening to accept next connection
+                ContinueAcceptSession(listener);
+            }
+            catch (Exception ex)
+            {
+                if (ex is ObjectDisposedException
+                    || ex is SocketException)
+                {
+                    _log.Error(ex.Message, ex);
+                }
+                else throw;
+            }
         }
 
         private void ConfigureClient(TcpClient tcpClient)
