@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 using Cowboy.Sockets;
 
@@ -20,9 +21,6 @@ namespace Cowboy.TcpLika
 
         public void Start()
         {
-            var config = BuildClientConfiguration();
-            var remoteEP = _options.RemoteEndPoints.First();
-
             int threads = 1;
             int connections = 1;
             int connectionsPerThread = 1;
@@ -45,7 +43,7 @@ namespace Cowboy.TcpLika
             {
                 var task = Task.Run(async () =>
                 {
-                    await Load(config, remoteEP, connectionsPerThread);
+                    await Load(connectionsPerThread);
                 });
                 tasks.Add(task);
             }
@@ -53,26 +51,38 @@ namespace Cowboy.TcpLika
             Task.WaitAll(tasks.ToArray());
         }
 
-        private async Task Load(AsyncTcpSocketClientConfiguration config, IPEndPoint remoteEP, int connections)
+        private async Task Load(int connections)
         {
+            var config = BuildClientConfiguration();
+            var remoteEP = _options.RemoteEndPoints.First();
+
             var channels = new List<AsyncTcpSocketClient>();
 
-            for (int i = 0; i < connections; i++)
+            for (int c = 0; c < connections; c++)
             {
-                var client = new AsyncTcpSocketClient(remoteEP, this, config);
-                if (!_options.IsSetConnectTimeout)
+                try
                 {
-                    await client.ConnectAsync();
-                }
-                else
-                {
-                    var task = client.ConnectAsync();
-                    if (!task.Wait(_options.ConnectTimeout))
+                    var client = new AsyncTcpSocketClient(remoteEP, this, config);
+                    if (!_options.IsSetConnectTimeout)
                     {
-                        client.Close();
+                        //client.Connect();
+                        //while(client.Connected)
+                        //channels.Add(client);
+                    }
+                    else
+                    {
+                        //client.Connect();
+                        //if (task.Wait(_options.ConnectTimeout))
+                        //{
+                        //    channels.Add(client);
+                        //}
+                        //else
+                        //{
+                        //    client.Close();
+                        //}
                     }
                 }
-                channels.Add(client);
+                catch (SocketException) { }
             }
 
             if (_options.IsSetChannelLifetime)
@@ -86,7 +96,12 @@ namespace Cowboy.TcpLika
 
         private AsyncTcpSocketClientConfiguration BuildClientConfiguration()
         {
-            var config = new AsyncTcpSocketClientConfiguration();
+            var config = new AsyncTcpSocketClientConfiguration()
+            {
+                ReceiveBufferSize = 32,
+                SendBufferSize = 32,
+                NoDelay = true,
+            };
 
             if (_options.IsSetNagle)
                 config.NoDelay = _options.Nagle;

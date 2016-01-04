@@ -12,9 +12,8 @@ namespace Cowboy.TcpLika
         public static readonly ReadOnlyCollection<string> ReceiveBufferSizeOptions;
         public static readonly ReadOnlyCollection<string> SendBufferSizeOptions;
         public static readonly ReadOnlyCollection<string> ConnectionsOptions;
-        public static readonly ReadOnlyCollection<string> ConnectRateOptions;
         public static readonly ReadOnlyCollection<string> ConnectTimeoutOptions;
-        public static readonly ReadOnlyCollection<string> ChannelLifetimeOptions;
+        public static readonly ReadOnlyCollection<string> ConnectionLifetimeOptions;
         public static readonly ReadOnlyCollection<string> WebSocketOptions;
 
         public static readonly ReadOnlyCollection<string> HelpOptions;
@@ -25,14 +24,13 @@ namespace Cowboy.TcpLika
         [SuppressMessage("Microsoft.Performance", "CA1810:InitializeReferenceTypeStaticFieldsInline")]
         static TcpLikaOptions()
         {
-            ThreadsOptions = new ReadOnlyCollection<string>(new string[] { "w", "workers", "threads" });
-            NagleOptions = new ReadOnlyCollection<string>(new string[] { "nagle" });
-            ReceiveBufferSizeOptions = new ReadOnlyCollection<string>(new string[] { "rcvbuf" });
-            SendBufferSizeOptions = new ReadOnlyCollection<string>(new string[] { "sndbuf" });
+            ThreadsOptions = new ReadOnlyCollection<string>(new string[] { "w", "workers", "t", "threads" });
+            NagleOptions = new ReadOnlyCollection<string>(new string[] { "nagle", "no-delay" });
+            ReceiveBufferSizeOptions = new ReadOnlyCollection<string>(new string[] { "rcvbuf", "receive-buffer-size" });
+            SendBufferSizeOptions = new ReadOnlyCollection<string>(new string[] { "sndbuf", "send-buffer-size" });
             ConnectionsOptions = new ReadOnlyCollection<string>(new string[] { "c", "connections" });
-            ConnectRateOptions = new ReadOnlyCollection<string>(new string[] { "connect-rate" });
             ConnectTimeoutOptions = new ReadOnlyCollection<string>(new string[] { "connect-timeout" });
-            ChannelLifetimeOptions = new ReadOnlyCollection<string>(new string[] { "channel-lifetime" });
+            ConnectionLifetimeOptions = new ReadOnlyCollection<string>(new string[] { "l", "connection-lifetime" });
             WebSocketOptions = new ReadOnlyCollection<string>(new string[] { "ws", "websocket" });
 
             HelpOptions = new ReadOnlyCollection<string>(new string[] { "h", "help" });
@@ -45,9 +43,8 @@ namespace Cowboy.TcpLika
             Options.Add(TcpLikaOptionType.ReceiveBufferSize, ReceiveBufferSizeOptions);
             Options.Add(TcpLikaOptionType.SendBufferSize, SendBufferSizeOptions);
             Options.Add(TcpLikaOptionType.Connections, ConnectionsOptions);
-            Options.Add(TcpLikaOptionType.ConnectRate, ConnectRateOptions);
             Options.Add(TcpLikaOptionType.ConnectTimeout, ConnectTimeoutOptions);
-            Options.Add(TcpLikaOptionType.ChannelLifetime, ChannelLifetimeOptions);
+            Options.Add(TcpLikaOptionType.ConnectionLifetime, ConnectionLifetimeOptions);
             Options.Add(TcpLikaOptionType.WebSocket, WebSocketOptions);
 
             Options.Add(TcpLikaOptionType.Help, HelpOptions);
@@ -90,7 +87,7 @@ namespace Cowboy.TcpLika
         public static readonly string Usage = string.Format(CultureInfo.CurrentCulture, @"
 NAME
 
-    tcplika - just a tcp testing tool
+    tcplika - just a TCP testing tool
 
 SYNOPSIS
 
@@ -98,12 +95,26 @@ SYNOPSIS
 
 DESCRIPTION
 
-    TcpLika is a tcp testing tool. 
+    TcpLika is a TCP testing tool. 
 
 OPTIONS
 
-    -d, --directory
-    {0}{0}.
+    -w, --workers, -t, --threads
+    {0}{0}Number of parallel threads to use.
+    --nagle, --no-delay
+    {0}{0}ON|OFF, Control Nagle algorithm.
+    --rcvbuf, --receive-buffer-size
+    {0}{0}Set TCP receive buffer size.
+    --sndbuf, --send-buffer-size
+    {0}{0}Set TCP send buffer size.
+    -c, --connections
+    {0}{0}Connections to keep open to the destinations.
+    --connect-timeout
+    {0}{0}Limit time milliseconds spent in a connection attempt.
+    -l, --connection-lifetime
+    {0}{0}Shut down each connection after time milliseconds.
+    -ws, --websocket
+    {0}{0}Use RFC6455 WebSocket transport.
     -h, --help 
     {0}{0}Display this help and exit.
     -v, --version
@@ -111,8 +122,16 @@ OPTIONS
 
 EXAMPLES
 
-    tcplika .
-    .
+    tcplika 127.0.0.1:9001
+    Create 1 TCP connection to <127.0.0.1:9001>, then close immediately.
+
+    tcplika 127.0.0.1:9001 -w 2 -c 10
+    Create 10 TCP connections to <127.0.0.1:9001> in 2 threads parallel, 
+    then close all connections immediately.
+
+    tcplika 127.0.0.1:9001 -w 2 -c 10 -l 10000
+    Create 10 TCP connections to <127.0.0.1:9001> in 2 threads parallel, 
+    then close all connections after 10 seconds.
 
 AUTHOR
 

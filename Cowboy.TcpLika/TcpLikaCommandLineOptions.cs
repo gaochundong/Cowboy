@@ -21,12 +21,10 @@ namespace Cowboy.TcpLika
         public bool IsSetReceiveBufferSize { get; set; }
         public int ReceiveBufferSize { get; set; }       // Set TCP receive buffers (set SO_RCVBUF)
         public bool IsSetSendBufferSize { get; set; }
-        public int SendBufferSize { get; set; }          // Set TCP rend buffers (set SO_SNDBUF)
+        public int SendBufferSize { get; set; }          // Set TCP send buffers (set SO_SNDBUF)
 
         public bool IsSetConnections { get; set; }
         public int Connections { get; set; }             // Connections to keep open to the destinations
-        public bool IsSetConnectRate { get; set; }
-        public int ConnectRate { get; set; }             // Limit number of new connections per second
         public bool IsSetConnectTimeout { get; set; }
         public TimeSpan ConnectTimeout { get; set; }     // Limit time milliseconds spent in a connection attempt
         public bool IsSetChannelLifetime { get; set; }

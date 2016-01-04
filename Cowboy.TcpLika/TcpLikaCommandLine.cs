@@ -137,19 +137,6 @@ namespace Cowboy.TcpLika
                                 options.Connections = connections;
                             }
                             break;
-                        case TcpLikaOptionType.ConnectRate:
-                            {
-                                options.IsSetConnectRate = true;
-                                int rate;
-                                if (!int.TryParse(commandLineOptions.Arguments[arg], out rate))
-                                    throw new CommandLineException(string.Format(CultureInfo.CurrentCulture,
-                                        "Invalid formats of connect rate option -- {0}.", commandLineOptions.Arguments[arg]));
-                                if (rate < 1)
-                                    throw new CommandLineException(string.Format(CultureInfo.CurrentCulture,
-                                        "Invalid formats of connect rate option -- {0}.", commandLineOptions.Arguments[arg]));
-                                options.ConnectRate = rate;
-                            }
-                            break;
                         case TcpLikaOptionType.ConnectTimeout:
                             {
                                 options.IsSetConnectTimeout = true;
@@ -163,7 +150,7 @@ namespace Cowboy.TcpLika
                                 options.ConnectTimeout = TimeSpan.FromMilliseconds(milliseconds);
                             }
                             break;
-                        case TcpLikaOptionType.ChannelLifetime:
+                        case TcpLikaOptionType.ConnectionLifetime:
                             {
                                 options.IsSetChannelLifetime = true;
                                 int milliseconds;

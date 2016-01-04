@@ -2,7 +2,7 @@
 
 namespace Cowboy.TcpLika
 {
-    public static class TplExtensions
+    internal static class TplExtensions
     {
         public static void Forget(this Task task)
         {
