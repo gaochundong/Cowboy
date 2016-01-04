@@ -307,14 +307,14 @@ namespace Cowboy.Sockets
                 session.AppendBuffer(receivedBufferCount);
                 while (true)
                 {
-                    var packetHeader = TcpPacketHeader.ReadHeader(session.SessionBuffer);
-                    if (TcpPacketHeader.HEADER_SIZE + packetHeader.PayloadSize <= session.SessionBufferCount)
+                    var frameHeader = TcpFrameHeader.ReadHeader(session.SessionBuffer);
+                    if (TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize <= session.SessionBufferCount)
                     {
                         // yeah, we received the buffer and then raise it to user side to handle.
-                        RaiseClientDataReceived(session, session.SessionBuffer, TcpPacketHeader.HEADER_SIZE, packetHeader.PayloadSize);
+                        RaiseClientDataReceived(session, session.SessionBuffer, TcpFrameHeader.HEADER_SIZE, frameHeader.PayloadSize);
 
                         // remove the received packet from buffer
-                        session.ShiftBuffer(TcpPacketHeader.HEADER_SIZE + packetHeader.PayloadSize);
+                        session.ShiftBuffer(TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize);
                     }
                     else
                     {
@@ -399,9 +399,9 @@ namespace Cowboy.Sockets
                     }
                     else
                     {
-                        var packet = TcpPacket.FromPayload(data, offset, count);
-                        var packetArray = packet.ToArray();
-                        writeSession.Stream.BeginWrite(packetArray, 0, packetArray.Length, HandleDataWritten, writeSession);
+                        var frame = TcpFrame.FromPayload(data, offset, count);
+                        var frameBuffer = frame.ToArray();
+                        writeSession.Stream.BeginWrite(frameBuffer, 0, frameBuffer.Length, HandleDataWritten, writeSession);
                     }
                 }
             }

@@ -9,18 +9,18 @@ namespace Cowboy.Sockets
     // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     // | To be extended in the future                                  |
     // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    public sealed class TcpPacketHeader
+    public sealed class TcpFrameHeader
     {
         public const int HEADER_SIZE = 4;
         public const int PAYLOAD_SIZE = 4;
 
         private byte[] _header;
 
-        public TcpPacketHeader()
+        public TcpFrameHeader()
         {
         }
 
-        public TcpPacketHeader(byte[] fromHeader)
+        public TcpFrameHeader(byte[] fromHeader)
             : this()
         {
             _header = fromHeader;
@@ -44,7 +44,7 @@ namespace Cowboy.Sockets
             return _header;
         }
 
-        public TcpPacketHeader Reset()
+        public TcpFrameHeader Reset()
         {
             _header = new byte[HEADER_SIZE];
 
@@ -56,12 +56,12 @@ namespace Cowboy.Sockets
             return this;
         }
 
-        public static TcpPacketHeader ReadHeader(byte[] buffer)
+        public static TcpFrameHeader ReadHeader(byte[] buffer)
         {
             return ReadHeader(buffer, 0);
         }
 
-        public static TcpPacketHeader ReadHeader(byte[] buffer, int offset)
+        public static TcpFrameHeader ReadHeader(byte[] buffer, int offset)
         {
             var header = new byte[HEADER_SIZE];
             for (int i = 0; i < HEADER_SIZE; i++)
@@ -69,7 +69,7 @@ namespace Cowboy.Sockets
                 header[i] = buffer[offset + i];
             }
 
-            return new TcpPacketHeader(header);
+            return new TcpFrameHeader(header);
         }
 
         private static int UnsignedInt(int nb)

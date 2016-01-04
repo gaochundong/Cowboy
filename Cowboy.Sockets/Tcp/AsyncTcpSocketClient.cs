@@ -134,11 +134,11 @@ namespace Cowboy.Sockets
 
                         while (true)
                         {
-                            var packetHeader = TcpPacketHeader.ReadHeader(_sessionBuffer);
-                            if (TcpPacketHeader.HEADER_SIZE + packetHeader.PayloadSize <= _sessionBufferCount)
+                            var frameHeader = TcpFrameHeader.ReadHeader(_sessionBuffer);
+                            if (TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize <= _sessionBufferCount)
                             {
-                                await _dispatcher.Dispatch(this, _sessionBuffer, TcpPacketHeader.HEADER_SIZE, packetHeader.PayloadSize);
-                                ShiftBuffer(TcpPacketHeader.HEADER_SIZE + packetHeader.PayloadSize, ref _sessionBuffer, ref _sessionBufferCount);
+                                await _dispatcher.Dispatch(this, _sessionBuffer, TcpFrameHeader.HEADER_SIZE, frameHeader.PayloadSize);
+                                ShiftBuffer(TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize, ref _sessionBuffer, ref _sessionBufferCount);
                             }
                             else
                             {
@@ -290,9 +290,9 @@ namespace Cowboy.Sockets
             }
             else
             {
-                var packet = TcpPacket.FromPayload(data, offset, count);
-                var packetArray = packet.ToArray();
-                await _stream.WriteAsync(packetArray, 0, packetArray.Length);
+                var frame = TcpFrame.FromPayload(data, offset, count);
+                var frameBuffer = frame.ToArray();
+                await _stream.WriteAsync(frameBuffer, 0, frameBuffer.Length);
             }
         }
 
