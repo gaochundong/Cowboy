@@ -56,6 +56,10 @@
     <Compile Include="Extensions\TplExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Cowboy.Buffer\Cowboy.Buffer.csproj">
+      <Project>{555192b1-c597-4279-bf19-00ca30c6df8d}</Project>
+      <Name>Cowboy.Buffer</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Cowboy.CommandLines\Cowboy.CommandLines.csproj">
       <Project>{e7a41d23-4f6b-4be2-a311-0d3d25bfe6e7}</Project>
       <Name>Cowboy.CommandLines</Name>

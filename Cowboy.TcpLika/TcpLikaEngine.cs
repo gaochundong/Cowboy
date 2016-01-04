@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
 using System.Threading.Tasks;
+using Cowboy.Buffer;
 
 namespace Cowboy.TcpLika
 {
@@ -12,6 +13,7 @@ namespace Cowboy.TcpLika
     {
         private TcpLikaCommandLineOptions _options;
         private Action<string> _logger = (s) => { };
+        private IBufferManager _bufferManager;
 
         public TcpLikaEngine(TcpLikaCommandLineOptions options, Action<string> logger = null)
         {
@@ -21,6 +23,11 @@ namespace Cowboy.TcpLika
 
             if (logger != null)
                 _logger = logger;
+
+            if (_options.IsSetConnections)
+                _bufferManager = new GrowingByteBufferManager(_options.Connections, 256);
+            else
+                _bufferManager = new GrowingByteBufferManager(10, 256);
         }
 
         public void Start()
@@ -71,7 +78,10 @@ namespace Cowboy.TcpLika
 
                         if (_options.IsSetWebSocket)
                         {
-                            HandshakeWebSocket(client, remoteEP);
+                            if (!HandshakeWebSocket(client.GetStream(), remoteEP.Address.ToString(), "/"))
+                            {
+                                _logger(string.Format("Handshake failed with [{0}] from [{1}].", remoteEP, client.Client.LocalEndPoint));
+                            }
                         }
 
                         channels.Add(client);
@@ -85,7 +95,10 @@ namespace Cowboy.TcpLika
                         {
                             if (_options.IsSetWebSocket)
                             {
-                                HandshakeWebSocket(client, remoteEP);
+                                if (!HandshakeWebSocket(client.GetStream(), remoteEP.Address.ToString(), "/"))
+                                {
+                                    _logger(string.Format("Handshake failed with [{0}] from [{1}].", remoteEP, client.Client.LocalEndPoint));
+                                }
                             }
 
                             channels.Add(client);
@@ -123,18 +136,22 @@ namespace Cowboy.TcpLika
             }
         }
 
-        private void HandshakeWebSocket(TcpClient client, IPEndPoint remoteEP)
+        private bool HandshakeWebSocket(Stream stream, string host, string path)
         {
-            var context = WebSocketHandshake.BuildHandeshakeContext(remoteEP.Address.ToString(), "/");
-            client.GetStream().Write(context.RequestBuffer, context.RequestBufferOffset, context.RequestBufferCount);
+            var context = WebSocketHandshake.BuildHandeshakeContext(host, path);
+            stream.Write(context.RequestBuffer, context.RequestBufferOffset, context.RequestBufferCount);
 
-            var receiveBuffer = new byte[8192];
-            var count = client.GetStream().Read(receiveBuffer, 0, receiveBuffer.Length);
+            var receiveBuffer = _bufferManager.BorrowBuffer();
+            var count = stream.Read(receiveBuffer, 0, receiveBuffer.Length);
 
             context.ResponseBuffer = receiveBuffer;
             context.ResponseBufferOffset = 0;
             context.ResponseBufferCount = count;
             var passedVerification = WebSocketHandshake.VerifyHandshake(context);
+
+            _bufferManager.ReturnBuffer(receiveBuffer);
+
+            return passedVerification;
         }
 
         private void ConfigureClient(TcpClient client)

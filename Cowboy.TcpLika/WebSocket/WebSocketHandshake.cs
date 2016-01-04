@@ -45,7 +45,7 @@ namespace Cowboy.TcpLika
             sb.AppendFormatWithCrCf("GET {0} HTTP/1.1", path);
             sb.AppendFormatWithCrCf("Host: {0}", host);
 
-            sb.AppendWithCrCf("Upgrade: WebSocket");
+            sb.AppendWithCrCf("Upgrade: websocket");
             sb.AppendWithCrCf("Connection: Upgrade");
 
             sb.AppendFormatWithCrCf("Sec-WebSocket-Key: {0}", key);
@@ -76,7 +76,16 @@ namespace Cowboy.TcpLika
 
             sb.AppendWithCrCf();
 
+            // GET /chat HTTP/1.1
+            // Host: server.example.com
+            // Upgrade: websocket
+            // Connection: Upgrade
+            // Sec-WebSocket-Key: x3JJHMbDL1EzLkh9GBhXDw==
+            // Sec-WebSocket-Protocol: chat, superchat
+            // Sec-WebSocket-Version: 13
+            // Origin: http://example.com
             var message = sb.ToString();
+
             var requestBuffer = Encoding.UTF8.GetBytes(message);
             var context = new HandshakeContext()
             {
@@ -97,15 +106,77 @@ namespace Cowboy.TcpLika
             if (string.IsNullOrEmpty(context.SecWebSocketKey))
                 throw new ArgumentNullException("context.SecWebSocketKey");
 
+            var response = Encoding.UTF8.GetString(context.ResponseBuffer, context.ResponseBufferOffset, context.ResponseBufferCount);
+
+            // HTTP/1.1 101 Switching Protocols
+            // Upgrade: websocket
+            // Connection: Upgrade
+            // Sec-WebSocket-Accept: 1tGBmA9p0DQDgmFll6P0/UcVS/E=
+            // Sec-WebSocket-Protocol: chat
+            var headers = ParseWebSocketResponseHeaders(response);
+
+            if (!headers.ContainsKey("Sec-WebSocket-Accept"))
+                return false;
+
             string challenge =
                 Convert.ToBase64String(
                     SHA1.Create().ComputeHash(
                         Encoding.ASCII.GetBytes(
                             context.SecWebSocketKey + MagicHandeshakeAcceptedKey)));
 
-            var response = Encoding.UTF8.GetString(context.ResponseBuffer, context.ResponseBufferOffset, context.ResponseBufferCount);
+            return headers["Sec-WebSocket-Accept"].Equals(challenge, StringComparison.OrdinalIgnoreCase);
+        }
 
-            return true;
+        private static Dictionary<string, string> ParseWebSocketResponseHeaders(string response)
+        {
+            var headers = new Dictionary<string, string>();
+
+            var lines = response.Split(new char[] { '\r', '\n' }).Where(l => l.Length > 0);
+            foreach (var line in lines)
+            {
+                if (line.StartsWith(@"HTTP/"))
+                {
+                    var segements = line.Split(' ');
+                    if (segements.Length > 1)
+                    {
+                        headers.Add("HttpStatusCode", segements[1]);
+                    }
+                }
+                else if (line.StartsWith(@"Upgrade:"))
+                {
+                    var segements = line.Split(':');
+                    if (segements.Length > 1)
+                    {
+                        headers.Add("Upgrade", segements[1].Trim());
+                    }
+                }
+                else if (line.StartsWith(@"Connection:"))
+                {
+                    var segements = line.Split(':');
+                    if (segements.Length > 1)
+                    {
+                        headers.Add("Connection", segements[1].Trim());
+                    }
+                }
+                else if (line.StartsWith(@"Sec-WebSocket-Accept:"))
+                {
+                    var segements = line.Split(':');
+                    if (segements.Length > 1)
+                    {
+                        headers.Add("Sec-WebSocket-Accept", segements[1].Trim());
+                    }
+                }
+                else if (line.StartsWith(@"Sec-WebSocket-Protocol:"))
+                {
+                    var segements = line.Split(':');
+                    if (segements.Length > 1)
+                    {
+                        headers.Add("Sec-WebSocket-Protocol", segements[1].Trim());
+                    }
+                }
+            }
+
+            return headers;
         }
     }
 }
