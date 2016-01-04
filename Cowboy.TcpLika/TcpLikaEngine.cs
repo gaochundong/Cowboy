@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -54,7 +53,10 @@ namespace Cowboy.TcpLika
             {
                 var task = Task.Run(async () =>
                 {
-                    await PerformLoad(connectionsPerThread, _options.RemoteEndPoints.First());
+                    foreach (var remoteEP in _options.RemoteEndPoints)
+                    {
+                        await PerformLoad(connectionsPerThread, remoteEP);
+                    }
                 });
                 tasks.Add(task);
             }
