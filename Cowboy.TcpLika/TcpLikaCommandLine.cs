@@ -45,7 +45,8 @@ namespace Cowboy.TcpLika
         {
             try
             {
-                var engine = new TcpLikaEngine(_options);
+                var engine = new TcpLikaEngine(_options,
+                    (string log) => OutputText(string.Format("{0}|{1}", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fffffff"), log)));
                 engine.Start();
             }
             catch (CommandLineException ex)

@@ -3,20 +3,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
-using Cowboy.Sockets;
 
 namespace Cowboy.TcpLika
 {
-    internal class TcpLikaEngine : IAsyncTcpSocketClientMessageDispatcher
+    internal class TcpLikaEngine
     {
         private TcpLikaCommandLineOptions _options;
+        private Action<string> _logger = (s) => { };
 
-        public TcpLikaEngine(TcpLikaCommandLineOptions options)
+        public TcpLikaEngine(TcpLikaCommandLineOptions options, Action<string> logger = null)
         {
             if (options == null)
                 throw new ArgumentNullException("options");
             _options = options;
+
+            if (logger != null)
+                _logger = logger;
         }
 
         public void Start()
@@ -43,7 +47,7 @@ namespace Cowboy.TcpLika
             {
                 var task = Task.Run(async () =>
                 {
-                    await Load(connectionsPerThread);
+                    await PerformLoad(connectionsPerThread, _options.RemoteEndPoints.First());
                 });
                 tasks.Add(task);
             }
@@ -51,38 +55,42 @@ namespace Cowboy.TcpLika
             Task.WaitAll(tasks.ToArray());
         }
 
-        private async Task Load(int connections)
+        private async Task PerformLoad(int connections, IPEndPoint remoteEP)
         {
-            var config = BuildClientConfiguration();
-            var remoteEP = _options.RemoteEndPoints.First();
-
-            var channels = new List<AsyncTcpSocketClient>();
+            var channels = new List<TcpClient>();
 
             for (int c = 0; c < connections; c++)
             {
                 try
                 {
-                    var client = new AsyncTcpSocketClient(remoteEP, this, config);
+                    var client = new TcpClient();
                     if (!_options.IsSetConnectTimeout)
                     {
-                        //client.Connect();
-                        //while(client.Connected)
-                        //channels.Add(client);
+                        _logger(string.Format("Connecting to [{0}] on [{1}].", remoteEP, Thread.CurrentThread.GetDescription()));
+                        client.Connect(remoteEP);
+                        channels.Add(client);
+                        _logger(string.Format(" Connected to [{0}] on [{1}].", remoteEP, Thread.CurrentThread.GetDescription()));
                     }
                     else
                     {
-                        //client.Connect();
-                        //if (task.Wait(_options.ConnectTimeout))
-                        //{
-                        //    channels.Add(client);
-                        //}
-                        //else
-                        //{
-                        //    client.Close();
-                        //}
+                        _logger(string.Format("Connecting to [{0}] on [{1}].", remoteEP, Thread.CurrentThread.GetDescription()));
+                        var task = client.ConnectAsync(remoteEP.Address, remoteEP.Port);
+                        if (task.Wait(_options.ConnectTimeout))
+                        {
+                            channels.Add(client);
+                            _logger(string.Format(" Connected to [{0}] on [{1}].", remoteEP, Thread.CurrentThread.GetDescription()));
+                        }
+                        else
+                        {
+                            _logger(string.Format("   Connect to [{0}] timeout [{1}] on [{2}].", remoteEP, _options.ConnectTimeout, Thread.CurrentThread.GetDescription()));
+                            client.Close();
+                        }
                     }
                 }
-                catch (SocketException) { }
+                catch (SocketException ex)
+                {
+                    _logger(string.Format("   Connect to [{0}] on [{1}] error occurred [{2}].", remoteEP, Thread.CurrentThread.GetDescription(), ex));
+                }
             }
 
             if (_options.IsSetChannelLifetime)
@@ -90,34 +98,33 @@ namespace Cowboy.TcpLika
 
             foreach (var client in channels)
             {
-                client.Close();
+                try
+                {
+                    _logger(string.Format("Closed to [{0}] from [{1}] on [{2}].", remoteEP, client.Client.LocalEndPoint, Thread.CurrentThread.GetDescription()));
+                    client.Close();
+                }
+                catch (SocketException ex)
+                {
+                    _logger(string.Format("Closed to [{0}] on [{1}] error occurred [{2}].", remoteEP, Thread.CurrentThread.GetDescription(), ex));
+                }
             }
         }
 
-        private AsyncTcpSocketClientConfiguration BuildClientConfiguration()
+        private void ConfigureClient(TcpClient tcpClient)
         {
-            var config = new AsyncTcpSocketClientConfiguration()
-            {
-                ReceiveBufferSize = 32,
-                SendBufferSize = 32,
-                NoDelay = true,
-            };
+            tcpClient.ReceiveBufferSize = 32;
+            tcpClient.SendBufferSize = 32;
+            tcpClient.ExclusiveAddressUse = true;
+            tcpClient.NoDelay = true;
 
             if (_options.IsSetNagle)
-                config.NoDelay = _options.Nagle;
+                tcpClient.NoDelay = _options.Nagle;
 
             if (_options.IsSetReceiveBufferSize)
-                config.ReceiveBufferSize = _options.ReceiveBufferSize;
+                tcpClient.ReceiveBufferSize = _options.ReceiveBufferSize;
 
             if (_options.IsSetSendBufferSize)
-                config.SendBufferSize = _options.SendBufferSize;
-
-            return config;
-        }
-
-        public async Task Dispatch(AsyncTcpSocketClient client, byte[] data, int offset, int count)
-        {
-            await Task.CompletedTask;
+                tcpClient.SendBufferSize = _options.SendBufferSize;
         }
     }
 }

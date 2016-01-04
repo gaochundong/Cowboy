@@ -50,16 +50,13 @@
     <Compile Include="TcpLikaOptionType.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ThreadExtensions.cs" />
     <Compile Include="TplExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Cowboy.CommandLines\Cowboy.CommandLines.csproj">
       <Project>{e7a41d23-4f6b-4be2-a311-0d3d25bfe6e7}</Project>
       <Name>Cowboy.CommandLines</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Cowboy.Sockets\Cowboy.Sockets.csproj">
-      <Project>{39d916fe-2c09-47ab-a5a2-1a23787f20ba}</Project>
-      <Name>Cowboy.Sockets</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
