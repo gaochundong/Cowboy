@@ -29,6 +29,7 @@ namespace Cowboy.TcpLika
             string key = null,
             string protocol = null,
             string version = null,
+            string extensions = null,
             string origin = null,
             IEnumerable<KeyValuePair<string, string>> cookies = null)
         {
@@ -48,8 +49,19 @@ namespace Cowboy.TcpLika
             sb.AppendWithCrCf("Upgrade: websocket");
             sb.AppendWithCrCf("Connection: Upgrade");
 
+            // In addition to Upgrade headers, the client sends a Sec-WebSocket-Key header 
+            // containing base64-encoded random bytes, and the server replies with a hash of the key 
+            // in the Sec-WebSocket-Accept header. This is intended to prevent a caching proxy 
+            // from re-sending a previous WebSocket conversation, and does not provide any authentication, 
+            // privacy or integrity. The hashing function appends the 
+            // fixed string 258EAFA5-E914-47DA-95CA-C5AB0DC85B11 (a GUID) to the value 
+            // from Sec-WebSocket-Key header (which is not decoded from base64), 
+            // applies the SHA-1 hashing function, and encodes the result using base64.
             sb.AppendFormatWithCrCf("Sec-WebSocket-Key: {0}", key);
 
+            // The |Sec-WebSocket-Protocol| request-header field can be
+            // used to indicate what subprotocols(application - level protocols
+            // layered over the WebSocket Protocol) are acceptable to the client.
             if (!string.IsNullOrEmpty(protocol))
                 sb.AppendFormatWithCrCf("Sec-WebSocket-Protocol: {0}", protocol);
 
@@ -58,6 +70,15 @@ namespace Cowboy.TcpLika
             else
                 sb.AppendFormatWithCrCf("Sec-WebSocket-Version: {0}", 13);
 
+            // List of extensions support by the client.
+            if (!string.IsNullOrEmpty(extensions))
+                sb.AppendFormatWithCrCf("Sec-WebSocket-Extensions: {0}", extensions);
+
+            // The |Origin| header field is used to protect against
+            // unauthorized cross-origin use of a WebSocket server by scripts using         
+            // the WebSocket API in a web browser.
+            // This header field is sent by browser clients; for non-browser clients, 
+            // this header field may be sent if it makes sense in the context of those clients.
             if (!string.IsNullOrEmpty(origin))
                 sb.AppendFormatWithCrCf("Origin: {0}", origin);
 
@@ -115,6 +136,14 @@ namespace Cowboy.TcpLika
             // Sec-WebSocket-Protocol: chat
             var headers = ParseWebSocketResponseHeaders(response);
 
+            if (!headers.ContainsKey("HttpStatusCode"))
+                return false;
+
+            // Any status code other than 101 indicates that the WebSocket handshake
+            // has not completed and that the semantics of HTTP still apply.
+            if (headers["HttpStatusCode"] != "101")
+                return false;
+
             if (!headers.ContainsKey("Sec-WebSocket-Accept"))
                 return false;
 
@@ -144,42 +173,56 @@ namespace Cowboy.TcpLika
                 }
                 else if (line.StartsWith(@"Upgrade:"))
                 {
-                    var segements = line.Split(':');
-                    if (segements.Length > 1)
+                    var index = line.IndexOf(':');
+                    if (index != -1)
                     {
-                        headers.Add("Upgrade", segements[1].Trim());
+                        var value = line.Substring(index + 1);
+                        headers.Add("Upgrade", value.Trim());
                     }
                 }
                 else if (line.StartsWith(@"Connection:"))
                 {
-                    var segements = line.Split(':');
-                    if (segements.Length > 1)
+                    var index = line.IndexOf(':');
+                    if (index != -1)
                     {
-                        headers.Add("Connection", segements[1].Trim());
+                        var value = line.Substring(index + 1);
+                        headers.Add("Connection", value.Trim());
                     }
                 }
                 else if (line.StartsWith(@"Sec-WebSocket-Accept:"))
                 {
-                    var segements = line.Split(':');
-                    if (segements.Length > 1)
+                    var index = line.IndexOf(':');
+                    if (index != -1)
                     {
-                        headers.Add("Sec-WebSocket-Accept", segements[1].Trim());
+                        var value = line.Substring(index + 1);
+                        headers.Add("Sec-WebSocket-Accept", value.Trim());
                     }
                 }
                 else if (line.StartsWith(@"Sec-WebSocket-Protocol:"))
                 {
-                    var segements = line.Split(':');
-                    if (segements.Length > 1)
+                    var index = line.IndexOf(':');
+                    if (index != -1)
                     {
-                        headers.Add("Sec-WebSocket-Protocol", segements[1].Trim());
+                        var value = line.Substring(index + 1);
+                        headers.Add("Sec-WebSocket-Protocol", value.Trim());
+                    }
+                }
+                else if (line.StartsWith(@"Origin:"))
+                {
+                    var index = line.IndexOf(':');
+                    if (index != -1)
+                    {
+                        var value = line.Substring(index + 1);
+                        headers.Add("Origin", value.Trim());
                     }
                 }
                 else if (line.StartsWith(@"Cookie:"))
                 {
-                    var segements = line.Split(':');
-                    if (segements.Length > 1)
+                    var index = line.IndexOf(':');
+                    if (index != -1)
                     {
-                        headers.Add("Cookie", segements[1].Trim());
+                        var value = line.Substring(index + 1);
+                        headers.Add("Cookie", value.Trim());
                     }
                 }
             }
