@@ -113,7 +113,7 @@ namespace Cowboy.TcpLika
                         }
                     }
                 }
-                catch (SocketException ex)
+                catch (Exception ex) when (ex is SocketException || ex is IOException)
                 {
                     _logger(string.Format("Connect to [{0}] error occurred [{1}].", remoteEP, ex.Message));
                 }
@@ -131,7 +131,7 @@ namespace Cowboy.TcpLika
                     _logger(string.Format("Closed to [{0}] from [{1}].", remoteEP, client.Client.LocalEndPoint));
                     client.Close();
                 }
-                catch (SocketException ex)
+                catch (Exception ex) when (ex is SocketException || ex is IOException)
                 {
                     _logger(string.Format("Closed to [{0}] error occurred [{1}].", remoteEP, ex.Message));
                 }
