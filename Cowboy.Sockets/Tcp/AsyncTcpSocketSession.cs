@@ -91,7 +91,7 @@ namespace Cowboy.Sockets
                     if (receiveCount == 0)
                         break;
 
-                    if (!_configuration.IsFramingEnabled)
+                    if (!_configuration.Framing)
                     {
                         await _dispatcher.Dispatch(this, receiveBuffer, 0, receiveCount);
                     }
@@ -147,7 +147,7 @@ namespace Cowboy.Sockets
 
         public async Task Send(byte[] data, int offset, int count)
         {
-            if (!_configuration.IsFramingEnabled)
+            if (!_configuration.Framing)
             {
                 await _stream.WriteAsync(data, offset, count);
             }

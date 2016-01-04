@@ -7,7 +7,7 @@ namespace Cowboy.Sockets
     {
         public TcpSocketServerConfiguration()
         {
-            IsFramingEnabled = true;
+            Framing = true;
             InitialBufferAllocationCount = 100;
             ReceiveBufferSize = 8192;
             SendBufferSize = 8192;
@@ -21,7 +21,7 @@ namespace Cowboy.Sockets
             AllowNatTraversal = true;
         }
 
-        public bool IsFramingEnabled { get; set; }
+        public bool Framing { get; set; }
         public int InitialBufferAllocationCount { get; set; }
         public int ReceiveBufferSize { get; set; }
         public int SendBufferSize { get; set; }
