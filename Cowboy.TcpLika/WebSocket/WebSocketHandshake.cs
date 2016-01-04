@@ -174,6 +174,14 @@ namespace Cowboy.TcpLika
                         headers.Add("Sec-WebSocket-Protocol", segements[1].Trim());
                     }
                 }
+                else if (line.StartsWith(@"Cookie:"))
+                {
+                    var segements = line.Split(':');
+                    if (segements.Length > 1)
+                    {
+                        headers.Add("Cookie", segements[1].Trim());
+                    }
+                }
             }
 
             return headers;
