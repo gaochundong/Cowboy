@@ -282,7 +282,7 @@ namespace Cowboy.Sockets
 
         private void ReceiveBuffer(TcpSocketSession session, int receivedBufferCount)
         {
-            if (!_configuration.IsPackingEnabled)
+            if (!_configuration.IsFramingEnabled)
             {
                 // yeah, we received the buffer and then raise it to user side to handle.
                 RaiseClientDataReceived(session, session.ReceiveBuffer, 0, receivedBufferCount);
@@ -393,7 +393,7 @@ namespace Cowboy.Sockets
             {
                 if (writeSession.Stream.CanWrite)
                 {
-                    if (!_configuration.IsPackingEnabled)
+                    if (!_configuration.IsFramingEnabled)
                     {
                         writeSession.Stream.BeginWrite(data, offset, count, HandleDataWritten, writeSession);
                     }
