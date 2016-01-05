@@ -1,2 +1,2 @@
 # Cowboy
-Cowboy is a HTTP library for building HTTP based services.
+Cowboy is a library for building Sockets/HTTP based services.
