@@ -37,7 +37,6 @@ namespace Cowboy.TcpLika
         {
             int threads = 1;
             int connections = 1;
-            int connectionsPerThread = 1;
 
             if (_options.IsSetThreads)
                 threads = _options.Threads;
@@ -50,7 +49,8 @@ namespace Cowboy.TcpLika
             if (connections < threads)
                 threads = connections;
 
-            connectionsPerThread = connections / threads;
+            int connectionsPerThread = connections / threads;
+            int connectionsRemainder = connections % threads;
 
             var tasks = new List<Task>();
             for (int p = 0; p < threads; p++)
@@ -60,6 +60,17 @@ namespace Cowboy.TcpLika
                     foreach (var remoteEP in _options.RemoteEndPoints)
                     {
                         await PerformLoad(connectionsPerThread, remoteEP);
+                    }
+                });
+                tasks.Add(task);
+            }
+            if (connectionsRemainder > 0)
+            {
+                var task = Task.Run(async () =>
+                {
+                    foreach (var remoteEP in _options.RemoteEndPoints)
+                    {
+                        await PerformLoad(connectionsRemainder, remoteEP);
                     }
                 });
                 tasks.Add(task);
