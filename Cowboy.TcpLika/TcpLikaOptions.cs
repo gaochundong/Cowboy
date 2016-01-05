@@ -164,6 +164,10 @@ EXAMPLES
     Create 10 TCP connections to <127.0.0.1:9001> in 2 threads parallel, 
     then close all connections after 10 seconds.
 
+    tcplika 127.0.0.1:3202 -w 2 -c 10 -l 10000 -ws -ws-path 'test'
+    Create 10 WebSocket connections to URI <ws://127.0.0.1:3202/test> 
+    in 2 threads parallel, then close all connections after 10 seconds.
+
     tcplika 127.0.0.1:80 -w 8 -c 10000 -l 30000 -ws \
       -ssl -ssl-bypass-errors \
       -ssl-target-host 'WebSocketServer' \
