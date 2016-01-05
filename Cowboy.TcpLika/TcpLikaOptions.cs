@@ -122,11 +122,11 @@ OPTIONS
 
     -w, --workers, -t, --threads
     {0}{0}Number of parallel threads to use.
-    --nagle, --no-delay
+    -nagle, --no-delay
     {0}{0}ON|OFF, Control Nagle algorithm.
-    --rcvbuf, --receive-buffer-size
+    -rcvbuf, --receive-buffer-size
     {0}{0}Set TCP receive buffer size.
-    --sndbuf, --send-buffer-size
+    -sndbuf, --send-buffer-size
     {0}{0}Set TCP send buffer size.
     -c, --connections
     {0}{0}Connections to keep open to the destinations.
