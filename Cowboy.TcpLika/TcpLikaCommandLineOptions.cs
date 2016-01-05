@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
-using System.Net.Security;
-using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 
 namespace Cowboy.TcpLika
@@ -35,7 +33,10 @@ namespace Cowboy.TcpLika
         public bool IsSetWebSocket { get; set; }         // Use RFC6455 WebSocket transport
 
         public bool IsSetSsl { get; set; }
+        public bool IsSetSslTargetHost { get; set; }
         public string SslTargetHost { get; set; }
+        public bool IsSetSslClientCertificateFilePath { get; set; }
+        public string SslClientCertificateFilePath { get; set; }
         public X509CertificateCollection SslClientCertificates { get; set; }
         public bool IsSetSslPolicyErrorsBypassed { get; set; }
 

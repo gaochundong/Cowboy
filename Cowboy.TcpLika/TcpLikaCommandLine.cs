@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Net;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using Cowboy.CommandLines;
 
@@ -162,6 +165,43 @@ namespace Cowboy.TcpLika
                         case TcpLikaOptionType.WebSocket:
                             options.IsSetWebSocket = true;
                             break;
+                        case TcpLikaOptionType.Ssl:
+                            options.IsSetSsl = true;
+                            break;
+                        case TcpLikaOptionType.SslTargetHost:
+                            {
+                                options.IsSetSslTargetHost = true;
+                                options.SslTargetHost = commandLineOptions.Arguments[arg];
+                                if (string.IsNullOrEmpty(options.SslTargetHost))
+                                    throw new CommandLineException(string.Format(CultureInfo.CurrentCulture,
+                                        "Invalid value of SslTargetHost option -- {0}.", commandLineOptions.Arguments[arg]));
+                            }
+                            break;
+                        case TcpLikaOptionType.SslClientCertificateFilePath:
+                            {
+                                options.IsSetSslClientCertificateFilePath = true;
+                                options.SslClientCertificateFilePath = commandLineOptions.Arguments[arg];
+                                if (string.IsNullOrEmpty(options.SslClientCertificateFilePath))
+                                    throw new CommandLineException(string.Format(CultureInfo.CurrentCulture,
+                                        "Invalid value of SslClientCertificateFilePath option -- {0}.", commandLineOptions.Arguments[arg]));
+                                if (!File.Exists(options.SslClientCertificateFilePath))
+                                    throw new CommandLineException(string.Format(CultureInfo.CurrentCulture,
+                                        "Invalid value of SslClientCertificateFilePath option -- {0} does not exist.", commandLineOptions.Arguments[arg]));
+
+                                try
+                                {
+                                    options.SslClientCertificates.Add(new X509Certificate2(options.SslClientCertificateFilePath));
+                                }
+                                catch (CryptographicException ex)
+                                {
+                                    throw new CommandLineException(string.Format(CultureInfo.CurrentCulture,
+                                        "Invalid value of SslClientCertificateFilePath option -- {0}.", ex.Message), ex);
+                                }
+                            }
+                            break;
+                        case TcpLikaOptionType.SslBypassedErrors:
+                            options.IsSetSslPolicyErrorsBypassed = true;
+                            break;
                         case TcpLikaOptionType.Help:
                             options.IsSetHelp = true;
                             break;
@@ -208,6 +248,21 @@ namespace Cowboy.TcpLika
             {
                 throw new CommandLineException(string.Format(CultureInfo.CurrentCulture,
                   "Option used in invalid context -- {0}", "must specify a <host:port>."));
+            }
+
+            if (options.IsSetSsl)
+            {
+                if (!options.IsSetSslTargetHost)
+                {
+                    throw new CommandLineException(string.Format(CultureInfo.CurrentCulture,
+                      "Option used in invalid context -- {0}", "must specify <SslTargetHost> when enable SSL/TLS."));
+                }
+
+                if (!options.IsSetSslClientCertificateFilePath)
+                {
+                    throw new CommandLineException(string.Format(CultureInfo.CurrentCulture,
+                      "Option used in invalid context -- {0}", "must specify <SslClientCertificateFilePath> when enable SSL/TLS."));
+                }
             }
         }
     }

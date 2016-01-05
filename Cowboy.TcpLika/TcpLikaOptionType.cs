@@ -18,6 +18,11 @@ namespace Cowboy.TcpLika
 
         WebSocket,          // Use RFC6455 WebSocket transport
 
+        Ssl,
+        SslTargetHost,
+        SslClientCertificateFilePath,
+        SslBypassedErrors,
+
         Help,
         Version,
     }

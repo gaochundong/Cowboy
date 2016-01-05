@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
@@ -96,9 +97,7 @@ namespace Cowboy.TcpLika
                 catch (Exception ex) when (ex is SocketException || ex is IOException)
                 {
                     _logger(string.Format("Connect to [{0}] error occurred [{1}].", remoteEP, ex.Message));
-                }
-                finally
-                {
+
                     if (stream != null)
                         stream.Close();
                     if (client != null && client.Connected)
@@ -106,7 +105,7 @@ namespace Cowboy.TcpLika
                 }
             }
 
-            if (_options.IsSetChannelLifetime)
+            if (_options.IsSetChannelLifetime && channels.Any())
             {
                 await Task.Delay(_options.ChannelLifetime);
             }
@@ -162,11 +161,6 @@ namespace Cowboy.TcpLika
 
         private async Task<Stream> NegotiateStream(Stream stream, IPEndPoint remoteEP)
         {
-            _options.IsSetSsl = true;
-            _options.SslTargetHost = "WebSocketServer";
-            _options.SslClientCertificates.Add(new X509Certificate2(@"D:\\Cowboy.cer"));
-            _options.IsSetSslPolicyErrorsBypassed = false;
-
             if (!_options.IsSetSsl)
                 return stream;
 
@@ -200,6 +194,24 @@ namespace Cowboy.TcpLika
                 _options.SslClientCertificates,
                 SslProtocols.Ssl3 | SslProtocols.Tls,
                 false);
+
+#if VERBOSE
+            _logger(string.Format(
+                "Ssl Stream: SslProtocol[{0}], IsServer[{1}], IsAuthenticated[{2}], IsEncrypted[{3}], IsSigned[{4}], IsMutuallyAuthenticated[{5}], "
+                + "HashAlgorithm[{6}], HashStrength[{7}], KeyExchangeAlgorithm[{8}], KeyExchangeStrength[{9}], CipherAlgorithm[{10}], CipherStrength[{11}].",
+                sslStream.SslProtocol,
+                sslStream.IsServer,
+                sslStream.IsAuthenticated,
+                sslStream.IsEncrypted,
+                sslStream.IsSigned,
+                sslStream.IsMutuallyAuthenticated,
+                sslStream.HashAlgorithm,
+                sslStream.HashStrength,
+                sslStream.KeyExchangeAlgorithm,
+                sslStream.KeyExchangeStrength,
+                sslStream.CipherAlgorithm,
+                sslStream.CipherStrength));
+#endif
 
             return sslStream;
         }

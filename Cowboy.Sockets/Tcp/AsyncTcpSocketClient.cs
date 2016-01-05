@@ -207,7 +207,8 @@ namespace Cowboy.Sockets
                     if (_configuration.SslPolicyErrorsBypassed)
                         return true;
                     else
-                        _log.ErrorFormat("Error occurred when validating remote certificate: [{0}], [{1}].", this.RemoteEndPoint, sslPolicyErrors);
+                        _log.ErrorFormat("Error occurred when validating remote certificate: [{0}], [{1}].", 
+                            this.RemoteEndPoint, sslPolicyErrors);
 
                     return false;
                 });
@@ -220,10 +221,29 @@ namespace Cowboy.Sockets
                 _configuration.SslEncryptionPolicy);
 
             await sslStream.AuthenticateAsClientAsync(
-                _configuration.SslTargetHost,
-                _configuration.SslClientCertificates,
-                _configuration.SslEnabledProtocols,
-                _configuration.SslCheckCertificateRevocation);
+                _configuration.SslTargetHost, // The name of the server that will share this SslStream.
+                _configuration.SslClientCertificates, // The X509CertificateCollection that contains client certificates.
+                _configuration.SslEnabledProtocols, // The SslProtocols value that represents the protocol used for authentication.
+                _configuration.SslCheckCertificateRevocation); // A Boolean value that specifies whether the certificate revocation list is checked during authentication.
+
+            // When authentication succeeds, you must check the IsEncrypted and IsSigned properties 
+            // to determine what security services are used by the SslStream. 
+            // Check the IsMutuallyAuthenticated property to determine whether mutual authentication occurred.
+            _log.DebugFormat(
+                "Ssl Stream: SslProtocol[{0}], IsServer[{1}], IsAuthenticated[{2}], IsEncrypted[{3}], IsSigned[{4}], IsMutuallyAuthenticated[{5}], "
+                + "HashAlgorithm[{6}], HashStrength[{7}], KeyExchangeAlgorithm[{8}], KeyExchangeStrength[{9}], CipherAlgorithm[{10}], CipherStrength[{11}].",
+                sslStream.SslProtocol,
+                sslStream.IsServer,
+                sslStream.IsAuthenticated,
+                sslStream.IsEncrypted,
+                sslStream.IsSigned,
+                sslStream.IsMutuallyAuthenticated,
+                sslStream.HashAlgorithm,
+                sslStream.HashStrength,
+                sslStream.KeyExchangeAlgorithm,
+                sslStream.KeyExchangeStrength,
+                sslStream.CipherAlgorithm,
+                sslStream.CipherStrength);
 
             return sslStream;
         }
