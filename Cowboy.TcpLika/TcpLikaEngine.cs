@@ -96,7 +96,11 @@ namespace Cowboy.TcpLika
 
                     if (_options.IsSetWebSocket)
                     {
-                        if (!await HandshakeWebSocket(stream, remoteEP.Address.ToString(), "/"))
+                        if (!await HandshakeWebSocket(
+                            stream,
+                            remoteEP.Address.ToString(),
+                            _options.IsSetWebSocketPath ? _options.WebSocketPath : "/",
+                            _options.IsSetWebSocketProtocol ? _options.WebSocketProtocol : null))
                         {
                             _logger(string.Format("Handshake failed with [{0}] from [{1}].", remoteEP, client.Client.LocalEndPoint));
                         }
@@ -135,9 +139,9 @@ namespace Cowboy.TcpLika
             }
         }
 
-        private async Task<bool> HandshakeWebSocket(Stream stream, string host, string path)
+        private async Task<bool> HandshakeWebSocket(Stream stream, string host, string path, string protocol = null)
         {
-            var context = WebSocketHandshake.BuildHandeshakeContext(host, path);
+            var context = WebSocketHandshake.BuildHandeshakeContext(host, path, protocol: protocol);
             await stream.WriteAsync(context.RequestBuffer, context.RequestBufferOffset, context.RequestBufferCount);
 
             var receiveBuffer = _bufferManager.BorrowBuffer();

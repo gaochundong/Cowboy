@@ -6,7 +6,7 @@ namespace Cowboy.TestServer
     public class TestWebSocketModule : WebSocketModule
     {
         public TestWebSocketModule()
-            : base(@"/")
+            : base(@"/test")
         {
         }
 

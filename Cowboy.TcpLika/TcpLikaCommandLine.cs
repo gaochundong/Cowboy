@@ -165,6 +165,25 @@ namespace Cowboy.TcpLika
                         case TcpLikaOptionType.WebSocket:
                             options.IsSetWebSocket = true;
                             break;
+                        case TcpLikaOptionType.WebSocketPath:
+                            {
+                                options.IsSetWebSocketPath = true;
+                                options.WebSocketPath = commandLineOptions.Arguments[arg].Trim();
+                                if (string.IsNullOrEmpty(options.WebSocketPath))
+                                    throw new CommandLineException(string.Format(CultureInfo.CurrentCulture,
+                                        "Invalid value of WebSocketPath option -- {0}.", commandLineOptions.Arguments[arg]));
+                                options.WebSocketPath = "/" + options.WebSocketPath.TrimStart('/');
+                            }
+                            break;
+                        case TcpLikaOptionType.WebSocketProtocol:
+                            {
+                                options.IsSetWebSocketProtocol = true;
+                                options.WebSocketProtocol = commandLineOptions.Arguments[arg];
+                                if (string.IsNullOrEmpty(options.WebSocketProtocol))
+                                    throw new CommandLineException(string.Format(CultureInfo.CurrentCulture,
+                                        "Invalid value of WebSocketProtocol option -- {0}.", commandLineOptions.Arguments[arg]));
+                            }
+                            break;
                         case TcpLikaOptionType.Ssl:
                             options.IsSetSsl = true;
                             break;

@@ -14,6 +14,8 @@ namespace Cowboy.TcpLika
         public static readonly ReadOnlyCollection<string> ConnectionsOptions;
         public static readonly ReadOnlyCollection<string> ConnectionLifetimeOptions;
         public static readonly ReadOnlyCollection<string> WebSocketOptions;
+        public static readonly ReadOnlyCollection<string> WebSocketPathOptions;
+        public static readonly ReadOnlyCollection<string> WebSocketProtocolOptions;
 
         public static readonly ReadOnlyCollection<string> SslOptions;
         public static readonly ReadOnlyCollection<string> SslTargetHostOptions;
@@ -35,6 +37,8 @@ namespace Cowboy.TcpLika
             ConnectionsOptions = new ReadOnlyCollection<string>(new string[] { "c", "connections" });
             ConnectionLifetimeOptions = new ReadOnlyCollection<string>(new string[] { "l", "connection-lifetime" });
             WebSocketOptions = new ReadOnlyCollection<string>(new string[] { "ws", "websocket" });
+            WebSocketPathOptions = new ReadOnlyCollection<string>(new string[] { "ws-path", "websocket-path" });
+            WebSocketProtocolOptions = new ReadOnlyCollection<string>(new string[] { "ws-protocol", "websocket-protocol" });
 
             SslOptions = new ReadOnlyCollection<string>(new string[] { "ssl" });
             SslTargetHostOptions = new ReadOnlyCollection<string>(new string[] { "ssl-target-host" });
@@ -53,6 +57,8 @@ namespace Cowboy.TcpLika
             Options.Add(TcpLikaOptionType.Connections, ConnectionsOptions);
             Options.Add(TcpLikaOptionType.ConnectionLifetime, ConnectionLifetimeOptions);
             Options.Add(TcpLikaOptionType.WebSocket, WebSocketOptions);
+            Options.Add(TcpLikaOptionType.WebSocketPath, WebSocketPathOptions);
+            Options.Add(TcpLikaOptionType.WebSocketProtocol, WebSocketProtocolOptions);
 
             Options.Add(TcpLikaOptionType.Ssl, SslOptions);
             Options.Add(TcpLikaOptionType.SslTargetHost, SslTargetHostOptions);
@@ -128,6 +134,10 @@ OPTIONS
     {0}{0}Shut down each connection after time milliseconds.
     -ws, --websocket
     {0}{0}Use RFC6455 WebSocket transport.
+    -ws-path, --websocket-path
+    {0}{0}Specify the WebSocket request-line path.
+    -ws-protocol, --websocket-protocol
+    {0}{0}Specify the WebSocket sub-protocol.
     -ssl
     {0}{0}Use Ssl/Tls channel.
     -ssl-target-host
