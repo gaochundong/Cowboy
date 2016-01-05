@@ -12,7 +12,7 @@ namespace Cowboy.TestClient
 
         public static async Task Connect()
         {
-            string uri = "ws://localhost:3202/test";
+            string uri = "ws://localhost:3202/";
 
             ClientWebSocket webSocket = null;
 
