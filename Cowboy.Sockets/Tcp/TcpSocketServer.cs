@@ -104,10 +104,7 @@ namespace Cowboy.Sockets
                 }
                 catch (Exception ex)
                 {
-                    if (ex is ObjectDisposedException
-                        || ex is InvalidOperationException
-                        || ex is SocketException
-                        || ex is IOException)
+                    if (!ShouldThrow(ex))
                     {
                         _log.Error(ex.Message, ex);
                     }

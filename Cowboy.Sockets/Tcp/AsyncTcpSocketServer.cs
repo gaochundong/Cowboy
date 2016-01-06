@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -86,15 +87,7 @@ namespace Cowboy.Sockets
                     })
                     .Forget();
                 }
-                catch (Exception ex)
-                {
-                    if (!(ex is ObjectDisposedException))
-                    {
-                        _log.Error(ex.Message, ex);
-                        if (!(ex is SocketException))
-                            throw;
-                    }
-                }
+                catch (Exception ex) when (!ShouldThrow(ex)) { }
             }
         }
 
@@ -121,15 +114,7 @@ namespace Cowboy.Sockets
                         session.Close();
                     }
                 }
-                catch (Exception ex)
-                {
-                    if (!(ex is ObjectDisposedException))
-                    {
-                        _log.Error(ex.Message, ex);
-                        if (!(ex is SocketException))
-                            throw;
-                    }
-                }
+                catch (Exception ex) when (!ShouldThrow(ex)) { }
             }
         }
 
@@ -174,6 +159,18 @@ namespace Cowboy.Sockets
                     _sessions.TryRemove(sessionKey, out throwAway);
                 }
             }
+        }
+
+        private bool ShouldThrow(Exception ex)
+        {
+            if (ex is ObjectDisposedException
+                || ex is InvalidOperationException
+                || ex is SocketException
+                || ex is IOException)
+            {
+                return false;
+            }
+            return false;
         }
 
         #endregion

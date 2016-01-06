@@ -114,12 +114,7 @@ namespace Cowboy.Sockets
                     }
                 }
             }
-            catch (Exception ex)
-            when (ex is ObjectDisposedException
-                || ex is InvalidOperationException
-                || ex is SocketException
-                || ex is IOException)
-            { }
+            catch (Exception ex) when (!ShouldThrow(ex)) { }
             finally
             {
                 _bufferManager.ReturnBuffer(receiveBuffer);
@@ -234,6 +229,18 @@ namespace Cowboy.Sockets
                 sslStream.CipherStrength);
 
             return sslStream;
+        }
+
+        private bool ShouldThrow(Exception ex)
+        {
+            if (ex is ObjectDisposedException
+                || ex is InvalidOperationException
+                || ex is SocketException
+                || ex is IOException)
+            {
+                return false;
+            }
+            return false;
         }
 
         public override string ToString()
