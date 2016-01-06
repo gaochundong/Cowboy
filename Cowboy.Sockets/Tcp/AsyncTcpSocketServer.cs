@@ -101,7 +101,6 @@ namespace Cowboy.Sockets
         private void ConfigureListener()
         {
             _listener.AllowNatTraversal(_configuration.AllowNatTraversal);
-            _listener.ExclusiveAddressUse = _configuration.ExclusiveAddressUse;
         }
 
         public void Stop()

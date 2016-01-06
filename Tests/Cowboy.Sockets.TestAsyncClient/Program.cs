@@ -21,8 +21,7 @@ namespace Cowboy.Sockets.TestAsyncClient
             //config.SslPolicyErrorsBypassed = false;
 
             IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 22222);
-            IPEndPoint localEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 22221);
-            _client = new AsyncTcpSocketClient(remoteEP, localEP, new SimpleMessageDispatcher(), config);
+            _client = new AsyncTcpSocketClient(remoteEP, new SimpleMessageDispatcher(), config);
             _client.Connect();
 
             Console.WriteLine("TCP client has connected to server [{0}].", remoteEP);

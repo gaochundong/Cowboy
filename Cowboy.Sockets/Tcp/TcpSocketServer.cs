@@ -55,7 +55,6 @@ namespace Cowboy.Sockets
         private void ConfigureListener()
         {
             _listener.AllowNatTraversal(_configuration.AllowNatTraversal);
-            _listener.ExclusiveAddressUse = _configuration.ExclusiveAddressUse;
         }
 
         #endregion
@@ -208,7 +207,6 @@ namespace Cowboy.Sockets
             tcpClient.SendBufferSize = _configuration.SendBufferSize;
             tcpClient.ReceiveTimeout = (int)_configuration.ReceiveTimeout.TotalMilliseconds;
             tcpClient.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
-            tcpClient.ExclusiveAddressUse = _configuration.ExclusiveAddressUse;
             tcpClient.NoDelay = _configuration.NoDelay;
             tcpClient.LingerState = _configuration.LingerState;
         }

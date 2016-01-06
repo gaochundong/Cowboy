@@ -22,6 +22,8 @@ namespace Cowboy.Sockets.TestClient
                 try
                 {
                     string text = Console.ReadLine();
+                    if (text == "quit")
+                        break;
                     _client.Send(Encoding.UTF8.GetBytes(text));
                 }
                 catch (Exception ex)
@@ -29,13 +31,24 @@ namespace Cowboy.Sockets.TestClient
                     Console.WriteLine(ex.Message);
                 }
             }
+
+            _client.Close();
+            Console.WriteLine("TCP client has disconnected from server.");
+
+            Console.ReadKey();
         }
 
         private static void ConnectToServer()
         {
+            var config = new TcpSocketClientConfiguration();
+            //config.UseSsl = true;
+            //config.SslTargetHost = "Cowboy";
+            //config.SslClientCertificates.Add(new X509Certificate2(@"D:\\Cowboy.cer"));
+            //config.SslPolicyErrorsBypassed = false;
+
             IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 22222);
-            IPEndPoint localEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 22221);
-            _client = new TcpSocketClient(remoteEP, localEP);
+
+            _client = new TcpSocketClient(remoteEP, config);
             _client.ServerConnected += client_ServerConnected;
             _client.ServerDisconnected += client_ServerDisconnected;
             _client.ServerDataReceived += client_ServerDataReceived;

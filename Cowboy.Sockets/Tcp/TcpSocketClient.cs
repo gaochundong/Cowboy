@@ -1,7 +1,9 @@
 ﻿using System;
 using System.IO;
 using System.Net;
+using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Cryptography.X509Certificates;
 using Cowboy.Buffer;
 using Cowboy.Logging;
 
@@ -18,6 +20,7 @@ namespace Cowboy.Sockets
         private readonly TcpSocketClientConfiguration _configuration;
         private readonly IPEndPoint _remoteEndPoint;
         private readonly IPEndPoint _localEndPoint;
+        private Stream _stream;
         private byte[] _receiveBuffer;
         private byte[] _sessionBuffer;
         private int _sessionBufferCount = 0;
@@ -33,6 +36,11 @@ namespace Cowboy.Sockets
 
         public TcpSocketClient(IPAddress remoteIPAddress, int remotePort, IPEndPoint localEP = null, TcpSocketClientConfiguration configuration = null)
             : this(new IPEndPoint(remoteIPAddress, remotePort), localEP, configuration)
+        {
+        }
+
+        public TcpSocketClient(IPEndPoint remoteEP, TcpSocketClientConfiguration configuration = null)
+            : this(remoteEP, null, configuration)
         {
         }
 
@@ -79,8 +87,7 @@ namespace Cowboy.Sockets
                     {
                         _tcpClient = new TcpClient();
                     }
-                    ConfigureClient();
-
+                    
                     _receiveBuffer = _bufferManager.BorrowBuffer();
                     _sessionBuffer = _bufferManager.BorrowBuffer();
                     _sessionBufferCount = 0;
@@ -96,7 +103,6 @@ namespace Cowboy.Sockets
             _tcpClient.SendBufferSize = _configuration.SendBufferSize;
             _tcpClient.ReceiveTimeout = (int)_configuration.ReceiveTimeout.TotalMilliseconds;
             _tcpClient.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
-            _tcpClient.ExclusiveAddressUse = _configuration.ExclusiveAddressUse;
             _tcpClient.NoDelay = _configuration.NoDelay;
             _tcpClient.LingerState = _configuration.LingerState;
         }
@@ -109,7 +115,14 @@ namespace Cowboy.Sockets
                 {
                     try
                     {
-                        _tcpClient.Close();
+                        if (_stream != null)
+                        {
+                            _stream.Close();
+                        }
+                        if (_tcpClient != null && _tcpClient.Connected)
+                        {
+                            _tcpClient.Close();
+                        }
 
                         RaiseServerDisconnected();
                     }
@@ -133,6 +146,10 @@ namespace Cowboy.Sockets
                 _tcpClient.EndConnect(ar);
                 RaiseServerConnected();
 
+                ConfigureClient();
+
+                _stream = NegotiateStream(_tcpClient.GetStream());
+
                 // we are connected successfully and start async read operation.
                 ContinueReadBuffer();
             }
@@ -140,6 +157,65 @@ namespace Cowboy.Sockets
             {
                 _log.Error(ex.Message, ex);
             }
+        }
+
+        private Stream NegotiateStream(Stream stream)
+        {
+            if (!_configuration.UseSsl)
+                return stream;
+
+            var validateRemoteCertificate = new RemoteCertificateValidationCallback(
+                (object sender,
+                X509Certificate certificate,
+                X509Chain chain,
+                SslPolicyErrors sslPolicyErrors)
+                =>
+                {
+                    if (sslPolicyErrors == SslPolicyErrors.None)
+                        return true;
+
+                    if (_configuration.SslPolicyErrorsBypassed)
+                        return true;
+                    else
+                        _log.ErrorFormat("Error occurred when validating remote certificate: [{0}], [{1}].",
+                            this.RemoteEndPoint, sslPolicyErrors);
+
+                    return false;
+                });
+
+            var sslStream = new SslStream(
+                stream,
+                false,
+                validateRemoteCertificate,
+                null,
+                _configuration.SslEncryptionPolicy);
+
+            sslStream.AuthenticateAsClient(
+                _configuration.SslTargetHost, // The name of the server that will share this SslStream.
+                _configuration.SslClientCertificates, // The X509CertificateCollection that contains client certificates.
+                _configuration.SslEnabledProtocols, // The SslProtocols value that represents the protocol used for authentication.
+                _configuration.SslCheckCertificateRevocation); // A Boolean value that specifies whether the certificate revocation list is checked during authentication.
+
+            // When authentication succeeds, you must check the IsEncrypted and IsSigned properties 
+            // to determine what security services are used by the SslStream. 
+            // Check the IsMutuallyAuthenticated property to determine whether mutual authentication occurred.
+            _log.DebugFormat(
+                "Ssl Stream: SslProtocol[{0}], IsServer[{1}], IsAuthenticated[{2}], IsEncrypted[{3}], IsSigned[{4}], IsMutuallyAuthenticated[{5}], "
+                + "HashAlgorithm[{6}], HashStrength[{7}], KeyExchangeAlgorithm[{8}], KeyExchangeStrength[{9}], CipherAlgorithm[{10}], CipherStrength[{11}].",
+                sslStream.SslProtocol,
+                sslStream.IsServer,
+                sslStream.IsAuthenticated,
+                sslStream.IsEncrypted,
+                sslStream.IsSigned,
+                sslStream.IsMutuallyAuthenticated,
+                sslStream.HashAlgorithm,
+                sslStream.HashStrength,
+                sslStream.KeyExchangeAlgorithm,
+                sslStream.KeyExchangeStrength,
+                sslStream.CipherAlgorithm,
+                sslStream.CipherStrength);
+
+            return sslStream;
         }
 
         private void ContinueReadBuffer()
@@ -151,7 +227,7 @@ namespace Cowboy.Sockets
                 // size : The number of bytes to read from the NetworkStream.
                 // callback : The AsyncCallback delegate that is executed when BeginRead completes.
                 // state : An object that contains any additional user-defined data.
-                _tcpClient.GetStream().BeginRead(_receiveBuffer, 0, _receiveBuffer.Length, HandleDataReceived, _tcpClient);
+                _stream.BeginRead(_receiveBuffer, 0, _receiveBuffer.Length, HandleDataReceived, _tcpClient);
             }
             catch (Exception ex)
             {
@@ -172,7 +248,7 @@ namespace Cowboy.Sockets
                     // parameter of the BeginRead method. If the remote host shuts down the Socket 
                     // connection and all available data has been received, the EndRead method 
                     // completes immediately and returns zero bytes.
-                    numberOfReadBytes = _tcpClient.GetStream().EndRead(ar);
+                    numberOfReadBytes = _stream.EndRead(ar);
                 }
                 catch (Exception ex)
                 {
@@ -323,13 +399,13 @@ namespace Cowboy.Sockets
             {
                 if (!_configuration.Framing)
                 {
-                    _tcpClient.GetStream().BeginWrite(data, offset, count, HandleDataWritten, _tcpClient);
+                    _stream.BeginWrite(data, offset, count, HandleDataWritten, _tcpClient);
                 }
                 else
                 {
                     var frame = TcpFrame.FromPayload(data, offset, count);
                     var frameBuffer = frame.ToArray();
-                    _tcpClient.GetStream().BeginWrite(frameBuffer, 0, frameBuffer.Length, HandleDataWritten, _tcpClient);
+                    _stream.BeginWrite(frameBuffer, 0, frameBuffer.Length, HandleDataWritten, _tcpClient);
                 }
             }
             catch (Exception ex)
@@ -343,7 +419,7 @@ namespace Cowboy.Sockets
         {
             try
             {
-                _tcpClient.GetStream().EndWrite(ar);
+                _stream.EndWrite(ar);
             }
             catch (Exception ex)
             {

@@ -103,9 +103,9 @@ namespace Cowboy.Sockets
             {
                 _tcpClient = new TcpClient();
             }
-            ConfigureClient();
-
+            
             await _tcpClient.ConnectAsync(_remoteEndPoint.Address, _remoteEndPoint.Port);
+            ConfigureClient();
 
             _log.DebugFormat("Connected to server [{0}] with dispatcher [{1}] on [{2}].",
                 this.RemoteEndPoint, _dispatcher.GetType().Name, DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
@@ -176,13 +176,16 @@ namespace Cowboy.Sockets
             _tcpClient.SendBufferSize = _configuration.SendBufferSize;
             _tcpClient.ReceiveTimeout = (int)_configuration.ReceiveTimeout.TotalMilliseconds;
             _tcpClient.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
-            _tcpClient.ExclusiveAddressUse = _configuration.ExclusiveAddressUse;
             _tcpClient.NoDelay = _configuration.NoDelay;
             _tcpClient.LingerState = _configuration.LingerState;
         }
 
         public void Close()
         {
+            if (_stream != null)
+            {
+                _stream.Close();
+            }
             if (_tcpClient != null && _tcpClient.Connected)
             {
                 _tcpClient.Close();

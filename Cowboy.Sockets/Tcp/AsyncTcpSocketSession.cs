@@ -64,7 +64,6 @@ namespace Cowboy.Sockets
             _tcpClient.SendBufferSize = _configuration.SendBufferSize;
             _tcpClient.ReceiveTimeout = (int)_configuration.ReceiveTimeout.TotalMilliseconds;
             _tcpClient.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
-            _tcpClient.ExclusiveAddressUse = _configuration.ExclusiveAddressUse;
             _tcpClient.NoDelay = _configuration.NoDelay;
             _tcpClient.LingerState = _configuration.LingerState;
         }

@@ -21,6 +21,8 @@ namespace Cowboy.Sockets.TestServer
                 try
                 {
                     string text = Console.ReadLine();
+                    if (text == "quit")
+                        break;
                     _server.Broadcast(Encoding.UTF8.GetBytes(text));
                 }
                 catch (Exception ex)
@@ -28,11 +30,21 @@ namespace Cowboy.Sockets.TestServer
                     Console.WriteLine(ex.Message);
                 }
             }
+
+            _server.Stop();
+            Console.WriteLine("TCP server has been stopped on [{0}].", _server.ListenedEndPoint);
+
+            Console.ReadKey();
         }
 
         private static void StartServer()
         {
-            _server = new TcpSocketServer(22222);
+            var config = new TcpSocketServerConfiguration();
+            //config.UseSsl = true;
+            //config.SslServerCertificate = new X509Certificate2(@"D:\\Cowboy.pfx", "Cowboy");
+            //config.SslPolicyErrorsBypassed = false;
+
+            _server = new TcpSocketServer(22222, config);
             _server.ClientConnected += server_ClientConnected;
             _server.ClientDisconnected += server_ClientDisconnected;
             _server.ClientDataReceived += server_ClientDataReceived;

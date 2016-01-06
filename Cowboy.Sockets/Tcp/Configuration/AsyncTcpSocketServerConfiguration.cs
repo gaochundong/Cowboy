@@ -16,7 +16,6 @@ namespace Cowboy.Sockets
             SendBufferSize = 8192;
             ReceiveTimeout = TimeSpan.Zero;
             SendTimeout = TimeSpan.Zero;
-            ExclusiveAddressUse = true;
             NoDelay = true;
             LingerState = new LingerOption(false, 0);
 
@@ -38,7 +37,6 @@ namespace Cowboy.Sockets
         public int SendBufferSize { get; set; }
         public TimeSpan ReceiveTimeout { get; set; }
         public TimeSpan SendTimeout { get; set; }
-        public bool ExclusiveAddressUse { get; set; }
         public bool NoDelay { get; set; }
         public LingerOption LingerState { get; set; }
 
