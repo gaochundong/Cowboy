@@ -58,7 +58,7 @@ namespace Cowboy.Sockets.TestServer
 
         static void server_ClientDisconnected(object sender, TcpClientDisconnectedEventArgs e)
         {
-            Console.WriteLine(string.Format("TCP client {0} has disconnected.", e.Session.RemoteEndPoint.ToString()));
+            Console.WriteLine(string.Format("TCP client {0} has disconnected.", e.Session));
         }
 
         static void server_ClientDataReceived(object sender, TcpClientDataReceivedEventArgs e)

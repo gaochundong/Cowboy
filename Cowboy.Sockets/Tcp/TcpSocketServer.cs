@@ -321,13 +321,13 @@ namespace Cowboy.Sockets
             }
         }
 
-        internal void RaiseClientDataReceived(TcpSocketSession sender, byte[] data, int dataOffset, int dataLength)
+        internal void RaiseClientDataReceived(TcpSocketSession session, byte[] data, int dataOffset, int dataLength)
         {
             try
             {
                 if (ClientDataReceived != null)
                 {
-                    ClientDataReceived(this, new TcpClientDataReceivedEventArgs(sender, data, dataOffset, dataLength));
+                    ClientDataReceived(this, new TcpClientDataReceivedEventArgs(session, data, dataOffset, dataLength));
                 }
             }
             catch (Exception ex)

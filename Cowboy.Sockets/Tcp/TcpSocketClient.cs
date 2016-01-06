@@ -87,7 +87,7 @@ namespace Cowboy.Sockets
                     {
                         _tcpClient = new TcpClient();
                     }
-                    
+
                     _receiveBuffer = _bufferManager.BorrowBuffer();
                     _sessionBuffer = _bufferManager.BorrowBuffer();
                     _sessionBufferCount = 0;
@@ -256,8 +256,11 @@ namespace Cowboy.Sockets
                     // the existing connection was forcibly closes by remote host
                     numberOfReadBytes = 0;
 
-                    if (!(ex is IOException))
+                    if (!(ex is ObjectDisposedException
+                        || ex is IOException))
+                    {
                         _log.Error(ex.Message, ex);
+                    }
                 }
 
                 if (numberOfReadBytes == 0)
@@ -426,7 +429,7 @@ namespace Cowboy.Sockets
             {
                 if (ServerDisconnected != null)
                 {
-                    ServerDisconnected(this, new TcpServerDisconnectedEventArgs(this.RemoteEndPoint, this.LocalEndPoint));
+                    ServerDisconnected(this, new TcpServerDisconnectedEventArgs(_remoteEndPoint, _localEndPoint));
                 }
             }
             catch (Exception ex)

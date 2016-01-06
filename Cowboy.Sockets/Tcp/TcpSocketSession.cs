@@ -12,7 +12,6 @@ namespace Cowboy.Sockets
     public sealed class TcpSocketSession
     {
         private static readonly ILog _log = Logger.Get<TcpSocketSession>();
-        private readonly object _sync = new object();
         private readonly TcpClient _tcpClient;
         private readonly TcpSocketServerConfiguration _configuration;
         private readonly IBufferManager _bufferManager;
@@ -213,8 +212,11 @@ namespace Cowboy.Sockets
                     // the existing connection was forcibly closes by remote host
                     numberOfReadBytes = 0;
 
-                    if (!(ex is IOException))
+                    if (!(ex is ObjectDisposedException
+                        || ex is IOException))
+                    {
                         _log.Error(ex.Message, ex);
+                    }
                 }
 
                 if (numberOfReadBytes == 0)
