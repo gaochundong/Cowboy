@@ -40,9 +40,9 @@ namespace Cowboy.Sockets.TestServer
         private static void StartServer()
         {
             var config = new TcpSocketServerConfiguration();
-            //config.UseSsl = true;
-            //config.SslServerCertificate = new X509Certificate2(@"D:\\Cowboy.pfx", "Cowboy");
-            //config.SslPolicyErrorsBypassed = false;
+            config.UseSsl = true;
+            config.SslServerCertificate = new System.Security.Cryptography.X509Certificates.X509Certificate2(@"D:\\Cowboy.pfx", "Cowboy");
+            config.SslPolicyErrorsBypassed = false;
 
             _server = new TcpSocketServer(22222, config);
             _server.ClientConnected += server_ClientConnected;

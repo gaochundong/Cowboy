@@ -14,9 +14,9 @@ namespace Cowboy.Sockets.TestAsyncServer
             NLogLogger.Use();
 
             var config = new AsyncTcpSocketServerConfiguration();
-            //config.UseSsl = true;
-            //config.SslServerCertificate = new X509Certificate2(@"D:\\Cowboy.pfx", "Cowboy");
-            //config.SslPolicyErrorsBypassed = false;
+            config.UseSsl = true;
+            config.SslServerCertificate = new System.Security.Cryptography.X509Certificates.X509Certificate2(@"D:\\Cowboy.pfx", "Cowboy");
+            config.SslPolicyErrorsBypassed = false;
 
             _server = new AsyncTcpSocketServer(22222, new SimpleMessageDispatcher(), config);
             _server.Start();
