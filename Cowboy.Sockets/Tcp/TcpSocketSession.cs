@@ -57,6 +57,7 @@ namespace Cowboy.Sockets
         public EndPoint RemoteEndPoint { get { return _tcpClient.Client.RemoteEndPoint; } }
         public EndPoint LocalEndPoint { get { return _tcpClient.Client.LocalEndPoint; } }
         public bool Connected { get { return _tcpClient.Client.Connected; } }
+        public TcpSocketServer Server { get { return _server; } }
 
         internal byte[] ReceiveBuffer { get; private set; }
         internal byte[] SessionBuffer { get; private set; }
