@@ -103,7 +103,7 @@ namespace Cowboy.Sockets
             {
                 _tcpClient = new TcpClient();
             }
-            
+
             await _tcpClient.ConnectAsync(_remoteEndPoint.Address, _remoteEndPoint.Port);
             ConfigureClient();
 
@@ -130,7 +130,7 @@ namespace Cowboy.Sockets
                     }
                     else
                     {
-                        AppendBuffer(_receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
+                        BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
 
                         while (true)
                         {
@@ -138,7 +138,7 @@ namespace Cowboy.Sockets
                             if (TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize <= _sessionBufferCount)
                             {
                                 await _dispatcher.Dispatch(this, _sessionBuffer, TcpFrameHeader.HEADER_SIZE, frameHeader.PayloadSize);
-                                ShiftBuffer(TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize, ref _sessionBuffer, ref _sessionBufferCount);
+                                BufferDeflector.ShiftBuffer(_bufferManager, TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize, ref _sessionBuffer, ref _sessionBufferCount);
                             }
                             else
                             {
@@ -216,7 +216,7 @@ namespace Cowboy.Sockets
                     if (_configuration.SslPolicyErrorsBypassed)
                         return true;
                     else
-                        _log.ErrorFormat("Error occurred when validating remote certificate: [{0}], [{1}].", 
+                        _log.ErrorFormat("Error occurred when validating remote certificate: [{0}], [{1}].",
                             this.RemoteEndPoint, sslPolicyErrors);
 
                     return false;
@@ -255,52 +255,6 @@ namespace Cowboy.Sockets
                 sslStream.CipherStrength);
 
             return sslStream;
-        }
-
-        private void AppendBuffer(byte[] receiveBuffer, int receiveCount, ref byte[] sessionBuffer, ref int sessionBufferCount)
-        {
-            if (sessionBuffer.Length < (sessionBufferCount + receiveCount))
-            {
-                byte[] autoExpandedBuffer = _bufferManager.BorrowBuffer();
-                if (autoExpandedBuffer.Length < (sessionBufferCount + receiveCount) * 2)
-                {
-                    _bufferManager.ReturnBuffer(autoExpandedBuffer);
-                    autoExpandedBuffer = new byte[(sessionBufferCount + receiveCount) * 2];
-                }
-
-                Array.Copy(sessionBuffer, 0, autoExpandedBuffer, 0, sessionBufferCount);
-
-                var discardBuffer = sessionBuffer;
-                sessionBuffer = autoExpandedBuffer;
-                _bufferManager.ReturnBuffer(discardBuffer);
-            }
-
-            Array.Copy(receiveBuffer, 0, sessionBuffer, sessionBufferCount, receiveCount);
-            sessionBufferCount = sessionBufferCount + receiveCount;
-        }
-
-        private void ShiftBuffer(int shiftStart, ref byte[] sessionBuffer, ref int sessionBufferCount)
-        {
-            if ((sessionBufferCount - shiftStart) < shiftStart)
-            {
-                Array.Copy(sessionBuffer, shiftStart, sessionBuffer, 0, sessionBufferCount - shiftStart);
-                sessionBufferCount = sessionBufferCount - shiftStart;
-            }
-            else
-            {
-                byte[] copyBuffer = _bufferManager.BorrowBuffer();
-                if (copyBuffer.Length < (sessionBufferCount - shiftStart))
-                {
-                    _bufferManager.ReturnBuffer(copyBuffer);
-                    copyBuffer = new byte[sessionBufferCount - shiftStart];
-                }
-
-                Array.Copy(sessionBuffer, shiftStart, copyBuffer, 0, sessionBufferCount - shiftStart);
-                Array.Copy(copyBuffer, 0, sessionBuffer, 0, sessionBufferCount - shiftStart);
-                sessionBufferCount = sessionBufferCount - shiftStart;
-
-                _bufferManager.ReturnBuffer(copyBuffer);
-            }
         }
 
         #endregion

@@ -304,7 +304,7 @@ namespace Cowboy.Sockets
                 //   2. use a fixed length header that indicates the length of the body
                 //   3. using a delimiter; for example many text-based protocols append
                 //      a newline (or CR LF pair) after every message.
-                AppendBuffer(receiveCount);
+                BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
                 while (true)
                 {
                     var frameHeader = TcpFrameHeader.ReadHeader(_sessionBuffer);
@@ -314,61 +314,13 @@ namespace Cowboy.Sockets
                         RaiseServerDataReceived(_sessionBuffer, TcpFrameHeader.HEADER_SIZE, frameHeader.PayloadSize);
 
                         // remove the received packet from buffer
-                        ShiftBuffer(TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize);
+                        BufferDeflector.ShiftBuffer(_bufferManager, TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize, ref _sessionBuffer, ref _sessionBufferCount);
                     }
                     else
                     {
                         break;
                     }
                 }
-            }
-        }
-
-        private void AppendBuffer(int appendedCount)
-        {
-            if (appendedCount <= 0) return;
-
-            if (_sessionBuffer.Length < (_sessionBufferCount + appendedCount))
-            {
-                byte[] autoExpandedBuffer = _bufferManager.BorrowBuffer();
-                if (autoExpandedBuffer.Length < (_sessionBufferCount + appendedCount) * 2)
-                {
-                    _bufferManager.ReturnBuffer(autoExpandedBuffer);
-                    autoExpandedBuffer = new byte[(_sessionBufferCount + appendedCount) * 2];
-                }
-
-                Array.Copy(_sessionBuffer, 0, autoExpandedBuffer, 0, _sessionBufferCount);
-
-                var discardBuffer = _sessionBuffer;
-                _sessionBuffer = autoExpandedBuffer;
-                _bufferManager.ReturnBuffer(discardBuffer);
-            }
-
-            Array.Copy(_receiveBuffer, 0, _sessionBuffer, _sessionBufferCount, appendedCount);
-            _sessionBufferCount = _sessionBufferCount + appendedCount;
-        }
-
-        private void ShiftBuffer(int shiftStart)
-        {
-            if ((_sessionBufferCount - shiftStart) < shiftStart)
-            {
-                Array.Copy(_sessionBuffer, shiftStart, _sessionBuffer, 0, _sessionBufferCount - shiftStart);
-                _sessionBufferCount = _sessionBufferCount - shiftStart;
-            }
-            else
-            {
-                byte[] copyBuffer = _bufferManager.BorrowBuffer();
-                if (copyBuffer.Length < (_sessionBufferCount - shiftStart))
-                {
-                    _bufferManager.ReturnBuffer(copyBuffer);
-                    copyBuffer = new byte[_sessionBufferCount - shiftStart];
-                }
-
-                Array.Copy(_sessionBuffer, shiftStart, copyBuffer, 0, _sessionBufferCount - shiftStart);
-                Array.Copy(copyBuffer, 0, _sessionBuffer, 0, _sessionBufferCount - shiftStart);
-                _sessionBufferCount = _sessionBufferCount - shiftStart;
-
-                _bufferManager.ReturnBuffer(copyBuffer);
             }
         }
 

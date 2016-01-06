@@ -160,7 +160,7 @@ namespace Cowboy.Sockets
             }
         }
 
-        private bool ShouldCloseSession(Exception ex)
+        private bool ShouldClose(Exception ex)
         {
             if (ex is ObjectDisposedException
                 || ex is InvalidOperationException
@@ -185,7 +185,7 @@ namespace Cowboy.Sockets
             }
             catch (Exception ex)
             {
-                if (!ShouldCloseSession(ex))
+                if (!ShouldClose(ex))
                     throw;
             }
         }
@@ -232,7 +232,7 @@ namespace Cowboy.Sockets
             }
             catch (Exception ex)
             {
-                if (!ShouldCloseSession(ex))
+                if (!ShouldClose(ex))
                     throw;
             }
         }
@@ -312,7 +312,7 @@ namespace Cowboy.Sockets
             }
             catch (Exception ex)
             {
-                if (!ShouldCloseSession(ex))
+                if (!ShouldClose(ex))
                     throw;
             }
         }
@@ -325,7 +325,7 @@ namespace Cowboy.Sockets
             }
             catch (Exception ex)
             {
-                if (!ShouldCloseSession(ex))
+                if (!ShouldClose(ex))
                     throw;
             }
         }
