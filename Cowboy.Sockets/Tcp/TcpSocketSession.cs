@@ -19,6 +19,9 @@ namespace Cowboy.Sockets
         private readonly TcpSocketServer _server;
         private readonly string _sessionKey;
         private Stream _stream;
+        private byte[] _receiveBuffer;
+        private byte[] _sessionBuffer;
+        private int _sessionBufferCount = 0;
 
         public TcpSocketSession(
             TcpClient tcpClient,
@@ -40,28 +43,18 @@ namespace Cowboy.Sockets
             _bufferManager = bufferManager;
             _server = server;
 
-            this.ReceiveBuffer = _bufferManager.BorrowBuffer();
-            this.SessionBuffer = _bufferManager.BorrowBuffer();
-            this.SessionBufferCount = 0;
-
             _sessionKey = Guid.NewGuid().ToString();
+            this.StartTime = DateTime.UtcNow;
 
             ConfigureClient();
-
-            _stream = NegotiateStream(_tcpClient.GetStream());
         }
 
         public string SessionKey { get { return _sessionKey; } }
-
-        internal Stream Stream { get { return _stream; } }
+        public DateTime StartTime { get; private set; }
+        public bool Connected { get { return _tcpClient.Connected; } }
         public EndPoint RemoteEndPoint { get { return _tcpClient.Client.RemoteEndPoint; } }
         public EndPoint LocalEndPoint { get { return _tcpClient.Client.LocalEndPoint; } }
-        public bool Connected { get { return _tcpClient.Client.Connected; } }
         public TcpSocketServer Server { get { return _server; } }
-
-        internal byte[] ReceiveBuffer { get; private set; }
-        internal byte[] SessionBuffer { get; private set; }
-        internal int SessionBufferCount { get; private set; }
 
         private void ConfigureClient()
         {
@@ -71,6 +64,17 @@ namespace Cowboy.Sockets
             _tcpClient.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
             _tcpClient.NoDelay = _configuration.NoDelay;
             _tcpClient.LingerState = _configuration.LingerState;
+        }
+
+        public void Start()
+        {
+            _stream = NegotiateStream(_tcpClient.GetStream());
+
+            _receiveBuffer = _bufferManager.BorrowBuffer();
+            _sessionBuffer = _bufferManager.BorrowBuffer();
+            _sessionBufferCount = 0;
+
+            ContinueReadBuffer();
         }
 
         private Stream NegotiateStream(Stream stream)
@@ -132,75 +136,203 @@ namespace Cowboy.Sockets
             return sslStream;
         }
 
-        internal void AppendBuffer(int appendedCount)
-        {
-            if (appendedCount <= 0) return;
-
-            lock (_sync)
-            {
-                if (this.SessionBuffer.Length < (this.SessionBufferCount + appendedCount))
-                {
-                    byte[] autoExpandedBuffer = _bufferManager.BorrowBuffer();
-                    if (autoExpandedBuffer.Length < (this.SessionBufferCount + appendedCount) * 2)
-                    {
-                        _bufferManager.ReturnBuffer(autoExpandedBuffer);
-                        autoExpandedBuffer = new byte[(this.SessionBufferCount + appendedCount) * 2];
-                    }
-
-                    Array.Copy(this.SessionBuffer, 0, autoExpandedBuffer, 0, this.SessionBufferCount);
-
-                    var discardBuffer = this.SessionBuffer;
-                    this.SessionBuffer = autoExpandedBuffer;
-                    _bufferManager.ReturnBuffer(discardBuffer);
-                }
-
-                Array.Copy(this.ReceiveBuffer, 0, this.SessionBuffer, this.SessionBufferCount, appendedCount);
-                this.SessionBufferCount = this.SessionBufferCount + appendedCount;
-            }
-        }
-
-        internal void ShiftBuffer(int shiftStart)
-        {
-            lock (_sync)
-            {
-                if ((this.SessionBufferCount - shiftStart) < shiftStart)
-                {
-                    Array.Copy(this.SessionBuffer, shiftStart, this.SessionBuffer, 0, this.SessionBufferCount - shiftStart);
-                    this.SessionBufferCount = this.SessionBufferCount - shiftStart;
-                }
-                else
-                {
-                    byte[] copyBuffer = _bufferManager.BorrowBuffer();
-                    if (copyBuffer.Length < (this.SessionBufferCount - shiftStart))
-                    {
-                        _bufferManager.ReturnBuffer(copyBuffer);
-                        copyBuffer = new byte[this.SessionBufferCount - shiftStart];
-                    }
-
-                    Array.Copy(this.SessionBuffer, shiftStart, copyBuffer, 0, this.SessionBufferCount - shiftStart);
-                    Array.Copy(copyBuffer, 0, this.SessionBuffer, 0, this.SessionBufferCount - shiftStart);
-                    this.SessionBufferCount = this.SessionBufferCount - shiftStart;
-
-                    _bufferManager.ReturnBuffer(copyBuffer);
-                }
-            }
-        }
-
         public void Close()
         {
             try
             {
-                _tcpClient.Client.Disconnect(false);
+                if (_stream != null)
+                {
+                    _stream.Close();
+                }
+                if (_tcpClient != null && _tcpClient.Connected)
+                {
+                    _tcpClient.Dispose();
+                }
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex.Message, ex);
             }
             finally
             {
-                _bufferManager.ReturnBuffers(this.ReceiveBuffer, this.SessionBuffer);
+                _bufferManager.ReturnBuffer(_receiveBuffer);
+                _bufferManager.ReturnBuffer(_sessionBuffer);
+            }
+        }
+
+        private bool ShouldCloseSession(Exception ex)
+        {
+            if (ex is ObjectDisposedException
+                || ex is InvalidOperationException
+                || ex is IOException)
+            {
+                _log.Error(ex.Message, ex);
+
+                // connection has been closed
+                Close();
+
+                return true;
+            }
+
+            return false;
+        }
+
+        private void ContinueReadBuffer()
+        {
+            try
+            {
+                _stream.BeginRead(_receiveBuffer, 0, _receiveBuffer.Length, HandleDataReceived, _stream);
+            }
+            catch (Exception ex)
+            {
+                if (!ShouldCloseSession(ex))
+                    throw;
+            }
+        }
+
+        private void HandleDataReceived(IAsyncResult ar)
+        {
+            if (!Connected)
+                return;
+
+            try
+            {
+                int numberOfReadBytes = 0;
+                try
+                {
+                    // The EndRead method blocks until data is available. The EndRead method reads 
+                    // as much data as is available up to the number of bytes specified in the size 
+                    // parameter of the BeginRead method. If the remote host shuts down the Socket 
+                    // connection and all available data has been received, the EndRead method 
+                    // completes immediately and returns zero bytes.
+                    numberOfReadBytes = _stream.EndRead(ar);
+                }
+                catch (Exception ex)
+                {
+                    // unable to read data from transport connection, 
+                    // the existing connection was forcibly closes by remote host
+                    numberOfReadBytes = 0;
+
+                    if (!(ex is IOException))
+                        _log.Error(ex.Message, ex);
+                }
+
+                if (numberOfReadBytes == 0)
+                {
+                    // connection has been closed
+                    Close();
+                    return;
+                }
+
+                // received bytes and trigger notifications
+                ReceiveBuffer(numberOfReadBytes);
+
+                // continue listening for TCP data packets
+                ContinueReadBuffer();
+            }
+            catch (Exception ex)
+            {
+                if (!ShouldCloseSession(ex))
+                    throw;
+            }
+        }
+
+        private void ReceiveBuffer(int receiveCount)
+        {
+            if (!_configuration.Framing)
+            {
+                // yeah, we received the buffer and then raise it to user side to handle.
+                _server.RaiseClientDataReceived(this, _receiveBuffer, 0, receiveCount);
+            }
+            else
+            {
+                // TCP guarantees delivery of all packets in the correct order. 
+                // But there is no guarantee that one write operation on the sender-side will result in 
+                // one read event on the receiving side. One call of write(message) by the sender 
+                // can result in multiple messageReceived(session, message) events on the receiver; 
+                // and multiple calls of write(message) can lead to a single messageReceived event.
+                // In a stream-based transport such as TCP/IP, received data is stored into a socket receive buffer. 
+                // Unfortunately, the buffer of a stream-based transport is not a queue of packets but a queue of bytes. 
+                // It means, even if you sent two messages as two independent packets, 
+                // an operating system will not treat them as two messages but as just a bunch of bytes. 
+                // Therefore, there is no guarantee that what you read is exactly what your remote peer wrote.
+                // There are three common techniques for splitting the stream of bytes into messages:
+                //   1. use fixed length messages
+                //   2. use a fixed length header that indicates the length of the body
+                //   3. using a delimiter; for example many text-based protocols append
+                //      a newline (or CR LF pair) after every message.
+                BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
+                while (true)
+                {
+                    var frameHeader = TcpFrameHeader.ReadHeader(_sessionBuffer);
+                    if (TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize <= _sessionBufferCount)
+                    {
+                        // yeah, we received the buffer and then raise it to user side to handle.
+                        _server.RaiseClientDataReceived(this, _sessionBuffer, TcpFrameHeader.HEADER_SIZE, frameHeader.PayloadSize);
+
+                        // remove the received packet from buffer
+                        BufferDeflector.ShiftBuffer(_bufferManager, TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize, ref _sessionBuffer, ref _sessionBufferCount);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+
+        public void Send(byte[] data)
+        {
+            if (data == null)
+                throw new ArgumentNullException("data");
+
+            Send(data, 0, data.Length);
+        }
+
+        public void Send(byte[] data, int offset, int count)
+        {
+            if (data == null)
+                throw new ArgumentNullException("data");
+
+            try
+            {
+                if (_stream.CanWrite)
+                {
+                    if (!_configuration.Framing)
+                    {
+                        _stream.BeginWrite(data, offset, count, HandleDataWritten, _stream);
+                    }
+                    else
+                    {
+                        var frame = TcpFrame.FromPayload(data, offset, count);
+                        var frameBuffer = frame.ToArray();
+                        _stream.BeginWrite(frameBuffer, 0, frameBuffer.Length, HandleDataWritten, _stream);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                if (!ShouldCloseSession(ex))
+                    throw;
+            }
+        }
+
+        private void HandleDataWritten(IAsyncResult ar)
+        {
+            try
+            {
+                _stream.EndWrite(ar);
+            }
+            catch (Exception ex)
+            {
+                if (!ShouldCloseSession(ex))
+                    throw;
             }
         }
 
         public override string ToString()
         {
-            return _sessionKey;
+            return SessionKey;
         }
     }
 }

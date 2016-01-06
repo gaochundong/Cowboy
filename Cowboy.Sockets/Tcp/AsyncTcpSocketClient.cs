@@ -165,8 +165,7 @@ namespace Cowboy.Sockets
                 _log.DebugFormat("Disconnected from server [{0}] with dispatcher [{1}] on [{2}].",
                     this.RemoteEndPoint, _dispatcher.GetType().Name, DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
 
-                if (_tcpClient != null)
-                    _tcpClient.Dispose();
+                Close();
             }
         }
 
@@ -182,13 +181,20 @@ namespace Cowboy.Sockets
 
         public void Close()
         {
-            if (_stream != null)
+            try
             {
-                _stream.Close();
+                if (_stream != null)
+                {
+                    _stream.Close();
+                }
+                if (_tcpClient != null && _tcpClient.Connected)
+                {
+                    _tcpClient.Dispose();
+                }
             }
-            if (_tcpClient != null && _tcpClient.Connected)
+            catch (Exception ex)
             {
-                _tcpClient.Close();
+                _log.Error(ex.Message, ex);
             }
         }
 
@@ -308,15 +314,18 @@ namespace Cowboy.Sockets
 
         public async Task Send(byte[] data, int offset, int count)
         {
-            if (!_configuration.Framing)
+            if (_stream.CanWrite)
             {
-                await _stream.WriteAsync(data, offset, count);
-            }
-            else
-            {
-                var frame = TcpFrame.FromPayload(data, offset, count);
-                var frameBuffer = frame.ToArray();
-                await _stream.WriteAsync(frameBuffer, 0, frameBuffer.Length);
+                if (!_configuration.Framing)
+                {
+                    await _stream.WriteAsync(data, offset, count);
+                }
+                else
+                {
+                    var frame = TcpFrame.FromPayload(data, offset, count);
+                    var frameBuffer = frame.ToArray();
+                    await _stream.WriteAsync(frameBuffer, 0, frameBuffer.Length);
+                }
             }
         }
 

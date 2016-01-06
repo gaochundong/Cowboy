@@ -40,6 +40,7 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>SolutionVersion.cs</Link>
     </Compile>
+    <Compile Include="Tcp\Buffer\BufferDeflector.cs" />
     <Compile Include="Tcp\Configuration\AsyncTcpSocketClientConfiguration.cs" />
     <Compile Include="Tcp\Configuration\TcpSocketClientConfiguration.cs" />
     <Compile Include="Tcp\Configuration\AsyncTcpSocketServerConfiguration.cs" />

@@ -280,12 +280,12 @@ namespace Cowboy.Sockets
             }
         }
 
-        private void ReceiveBuffer(int receivedBufferLength)
+        private void ReceiveBuffer(int receiveCount)
         {
             if (!_configuration.Framing)
             {
                 // yeah, we received the buffer and then raise it to user side to handle.
-                RaiseServerDataReceived(_receiveBuffer, 0, receivedBufferLength);
+                RaiseServerDataReceived(_receiveBuffer, 0, receiveCount);
             }
             else
             {
@@ -304,7 +304,7 @@ namespace Cowboy.Sockets
                 //   2. use a fixed length header that indicates the length of the body
                 //   3. using a delimiter; for example many text-based protocols append
                 //      a newline (or CR LF pair) after every message.
-                AppendBuffer(receivedBufferLength);
+                AppendBuffer(receiveCount);
                 while (true)
                 {
                     var frameHeader = TcpFrameHeader.ReadHeader(_sessionBuffer);

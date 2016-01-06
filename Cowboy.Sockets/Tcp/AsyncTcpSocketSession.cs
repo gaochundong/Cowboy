@@ -134,8 +134,7 @@ namespace Cowboy.Sockets
                     _dispatcher.GetType().Name,
                     this.Server.SessionCount - 1);
 
-                if (_tcpClient != null)
-                    _tcpClient.Dispose();
+                Close();
             }
         }
 
@@ -146,27 +145,37 @@ namespace Cowboy.Sockets
 
         public async Task Send(byte[] data, int offset, int count)
         {
-            if (!_configuration.Framing)
+            if (_stream.CanWrite)
             {
-                await _stream.WriteAsync(data, offset, count);
-            }
-            else
-            {
-                var frame = TcpFrame.FromPayload(data, offset, count);
-                var frameBuffer = frame.ToArray();
-                await _stream.WriteAsync(frameBuffer, 0, frameBuffer.Length);
+                if (!_configuration.Framing)
+                {
+                    await _stream.WriteAsync(data, offset, count);
+                }
+                else
+                {
+                    var frame = TcpFrame.FromPayload(data, offset, count);
+                    var frameBuffer = frame.ToArray();
+                    await _stream.WriteAsync(frameBuffer, 0, frameBuffer.Length);
+                }
             }
         }
 
         public void Close()
         {
-            if (_stream != null)
+            try
             {
-                _stream.Close();
+                if (_stream != null)
+                {
+                    _stream.Close();
+                }
+                if (_tcpClient != null && _tcpClient.Connected)
+                {
+                    _tcpClient.Dispose();
+                }
             }
-            if (_tcpClient != null && _tcpClient.Connected)
+            catch (Exception ex)
             {
-                _tcpClient.Close();
+                _log.Error(ex.Message, ex);
             }
         }
 
@@ -277,7 +286,7 @@ namespace Cowboy.Sockets
 
         public override string ToString()
         {
-            return _sessionKey;
+            return SessionKey;
         }
     }
 }
