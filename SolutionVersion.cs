@@ -1,10 +1,10 @@
 ﻿using System.Reflection;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyDescription("Cowboy")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyDescription("Cowboy is a library for building Sockets/HTTP based services.")]
+[assembly: AssemblyCompany("Dennis Gao")]
 [assembly: AssemblyProduct("Cowboy")]
-[assembly: AssemblyCopyright("Copyright (C) 2015-2016 Dennis Gao. All Rights Reserved.")]
+[assembly: AssemblyCopyright("Copyright © 2015-2016 Dennis Gao.")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCulture("")]

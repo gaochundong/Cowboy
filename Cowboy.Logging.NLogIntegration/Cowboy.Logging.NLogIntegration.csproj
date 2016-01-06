@@ -56,7 +56,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Cowboy.Logging\Cowboy.Logging.csproj">
       <Project>{7ada144a-a176-437b-812e-889b6aa2536e}</Project>
-      <Name>TCM.Logging</Name>
+      <Name>Cowboy.Logging</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
