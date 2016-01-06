@@ -178,7 +178,7 @@ namespace Cowboy.Sockets
                 ConfigureClient(tcpClient);
 
                 // create session
-                var session = new TcpSocketSession(tcpClient, _bufferManager);
+                var session = new TcpSocketSession(tcpClient, _configuration, _bufferManager);
 
                 // add client connection to cache
                 _sessions.AddOrUpdate(session.SessionKey, session, (n, o) => { return o; });

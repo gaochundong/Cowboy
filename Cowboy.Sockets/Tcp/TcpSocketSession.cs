@@ -1,6 +1,9 @@
 ﻿using System;
+using System.IO;
 using System.Net;
+using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Cryptography.X509Certificates;
 using Cowboy.Buffer;
 using Cowboy.Logging;
 
@@ -10,18 +13,23 @@ namespace Cowboy.Sockets
     {
         private static readonly ILog _log = Logger.Get<TcpSocketSession>();
         private readonly object _sync = new object();
-        private readonly IBufferManager _bufferManager;
         private readonly TcpClient _tcpClient;
+        private readonly TcpSocketServerConfiguration _configuration;
+        private readonly IBufferManager _bufferManager;        
         private readonly string _sessionKey;
+        private Stream _stream;
 
-        public TcpSocketSession(TcpClient tcpClient, IBufferManager bufferManager)
+        public TcpSocketSession(TcpClient tcpClient, TcpSocketServerConfiguration configuration, IBufferManager bufferManager)
         {
             if (tcpClient == null)
                 throw new ArgumentNullException("tcpClient");
+            if (configuration == null)
+                throw new ArgumentNullException("configuration");
             if (bufferManager == null)
                 throw new ArgumentNullException("bufferManager");
 
             _tcpClient = tcpClient;
+            _configuration = configuration;
             _bufferManager = bufferManager;
 
             this.ReceiveBuffer = _bufferManager.BorrowBuffer();
@@ -29,20 +37,81 @@ namespace Cowboy.Sockets
             this.SessionBufferCount = 0;
 
             _sessionKey = Guid.NewGuid().ToString();
+
+            _stream = NegotiateStream(_tcpClient.GetStream());
         }
 
         public string SessionKey { get { return _sessionKey; } }
 
-        public NetworkStream Stream { get { return _tcpClient.GetStream(); } }
+        internal Stream Stream { get { return _stream; } }
         public EndPoint RemoteEndPoint { get { return _tcpClient.Client.RemoteEndPoint; } }
         public EndPoint LocalEndPoint { get { return _tcpClient.Client.LocalEndPoint; } }
         public bool Connected { get { return _tcpClient.Client.Connected; } }
 
-        public byte[] ReceiveBuffer { get; private set; }
-        public byte[] SessionBuffer { get; private set; }
-        public int SessionBufferCount { get; private set; }
+        internal byte[] ReceiveBuffer { get; private set; }
+        internal byte[] SessionBuffer { get; private set; }
+        internal int SessionBufferCount { get; private set; }
 
-        public void AppendBuffer(int appendedCount)
+        private Stream NegotiateStream(Stream stream)
+        {
+            if (!_configuration.UseSsl)
+                return stream;
+
+            var validateRemoteCertificate = new RemoteCertificateValidationCallback(
+                (object sender,
+                X509Certificate certificate,
+                X509Chain chain,
+                SslPolicyErrors sslPolicyErrors)
+                =>
+                {
+                    if (sslPolicyErrors == SslPolicyErrors.None)
+                        return true;
+
+                    if (_configuration.SslPolicyErrorsBypassed)
+                        return true;
+                    else
+                        _log.ErrorFormat("Error occurred when validating remote certificate: [{0}], [{1}].",
+                            this.RemoteEndPoint, sslPolicyErrors);
+
+                    return false;
+                });
+
+            var sslStream = new SslStream(
+                stream,
+                false,
+                validateRemoteCertificate,
+                null,
+                _configuration.SslEncryptionPolicy);
+
+            sslStream.AuthenticateAsServer(
+                _configuration.SslServerCertificate, // The X509Certificate used to authenticate the server.
+                _configuration.SslClientCertificateRequired, // A Boolean value that specifies whether the client must supply a certificate for authentication.
+                _configuration.SslEnabledProtocols, // The SslProtocols value that represents the protocol used for authentication.
+                _configuration.SslCheckCertificateRevocation); // A Boolean value that specifies whether the certificate revocation list is checked during authentication.
+
+            // When authentication succeeds, you must check the IsEncrypted and IsSigned properties 
+            // to determine what security services are used by the SslStream. 
+            // Check the IsMutuallyAuthenticated property to determine whether mutual authentication occurred.
+            _log.DebugFormat(
+                "Ssl Stream: SslProtocol[{0}], IsServer[{1}], IsAuthenticated[{2}], IsEncrypted[{3}], IsSigned[{4}], IsMutuallyAuthenticated[{5}], "
+                + "HashAlgorithm[{6}], HashStrength[{7}], KeyExchangeAlgorithm[{8}], KeyExchangeStrength[{9}], CipherAlgorithm[{10}], CipherStrength[{11}].",
+                sslStream.SslProtocol,
+                sslStream.IsServer,
+                sslStream.IsAuthenticated,
+                sslStream.IsEncrypted,
+                sslStream.IsSigned,
+                sslStream.IsMutuallyAuthenticated,
+                sslStream.HashAlgorithm,
+                sslStream.HashStrength,
+                sslStream.KeyExchangeAlgorithm,
+                sslStream.KeyExchangeStrength,
+                sslStream.CipherAlgorithm,
+                sslStream.CipherStrength);
+
+            return sslStream;
+        }
+
+        internal void AppendBuffer(int appendedCount)
         {
             if (appendedCount <= 0) return;
 
@@ -69,7 +138,7 @@ namespace Cowboy.Sockets
             }
         }
 
-        public void ShiftBuffer(int shiftStart)
+        internal void ShiftBuffer(int shiftStart)
         {
             lock (_sync)
             {
