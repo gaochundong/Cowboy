@@ -142,6 +142,7 @@ namespace Cowboy.Sockets
                 if (_stream != null)
                 {
                     _stream.Close();
+                    _stream = null;
                 }
                 if (_tcpClient != null && _tcpClient.Connected)
                 {
@@ -163,6 +164,7 @@ namespace Cowboy.Sockets
         {
             if (ex is ObjectDisposedException
                 || ex is InvalidOperationException
+                || ex is SocketException
                 || ex is IOException)
             {
                 _log.Error(ex.Message, ex);

@@ -149,14 +149,11 @@ namespace Cowboy.Sockets
                 }
             }
             catch (Exception ex)
-            {
-                if (!(ex is ObjectDisposedException))
-                {
-                    _log.Error(ex.Message, ex);
-                    if (!(ex is SocketException))
-                        throw;
-                }
-            }
+            when (ex is ObjectDisposedException
+                || ex is InvalidOperationException
+                || ex is SocketException
+                || ex is IOException)
+            { }
             finally
             {
                 _bufferManager.ReturnBuffer(_receiveBuffer);
@@ -186,6 +183,7 @@ namespace Cowboy.Sockets
                 if (_stream != null)
                 {
                     _stream.Close();
+                    _stream = null;
                 }
                 if (_tcpClient != null && _tcpClient.Connected)
                 {
