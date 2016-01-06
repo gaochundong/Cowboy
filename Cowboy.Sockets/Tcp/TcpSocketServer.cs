@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using Cowboy.Buffer;
@@ -104,7 +105,9 @@ namespace Cowboy.Sockets
                 catch (Exception ex)
                 {
                     if (ex is ObjectDisposedException
-                        || ex is SocketException)
+                        || ex is InvalidOperationException
+                        || ex is SocketException
+                        || ex is IOException)
                     {
                         _log.Error(ex.Message, ex);
                     }
@@ -133,8 +136,7 @@ namespace Cowboy.Sockets
             }
             catch (Exception ex)
             {
-                if (ex is ObjectDisposedException
-                    || ex is SocketException)
+                if (!ShouldThrow(ex))
                 {
                     _log.Error(ex.Message, ex);
                 }
@@ -166,8 +168,7 @@ namespace Cowboy.Sockets
             }
             catch (Exception ex)
             {
-                if (ex is ObjectDisposedException
-                    || ex is SocketException)
+                if (!ShouldThrow(ex))
                 {
                     _log.Error(ex.Message, ex);
                 }
@@ -180,16 +181,22 @@ namespace Cowboy.Sockets
             TcpSocketSession sessionToBeThrowAway;
             _sessions.TryRemove(session.SessionKey, out sessionToBeThrowAway);
 
-            try
+            if (session != null)
             {
-                if (session != null)
-                {
-                    session.Close();
-                }
+                session.Close();
             }
-            catch { }
+        }
 
-            RaiseClientDisconnected(session);
+        private bool ShouldThrow(Exception ex)
+        {
+            if (ex is ObjectDisposedException
+                || ex is InvalidOperationException
+                || ex is SocketException
+                || ex is IOException)
+            {
+                return false;
+            }
+            return false;
         }
 
         #endregion
@@ -318,6 +325,11 @@ namespace Cowboy.Sockets
             catch (Exception ex)
             {
                 HandleUserSideError(ex);
+            }
+            finally
+            {
+                TcpSocketSession sessionToBeThrowAway;
+                _sessions.TryRemove(session.SessionKey, out sessionToBeThrowAway);
             }
         }
 

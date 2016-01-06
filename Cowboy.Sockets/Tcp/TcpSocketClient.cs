@@ -136,7 +136,7 @@ namespace Cowboy.Sockets
             }
         }
 
-        private bool ShouldClose(Exception ex)
+        private bool CloseIfShould(Exception ex)
         {
             if (ex is ObjectDisposedException
                 || ex is InvalidOperationException
@@ -250,7 +250,7 @@ namespace Cowboy.Sockets
             }
             catch (Exception ex)
             {
-                if (!ShouldClose(ex))
+                if (!CloseIfShould(ex))
                     throw;
             }
         }
@@ -269,17 +269,11 @@ namespace Cowboy.Sockets
                     // completes immediately and returns zero bytes.
                     numberOfReadBytes = _stream.EndRead(ar);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // unable to read data from transport connection, 
                     // the existing connection was forcibly closes by remote host
                     numberOfReadBytes = 0;
-
-                    if (!(ex is ObjectDisposedException
-                        || ex is IOException))
-                    {
-                        _log.Error(ex.Message, ex);
-                    }
                 }
 
                 if (numberOfReadBytes == 0)
@@ -297,7 +291,7 @@ namespace Cowboy.Sockets
             }
             catch (Exception ex)
             {
-                if (!ShouldClose(ex))
+                if (!CloseIfShould(ex))
                     throw;
             }
         }
@@ -384,7 +378,7 @@ namespace Cowboy.Sockets
             }
             catch (Exception ex)
             {
-                if (!ShouldClose(ex))
+                if (!CloseIfShould(ex))
                     throw;
             }
         }
@@ -397,7 +391,7 @@ namespace Cowboy.Sockets
             }
             catch (Exception ex)
             {
-                if (!ShouldClose(ex))
+                if (!CloseIfShould(ex))
                     throw;
             }
         }

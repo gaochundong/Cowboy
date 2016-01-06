@@ -57,18 +57,18 @@ namespace Cowboy.Sockets.TestClient
 
         static void client_ServerConnected(object sender, TcpServerConnectedEventArgs e)
         {
-            Console.WriteLine(string.Format("TCP server {0} has connected.", e.RemoteEndPoint.ToString()));
+            Console.WriteLine(string.Format("TCP server {0} has connected.", e.RemoteEndPoint));
         }
 
         static void client_ServerDisconnected(object sender, TcpServerDisconnectedEventArgs e)
         {
-            Console.WriteLine(string.Format("TCP server {0} has disconnected.", e.RemoteEndPoint.ToString()));
+            Console.WriteLine(string.Format("TCP server {0} has disconnected.", e.RemoteEndPoint));
         }
 
         static void client_ServerDataReceived(object sender, TcpServerDataReceivedEventArgs e)
         {
             var text = Encoding.UTF8.GetString(e.Data, e.DataOffset, e.DataLength);
-            Console.Write(string.Format("Server : {0} --> ", e.Client.RemoteEndPoint.ToString()));
+            Console.Write(string.Format("Server : {0} --> ", e.Client.RemoteEndPoint));
             Console.WriteLine(string.Format("{0}", text));
         }
     }
