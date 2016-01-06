@@ -175,10 +175,8 @@ namespace Cowboy.Sockets
                 TcpClient tcpClient = listener.EndAcceptTcpClient(ar);
                 if (!tcpClient.Connected) return;
 
-                ConfigureClient(tcpClient);
-
                 // create session
-                var session = new TcpSocketSession(tcpClient, _configuration, _bufferManager);
+                var session = new TcpSocketSession(tcpClient, _configuration, _bufferManager, this);
 
                 // add client connection to cache
                 _sessions.AddOrUpdate(session.SessionKey, session, (n, o) => { return o; });
@@ -199,16 +197,6 @@ namespace Cowboy.Sockets
                 }
                 else throw;
             }
-        }
-
-        private void ConfigureClient(TcpClient tcpClient)
-        {
-            tcpClient.ReceiveBufferSize = _configuration.ReceiveBufferSize;
-            tcpClient.SendBufferSize = _configuration.SendBufferSize;
-            tcpClient.ReceiveTimeout = (int)_configuration.ReceiveTimeout.TotalMilliseconds;
-            tcpClient.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
-            tcpClient.NoDelay = _configuration.NoDelay;
-            tcpClient.LingerState = _configuration.LingerState;
         }
 
         private void ContinueReadBuffer(TcpSocketSession session)

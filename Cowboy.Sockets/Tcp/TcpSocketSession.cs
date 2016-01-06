@@ -15,11 +15,16 @@ namespace Cowboy.Sockets
         private readonly object _sync = new object();
         private readonly TcpClient _tcpClient;
         private readonly TcpSocketServerConfiguration _configuration;
-        private readonly IBufferManager _bufferManager;        
+        private readonly IBufferManager _bufferManager;
+        private readonly TcpSocketServer _server;
         private readonly string _sessionKey;
         private Stream _stream;
 
-        public TcpSocketSession(TcpClient tcpClient, TcpSocketServerConfiguration configuration, IBufferManager bufferManager)
+        public TcpSocketSession(
+            TcpClient tcpClient,
+            TcpSocketServerConfiguration configuration,
+            IBufferManager bufferManager,
+            TcpSocketServer server)
         {
             if (tcpClient == null)
                 throw new ArgumentNullException("tcpClient");
@@ -27,16 +32,21 @@ namespace Cowboy.Sockets
                 throw new ArgumentNullException("configuration");
             if (bufferManager == null)
                 throw new ArgumentNullException("bufferManager");
+            if (server == null)
+                throw new ArgumentNullException("server");
 
             _tcpClient = tcpClient;
             _configuration = configuration;
             _bufferManager = bufferManager;
+            _server = server;
 
             this.ReceiveBuffer = _bufferManager.BorrowBuffer();
             this.SessionBuffer = _bufferManager.BorrowBuffer();
             this.SessionBufferCount = 0;
 
             _sessionKey = Guid.NewGuid().ToString();
+
+            ConfigureClient();
 
             _stream = NegotiateStream(_tcpClient.GetStream());
         }
@@ -51,6 +61,16 @@ namespace Cowboy.Sockets
         internal byte[] ReceiveBuffer { get; private set; }
         internal byte[] SessionBuffer { get; private set; }
         internal int SessionBufferCount { get; private set; }
+
+        private void ConfigureClient()
+        {
+            _tcpClient.ReceiveBufferSize = _configuration.ReceiveBufferSize;
+            _tcpClient.SendBufferSize = _configuration.SendBufferSize;
+            _tcpClient.ReceiveTimeout = (int)_configuration.ReceiveTimeout.TotalMilliseconds;
+            _tcpClient.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
+            _tcpClient.NoDelay = _configuration.NoDelay;
+            _tcpClient.LingerState = _configuration.LingerState;
+        }
 
         private Stream NegotiateStream(Stream stream)
         {
