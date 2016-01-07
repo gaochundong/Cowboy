@@ -163,14 +163,14 @@ namespace Cowboy.Sockets
             try
             {
                 _tcpClient.EndConnect(ar);
-                RaiseServerConnected();
-
                 ConfigureClient();
 
                 _stream = NegotiateStream(_tcpClient.GetStream());
 
                 // we are connected successfully and start async read operation.
                 ContinueReadBuffer();
+
+                RaiseServerConnected();
             }
             catch (Exception ex)
             {
