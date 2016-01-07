@@ -306,6 +306,11 @@ namespace Cowboy.Sockets
             if (data == null)
                 throw new ArgumentNullException("data");
 
+            if (!Connected)
+            {
+                throw new InvalidProgramException("This session has been closed.");
+            }
+
             try
             {
                 if (_stream.CanWrite)
