@@ -44,7 +44,7 @@ namespace Cowboy.Sockets
         {
         }
 
-        public TcpSocketClient(IPEndPoint remoteEP, IPEndPoint localEP = null, TcpSocketClientConfiguration configuration = null)
+        public TcpSocketClient(IPEndPoint remoteEP, IPEndPoint localEP, TcpSocketClientConfiguration configuration = null)
         {
             if (remoteEP == null)
                 throw new ArgumentNullException("remoteEP");
