@@ -146,7 +146,7 @@ namespace Cowboy.Sockets
                 }
                 if (_tcpClient != null && _tcpClient.Connected)
                 {
-                    _tcpClient.Dispose();
+                    _tcpClient.Close();
                 }
             }
             catch (Exception ex)
