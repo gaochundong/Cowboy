@@ -22,7 +22,7 @@ namespace Cowboy.Sockets.TestAsyncClient
 
             IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 22222);
             _client = new AsyncTcpSocketClient(remoteEP, new SimpleMessageDispatcher(), config);
-            _client.Connect();
+            _client.Connect().Wait();
 
             Console.WriteLine("TCP client has connected to server [{0}].", remoteEP);
             Console.WriteLine("Type something to send to server...");
@@ -45,7 +45,7 @@ namespace Cowboy.Sockets.TestAsyncClient
                 }
             }
 
-            _client.Close().Wait();
+            _client.Close();
             Console.WriteLine("TCP client has disconnected from server [{0}].", remoteEP);
 
             Console.ReadKey();

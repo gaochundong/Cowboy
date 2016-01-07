@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 using System.Threading.Tasks;
 using Cowboy.Buffer;
 using Cowboy.Logging;
@@ -17,7 +18,7 @@ namespace Cowboy.Sockets
         private static readonly ILog _log = Logger.Get<AsyncTcpSocketClient>();
         private IBufferManager _bufferManager;
         private TcpClient _tcpClient;
-        private readonly object _opsLock = new object();
+        private readonly SemaphoreSlim _opsLock = new SemaphoreSlim(1, 1);
         private bool _closed = false;
         private readonly IAsyncTcpSocketClientMessageDispatcher _dispatcher;
         private readonly AsyncTcpSocketClientConfiguration _configuration;
@@ -77,25 +78,58 @@ namespace Cowboy.Sockets
         #region Properties
 
         public bool Connected { get { return _tcpClient != null && _tcpClient.Client.Connected; } }
-        public EndPoint RemoteEndPoint { get { return _tcpClient.Client.RemoteEndPoint; } }
-        public EndPoint LocalEndPoint { get { return _tcpClient.Client.LocalEndPoint; } }
+        public EndPoint RemoteEndPoint { get { return Connected ? _tcpClient.Client.RemoteEndPoint : _remoteEndPoint; } }
+        public EndPoint LocalEndPoint { get { return Connected ? _tcpClient.Client.LocalEndPoint : _localEndPoint; } }
 
         #endregion
 
         #region Connect
 
-        public void Connect()
+        public async Task Connect()
         {
-            lock (_opsLock)
+            if (await _opsLock.WaitAsync(0))
             {
-                if (!Connected)
+                try
                 {
-                    _closed = false;
-
-                    Task.Run(async () =>
+                    if (!Connected)
                     {
-                        await Process();
-                    });
+                        _closed = false;
+
+                        Task.Run(async () =>
+                        {
+                            await Process();
+                        })
+                        .Forget();
+                    }
+                }
+                finally
+                {
+                    _opsLock.Release();
+                }
+            }
+        }
+
+        public void Close()
+        {
+            if (!_closed)
+            {
+                _closed = true;
+
+                try
+                {
+                    if (_stream != null)
+                    {
+                        _stream.Close();
+                        _stream = null;
+                    }
+                    if (_tcpClient != null && _tcpClient.Connected)
+                    {
+                        _tcpClient.Close();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _log.Error(ex.Message, ex);
                 }
             }
         }
@@ -114,9 +148,6 @@ namespace Cowboy.Sockets
             await _tcpClient.ConnectAsync(_remoteEndPoint.Address, _remoteEndPoint.Port);
             ConfigureClient();
 
-            _log.DebugFormat("Connected to server [{0}] with dispatcher [{1}] on [{2}].",
-                this.RemoteEndPoint, _dispatcher.GetType().Name, DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
-
             _receiveBuffer = _bufferManager.BorrowBuffer();
             _sessionBuffer = _bufferManager.BorrowBuffer();
             _sessionBufferCount = 0;
@@ -125,6 +156,10 @@ namespace Cowboy.Sockets
             {
                 _stream = await NegotiateStream(_tcpClient.GetStream());
 
+                _log.DebugFormat("Connected to server [{0}] with dispatcher [{1}] on [{2}].",
+                    this.RemoteEndPoint,
+                    _dispatcher.GetType().Name,
+                    DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
                 await _dispatcher.OnServerConnected(this);
 
                 while (Connected)
@@ -164,40 +199,13 @@ namespace Cowboy.Sockets
                 _bufferManager.ReturnBuffer(_sessionBuffer);
 
                 _log.DebugFormat("Disconnected from server [{0}] with dispatcher [{1}] on [{2}].",
-                    this.RemoteEndPoint, _dispatcher.GetType().Name, DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
+                    this.RemoteEndPoint,
+                    _dispatcher.GetType().Name,
+                    DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
 
-                await Close();
-            }
-        }
+                Close();
 
-        public async Task Close()
-        {
-            if (!_closed)
                 await _dispatcher.OnServerDisconnected(this);
-
-            lock (_opsLock)
-            {
-                if (!_closed)
-                {
-                    _closed = true;
-
-                    try
-                    {
-                        if (_stream != null)
-                        {
-                            _stream.Close();
-                            _stream = null;
-                        }
-                        if (_tcpClient != null && _tcpClient.Connected)
-                        {
-                            _tcpClient.Close();
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _log.Error(ex.Message, ex);
-                    }
-                }
             }
         }
 

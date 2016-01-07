@@ -19,7 +19,7 @@ namespace Cowboy.Sockets.TestAsyncServer
             //config.SslPolicyErrorsBypassed = false;
 
             _server = new AsyncTcpSocketServer(22222, new SimpleMessageDispatcher(), config);
-            _server.Start();
+            _server.Start().Wait();
 
             Console.WriteLine("TCP server has been started on [{0}].", _server.ListenedEndPoint);
             Console.WriteLine("Type something to send to clients...");
@@ -42,7 +42,7 @@ namespace Cowboy.Sockets.TestAsyncServer
                 }
             }
 
-            _server.Stop();
+            _server.Stop().Wait();
             Console.WriteLine("TCP server has been stopped on [{0}].", _server.ListenedEndPoint);
 
             Console.ReadKey();

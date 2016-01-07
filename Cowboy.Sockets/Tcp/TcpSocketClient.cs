@@ -67,8 +67,8 @@ namespace Cowboy.Sockets
         #region Properties
 
         public bool Connected { get { return _tcpClient != null && _tcpClient.Client.Connected; } }
-        public EndPoint RemoteEndPoint { get { return _tcpClient.Client.RemoteEndPoint; } }
-        public EndPoint LocalEndPoint { get { return _tcpClient.Client.LocalEndPoint; } }
+        public EndPoint RemoteEndPoint { get { return Connected ? _tcpClient.Client.RemoteEndPoint : _remoteEndPoint; } }
+        public EndPoint LocalEndPoint { get { return Connected ? _tcpClient.Client.LocalEndPoint : _localEndPoint; } }
 
         #endregion
 

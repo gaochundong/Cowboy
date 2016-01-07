@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 using System.Threading.Tasks;
 using Cowboy.Buffer;
 using Cowboy.Logging;
@@ -14,7 +15,7 @@ namespace Cowboy.Sockets
     {
         private static readonly ILog _log = Logger.Get<AsyncTcpSocketSession>();
         private readonly TcpClient _tcpClient;
-        private readonly object _opsLock = new object();
+        private readonly SemaphoreSlim _opsLock = new SemaphoreSlim(1, 1);
         private bool _closed = false;
         private readonly AsyncTcpSocketServerConfiguration _configuration;
         private readonly IBufferManager _bufferManager;
@@ -55,22 +56,54 @@ namespace Cowboy.Sockets
 
         public string SessionKey { get { return _sessionKey; } }
         public DateTime StartTime { get; private set; }
-        public bool Connected { get { return _tcpClient.Connected; } }
-        public EndPoint RemoteEndPoint { get { return _tcpClient.Client.RemoteEndPoint; } }
-        public EndPoint LocalEndPoint { get { return _tcpClient.Client.LocalEndPoint; } }
+        public bool Connected { get { return _tcpClient != null && _tcpClient.Connected; } }
+        public EndPoint RemoteEndPoint { get { return Connected ? _tcpClient.Client.RemoteEndPoint : null; } }
+        public EndPoint LocalEndPoint { get { return Connected ? _tcpClient.Client.LocalEndPoint : null; } }
         public AsyncTcpSocketServer Server { get { return _server; } }
 
         internal async Task Start()
         {
-            lock (_opsLock)
+            if (await _opsLock.WaitAsync(0))
             {
-                if (!Connected)
+                try
                 {
-                    _closed = false;
+                    if (Connected)
+                    {
+                        _closed = false;
+
+                        await Process();
+                    }
+                }
+                finally
+                {
+                    _opsLock.Release();
                 }
             }
+        }
 
-            await Process();
+        public void Close()
+        {
+            if (!_closed)
+            {
+                _closed = true;
+
+                try
+                {
+                    if (_stream != null)
+                    {
+                        _stream.Close();
+                        _stream = null;
+                    }
+                    if (_tcpClient != null && _tcpClient.Connected)
+                    {
+                        _tcpClient.Close();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _log.Error(ex.Message, ex);
+                }
+            }
         }
 
         private async Task Process()
@@ -82,16 +115,16 @@ namespace Cowboy.Sockets
             byte[] sessionBuffer = _bufferManager.BorrowBuffer();
             int sessionBufferCount = 0;
 
-            _log.DebugFormat("Session started for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
-                this.RemoteEndPoint,
-                this.StartTime.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"),
-                _dispatcher.GetType().Name,
-                this.Server.SessionCount);
-            await _dispatcher.OnSessionStarted(this);
-
             try
             {
                 _stream = await NegotiateStream(_tcpClient.GetStream());
+
+                _log.DebugFormat("Session started for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
+                    this.RemoteEndPoint,
+                    this.StartTime.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"),
+                    _dispatcher.GetType().Name,
+                    this.Server.SessionCount);
+                await _dispatcher.OnSessionStarted(this);
 
                 while (Connected)
                 {
@@ -135,38 +168,9 @@ namespace Cowboy.Sockets
                     _dispatcher.GetType().Name,
                     this.Server.SessionCount - 1);
 
-                await Close();
-            }
-        }
+                Close();
 
-        public async Task Close()
-        {
-            if (!_closed)
                 await _dispatcher.OnSessionClosed(this);
-
-            lock (_opsLock)
-            {
-                if (!_closed)
-                {
-                    _closed = true;
-
-                    try
-                    {
-                        if (_stream != null)
-                        {
-                            _stream.Close();
-                            _stream = null;
-                        }
-                        if (_tcpClient != null && _tcpClient.Connected)
-                        {
-                            _tcpClient.Close();
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _log.Error(ex.Message, ex);
-                    }
-                }
             }
         }
 

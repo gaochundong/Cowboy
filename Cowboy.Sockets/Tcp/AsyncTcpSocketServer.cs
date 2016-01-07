@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 using Cowboy.Buffer;
 using Cowboy.Logging;
@@ -17,7 +18,7 @@ namespace Cowboy.Sockets
         private IBufferManager _bufferManager;
         private TcpListener _listener;
         private readonly ConcurrentDictionary<string, AsyncTcpSocketSession> _sessions = new ConcurrentDictionary<string, AsyncTcpSocketSession>();
-        private readonly object _opsLock = new object();
+        private readonly SemaphoreSlim _opsLock = new SemaphoreSlim(1, 1);
         private readonly AsyncTcpSocketServerConfiguration _configuration;
         private readonly IAsyncTcpSocketServerMessageDispatcher _dispatcher;
 
@@ -66,56 +67,70 @@ namespace Cowboy.Sockets
 
         #region Server
 
-        public void Start()
+        public async Task Start()
         {
-            lock (_opsLock)
+            if (await _opsLock.WaitAsync(0))
             {
-                if (Active)
-                    return;
-
                 try
                 {
-                    _listener = new TcpListener(this.ListenedEndPoint);
-                    ConfigureListener();
+                    if (Active)
+                        return;
 
-                    _listener.Start(_configuration.PendingConnectionBacklog);
-                    Active = true;
-
-                    Task.Run(async () =>
+                    try
                     {
-                        await Accept();
-                    })
-                    .Forget();
+                        _listener = new TcpListener(this.ListenedEndPoint);
+                        ConfigureListener();
+
+                        _listener.Start(_configuration.PendingConnectionBacklog);
+                        Active = true;
+
+                        Task.Run(async () =>
+                        {
+                            await Accept();
+                        })
+                        .Forget();
+                    }
+                    catch (Exception ex) when (!ShouldThrow(ex)) { }
                 }
-                catch (Exception ex) when (!ShouldThrow(ex)) { }
+                finally
+                {
+                    _opsLock.Release();
+                }
+            }
+        }
+
+        public async Task Stop()
+        {
+            if (await _opsLock.WaitAsync(0))
+            {
+                try
+                {
+                    if (!Active)
+                        return;
+
+                    try
+                    {
+                        Active = false;
+                        _listener.Stop();
+                        _listener = null;
+
+                        foreach (var session in _sessions.Values)
+                        {
+                            session.Close();
+                        }
+                    }
+                    catch (Exception ex) when (!ShouldThrow(ex)) { }
+                }
+                finally
+                {
+                    _opsLock.Release();
+                }
             }
         }
 
         private void ConfigureListener()
         {
             _listener.AllowNatTraversal(_configuration.AllowNatTraversal);
-        }
-
-        public void Stop()
-        {
-            lock (_opsLock)
-            {
-                if (!Active)
-                    return;
-
-                try
-                {
-                    Active = false;
-                    _listener.Stop();
-                    _listener = null;
-
-                    foreach (var session in _sessions.Values)
-                    {
-                        session.Close();
-                    }
-                }
-                catch (Exception ex) when (!ShouldThrow(ex)) { }
-            }
         }
 
         public bool Pending()

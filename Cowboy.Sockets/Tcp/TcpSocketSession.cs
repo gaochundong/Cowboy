@@ -52,9 +52,9 @@ namespace Cowboy.Sockets
 
         public string SessionKey { get { return _sessionKey; } }
         public DateTime StartTime { get; private set; }
-        public bool Connected { get { return _tcpClient.Connected; } }
-        public EndPoint RemoteEndPoint { get { return _tcpClient.Client.RemoteEndPoint; } }
-        public EndPoint LocalEndPoint { get { return _tcpClient.Client.LocalEndPoint; } }
+        public bool Connected { get { return _tcpClient != null && _tcpClient.Connected; } }
+        public EndPoint RemoteEndPoint { get { return Connected ? _tcpClient.Client.RemoteEndPoint : null; } }
+        public EndPoint LocalEndPoint { get { return Connected ? _tcpClient.Client.LocalEndPoint : null; } }
         public TcpSocketServer Server { get { return _server; } }
 
         internal void Start()
