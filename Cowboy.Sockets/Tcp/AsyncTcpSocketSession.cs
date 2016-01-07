@@ -87,6 +87,7 @@ namespace Cowboy.Sockets
                 this.StartTime.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"),
                 _dispatcher.GetType().Name,
                 this.Server.SessionCount);
+            await _dispatcher.OnSessionStarted(this);
 
             try
             {
@@ -100,7 +101,7 @@ namespace Cowboy.Sockets
 
                     if (!_configuration.Framing)
                     {
-                        await _dispatcher.Dispatch(this, receiveBuffer, 0, receiveCount);
+                        await _dispatcher.OnSessionDataReceived(this, receiveBuffer, 0, receiveCount);
                     }
                     else
                     {
@@ -111,7 +112,7 @@ namespace Cowboy.Sockets
                             var frameHeader = TcpFrameHeader.ReadHeader(sessionBuffer);
                             if (TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize <= sessionBufferCount)
                             {
-                                await _dispatcher.Dispatch(this, sessionBuffer, TcpFrameHeader.HEADER_SIZE, frameHeader.PayloadSize);
+                                await _dispatcher.OnSessionDataReceived(this, sessionBuffer, TcpFrameHeader.HEADER_SIZE, frameHeader.PayloadSize);
                                 BufferDeflector.ShiftBuffer(_bufferManager, TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize, ref sessionBuffer, ref sessionBufferCount);
                             }
                             else
@@ -134,12 +135,15 @@ namespace Cowboy.Sockets
                     _dispatcher.GetType().Name,
                     this.Server.SessionCount - 1);
 
-                Close();
+                await Close();
             }
         }
 
-        public void Close()
+        public async Task Close()
         {
+            if (!_closed)
+                await _dispatcher.OnSessionClosed(this);
+
             lock (_opsLock)
             {
                 if (!_closed)

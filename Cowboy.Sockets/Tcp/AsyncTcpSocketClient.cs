@@ -125,6 +125,8 @@ namespace Cowboy.Sockets
             {
                 _stream = await NegotiateStream(_tcpClient.GetStream());
 
+                await _dispatcher.OnServerConnected(this);
+
                 while (Connected)
                 {
                     int receiveCount = await _stream.ReadAsync(_receiveBuffer, 0, _receiveBuffer.Length);
@@ -133,7 +135,7 @@ namespace Cowboy.Sockets
 
                     if (!_configuration.Framing)
                     {
-                        await _dispatcher.Dispatch(this, _receiveBuffer, 0, receiveCount);
+                        await _dispatcher.OnServerDataReceived(this, _receiveBuffer, 0, receiveCount);
                     }
                     else
                     {
@@ -144,7 +146,7 @@ namespace Cowboy.Sockets
                             var frameHeader = TcpFrameHeader.ReadHeader(_sessionBuffer);
                             if (TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize <= _sessionBufferCount)
                             {
-                                await _dispatcher.Dispatch(this, _sessionBuffer, TcpFrameHeader.HEADER_SIZE, frameHeader.PayloadSize);
+                                await _dispatcher.OnServerDataReceived(this, _sessionBuffer, TcpFrameHeader.HEADER_SIZE, frameHeader.PayloadSize);
                                 BufferDeflector.ShiftBuffer(_bufferManager, TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize, ref _sessionBuffer, ref _sessionBufferCount);
                             }
                             else
@@ -164,12 +166,15 @@ namespace Cowboy.Sockets
                 _log.DebugFormat("Disconnected from server [{0}] with dispatcher [{1}] on [{2}].",
                     this.RemoteEndPoint, _dispatcher.GetType().Name, DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
 
-                Close();
+                await Close();
             }
         }
 
-        public void Close()
+        public async Task Close()
         {
+            if (!_closed)
+                await _dispatcher.OnServerDisconnected(this);
+
             lock (_opsLock)
             {
                 if (!_closed)

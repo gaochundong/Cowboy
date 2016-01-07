@@ -45,7 +45,7 @@ namespace Cowboy.Sockets.TestAsyncClient
                 }
             }
 
-            _client.Close();
+            _client.Close().Wait();
             Console.WriteLine("TCP client has disconnected from server [{0}].", remoteEP);
 
             Console.ReadKey();
