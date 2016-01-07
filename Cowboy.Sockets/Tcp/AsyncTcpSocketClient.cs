@@ -68,6 +68,57 @@ namespace Cowboy.Sockets
             Initialize();
         }
 
+        public AsyncTcpSocketClient(IPAddress remoteAddress, int remotePort, IPAddress localAddress, int localPort,
+            Func<AsyncTcpSocketClient, byte[], int, int, Task> onServerDataReceived = null,
+            Func<AsyncTcpSocketClient, Task> onServerConnected = null,
+            Func<AsyncTcpSocketClient, Task> onServerDisconnected = null,
+            AsyncTcpSocketClientConfiguration configuration = null)
+            : this(new IPEndPoint(remoteAddress, remotePort), new IPEndPoint(localAddress, localPort),
+                  onServerDataReceived, onServerConnected, onServerDisconnected, configuration)
+        {
+        }
+
+        public AsyncTcpSocketClient(IPAddress remoteAddress, int remotePort, IPEndPoint localEP,
+            Func<AsyncTcpSocketClient, byte[], int, int, Task> onServerDataReceived = null,
+            Func<AsyncTcpSocketClient, Task> onServerConnected = null,
+            Func<AsyncTcpSocketClient, Task> onServerDisconnected = null,
+            AsyncTcpSocketClientConfiguration configuration = null)
+            : this(new IPEndPoint(remoteAddress, remotePort), localEP,
+                  onServerDataReceived, onServerConnected, onServerDisconnected, configuration)
+        {
+        }
+
+        public AsyncTcpSocketClient(IPAddress remoteAddress, int remotePort,
+            Func<AsyncTcpSocketClient, byte[], int, int, Task> onServerDataReceived = null,
+            Func<AsyncTcpSocketClient, Task> onServerConnected = null,
+            Func<AsyncTcpSocketClient, Task> onServerDisconnected = null,
+            AsyncTcpSocketClientConfiguration configuration = null)
+            : this(new IPEndPoint(remoteAddress, remotePort),
+                  onServerDataReceived, onServerConnected, onServerDisconnected, configuration)
+        {
+        }
+
+        public AsyncTcpSocketClient(IPEndPoint remoteEP,
+            Func<AsyncTcpSocketClient, byte[], int, int, Task> onServerDataReceived = null,
+            Func<AsyncTcpSocketClient, Task> onServerConnected = null,
+            Func<AsyncTcpSocketClient, Task> onServerDisconnected = null,
+            AsyncTcpSocketClientConfiguration configuration = null)
+            : this(remoteEP, null,
+                  onServerDataReceived, onServerConnected, onServerDisconnected, configuration)
+        {
+        }
+
+        public AsyncTcpSocketClient(IPEndPoint remoteEP, IPEndPoint localEP,
+            Func<AsyncTcpSocketClient, byte[], int, int, Task> onServerDataReceived = null,
+            Func<AsyncTcpSocketClient, Task> onServerConnected = null,
+            Func<AsyncTcpSocketClient, Task> onServerDisconnected = null,
+            AsyncTcpSocketClientConfiguration configuration = null)
+            : this(remoteEP, localEP,
+                 new InternalAsyncTcpSocketClientMessageDispatcherImplementation(onServerDataReceived, onServerConnected, onServerDisconnected),
+                 configuration)
+        {
+        }
+
         private void Initialize()
         {
             _bufferManager = new GrowingByteBufferManager(_configuration.InitialBufferAllocationCount, _configuration.ReceiveBufferSize);

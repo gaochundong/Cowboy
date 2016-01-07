@@ -50,6 +50,38 @@ namespace Cowboy.Sockets
             Initialize();
         }
 
+        public AsyncTcpSocketServer(
+            int listenedPort,
+            Func<AsyncTcpSocketSession, byte[], int, int, Task> onSessionDataReceived = null,
+            Func<AsyncTcpSocketSession, Task> onSessionStarted = null,
+            Func<AsyncTcpSocketSession, Task> onSessionClosed = null,
+            AsyncTcpSocketServerConfiguration configuration = null)
+            : this(IPAddress.Any, listenedPort, onSessionDataReceived, onSessionStarted, onSessionClosed, configuration)
+        {
+        }
+
+        public AsyncTcpSocketServer(
+            IPAddress listenedAddress, int listenedPort,
+            Func<AsyncTcpSocketSession, byte[], int, int, Task> onSessionDataReceived = null,
+            Func<AsyncTcpSocketSession, Task> onSessionStarted = null,
+            Func<AsyncTcpSocketSession, Task> onSessionClosed = null,
+            AsyncTcpSocketServerConfiguration configuration = null)
+            : this(new IPEndPoint(listenedAddress, listenedPort), onSessionDataReceived, onSessionStarted, onSessionClosed, configuration)
+        {
+        }
+
+        public AsyncTcpSocketServer(
+            IPEndPoint listenedEndPoint,
+            Func<AsyncTcpSocketSession, byte[], int, int, Task> onSessionDataReceived = null,
+            Func<AsyncTcpSocketSession, Task> onSessionStarted = null,
+            Func<AsyncTcpSocketSession, Task> onSessionClosed = null,
+            AsyncTcpSocketServerConfiguration configuration = null)
+            : this(listenedEndPoint,
+                  new InternalAsyncTcpSocketServerMessageDispatcherImplementation(onSessionDataReceived, onSessionStarted, onSessionClosed),
+                  configuration)
+        {
+        }
+
         private void Initialize()
         {
             _bufferManager = new GrowingByteBufferManager(_configuration.InitialBufferAllocationCount, _configuration.ReceiveBufferSize);

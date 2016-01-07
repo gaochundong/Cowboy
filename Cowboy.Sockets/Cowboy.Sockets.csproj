@@ -58,6 +58,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tcp\AsyncTcpSocketSession.cs" />
     <Compile Include="Tcp\AsyncTcpSocketClient.cs" />
+    <Compile Include="Tcp\InternalAsyncTcpSocketServerMessageDispatcherImplementation.cs" />
+    <Compile Include="Tcp\InternalAsyncTcpSocketClientMessageDispatcherImplementation.cs" />
     <Compile Include="Tcp\TcpSocketSession.cs" />
     <Compile Include="Tcp\TcpSocketClient.cs" />
     <Compile Include="Tcp\AsyncTcpSocketServer.cs" />
