@@ -60,16 +60,6 @@ namespace Cowboy.Sockets
         public EndPoint LocalEndPoint { get { return _tcpClient.Client.LocalEndPoint; } }
         public AsyncTcpSocketServer Server { get { return _server; } }
 
-        private void ConfigureClient()
-        {
-            _tcpClient.ReceiveBufferSize = _configuration.ReceiveBufferSize;
-            _tcpClient.SendBufferSize = _configuration.SendBufferSize;
-            _tcpClient.ReceiveTimeout = (int)_configuration.ReceiveTimeout.TotalMilliseconds;
-            _tcpClient.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
-            _tcpClient.NoDelay = _configuration.NoDelay;
-            _tcpClient.LingerState = _configuration.LingerState;
-        }
-
         internal async Task Start()
         {
             lock (_opsLock)
@@ -208,6 +198,16 @@ namespace Cowboy.Sockets
                 }
             }
             catch (Exception ex) when (!ShouldThrow(ex)) { }
+        }
+
+        private void ConfigureClient()
+        {
+            _tcpClient.ReceiveBufferSize = _configuration.ReceiveBufferSize;
+            _tcpClient.SendBufferSize = _configuration.SendBufferSize;
+            _tcpClient.ReceiveTimeout = (int)_configuration.ReceiveTimeout.TotalMilliseconds;
+            _tcpClient.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
+            _tcpClient.NoDelay = _configuration.NoDelay;
+            _tcpClient.LingerState = _configuration.LingerState;
         }
 
         private async Task<Stream> NegotiateStream(Stream stream)
