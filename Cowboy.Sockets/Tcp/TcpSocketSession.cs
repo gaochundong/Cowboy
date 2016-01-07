@@ -13,6 +13,8 @@ namespace Cowboy.Sockets
     {
         private static readonly ILog _log = Logger.Get<TcpSocketSession>();
         private readonly TcpClient _tcpClient;
+        private readonly object _opsLock = new object();
+        private bool _closed = false;
         private readonly TcpSocketServerConfiguration _configuration;
         private readonly IBufferManager _bufferManager;
         private readonly TcpSocketServer _server;
@@ -67,13 +69,56 @@ namespace Cowboy.Sockets
 
         public void Start()
         {
-            _stream = NegotiateStream(_tcpClient.GetStream());
+            lock (_opsLock)
+            {
+                if (Connected)
+                {
+                    _closed = false;
 
-            _receiveBuffer = _bufferManager.BorrowBuffer();
-            _sessionBuffer = _bufferManager.BorrowBuffer();
-            _sessionBufferCount = 0;
+                    _stream = NegotiateStream(_tcpClient.GetStream());
 
-            ContinueReadBuffer();
+                    _receiveBuffer = _bufferManager.BorrowBuffer();
+                    _sessionBuffer = _bufferManager.BorrowBuffer();
+                    _sessionBufferCount = 0;
+
+                    ContinueReadBuffer();
+                }
+            }
+        }
+
+        public void Close()
+        {
+            lock (_opsLock)
+            {
+                if (!_closed)
+                {
+                    _closed = true;
+
+                    try
+                    {
+                        if (_stream != null)
+                        {
+                            _stream.Close();
+                            _stream = null;
+                        }
+                        if (_tcpClient != null && _tcpClient.Connected)
+                        {
+                            _tcpClient.Close();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _log.Error(ex.Message, ex);
+                    }
+                    finally
+                    {
+                        _bufferManager.ReturnBuffer(_receiveBuffer);
+                        _bufferManager.ReturnBuffer(_sessionBuffer);
+                    }
+
+                    _server.RaiseClientDisconnected(this);
+                }
+            }
         }
 
         private Stream NegotiateStream(Stream stream)
@@ -133,33 +178,6 @@ namespace Cowboy.Sockets
                 sslStream.CipherStrength);
 
             return sslStream;
-        }
-
-        public void Close()
-        {
-            try
-            {
-                if (_stream != null)
-                {
-                    _stream.Close();
-                    _stream = null;
-                }
-                if (_tcpClient != null && _tcpClient.Connected)
-                {
-                    _tcpClient.Close();
-                }
-            }
-            catch (Exception ex)
-            {
-                _log.Error(ex.Message, ex);
-            }
-            finally
-            {
-                _bufferManager.ReturnBuffer(_receiveBuffer);
-                _bufferManager.ReturnBuffer(_sessionBuffer);
-            }
-
-            _server.RaiseClientDisconnected(this);
         }
 
         private bool CloseIfShould(Exception ex)
@@ -224,10 +242,8 @@ namespace Cowboy.Sockets
                     return;
                 }
 
-                // received bytes and trigger notifications
                 ReceiveBuffer(numberOfReadBytes);
 
-                // continue listening for TCP data packets
                 ContinueReadBuffer();
             }
             catch (Exception ex)
@@ -241,7 +257,6 @@ namespace Cowboy.Sockets
         {
             if (!_configuration.Framing)
             {
-                // yeah, we received the buffer and then raise it to user side to handle.
                 _server.RaiseClientDataReceived(this, _receiveBuffer, 0, receiveCount);
             }
             else
@@ -267,10 +282,7 @@ namespace Cowboy.Sockets
                     var frameHeader = TcpFrameHeader.ReadHeader(_sessionBuffer);
                     if (TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize <= _sessionBufferCount)
                     {
-                        // yeah, we received the buffer and then raise it to user side to handle.
                         _server.RaiseClientDataReceived(this, _sessionBuffer, TcpFrameHeader.HEADER_SIZE, frameHeader.PayloadSize);
-
-                        // remove the received packet from buffer
                         BufferDeflector.ShiftBuffer(_bufferManager, TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize, ref _sessionBuffer, ref _sessionBufferCount);
                     }
                     else

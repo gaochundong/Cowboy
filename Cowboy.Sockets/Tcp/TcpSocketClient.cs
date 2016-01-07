@@ -17,6 +17,7 @@ namespace Cowboy.Sockets
         private IBufferManager _bufferManager;
         private TcpClient _tcpClient;
         private readonly object _opsLock = new object();
+        private bool _closed = false;
         private readonly TcpSocketClientConfiguration _configuration;
         private readonly IPEndPoint _remoteEndPoint;
         private readonly IPEndPoint _localEndPoint;
@@ -79,6 +80,8 @@ namespace Cowboy.Sockets
             {
                 if (!Connected)
                 {
+                    _closed = false;
+
                     if (_localEndPoint != null)
                     {
                         _tcpClient = new TcpClient(_localEndPoint);
@@ -97,22 +100,14 @@ namespace Cowboy.Sockets
             }
         }
 
-        private void ConfigureClient()
-        {
-            _tcpClient.ReceiveBufferSize = _configuration.ReceiveBufferSize;
-            _tcpClient.SendBufferSize = _configuration.SendBufferSize;
-            _tcpClient.ReceiveTimeout = (int)_configuration.ReceiveTimeout.TotalMilliseconds;
-            _tcpClient.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
-            _tcpClient.NoDelay = _configuration.NoDelay;
-            _tcpClient.LingerState = _configuration.LingerState;
-        }
-
         public void Close()
         {
             lock (_opsLock)
             {
-                if (Connected)
+                if (!_closed)
                 {
+                    _closed = true;
+
                     try
                     {
                         if (_stream != null)
@@ -136,6 +131,16 @@ namespace Cowboy.Sockets
             }
         }
 
+        private void ConfigureClient()
+        {
+            _tcpClient.ReceiveBufferSize = _configuration.ReceiveBufferSize;
+            _tcpClient.SendBufferSize = _configuration.SendBufferSize;
+            _tcpClient.ReceiveTimeout = (int)_configuration.ReceiveTimeout.TotalMilliseconds;
+            _tcpClient.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
+            _tcpClient.NoDelay = _configuration.NoDelay;
+            _tcpClient.LingerState = _configuration.LingerState;
+        }
+
         private bool CloseIfShould(Exception ex)
         {
             if (ex is ObjectDisposedException
@@ -145,7 +150,6 @@ namespace Cowboy.Sockets
             {
                 _log.Error(ex.Message, ex);
 
-                // connection has been closed
                 Close();
 
                 return true;
@@ -167,7 +171,6 @@ namespace Cowboy.Sockets
 
                 _stream = NegotiateStream(_tcpClient.GetStream());
 
-                // we are connected successfully and start async read operation.
                 ContinueReadBuffer();
 
                 RaiseServerConnected();
@@ -241,11 +244,6 @@ namespace Cowboy.Sockets
         {
             try
             {
-                // buffer : An array of type Byte that is the location in memory to store data read from the NetworkStream.
-                // offset : The location in buffer to begin storing the data.
-                // size : The number of bytes to read from the NetworkStream.
-                // callback : The AsyncCallback delegate that is executed when BeginRead completes.
-                // state : An object that contains any additional user-defined data.
                 _stream.BeginRead(_receiveBuffer, 0, _receiveBuffer.Length, HandleDataReceived, _tcpClient);
             }
             catch (Exception ex)
@@ -283,10 +281,8 @@ namespace Cowboy.Sockets
                     return;
                 }
 
-                // received bytes and trigger notifications
                 ReceiveBuffer(numberOfReadBytes);
 
-                // then start reading from the network again
                 ContinueReadBuffer();
             }
             catch (Exception ex)
@@ -300,7 +296,6 @@ namespace Cowboy.Sockets
         {
             if (!_configuration.Framing)
             {
-                // yeah, we received the buffer and then raise it to user side to handle.
                 RaiseServerDataReceived(_receiveBuffer, 0, receiveCount);
             }
             else
@@ -326,10 +321,7 @@ namespace Cowboy.Sockets
                     var frameHeader = TcpFrameHeader.ReadHeader(_sessionBuffer);
                     if (TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize <= _sessionBufferCount)
                     {
-                        // yeah, we received the buffer and then raise it to user side to handle.
                         RaiseServerDataReceived(_sessionBuffer, TcpFrameHeader.HEADER_SIZE, frameHeader.PayloadSize);
-
-                        // remove the received packet from buffer
                         BufferDeflector.ShiftBuffer(_bufferManager, TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize, ref _sessionBuffer, ref _sessionBufferCount);
                     }
                     else
@@ -359,7 +351,6 @@ namespace Cowboy.Sockets
 
             if (!Connected)
             {
-                RaiseServerDisconnected();
                 throw new InvalidProgramException("This client has not connected to server.");
             }
 
