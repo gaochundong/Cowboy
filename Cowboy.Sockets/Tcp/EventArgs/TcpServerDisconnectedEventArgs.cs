@@ -5,7 +5,7 @@ namespace Cowboy.Sockets
 {
     public class TcpServerDisconnectedEventArgs : EventArgs
     {
-        public TcpServerDisconnectedEventArgs(EndPoint remoteEP, EndPoint localEP)
+        public TcpServerDisconnectedEventArgs(IPEndPoint remoteEP, IPEndPoint localEP)
         {
             if (remoteEP == null)
                 throw new ArgumentNullException("remoteEP");
@@ -14,8 +14,8 @@ namespace Cowboy.Sockets
             this.LocalEndPoint = localEP;
         }
 
-        public EndPoint RemoteEndPoint { get; private set; }
-        public EndPoint LocalEndPoint { get; private set; }
+        public IPEndPoint RemoteEndPoint { get; private set; }
+        public IPEndPoint LocalEndPoint { get; private set; }
 
         public override string ToString()
         {
