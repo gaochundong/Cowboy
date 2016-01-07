@@ -65,6 +65,8 @@ namespace Cowboy.Sockets
             _dispatcher = dispatcher;
             _configuration = configuration ?? new AsyncTcpSocketClientConfiguration();
 
+            this.ConnectTimeout = TimeSpan.FromSeconds(5);
+
             Initialize();
         }
 
@@ -128,6 +130,7 @@ namespace Cowboy.Sockets
 
         #region Properties
 
+        public TimeSpan ConnectTimeout { get; set; }
         public bool Connected { get { return _tcpClient != null && _tcpClient.Client.Connected; } }
         public EndPoint RemoteEndPoint { get { return Connected ? _tcpClient.Client.RemoteEndPoint : _remoteEndPoint; } }
         public EndPoint LocalEndPoint { get { return Connected ? _tcpClient.Client.LocalEndPoint : _localEndPoint; } }
@@ -145,6 +148,19 @@ namespace Cowboy.Sockets
                     if (!Connected)
                     {
                         _closed = false;
+
+                        _tcpClient = _localEndPoint != null ? new TcpClient(_localEndPoint) : new TcpClient();
+
+                        var awaiter = _tcpClient.ConnectAsync(_remoteEndPoint.Address, _remoteEndPoint.Port);
+                        if (!awaiter.Wait(ConnectTimeout))
+                        {
+                            Close();
+
+                            throw new TimeoutException(string.Format(
+                                "Connect to [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
+                        }
+
+                        ConfigureClient();
 
                         Task.Run(async () =>
                         {
@@ -187,18 +203,6 @@ namespace Cowboy.Sockets
 
         private async Task Process()
         {
-            if (_localEndPoint != null)
-            {
-                _tcpClient = new TcpClient(_localEndPoint);
-            }
-            else
-            {
-                _tcpClient = new TcpClient();
-            }
-
-            await _tcpClient.ConnectAsync(_remoteEndPoint.Address, _remoteEndPoint.Port);
-            ConfigureClient();
-
             _receiveBuffer = _bufferManager.BorrowBuffer();
             _sessionBuffer = _bufferManager.BorrowBuffer();
             _sessionBufferCount = 0;

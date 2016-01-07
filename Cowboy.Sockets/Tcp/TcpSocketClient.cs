@@ -85,14 +85,7 @@ namespace Cowboy.Sockets
                 {
                     _closed = false;
 
-                    if (_localEndPoint != null)
-                    {
-                        _tcpClient = new TcpClient(_localEndPoint);
-                    }
-                    else
-                    {
-                        _tcpClient = new TcpClient();
-                    }
+                    _tcpClient = _localEndPoint != null ? new TcpClient(_localEndPoint) : new TcpClient();
 
                     _receiveBuffer = _bufferManager.BorrowBuffer();
                     _sessionBuffer = _bufferManager.BorrowBuffer();
