@@ -14,6 +14,8 @@ namespace Cowboy.Sockets
     {
         private static readonly ILog _log = Logger.Get<AsyncTcpSocketSession>();
         private readonly TcpClient _tcpClient;
+        private readonly object _opsLock = new object();
+        private bool _closed = false;
         private readonly AsyncTcpSocketServerConfiguration _configuration;
         private readonly IBufferManager _bufferManager;
         private readonly IAsyncTcpSocketServerMessageDispatcher _dispatcher;
@@ -68,8 +70,24 @@ namespace Cowboy.Sockets
             _tcpClient.LingerState = _configuration.LingerState;
         }
 
-        public async Task Start()
+        internal async Task Start()
         {
+            lock (_opsLock)
+            {
+                if (!Connected)
+                {
+                    _closed = false;
+                }
+            }
+
+            await Process();
+        }
+
+        private async Task Process()
+        {
+            if (!Connected)
+                return;
+
             byte[] receiveBuffer = _bufferManager.BorrowBuffer();
             byte[] sessionBuffer = _bufferManager.BorrowBuffer();
             int sessionBufferCount = 0;
@@ -130,6 +148,34 @@ namespace Cowboy.Sockets
             }
         }
 
+        public void Close()
+        {
+            lock (_opsLock)
+            {
+                if (!_closed)
+                {
+                    _closed = true;
+
+                    try
+                    {
+                        if (_stream != null)
+                        {
+                            _stream.Close();
+                            _stream = null;
+                        }
+                        if (_tcpClient != null && _tcpClient.Connected)
+                        {
+                            _tcpClient.Close();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _log.Error(ex.Message, ex);
+                    }
+                }
+            }
+        }
+
         public async Task Send(byte[] data)
         {
             await Send(data, 0, data.Length);
@@ -137,39 +183,31 @@ namespace Cowboy.Sockets
 
         public async Task Send(byte[] data, int offset, int count)
         {
-            if (_stream.CanWrite)
-            {
-                if (!_configuration.Framing)
-                {
-                    await _stream.WriteAsync(data, offset, count);
-                }
-                else
-                {
-                    var frame = TcpFrame.FromPayload(data, offset, count);
-                    var frameBuffer = frame.ToArray();
-                    await _stream.WriteAsync(frameBuffer, 0, frameBuffer.Length);
-                }
-            }
-        }
+            if (data == null)
+                throw new ArgumentNullException("data");
 
-        public void Close()
-        {
+            if (!Connected)
+            {
+                throw new InvalidProgramException("This session has been closed.");
+            }
+
             try
             {
-                if (_stream != null)
+                if (_stream.CanWrite)
                 {
-                    _stream.Close();
-                    _stream = null;
-                }
-                if (_tcpClient != null && _tcpClient.Connected)
-                {
-                    _tcpClient.Close();
+                    if (!_configuration.Framing)
+                    {
+                        await _stream.WriteAsync(data, offset, count);
+                    }
+                    else
+                    {
+                        var frame = TcpFrame.FromPayload(data, offset, count);
+                        var frameBuffer = frame.ToArray();
+                        await _stream.WriteAsync(frameBuffer, 0, frameBuffer.Length);
+                    }
                 }
             }
-            catch (Exception ex)
-            {
-                _log.Error(ex.Message, ex);
-            }
+            catch (Exception ex) when (!ShouldThrow(ex)) { }
         }
 
         private async Task<Stream> NegotiateStream(Stream stream)

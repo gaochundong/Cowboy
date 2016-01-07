@@ -17,6 +17,8 @@ namespace Cowboy.Sockets
         private static readonly ILog _log = Logger.Get<AsyncTcpSocketClient>();
         private IBufferManager _bufferManager;
         private TcpClient _tcpClient;
+        private readonly object _opsLock = new object();
+        private bool _closed = false;
         private readonly IAsyncTcpSocketClientMessageDispatcher _dispatcher;
         private readonly AsyncTcpSocketClientConfiguration _configuration;
         private readonly IPEndPoint _remoteEndPoint;
@@ -84,13 +86,18 @@ namespace Cowboy.Sockets
 
         public void Connect()
         {
-            if (Connected)
-                return;
-
-            Task.Run(async () =>
+            lock (_opsLock)
             {
-                await Process();
-            });
+                if (!Connected)
+                {
+                    _closed = false;
+
+                    Task.Run(async () =>
+                    {
+                        await Process();
+                    });
+                }
+            }
         }
 
         private async Task Process()
@@ -161,6 +168,34 @@ namespace Cowboy.Sockets
             }
         }
 
+        public void Close()
+        {
+            lock (_opsLock)
+            {
+                if (!_closed)
+                {
+                    _closed = true;
+
+                    try
+                    {
+                        if (_stream != null)
+                        {
+                            _stream.Close();
+                            _stream = null;
+                        }
+                        if (_tcpClient != null && _tcpClient.Connected)
+                        {
+                            _tcpClient.Close();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _log.Error(ex.Message, ex);
+                    }
+                }
+            }
+        }
+
         private bool ShouldThrow(Exception ex)
         {
             if (ex is ObjectDisposedException
@@ -181,26 +216,6 @@ namespace Cowboy.Sockets
             _tcpClient.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
             _tcpClient.NoDelay = _configuration.NoDelay;
             _tcpClient.LingerState = _configuration.LingerState;
-        }
-
-        public void Close()
-        {
-            try
-            {
-                if (_stream != null)
-                {
-                    _stream.Close();
-                    _stream = null;
-                }
-                if (_tcpClient != null && _tcpClient.Connected)
-                {
-                    _tcpClient.Close();
-                }
-            }
-            catch (Exception ex)
-            {
-                _log.Error(ex.Message, ex);
-            }
         }
 
         private async Task<Stream> NegotiateStream(Stream stream)
@@ -273,19 +288,31 @@ namespace Cowboy.Sockets
 
         public async Task Send(byte[] data, int offset, int count)
         {
-            if (_stream.CanWrite)
+            if (data == null)
+                throw new ArgumentNullException("data");
+
+            if (!Connected)
             {
-                if (!_configuration.Framing)
+                throw new InvalidProgramException("This client has not connected to server.");
+            }
+
+            try
+            {
+                if (_stream.CanWrite)
                 {
-                    await _stream.WriteAsync(data, offset, count);
-                }
-                else
-                {
-                    var frame = TcpFrame.FromPayload(data, offset, count);
-                    var frameBuffer = frame.ToArray();
-                    await _stream.WriteAsync(frameBuffer, 0, frameBuffer.Length);
+                    if (!_configuration.Framing)
+                    {
+                        await _stream.WriteAsync(data, offset, count);
+                    }
+                    else
+                    {
+                        var frame = TcpFrame.FromPayload(data, offset, count);
+                        var frameBuffer = frame.ToArray();
+                        await _stream.WriteAsync(frameBuffer, 0, frameBuffer.Length);
+                    }
                 }
             }
+            catch (Exception ex) when (!ShouldThrow(ex)) { }
         }
 
         #endregion
