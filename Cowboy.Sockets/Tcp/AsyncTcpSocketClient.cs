@@ -33,18 +33,18 @@ namespace Cowboy.Sockets
 
         #region Constructors
 
-        public AsyncTcpSocketClient(IPAddress remoteIPAddress, int remotePort, IPAddress localIPAddress, int localPort, IAsyncTcpSocketClientMessageDispatcher dispatcher, AsyncTcpSocketClientConfiguration configuration = null)
-            : this(new IPEndPoint(remoteIPAddress, remotePort), new IPEndPoint(localIPAddress, localPort), dispatcher, configuration)
+        public AsyncTcpSocketClient(IPAddress remoteAddress, int remotePort, IPAddress localAddress, int localPort, IAsyncTcpSocketClientMessageDispatcher dispatcher, AsyncTcpSocketClientConfiguration configuration = null)
+            : this(new IPEndPoint(remoteAddress, remotePort), new IPEndPoint(localAddress, localPort), dispatcher, configuration)
         {
         }
 
-        public AsyncTcpSocketClient(IPAddress remoteIPAddress, int remotePort, IPEndPoint localEP, IAsyncTcpSocketClientMessageDispatcher dispatcher, AsyncTcpSocketClientConfiguration configuration = null)
-            : this(new IPEndPoint(remoteIPAddress, remotePort), localEP, dispatcher, configuration)
+        public AsyncTcpSocketClient(IPAddress remoteAddress, int remotePort, IPEndPoint localEP, IAsyncTcpSocketClientMessageDispatcher dispatcher, AsyncTcpSocketClientConfiguration configuration = null)
+            : this(new IPEndPoint(remoteAddress, remotePort), localEP, dispatcher, configuration)
         {
         }
 
-        public AsyncTcpSocketClient(IPAddress remoteIPAddress, int remotePort, IAsyncTcpSocketClientMessageDispatcher dispatcher, AsyncTcpSocketClientConfiguration configuration = null)
-            : this(new IPEndPoint(remoteIPAddress, remotePort), dispatcher, configuration)
+        public AsyncTcpSocketClient(IPAddress remoteAddress, int remotePort, IAsyncTcpSocketClientMessageDispatcher dispatcher, AsyncTcpSocketClientConfiguration configuration = null)
+            : this(new IPEndPoint(remoteAddress, remotePort), dispatcher, configuration)
         {
         }
 
