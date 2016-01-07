@@ -54,6 +54,8 @@ namespace Cowboy.Sockets
             _localEndPoint = localEP;
             _configuration = configuration ?? new TcpSocketClientConfiguration();
 
+            this.ConnectTimeout = TimeSpan.FromSeconds(5);
+
             Initialize();
         }
 
@@ -66,6 +68,7 @@ namespace Cowboy.Sockets
 
         #region Properties
 
+        public TimeSpan ConnectTimeout { get; set; }
         public bool Connected { get { return _tcpClient != null && _tcpClient.Client.Connected; } }
         public EndPoint RemoteEndPoint { get { return Connected ? _tcpClient.Client.RemoteEndPoint : _remoteEndPoint; } }
         public EndPoint LocalEndPoint { get { return Connected ? _tcpClient.Client.LocalEndPoint : _localEndPoint; } }
@@ -95,7 +98,18 @@ namespace Cowboy.Sockets
                     _sessionBuffer = _bufferManager.BorrowBuffer();
                     _sessionBufferCount = 0;
 
-                    _tcpClient.BeginConnect(_remoteEndPoint.Address, _remoteEndPoint.Port, HandleTcpServerConnected, _tcpClient);
+                    var ar = _tcpClient.BeginConnect(_remoteEndPoint.Address, _remoteEndPoint.Port, null, _tcpClient);
+                    if (ar.AsyncWaitHandle.WaitOne(ConnectTimeout))
+                    {
+                        HandleTcpServerConnected(ar);
+                    }
+                    else
+                    {
+                        Close();
+
+                        throw new TimeoutException(string.Format(
+                            "Connect to [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
+                    }
                 }
             }
         }
