@@ -148,7 +148,7 @@ namespace Cowboy.Sockets
 
                         foreach (var session in _sessions.Values)
                         {
-                            session.Close();
+                            await session.Close();
                         }
                     }
                     catch (Exception ex) when (!ShouldThrow(ex)) { }
@@ -179,16 +179,20 @@ namespace Cowboy.Sockets
 
         private async Task Accept()
         {
-            while (Active)
+            try
             {
-                var tcpClient = await _listener.AcceptTcpClientAsync();
-                var session = new AsyncTcpSocketSession(tcpClient, _configuration, _bufferManager, _dispatcher, this);
-                Task.Run(async () =>
+                while (Active)
                 {
-                    await Process(session);
-                })
-                .Forget();
+                    var tcpClient = await _listener.AcceptTcpClientAsync();
+                    var session = new AsyncTcpSocketSession(tcpClient, _configuration, _bufferManager, _dispatcher, this);
+                    Task.Run(async () =>
+                    {
+                        await Process(session);
+                    })
+                    .Forget();
+                }
             }
+            catch (Exception ex) when (!ShouldThrow(ex)) { }
         }
 
         private async Task Process(AsyncTcpSocketSession session)
@@ -221,7 +225,7 @@ namespace Cowboy.Sockets
             {
                 return false;
             }
-            return false;
+            return true;
         }
 
         #endregion

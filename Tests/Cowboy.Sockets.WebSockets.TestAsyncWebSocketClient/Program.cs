@@ -47,7 +47,7 @@ namespace Cowboy.Sockets.WebSockets.TestAsyncWebSocketClient
                     }
                 }
 
-                _client.Close();
+                _client.Close().Wait();
                 Console.WriteLine("WebSocket client has disconnected from server [{0}].", uri);
             }
             catch (Exception ex)

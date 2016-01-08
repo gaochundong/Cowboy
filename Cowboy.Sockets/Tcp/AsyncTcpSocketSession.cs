@@ -14,8 +14,9 @@ namespace Cowboy.Sockets
     public sealed class AsyncTcpSocketSession
     {
         private static readonly ILog _log = Logger.Get<AsyncTcpSocketSession>();
-        private readonly TcpClient _tcpClient;
+        private TcpClient _tcpClient;
         private readonly SemaphoreSlim _opsLock = new SemaphoreSlim(1, 1);
+        private readonly object _closeLock = new object();
         private bool _closed = false;
         private readonly AsyncTcpSocketServerConfiguration _configuration;
         private readonly IBufferManager _bufferManager;
@@ -23,6 +24,9 @@ namespace Cowboy.Sockets
         private readonly AsyncTcpSocketServer _server;
         private readonly string _sessionKey;
         private Stream _stream;
+        private byte[] _receiveBuffer;
+        private byte[] _sessionBuffer;
+        private int _sessionBufferCount = 0;
 
         public AsyncTcpSocketSession(
             TcpClient tcpClient,
@@ -75,13 +79,14 @@ namespace Cowboy.Sockets
                         var negotiator = NegotiateStream(_tcpClient.GetStream());
                         if (!negotiator.Wait(negotiatorTimeout))
                         {
-                            var remote = this.RemoteEndPoint;
-                            Close();
-
                             throw new TimeoutException(string.Format(
-                                "Negotiate SSL/TSL with remote [{0}] timeout [{1}].", remote, negotiatorTimeout));
+                                "Negotiate SSL/TSL with remote [{0}] timeout [{1}].", this.RemoteEndPoint, negotiatorTimeout));
                         }
                         _stream = negotiator.Result;
+
+                        _receiveBuffer = _bufferManager.BorrowBuffer();
+                        _sessionBuffer = _bufferManager.BorrowBuffer();
+                        _sessionBufferCount = 0;
 
                         _log.DebugFormat("Session started for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
                             this.RemoteEndPoint,
@@ -93,6 +98,12 @@ namespace Cowboy.Sockets
                         await Process();
                     }
                 }
+                catch (Exception ex)
+                when (ex is TimeoutException)
+                {
+                    _log.Error(ex.Message, ex);
+                    await Close();
+                }
                 finally
                 {
                     _opsLock.Release();
@@ -100,63 +111,77 @@ namespace Cowboy.Sockets
             }
         }
 
-        public void Close()
+        public async Task Close()
         {
-            if (!_closed)
+            if (Monitor.TryEnter(_closeLock))
             {
-                _closed = true;
-
                 try
                 {
-                    if (_stream != null)
+                    if (!_closed)
                     {
-                        _stream.Close();
-                        _stream = null;
-                    }
-                    if (_tcpClient != null && _tcpClient.Connected)
-                    {
-                        _tcpClient.Close();
+                        _closed = true;
+
+                        try
+                        {
+                            if (_stream != null)
+                            {
+                                _stream.Close();
+                                _stream = null;
+                            }
+                            if (_tcpClient != null && _tcpClient.Connected)
+                            {
+                                _tcpClient.Close();
+                                _tcpClient = null;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _log.Error(ex.Message, ex);
+                        }
+
+                        _bufferManager.ReturnBuffer(_receiveBuffer);
+                        _bufferManager.ReturnBuffer(_sessionBuffer);
+
+                        _log.DebugFormat("Session closed for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
+                            this.RemoteEndPoint,
+                            DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"),
+                            _dispatcher.GetType().Name,
+                            this.Server.SessionCount - 1);
+                        await _dispatcher.OnSessionClosed(this);
                     }
                 }
-                catch (Exception ex)
+                finally
                 {
-                    _log.Error(ex.Message, ex);
+                    Monitor.Exit(_closeLock);
                 }
             }
         }
 
         private async Task Process()
         {
-            if (!Connected)
-                return;
-
-            byte[] receiveBuffer = _bufferManager.BorrowBuffer();
-            byte[] sessionBuffer = _bufferManager.BorrowBuffer();
-            int sessionBufferCount = 0;
-
             try
             {
                 while (Connected)
                 {
-                    int receiveCount = await _stream.ReadAsync(receiveBuffer, 0, receiveBuffer.Length);
+                    int receiveCount = await _stream.ReadAsync(_receiveBuffer, 0, _receiveBuffer.Length);
                     if (receiveCount == 0)
                         break;
 
                     if (!_configuration.Framing)
                     {
-                        await _dispatcher.OnSessionDataReceived(this, receiveBuffer, 0, receiveCount);
+                        await _dispatcher.OnSessionDataReceived(this, _receiveBuffer, 0, receiveCount);
                     }
                     else
                     {
-                        BufferDeflector.AppendBuffer(_bufferManager, ref receiveBuffer, receiveCount, ref sessionBuffer, ref sessionBufferCount);
+                        BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
 
                         while (true)
                         {
-                            var frameHeader = TcpFrameHeader.ReadHeader(sessionBuffer);
-                            if (TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize <= sessionBufferCount)
+                            var frameHeader = TcpFrameHeader.ReadHeader(_sessionBuffer);
+                            if (TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize <= _sessionBufferCount)
                             {
-                                await _dispatcher.OnSessionDataReceived(this, sessionBuffer, TcpFrameHeader.HEADER_SIZE, frameHeader.PayloadSize);
-                                BufferDeflector.ShiftBuffer(_bufferManager, TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize, ref sessionBuffer, ref sessionBufferCount);
+                                await _dispatcher.OnSessionDataReceived(this, _sessionBuffer, TcpFrameHeader.HEADER_SIZE, frameHeader.PayloadSize);
+                                BufferDeflector.ShiftBuffer(_bufferManager, TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize, ref _sessionBuffer, ref _sessionBufferCount);
                             }
                             else
                             {
@@ -169,18 +194,7 @@ namespace Cowboy.Sockets
             catch (Exception ex) when (!ShouldThrow(ex)) { }
             finally
             {
-                _bufferManager.ReturnBuffer(receiveBuffer);
-                _bufferManager.ReturnBuffer(sessionBuffer);
-
-                _log.DebugFormat("Session closed for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
-                    this.RemoteEndPoint,
-                    DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"),
-                    _dispatcher.GetType().Name,
-                    this.Server.SessionCount - 1);
-
-                Close();
-
-                await _dispatcher.OnSessionClosed(this);
+                await Close();
             }
         }
 
@@ -296,7 +310,7 @@ namespace Cowboy.Sockets
             {
                 return false;
             }
-            return false;
+            return true;
         }
 
         public override string ToString()

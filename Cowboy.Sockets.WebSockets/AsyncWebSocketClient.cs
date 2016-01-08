@@ -22,6 +22,7 @@ namespace Cowboy.Sockets.WebSockets
         private IBufferManager _bufferManager;
         private TcpClient _tcpClient;
         private readonly SemaphoreSlim _opsLock = new SemaphoreSlim(1, 1);
+        private readonly object _closeLock = new object();
         private bool _closed = false;
         private readonly IAsyncWebSocketClientMessageDispatcher _dispatcher;
         private readonly AsyncWebSocketClientConfiguration _configuration;
@@ -157,8 +158,6 @@ namespace Cowboy.Sockets.WebSockets
                         var awaiter = _tcpClient.ConnectAsync(_remoteEndPoint.Address, _remoteEndPoint.Port);
                         if (!awaiter.Wait(ConnectTimeout))
                         {
-                            Close();
-
                             throw new TimeoutException(string.Format(
                                 "Connect to [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
                         }
@@ -167,8 +166,6 @@ namespace Cowboy.Sockets.WebSockets
                         var negotiator = NegotiateStream(_tcpClient.GetStream());
                         if (!negotiator.Wait(ConnectTimeout))
                         {
-                            Close();
-
                             throw new TimeoutException(string.Format(
                                 "Negotiate SSL/TSL with remote [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
                         }
@@ -181,8 +178,6 @@ namespace Cowboy.Sockets.WebSockets
                         var handshaker = Handshake();
                         if (!handshaker.Wait(ConnectTimeout))
                         {
-                            Close();
-
                             throw new TimeoutException(string.Format(
                                 "Handshake with remote [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
                         }
@@ -205,6 +200,12 @@ namespace Cowboy.Sockets.WebSockets
                         .Forget();
                     }
                 }
+                catch (Exception ex)
+                when (ex is TimeoutException || ex is WebSocketException)
+                {
+                    _log.Error(ex.Message, ex);
+                    await Close();
+                }
                 finally
                 {
                     _opsLock.Release();
@@ -212,27 +213,47 @@ namespace Cowboy.Sockets.WebSockets
             }
         }
 
-        public void Close()
+        public async Task Close()
         {
-            if (!_closed)
+            if (Monitor.TryEnter(_closeLock))
             {
-                _closed = true;
-
                 try
                 {
-                    if (_stream != null)
+                    if (!_closed)
                     {
-                        _stream.Close();
-                        _stream = null;
-                    }
-                    if (_tcpClient != null && _tcpClient.Connected)
-                    {
-                        _tcpClient.Close();
+                        _closed = true;
+
+                        try
+                        {
+                            if (_stream != null)
+                            {
+                                _stream.Close();
+                                _stream = null;
+                            }
+                            if (_tcpClient != null && _tcpClient.Connected)
+                            {
+                                _tcpClient.Close();
+                                _tcpClient = null;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _log.Error(ex.Message, ex);
+                        }
+
+                        _bufferManager.ReturnBuffer(_receiveBuffer);
+                        _bufferManager.ReturnBuffer(_sessionBuffer);
+
+                        _log.DebugFormat("Disconnected from server [{0}] with dispatcher [{1}] on [{2}].",
+                            this.RemoteEndPoint,
+                            _dispatcher.GetType().Name,
+                            DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
+                        await _dispatcher.OnServerDisconnected(this);
                     }
                 }
-                catch (Exception ex)
+                finally
                 {
-                    _log.Error(ex.Message, ex);
+                    Monitor.Exit(_closeLock);
                 }
             }
         }
@@ -247,43 +268,27 @@ namespace Cowboy.Sockets.WebSockets
                     if (receiveCount == 0)
                         break;
 
-                    //if (!_configuration.Framing)
-                    //{
-                    //    await _dispatcher.OnServerDataReceived(this, _receiveBuffer, 0, receiveCount);
-                    //}
-                    //else
-                    //{
-                    //    BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
+                    BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
 
-                    //    while (true)
-                    //    {
-                    //        var frameHeader = TcpFrameHeader.ReadHeader(_sessionBuffer);
-                    //        if (TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize <= _sessionBufferCount)
-                    //        {
-                    //            await _dispatcher.OnServerDataReceived(this, _sessionBuffer, TcpFrameHeader.HEADER_SIZE, frameHeader.PayloadSize);
-                    //            BufferDeflector.ShiftBuffer(_bufferManager, TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize, ref _sessionBuffer, ref _sessionBufferCount);
-                    //        }
-                    //        else
-                    //        {
-                    //            break;
-                    //        }
-                    //    }
-                    //}
+                    while (true)
+                    {
+                        //var frameHeader = ReadFrameHeader();
+                        //if (TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize <= _sessionBufferCount)
+                        //{
+                        //    await _dispatcher.OnServerDataReceived(this, _sessionBuffer, TcpFrameHeader.HEADER_SIZE, frameHeader.PayloadSize);
+                        //    BufferDeflector.ShiftBuffer(_bufferManager, TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize, ref _sessionBuffer, ref _sessionBufferCount);
+                        //}
+                        //else
+                        //{
+                        //    break;
+                        //}
+                    }
                 }
             }
             catch (Exception ex) when (!ShouldThrow(ex)) { }
             finally
             {
-                _bufferManager.ReturnBuffer(_receiveBuffer);
-                _bufferManager.ReturnBuffer(_sessionBuffer);
-
-                Close();
-
-                _log.DebugFormat("Disconnected from server [{0}] with dispatcher [{1}] on [{2}].",
-                    this.RemoteEndPoint,
-                    _dispatcher.GetType().Name,
-                    DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
-                await _dispatcher.OnServerDisconnected(this);
+                await Close();
             }
         }
 
@@ -296,7 +301,7 @@ namespace Cowboy.Sockets.WebSockets
             {
                 return false;
             }
-            return false;
+            return true;
         }
 
         private void ConfigureClient()
@@ -370,7 +375,7 @@ namespace Cowboy.Sockets.WebSockets
 
         private async Task<bool> Handshake()
         {
-            var requestBuffer = WebSocketHandshake.CreateHandshakeRequest(
+            var requestBuffer = WebSocketClientHandshaker.CreateHandshakeRequest(
                 this.Uri.Host,
                 this.Uri.PathAndQuery,
                 out _secWebSocketKey,
@@ -382,33 +387,63 @@ namespace Cowboy.Sockets.WebSockets
 
             await _stream.WriteAsync(requestBuffer, 0, requestBuffer.Length);
 
-            var receiveBuffer = new byte[512];
-            int received = 0;
-            var count = await _stream.ReadAsync(receiveBuffer, received, receiveBuffer.Length - received);
-
-            for (int i = 0; i < count; i++)
+            int terminatorIndex = -1;
+            while (!FindHeaderTerminator(out terminatorIndex))
             {
+                int receiveCount = await _stream.ReadAsync(_receiveBuffer, 0, _receiveBuffer.Length);
+                if (receiveCount == 0)
+                {
+                    throw new WebSocketException(string.Format(
+                        "Handshake with remote [{0}] failed due to receive zero bytes.", _remoteEndPoint));
+                }
 
-            }
+                BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
 
-            received = received + count;
-            while (received == receiveBuffer.Length)
-            {
-                var biggerBuffer = new byte[receiveBuffer.Length * 2];
-                Array.Copy(receiveBuffer, 0, biggerBuffer, 0, received);
-                receiveBuffer = biggerBuffer;
-
-                count = await _stream.ReadAsync(receiveBuffer, received, receiveBuffer.Length - received);
-                received = received + count;
-
-                if (received > 2048)
+                if (_sessionBufferCount > 2048)
                 {
                     throw new WebSocketException(string.Format(
                         "Handshake with remote [{0}] failed due to receive weird stream.", _remoteEndPoint));
                 }
             }
 
-            return WebSocketHandshake.VerifyHandshake(receiveBuffer, 0, received, _secWebSocketKey);
+            var result = WebSocketClientHandshaker.VerifyHandshakeResponse(_sessionBuffer, 0, terminatorIndex + HeaderTerminator.Length, _secWebSocketKey);
+
+            BufferDeflector.ShiftBuffer(_bufferManager, terminatorIndex + HeaderTerminator.Length, ref _sessionBuffer, ref _sessionBufferCount);
+
+            return result;
+        }
+
+        private bool FindHeaderTerminator(out int index)
+        {
+            index = -1;
+
+            for (int i = 0; i < _sessionBufferCount; i++)
+            {
+                if (i + HeaderTerminator.Length < _sessionBufferCount)
+                {
+                    bool matched = true;
+                    for (int j = 0; j < HeaderTerminator.Length; j++)
+                    {
+                        if (_sessionBuffer[i + j] != HeaderTerminator[j])
+                        {
+                            matched = false;
+                            break;
+                        }
+                    }
+
+                    if (matched)
+                    {
+                        index = i;
+                        return true;
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return false;
         }
 
         #endregion

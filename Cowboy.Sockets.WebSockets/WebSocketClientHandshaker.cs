@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Cowboy.Sockets.WebSockets
 {
-    internal class WebSocketHandshake
+    internal class WebSocketClientHandshaker
     {
         public const string MagicHandeshakeAcceptedKey = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
@@ -121,7 +121,7 @@ namespace Cowboy.Sockets.WebSockets
             return Encoding.UTF8.GetBytes(message);
         }
 
-        public static bool VerifyHandshake(byte[] buffer, int offset, int count, string secWebSocketKey)
+        public static bool VerifyHandshakeResponse(byte[] buffer, int offset, int count, string secWebSocketKey)
         {
             if (buffer == null)
                 throw new ArgumentNullException("buffer");
