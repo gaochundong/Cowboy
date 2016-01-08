@@ -55,6 +55,10 @@
       <Project>{aaf9f07e-921a-433f-b475-6988ecba754f}</Project>
       <Name>Cowboy.Extensions</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Cowboy.Http.WebSockets\Cowboy.Http.WebSockets.csproj">
+      <Project>{47e06681-38e9-46c0-8aae-00535845d42d}</Project>
+      <Name>Cowboy.Http.WebSockets</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Cowboy.Http\Cowboy.Http.csproj">
       <Project>{7eb615ae-71b7-4d75-8e43-1cef143e0b33}</Project>
       <Name>Cowboy.Http</Name>
@@ -70,10 +74,6 @@
     <ProjectReference Include="..\Cowboy.Utilities\Cowboy.Utilities.csproj">
       <Project>{d80d7951-9cb6-4f7d-b9ac-1566c173c950}</Project>
       <Name>Cowboy.Utilities</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Cowboy.WebSockets\Cowboy.Http.WebSockets.csproj">
-      <Project>{47e06681-38e9-46c0-8aae-00535845d42d}</Project>
-      <Name>Cowboy.Http.WebSockets</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup />
