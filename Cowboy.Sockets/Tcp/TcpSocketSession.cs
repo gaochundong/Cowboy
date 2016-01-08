@@ -12,7 +12,7 @@ namespace Cowboy.Sockets
     public sealed class TcpSocketSession
     {
         private static readonly ILog _log = Logger.Get<TcpSocketSession>();
-        private readonly TcpClient _tcpClient;
+        private TcpClient _tcpClient;
         private readonly object _opsLock = new object();
         private bool _closed = false;
         private readonly TcpSocketServerConfiguration _configuration;
@@ -94,6 +94,7 @@ namespace Cowboy.Sockets
                         if (_tcpClient != null && _tcpClient.Connected)
                         {
                             _tcpClient.Close();
+                            _tcpClient = null;
                         }
                     }
                     catch (Exception ex)

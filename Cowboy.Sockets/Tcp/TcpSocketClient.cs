@@ -125,6 +125,7 @@ namespace Cowboy.Sockets
                         if (_tcpClient != null && _tcpClient.Connected)
                         {
                             _tcpClient.Close();
+                            _tcpClient = null;
                         }
 
                         RaiseServerDisconnected();
