@@ -10,6 +10,21 @@ namespace Cowboy.Sockets.WebSockets
     {
         public const string MagicHandeshakeAcceptedKey = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
+        private static readonly List<string> HeaderItems = new List<string>()
+        {
+            "Upgrade",
+            "Connection",
+            "Sec-WebSocket-Accept",
+            "Sec-WebSocket-Version",
+            "Sec-WebSocket-Protocol",
+            "Sec-WebSocket-Extensions",
+            "Origin",
+            "Date",
+            "Server",
+            "Cookie",
+            "WWW-Authenticate",
+        };
+
         public static byte[] CreateHandshakeRequest(
             string host,
             string path,
@@ -120,31 +135,72 @@ namespace Cowboy.Sockets.WebSockets
             // Connection: Upgrade
             // Sec-WebSocket-Accept: 1tGBmA9p0DQDgmFll6P0/UcVS/E=
             // Sec-WebSocket-Protocol: chat
-            var headers = ParseWebSocketResponseHeaders(response);
+            var headerItems = ParseWebSocketResponseHeaderItems(response);
 
-            if (!headers.ContainsKey("HttpStatusCode"))
+            if (!headerItems.ContainsKey("HttpStatusCode"))
+                return false;
+            if (!headerItems.ContainsKey("Connection"))
+                return false;
+            if (!headerItems.ContainsKey("Upgrade"))
+                return false;
+            if (!headerItems.ContainsKey("Sec-WebSocket-Accept"))
                 return false;
 
-            // Any status code other than 101 indicates that the WebSocket handshake
-            // has not completed and that the semantics of HTTP still apply.
-            if (headers["HttpStatusCode"] != "101")
+            // If the status code received from the server is not 101, the
+            // client handles the response per HTTP [RFC2616] procedures.  In
+            // particular, the client might perform authentication if it
+            // receives a 401 status code; the server might redirect the client
+            // using a 3xx status code (but clients are not required to follow
+            // them), etc.
+            if (headerItems["HttpStatusCode"] != "101")
                 return false;
 
-            if (!headers.ContainsKey("Sec-WebSocket-Accept"))
+            // If the response lacks an |Upgrade| header field or the |Upgrade|
+            // header field contains a value that is not an ASCII case-
+            // insensitive match for the value "websocket", the client MUST
+            // _Fail the WebSocket Connection_.
+            if (headerItems["Connection"].ToLowerInvariant() != "upgrade")
                 return false;
 
+            // If the response lacks a |Connection| header field or the
+            // |Connection| header field doesn't contain a token that is an
+            // ASCII case-insensitive match for the value "Upgrade", the client
+            // MUST _Fail the WebSocket Connection_.
+            if (headerItems["Upgrade"].ToLowerInvariant() != "websocket")
+                return false;
+
+            // If the response lacks a |Sec-WebSocket-Accept| header field or
+            // the |Sec-WebSocket-Accept| contains a value other than the
+            // base64-encoded SHA-1 of the concatenation of the |Sec-WebSocket-
+            // Key| (as a string, not base64-decoded) with the string "258EAFA5-
+            // E914-47DA-95CA-C5AB0DC85B11" but ignoring any leading and
+            // trailing whitespace, the client MUST _Fail the WebSocket Connection_.
             string challenge =
                 Convert.ToBase64String(
                     SHA1.Create().ComputeHash(
                         Encoding.ASCII.GetBytes(
                             secWebSocketKey + MagicHandeshakeAcceptedKey)));
+            if (!headerItems["Sec-WebSocket-Accept"].Equals(challenge, StringComparison.OrdinalIgnoreCase))
+                return false;
 
-            return headers["Sec-WebSocket-Accept"].Equals(challenge, StringComparison.OrdinalIgnoreCase);
+            // If the response includes a |Sec-WebSocket-Extensions| header
+            // field and this header field indicates the use of an extension
+            // that was not present in the client's handshake (the server has
+            // indicated an extension not requested by the client), the client
+            // MUST _Fail the WebSocket Connection_.
+
+            // If the response includes a |Sec-WebSocket-Protocol| header field
+            // and this header field indicates the use of a subprotocol that was
+            // not present in the client's handshake (the server has indicated a
+            // subprotocol not requested by the client), the client MUST _Fail
+            // the WebSocket Connection_.
+
+            return true;
         }
 
-        private static Dictionary<string, string> ParseWebSocketResponseHeaders(string response)
+        private static Dictionary<string, string> ParseWebSocketResponseHeaderItems(string response)
         {
-            var headers = new Dictionary<string, string>();
+            var headerItems = new Dictionary<string, string>();
 
             var lines = response.Split(new char[] { '\r', '\n' }).Where(l => l.Length > 0);
             foreach (var line in lines)
@@ -154,84 +210,27 @@ namespace Cowboy.Sockets.WebSockets
                     var segements = line.Split(' ');
                     if (segements.Length > 1)
                     {
-                        headers.Add("HttpStatusCode", segements[1]);
+                        headerItems.Add("HttpStatusCode", segements[1]);
                     }
                 }
-                else if (line.StartsWith(@"Upgrade:"))
+                else
                 {
-                    var index = line.IndexOf(':');
-                    if (index != -1)
+                    foreach (var item in HeaderItems)
                     {
-                        var value = line.Substring(index + 1);
-                        headers.Add("Upgrade", value.Trim());
-                    }
-                }
-                else if (line.StartsWith(@"Connection:"))
-                {
-                    var index = line.IndexOf(':');
-                    if (index != -1)
-                    {
-                        var value = line.Substring(index + 1);
-                        headers.Add("Connection", value.Trim());
-                    }
-                }
-                else if (line.StartsWith(@"Sec-WebSocket-Accept:"))
-                {
-                    var index = line.IndexOf(':');
-                    if (index != -1)
-                    {
-                        var value = line.Substring(index + 1);
-                        headers.Add("Sec-WebSocket-Accept", value.Trim());
-                    }
-                }
-                else if (line.StartsWith(@"Sec-WebSocket-Version:"))
-                {
-                    var index = line.IndexOf(':');
-                    if (index != -1)
-                    {
-                        var value = line.Substring(index + 1);
-                        headers.Add("Sec-WebSocket-Version", value.Trim());
-                    }
-                }
-                else if (line.StartsWith(@"Sec-WebSocket-Protocol:"))
-                {
-                    var index = line.IndexOf(':');
-                    if (index != -1)
-                    {
-                        var value = line.Substring(index + 1);
-                        headers.Add("Sec-WebSocket-Protocol", value.Trim());
-                    }
-                }
-                else if (line.StartsWith(@"Sec-WebSocket-Extensions:"))
-                {
-                    var index = line.IndexOf(':');
-                    if (index != -1)
-                    {
-                        var value = line.Substring(index + 1);
-                        headers.Add("Sec-WebSocket-Extensions", value.Trim());
-                    }
-                }
-                else if (line.StartsWith(@"Origin:"))
-                {
-                    var index = line.IndexOf(':');
-                    if (index != -1)
-                    {
-                        var value = line.Substring(index + 1);
-                        headers.Add("Origin", value.Trim());
-                    }
-                }
-                else if (line.StartsWith(@"Cookie:"))
-                {
-                    var index = line.IndexOf(':');
-                    if (index != -1)
-                    {
-                        var value = line.Substring(index + 1);
-                        headers.Add("Cookie", value.Trim());
+                        if (line.StartsWith(item + ":"))
+                        {
+                            var index = line.IndexOf(':');
+                            if (index != -1)
+                            {
+                                var value = line.Substring(index + 1);
+                                headerItems.Add(item, value.Trim());
+                            }
+                        }
                     }
                 }
             }
 
-            return headers;
+            return headerItems;
         }
     }
 }

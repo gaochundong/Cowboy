@@ -22,7 +22,7 @@ namespace Cowboy.Sockets.WebSockets.TestAsyncWebSocketClient
                 config.SslClientCertificates.Add(new System.Security.Cryptography.X509Certificates.X509Certificate2(@"D:\\Cowboy.cer"));
                 config.SslPolicyErrorsBypassed = false;
 
-                Uri uri = new Uri("ws://54.223.158.99:80/");
+                Uri uri = new Uri("ws://echo.websocket.org/");
                 _client = new AsyncWebSocketClient(uri, OnServerDataReceived, OnServerConnected, OnServerDisconnected, config);
                 _client.Connect().Wait();
 

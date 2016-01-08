@@ -31,9 +31,10 @@ namespace Cowboy.Sockets.WebSockets
         private byte[] _sessionBuffer;
         private int _sessionBufferCount = 0;
 
+        private static readonly byte[] HeaderTerminator = Encoding.UTF8.GetBytes("\r\n\r\n");
         private readonly string[] AllowedSchemes = new string[] { "ws", "wss" };
         private readonly Uri _uri;
-        private bool _isSsl = false;
+        private bool _isSecure = false;
         private string _secWebSocketKey;
 
         #endregion
@@ -83,7 +84,7 @@ namespace Cowboy.Sockets.WebSockets
 
             _dispatcher = dispatcher;
             _configuration = configuration ?? new AsyncWebSocketClientConfiguration();
-            _isSsl = uri.Scheme.ToLowerInvariant() == "wss";
+            _isSecure = uri.Scheme.ToLowerInvariant() == "wss";
 
             this.ConnectTimeout = TimeSpan.FromSeconds(5);
 
@@ -173,6 +174,10 @@ namespace Cowboy.Sockets.WebSockets
                         }
                         _stream = negotiator.Result;
 
+                        _receiveBuffer = _bufferManager.BorrowBuffer();
+                        _sessionBuffer = _bufferManager.BorrowBuffer();
+                        _sessionBufferCount = 0;
+
                         var handshaker = Handshake();
                         if (!handshaker.Wait(ConnectTimeout))
                         {
@@ -184,7 +189,7 @@ namespace Cowboy.Sockets.WebSockets
                         if (!handshaker.Result)
                         {
                             throw new WebSocketException(string.Format(
-                                "Handshake with remote [{0}] failed.", _remoteEndPoint));
+                                "Handshake with remote [{0}] failed due to mismatched security key.", _remoteEndPoint));
                         }
 
                         _log.DebugFormat("Connected to server [{0}] with dispatcher [{1}] on [{2}].",
@@ -234,10 +239,6 @@ namespace Cowboy.Sockets.WebSockets
 
         private async Task Process()
         {
-            _receiveBuffer = _bufferManager.BorrowBuffer();
-            _sessionBuffer = _bufferManager.BorrowBuffer();
-            _sessionBufferCount = 0;
-
             try
             {
                 while (Connected)
@@ -310,7 +311,7 @@ namespace Cowboy.Sockets.WebSockets
 
         private async Task<Stream> NegotiateStream(Stream stream)
         {
-            if (!_isSsl)
+            if (!_isSecure)
                 return stream;
 
             var validateRemoteCertificate = new RemoteCertificateValidationCallback(
@@ -381,9 +382,15 @@ namespace Cowboy.Sockets.WebSockets
 
             await _stream.WriteAsync(requestBuffer, 0, requestBuffer.Length);
 
-            var receiveBuffer = new byte[8192];
+            var receiveBuffer = new byte[512];
             int received = 0;
             var count = await _stream.ReadAsync(receiveBuffer, received, receiveBuffer.Length - received);
+
+            for (int i = 0; i < count; i++)
+            {
+
+            }
+
             received = received + count;
             while (received == receiveBuffer.Length)
             {
@@ -393,9 +400,15 @@ namespace Cowboy.Sockets.WebSockets
 
                 count = await _stream.ReadAsync(receiveBuffer, received, receiveBuffer.Length - received);
                 received = received + count;
+
+                if (received > 2048)
+                {
+                    throw new WebSocketException(string.Format(
+                        "Handshake with remote [{0}] failed due to receive weird stream.", _remoteEndPoint));
+                }
             }
 
-            return WebSocketHandshake.VerifyHandshake(receiveBuffer, 0, count, _secWebSocketKey);
+            return WebSocketHandshake.VerifyHandshake(receiveBuffer, 0, received, _secWebSocketKey);
         }
 
         #endregion
