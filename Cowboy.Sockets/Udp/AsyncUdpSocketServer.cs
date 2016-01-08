@@ -1,27 +1,24 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
+using Cowboy.Logging;
 
 namespace Cowboy.Sockets
 {
-    public class UdpReceiver : IDisposable
+    public class AsyncUdpSocketServer : IDisposable
     {
+        private static readonly ILog _log = Logger.Get<AsyncUdpSocketServer>();
         private readonly UdpClient _udpClient;
         private readonly IPEndPoint _localEP;
         private bool _disposed = false;
 
-        public UdpReceiver(int localPort)
+        public AsyncUdpSocketServer(int localPort)
             : this(new IPEndPoint(IPAddress.Any, localPort))
         {
         }
 
-        public UdpReceiver(IPEndPoint localEP)
+        public AsyncUdpSocketServer(IPEndPoint localEP)
         {
             if (localEP == null)
                 throw new ArgumentNullException("localEP");
@@ -29,6 +26,7 @@ namespace Cowboy.Sockets
             _udpClient = new UdpClient(localEP);
         }
 
+        public IPEndPoint LocalEndPoint { get { return _localEP; } }
         public int Available { get { return _udpClient.Available; } }
         public Socket Client { get { return _udpClient.Client; } }
         public bool DontFragment { get { return _udpClient.DontFragment; } set { _udpClient.DontFragment = value; } }
@@ -36,20 +34,50 @@ namespace Cowboy.Sockets
         public bool ExclusiveAddressUse { get { return _udpClient.ExclusiveAddressUse; } set { _udpClient.ExclusiveAddressUse = value; } }
         public bool MulticastLoopback { get { return _udpClient.MulticastLoopback; } set { _udpClient.MulticastLoopback = value; } }
         public short Ttl { get { return _udpClient.Ttl; } set { _udpClient.Ttl = value; } }
-
-        public void AllowNatTraversal(bool allowed)
-        {
-            _udpClient.AllowNatTraversal(allowed);
-        }
+        public void AllowNatTraversal(bool allowed) { _udpClient.AllowNatTraversal(allowed); }
 
         public void Close()
         {
-            _udpClient.Close();
+            try
+            {
+                _udpClient.Close();
+            }
+            catch (Exception ex) when (ex is SocketException) { }
         }
 
         public async Task<UdpReceiveResult> Receive()
         {
-            return await _udpClient.ReceiveAsync();
+            try
+            {
+                return await _udpClient.ReceiveAsync();
+            }
+            catch (Exception ex) when (ShouldClose(ex))
+            {
+                _log.Error(ex.Message, ex);
+                Close();
+            }
+
+            return await Task.FromResult(new UdpReceiveResult(new byte[0], null));
+        }
+
+        public async Task<int> Send(byte[] datagram, int count, IPEndPoint remoteEP)
+        {
+            try
+            {
+                return await _udpClient.SendAsync(datagram, count, remoteEP);
+            }
+            catch (Exception ex) when (ShouldClose(ex))
+            {
+                _log.Error(ex.Message, ex);
+                Close();
+            }
+
+            return 0;
+        }
+
+        private bool ShouldClose(Exception ex)
+        {
+            return (ex is SocketException || ex is InvalidOperationException || ex is ObjectDisposedException);
         }
 
         public void Dispose()
@@ -64,6 +92,7 @@ namespace Cowboy.Sockets
             {
                 if (disposing)
                 {
+                    Close();
                     if (_udpClient != null)
                     {
                         _udpClient.Dispose();
