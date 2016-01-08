@@ -1,122 +1,112 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Cowboy.Buffer;
 using Cowboy.Logging;
 
-namespace Cowboy.Sockets
+namespace Cowboy.Sockets.WebSockets
 {
-    public class AsyncTcpSocketClient
+    public class AsyncWebSocketClient
     {
         #region Fields
 
-        private static readonly ILog _log = Logger.Get<AsyncTcpSocketClient>();
+        private static readonly ILog _log = Logger.Get<AsyncWebSocketClient>();
         private IBufferManager _bufferManager;
         private TcpClient _tcpClient;
         private readonly SemaphoreSlim _opsLock = new SemaphoreSlim(1, 1);
         private bool _closed = false;
-        private readonly IAsyncTcpSocketClientMessageDispatcher _dispatcher;
-        private readonly AsyncTcpSocketClientConfiguration _configuration;
-        private readonly IPEndPoint _remoteEndPoint;
-        private readonly IPEndPoint _localEndPoint;
+        private readonly IAsyncWebSocketClientMessageDispatcher _dispatcher;
+        private readonly AsyncWebSocketClientConfiguration _configuration;
+        private IPEndPoint _remoteEndPoint;
         private Stream _stream;
         private byte[] _receiveBuffer;
         private byte[] _sessionBuffer;
         private int _sessionBufferCount = 0;
 
+        private readonly string[] AllowedSchemes = new string[] { "ws", "wss" };
+        private readonly Uri _uri;
+        private bool _isSsl = false;
+        private string _secWebSocketKey;
+
         #endregion
 
         #region Constructors
 
-        public AsyncTcpSocketClient(IPAddress remoteAddress, int remotePort, IPAddress localAddress, int localPort, IAsyncTcpSocketClientMessageDispatcher dispatcher, AsyncTcpSocketClientConfiguration configuration = null)
-            : this(new IPEndPoint(remoteAddress, remotePort), new IPEndPoint(localAddress, localPort), dispatcher, configuration)
+        public AsyncWebSocketClient(Uri uri, IAsyncWebSocketClientMessageDispatcher dispatcher, AsyncWebSocketClientConfiguration configuration = null)
+            : this(uri, null, dispatcher, configuration)
         {
         }
 
-        public AsyncTcpSocketClient(IPAddress remoteAddress, int remotePort, IPEndPoint localEP, IAsyncTcpSocketClientMessageDispatcher dispatcher, AsyncTcpSocketClientConfiguration configuration = null)
-            : this(new IPEndPoint(remoteAddress, remotePort), localEP, dispatcher, configuration)
+        public AsyncWebSocketClient(Uri uri, string subProtocol, IAsyncWebSocketClientMessageDispatcher dispatcher, AsyncWebSocketClientConfiguration configuration = null)
         {
-        }
-
-        public AsyncTcpSocketClient(IPAddress remoteAddress, int remotePort, IAsyncTcpSocketClientMessageDispatcher dispatcher, AsyncTcpSocketClientConfiguration configuration = null)
-            : this(new IPEndPoint(remoteAddress, remotePort), dispatcher, configuration)
-        {
-        }
-
-        public AsyncTcpSocketClient(IPEndPoint remoteEP, IAsyncTcpSocketClientMessageDispatcher dispatcher, AsyncTcpSocketClientConfiguration configuration = null)
-            : this(remoteEP, null, dispatcher, configuration)
-        {
-        }
-
-        public AsyncTcpSocketClient(IPEndPoint remoteEP, IPEndPoint localEP, IAsyncTcpSocketClientMessageDispatcher dispatcher, AsyncTcpSocketClientConfiguration configuration = null)
-        {
-            if (remoteEP == null)
-                throw new ArgumentNullException("remoteEP");
+            if (uri == null)
+                throw new ArgumentNullException("uri");
             if (dispatcher == null)
                 throw new ArgumentNullException("dispatcher");
+            if (!AllowedSchemes.Contains(uri.Scheme.ToLowerInvariant()))
+                throw new NotSupportedException(
+                    string.Format("Not support the specified scheme [{0}].", uri.Scheme));
 
-            _remoteEndPoint = remoteEP;
-            _localEndPoint = localEP;
+            _uri = uri;
+            SubProtocol = subProtocol;
+
+            var host = _uri.Host;
+            var port = _uri.Port > 0 ? _uri.Port : uri.Scheme.ToLowerInvariant() == "wss" ? 443 : 80;
+            var path = _uri.PathAndQuery;
+
+            IPAddress ipAddress;
+            if (IPAddress.TryParse(host, out ipAddress))
+            {
+                _remoteEndPoint = new IPEndPoint(ipAddress, port);
+            }
+            else
+            {
+                IPAddress[] addresses = Dns.GetHostAddresses(host);
+                if (addresses.Any())
+                {
+                    _remoteEndPoint = new IPEndPoint(addresses.First(), port);
+                }
+                else
+                {
+                    throw new InvalidOperationException(
+                        string.Format("Cannot resolve host [{0}] by DNS.", host));
+                }
+            }
+
             _dispatcher = dispatcher;
-            _configuration = configuration ?? new AsyncTcpSocketClientConfiguration();
+            _configuration = configuration ?? new AsyncWebSocketClientConfiguration();
+            _isSsl = uri.Scheme.ToLowerInvariant() == "wss";
 
-            this.ConnectTimeout = TimeSpan.FromSeconds(30);
+            this.ConnectTimeout = TimeSpan.FromSeconds(5);
 
             Initialize();
         }
 
-        public AsyncTcpSocketClient(IPAddress remoteAddress, int remotePort, IPAddress localAddress, int localPort,
-            Func<AsyncTcpSocketClient, byte[], int, int, Task> onServerDataReceived = null,
-            Func<AsyncTcpSocketClient, Task> onServerConnected = null,
-            Func<AsyncTcpSocketClient, Task> onServerDisconnected = null,
-            AsyncTcpSocketClientConfiguration configuration = null)
-            : this(new IPEndPoint(remoteAddress, remotePort), new IPEndPoint(localAddress, localPort),
+        public AsyncWebSocketClient(Uri uri,
+            Func<AsyncWebSocketClient, byte[], int, int, Task> onServerDataReceived = null,
+            Func<AsyncWebSocketClient, Task> onServerConnected = null,
+            Func<AsyncWebSocketClient, Task> onServerDisconnected = null,
+            AsyncWebSocketClientConfiguration configuration = null)
+            : this(uri, null,
                   onServerDataReceived, onServerConnected, onServerDisconnected, configuration)
         {
         }
 
-        public AsyncTcpSocketClient(IPAddress remoteAddress, int remotePort, IPEndPoint localEP,
-            Func<AsyncTcpSocketClient, byte[], int, int, Task> onServerDataReceived = null,
-            Func<AsyncTcpSocketClient, Task> onServerConnected = null,
-            Func<AsyncTcpSocketClient, Task> onServerDisconnected = null,
-            AsyncTcpSocketClientConfiguration configuration = null)
-            : this(new IPEndPoint(remoteAddress, remotePort), localEP,
-                  onServerDataReceived, onServerConnected, onServerDisconnected, configuration)
-        {
-        }
-
-        public AsyncTcpSocketClient(IPAddress remoteAddress, int remotePort,
-            Func<AsyncTcpSocketClient, byte[], int, int, Task> onServerDataReceived = null,
-            Func<AsyncTcpSocketClient, Task> onServerConnected = null,
-            Func<AsyncTcpSocketClient, Task> onServerDisconnected = null,
-            AsyncTcpSocketClientConfiguration configuration = null)
-            : this(new IPEndPoint(remoteAddress, remotePort),
-                  onServerDataReceived, onServerConnected, onServerDisconnected, configuration)
-        {
-        }
-
-        public AsyncTcpSocketClient(IPEndPoint remoteEP,
-            Func<AsyncTcpSocketClient, byte[], int, int, Task> onServerDataReceived = null,
-            Func<AsyncTcpSocketClient, Task> onServerConnected = null,
-            Func<AsyncTcpSocketClient, Task> onServerDisconnected = null,
-            AsyncTcpSocketClientConfiguration configuration = null)
-            : this(remoteEP, null,
-                  onServerDataReceived, onServerConnected, onServerDisconnected, configuration)
-        {
-        }
-
-        public AsyncTcpSocketClient(IPEndPoint remoteEP, IPEndPoint localEP,
-            Func<AsyncTcpSocketClient, byte[], int, int, Task> onServerDataReceived = null,
-            Func<AsyncTcpSocketClient, Task> onServerConnected = null,
-            Func<AsyncTcpSocketClient, Task> onServerDisconnected = null,
-            AsyncTcpSocketClientConfiguration configuration = null)
-            : this(remoteEP, localEP,
-                 new InternalAsyncTcpSocketClientMessageDispatcherImplementation(onServerDataReceived, onServerConnected, onServerDisconnected),
+        public AsyncWebSocketClient(Uri uri, string subProtocol,
+            Func<AsyncWebSocketClient, byte[], int, int, Task> onServerDataReceived = null,
+            Func<AsyncWebSocketClient, Task> onServerConnected = null,
+            Func<AsyncWebSocketClient, Task> onServerDisconnected = null,
+            AsyncWebSocketClientConfiguration configuration = null)
+            : this(uri, subProtocol,
+                 new InternalAsyncWebSocketClientMessageDispatcherImplementation(onServerDataReceived, onServerConnected, onServerDisconnected),
                  configuration)
         {
         }
@@ -133,7 +123,19 @@ namespace Cowboy.Sockets
         public TimeSpan ConnectTimeout { get; set; }
         public bool Connected { get { return _tcpClient != null && _tcpClient.Client.Connected; } }
         public IPEndPoint RemoteEndPoint { get { return Connected ? (IPEndPoint)_tcpClient.Client.RemoteEndPoint : _remoteEndPoint; } }
-        public IPEndPoint LocalEndPoint { get { return Connected ? (IPEndPoint)_tcpClient.Client.LocalEndPoint : _localEndPoint; } }
+        public IPEndPoint LocalEndPoint { get { return Connected ? (IPEndPoint)_tcpClient.Client.LocalEndPoint : null; } }
+
+        public string SubProtocol { get; private set; }
+        public string Version { get { return "13"; } }
+        public string Extensions { get; set; }
+        public string Origin { get; set; }
+        public Dictionary<string, string> Cookies { get; set; }
+
+        public Uri Uri { get { return _uri; } }
+        public bool Handshaked { get; private set; }
+        //public WebSocketCloseStatus? CloseStatus;
+        //public string CloseStatusDescription;
+        //public WebSocketState State;
 
         #endregion
 
@@ -149,7 +151,7 @@ namespace Cowboy.Sockets
                     {
                         _closed = false;
 
-                        _tcpClient = _localEndPoint != null ? new TcpClient(_localEndPoint) : new TcpClient();
+                        _tcpClient = new TcpClient();
 
                         var awaiter = _tcpClient.ConnectAsync(_remoteEndPoint.Address, _remoteEndPoint.Port);
                         if (!awaiter.Wait(ConnectTimeout))
@@ -170,6 +172,20 @@ namespace Cowboy.Sockets
                                 "Negotiate SSL/TSL with remote [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
                         }
                         _stream = negotiator.Result;
+
+                        var handshaker = Handshake();
+                        if (!handshaker.Wait(ConnectTimeout))
+                        {
+                            Close();
+
+                            throw new TimeoutException(string.Format(
+                                "Handshake with remote [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
+                        }
+                        if (!handshaker.Result)
+                        {
+                            throw new WebSocketException(string.Format(
+                                "Handshake with remote [{0}] failed.", _remoteEndPoint));
+                        }
 
                         _log.DebugFormat("Connected to server [{0}] with dispatcher [{1}] on [{2}].",
                             this.RemoteEndPoint,
@@ -230,28 +246,28 @@ namespace Cowboy.Sockets
                     if (receiveCount == 0)
                         break;
 
-                    if (!_configuration.Framing)
-                    {
-                        await _dispatcher.OnServerDataReceived(this, _receiveBuffer, 0, receiveCount);
-                    }
-                    else
-                    {
-                        BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
+                    //if (!_configuration.Framing)
+                    //{
+                    //    await _dispatcher.OnServerDataReceived(this, _receiveBuffer, 0, receiveCount);
+                    //}
+                    //else
+                    //{
+                    //    BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
 
-                        while (true)
-                        {
-                            var frameHeader = TcpFrameHeader.ReadHeader(_sessionBuffer);
-                            if (TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize <= _sessionBufferCount)
-                            {
-                                await _dispatcher.OnServerDataReceived(this, _sessionBuffer, TcpFrameHeader.HEADER_SIZE, frameHeader.PayloadSize);
-                                BufferDeflector.ShiftBuffer(_bufferManager, TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize, ref _sessionBuffer, ref _sessionBufferCount);
-                            }
-                            else
-                            {
-                                break;
-                            }
-                        }
-                    }
+                    //    while (true)
+                    //    {
+                    //        var frameHeader = TcpFrameHeader.ReadHeader(_sessionBuffer);
+                    //        if (TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize <= _sessionBufferCount)
+                    //        {
+                    //            await _dispatcher.OnServerDataReceived(this, _sessionBuffer, TcpFrameHeader.HEADER_SIZE, frameHeader.PayloadSize);
+                    //            BufferDeflector.ShiftBuffer(_bufferManager, TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize, ref _sessionBuffer, ref _sessionBufferCount);
+                    //        }
+                    //        else
+                    //        {
+                    //            break;
+                    //        }
+                    //    }
+                    //}
                 }
             }
             catch (Exception ex) when (!ShouldThrow(ex)) { }
@@ -294,7 +310,7 @@ namespace Cowboy.Sockets
 
         private async Task<Stream> NegotiateStream(Stream stream)
         {
-            if (!_configuration.UseSsl)
+            if (!_isSsl)
                 return stream;
 
             var validateRemoteCertificate = new RemoteCertificateValidationCallback(
@@ -351,6 +367,37 @@ namespace Cowboy.Sockets
             return sslStream;
         }
 
+        private async Task<bool> Handshake()
+        {
+            var requestBuffer = WebSocketHandshake.CreateHandshakeRequest(
+                this.Uri.Host,
+                this.Uri.PathAndQuery,
+                out _secWebSocketKey,
+                this.SubProtocol,
+                this.Version,
+                this.Extensions,
+                this.Origin,
+                this.Cookies);
+
+            await _stream.WriteAsync(requestBuffer, 0, requestBuffer.Length);
+
+            var receiveBuffer = new byte[8192];
+            int received = 0;
+            var count = await _stream.ReadAsync(receiveBuffer, received, receiveBuffer.Length - received);
+            received = received + count;
+            while (received == receiveBuffer.Length)
+            {
+                var biggerBuffer = new byte[receiveBuffer.Length * 2];
+                Array.Copy(receiveBuffer, 0, biggerBuffer, 0, received);
+                receiveBuffer = biggerBuffer;
+
+                count = await _stream.ReadAsync(receiveBuffer, received, receiveBuffer.Length - received);
+                received = received + count;
+            }
+
+            return WebSocketHandshake.VerifyHandshake(receiveBuffer, 0, count, _secWebSocketKey);
+        }
+
         #endregion
 
         #region Send
@@ -374,16 +421,7 @@ namespace Cowboy.Sockets
             {
                 if (_stream.CanWrite)
                 {
-                    if (!_configuration.Framing)
-                    {
-                        await _stream.WriteAsync(data, offset, count);
-                    }
-                    else
-                    {
-                        var frame = TcpFrame.FromPayload(data, offset, count);
-                        var frameBuffer = frame.ToArray();
-                        await _stream.WriteAsync(frameBuffer, 0, frameBuffer.Length);
-                    }
+                    await _stream.WriteAsync(data, offset, count);
                 }
             }
             catch (Exception ex) when (!ShouldThrow(ex)) { }

@@ -200,6 +200,10 @@ namespace Cowboy.Sockets
                 {
                     await session.Start();
                 }
+                catch (TimeoutException ex)
+                {
+                    _log.Error(ex.Message, ex);
+                }
                 finally
                 {
                     AsyncTcpSocketSession throwAway;

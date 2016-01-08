@@ -50,8 +50,6 @@ namespace Cowboy.Sockets
 
             _sessionKey = Guid.NewGuid().ToString();
             this.StartTime = DateTime.UtcNow;
-
-            ConfigureClient();
         }
 
         public string SessionKey { get { return _sessionKey; } }
@@ -70,6 +68,27 @@ namespace Cowboy.Sockets
                     if (Connected)
                     {
                         _closed = false;
+
+                        ConfigureClient();
+
+                        var negotiatorTimeout = TimeSpan.FromSeconds(30);
+                        var negotiator = NegotiateStream(_tcpClient.GetStream());
+                        if (!negotiator.Wait(negotiatorTimeout))
+                        {
+                            var remote = this.RemoteEndPoint;
+                            Close();
+
+                            throw new TimeoutException(string.Format(
+                                "Negotiate SSL/TSL with remote [{0}] timeout [{1}].", remote, negotiatorTimeout));
+                        }
+                        _stream = negotiator.Result;
+
+                        _log.DebugFormat("Session started for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
+                            this.RemoteEndPoint,
+                            this.StartTime.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"),
+                            _dispatcher.GetType().Name,
+                            this.Server.SessionCount);
+                        await _dispatcher.OnSessionStarted(this);
 
                         await Process();
                     }
@@ -117,15 +136,6 @@ namespace Cowboy.Sockets
 
             try
             {
-                _stream = await NegotiateStream(_tcpClient.GetStream());
-
-                _log.DebugFormat("Session started for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
-                    this.RemoteEndPoint,
-                    this.StartTime.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"),
-                    _dispatcher.GetType().Name,
-                    this.Server.SessionCount);
-                await _dispatcher.OnSessionStarted(this);
-
                 while (Connected)
                 {
                     int receiveCount = await _stream.ReadAsync(receiveBuffer, 0, receiveBuffer.Length);

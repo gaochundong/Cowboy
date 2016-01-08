@@ -3,9 +3,9 @@ using Cowboy.Buffer;
 
 namespace Cowboy.Sockets
 {
-    internal class BufferDeflector
+    public class BufferDeflector
     {
-        internal static void AppendBuffer(IBufferManager bufferManager, ref byte[] receiveBuffer, int receiveCount, ref byte[] sessionBuffer, ref int sessionBufferCount)
+        public static void AppendBuffer(IBufferManager bufferManager, ref byte[] receiveBuffer, int receiveCount, ref byte[] sessionBuffer, ref int sessionBufferCount)
         {
             if (sessionBuffer.Length < (sessionBufferCount + receiveCount))
             {
@@ -27,7 +27,7 @@ namespace Cowboy.Sockets
             sessionBufferCount = sessionBufferCount + receiveCount;
         }
 
-        internal static void ShiftBuffer(IBufferManager bufferManager, int shiftStart, ref byte[] sessionBuffer, ref int sessionBufferCount)
+        public static void ShiftBuffer(IBufferManager bufferManager, int shiftStart, ref byte[] sessionBuffer, ref int sessionBufferCount)
         {
             if ((sessionBufferCount - shiftStart) < shiftStart)
             {
