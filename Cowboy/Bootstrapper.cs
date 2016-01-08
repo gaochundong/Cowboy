@@ -7,7 +7,7 @@ using Cowboy.Http.Routing;
 using Cowboy.Http.Routing.Trie;
 using Cowboy.Serialization;
 using Cowboy.StaticContent;
-using Cowboy.WebSockets;
+using Cowboy.Http.WebSockets;
 
 namespace Cowboy
 {

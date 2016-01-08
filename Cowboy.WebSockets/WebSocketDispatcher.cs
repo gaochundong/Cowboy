@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Cowboy.Buffer;
 
-namespace Cowboy.WebSockets
+namespace Cowboy.Http.WebSockets
 {
     public class WebSocketDispatcher
     {

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using Cowboy.Http;
 using Cowboy.StaticContent;
 using Cowboy.Utilities;
-using Cowboy.WebSockets;
+using Cowboy.Http.WebSockets;
 
 namespace Cowboy
 {

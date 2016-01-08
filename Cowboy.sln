@@ -17,7 +17,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{0E04BEDA
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.TestServer", "Tests\Cowboy.TestServer\Cowboy.TestServer.csproj", "{1DFCD593-8814-4DCE-82D8-7F7DC9BE5BD4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.WebSockets", "Cowboy.WebSockets\Cowboy.WebSockets.csproj", "{47E06681-38E9-46C0-8AAE-00535845D42D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Http.WebSockets", "Cowboy.WebSockets\Cowboy.Http.WebSockets.csproj", "{47E06681-38E9-46C0-8AAE-00535845D42D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Http", "Cowboy.Http\Cowboy.Http.csproj", "{7EB615AE-71B7-4D75-8E43-1CEF143E0B33}"
 EndProject

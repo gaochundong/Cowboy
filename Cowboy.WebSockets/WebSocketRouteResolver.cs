@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Net.WebSockets;
 
-namespace Cowboy.WebSockets
+namespace Cowboy.Http.WebSockets
 {
     public class WebSocketRouteResolver
     {

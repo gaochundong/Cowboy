@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Cowboy.WebSockets
+namespace Cowboy.Http.WebSockets
 {
     public abstract class WebSocketModule : IHideObjectMembers
     {

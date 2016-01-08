@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Cowboy.Buffer;
 using Cowboy.Logging;
 
-namespace Cowboy.WebSockets
+namespace Cowboy.Http.WebSockets
 {
     public class WebSocketSession
     {

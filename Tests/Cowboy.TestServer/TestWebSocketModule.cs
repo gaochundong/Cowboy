@@ -1,5 +1,5 @@
 ﻿using System.Threading.Tasks;
-using Cowboy.WebSockets;
+using Cowboy.Http.WebSockets;
 
 namespace Cowboy.TestServer
 {

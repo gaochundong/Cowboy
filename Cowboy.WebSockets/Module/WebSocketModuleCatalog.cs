@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Cowboy.WebSockets
+namespace Cowboy.Http.WebSockets
 {
     public class WebSocketModuleCatalog
     {
