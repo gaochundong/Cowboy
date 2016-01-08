@@ -68,6 +68,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{D27BF0
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Sockets.WebSockets", "Cowboy.Sockets.WebSockets\Cowboy.Sockets.WebSockets.csproj", "{3A79448C-5D23-4325-8076-576E64BA65BE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Sockets.WebSockets.TestAsyncWebSocketClient", "Tests\Cowboy.Sockets.WebSockets.TestAsyncWebSocketClient\Cowboy.Sockets.WebSockets.TestAsyncWebSocketClient.csproj", "{95639F67-5297-4D55-B126-2CB9226226CB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -162,6 +164,10 @@ Global
 		{3A79448C-5D23-4325-8076-576E64BA65BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3A79448C-5D23-4325-8076-576E64BA65BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3A79448C-5D23-4325-8076-576E64BA65BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{95639F67-5297-4D55-B126-2CB9226226CB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{95639F67-5297-4D55-B126-2CB9226226CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{95639F67-5297-4D55-B126-2CB9226226CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{95639F67-5297-4D55-B126-2CB9226226CB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -173,5 +179,6 @@ Global
 		{4A35D220-0CD3-4514-86E1-E55B8F517E24} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
 		{A1E6F527-386A-46C0-9A04-92CD0129662F} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
 		{80CA6A09-A08C-490B-A99F-6D972358968B} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
+		{95639F67-5297-4D55-B126-2CB9226226CB} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
 	EndGlobalSection
 EndGlobal
