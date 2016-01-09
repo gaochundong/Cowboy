@@ -40,7 +40,9 @@ namespace Cowboy.Sockets.WebSockets
         private static readonly Random _rng = new Random(DateTime.UtcNow.Millisecond);
         private static readonly int MaskingKeyLength = 4;
 
-        public static byte[] Encode(int opCode, byte[] playload, int offset, int count, bool isFinal = true)
+        public abstract FrameOpCode OpCode { get; }
+
+        public static byte[] Encode(FrameOpCode opCode, byte[] playload, int offset, int count, bool isFinal = true)
         {
             byte[] fragment;
 
@@ -95,9 +97,9 @@ namespace Cowboy.Sockets.WebSockets
             // *  %xA denotes a pong
             // *  %xB-F are reserved for further control frames
             if (isFinal)
-                fragment[0] = (byte)(opCode | 0x80);
+                fragment[0] = (byte)((byte)opCode | 0x80);
             else
-                fragment[0] = (byte)(opCode);
+                fragment[0] = (byte)opCode;
 
             // Mask:  1 bit
             // Defines whether the "Payload data" is masked.  If set to 1, a
@@ -147,7 +149,7 @@ namespace Cowboy.Sockets.WebSockets
             public bool IsRSV1 { get; set; }
             public bool IsRSV2 { get; set; }
             public bool IsRSV3 { get; set; }
-            public int OpCode { get; set; }
+            public FrameOpCode OpCode { get; set; }
             public bool IsMasked { get; set; }
             public int PayloadLength { get; set; }
             public byte[] MaskingKey { get; set; }
@@ -166,7 +168,7 @@ namespace Cowboy.Sockets.WebSockets
                 IsRSV1 = ((buffer[0] & 0x40) == 0x40),
                 IsRSV2 = ((buffer[0] & 0x20) == 0x20),
                 IsRSV3 = ((buffer[0] & 0x10) == 0x10),
-                OpCode = (buffer[0] & 0x0f),
+                OpCode = (FrameOpCode)(buffer[0] & 0x0f),
                 IsMasked = ((buffer[1] & 0x80) == 0x80),
                 PayloadLength = (buffer[1] & 0x7f),
                 Length = 2,
@@ -217,6 +219,11 @@ namespace Cowboy.Sockets.WebSockets
             }
 
             return header;
+        }
+
+        public override string ToString()
+        {
+            return string.Format("OpName[{0}], OpCode[{1}]", OpCode, (byte)OpCode);
         }
     }
 }

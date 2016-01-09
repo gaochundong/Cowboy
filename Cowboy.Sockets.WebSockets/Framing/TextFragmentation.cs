@@ -23,7 +23,7 @@ namespace Cowboy.Sockets.WebSockets
             {
                 var data = Encoding.UTF8.GetBytes(Fragments[i]);
                 yield return Frame.Encode(
-                    i == 0 ? OpCode.Text : OpCode.Continuation,
+                    i == 0 ? FrameOpCode.Text : FrameOpCode.Continuation,
                     data,
                     0,
                     data.Length);

@@ -93,22 +93,25 @@ namespace Cowboy.Sockets.WebSockets
         }
 
         public AsyncWebSocketClient(Uri uri,
-            Func<AsyncWebSocketClient, byte[], int, int, Task> onServerDataReceived = null,
+            Func<AsyncWebSocketClient, string, Task> onServerTextReceived = null,
+            Func<AsyncWebSocketClient, byte[], int, int, Task> onServerBinaryReceived = null,
             Func<AsyncWebSocketClient, Task> onServerConnected = null,
             Func<AsyncWebSocketClient, Task> onServerDisconnected = null,
             AsyncWebSocketClientConfiguration configuration = null)
             : this(uri, null,
-                  onServerDataReceived, onServerConnected, onServerDisconnected, configuration)
+                  onServerTextReceived, onServerBinaryReceived, onServerConnected, onServerDisconnected, configuration)
         {
         }
 
         public AsyncWebSocketClient(Uri uri, string subProtocol,
-            Func<AsyncWebSocketClient, byte[], int, int, Task> onServerDataReceived = null,
+            Func<AsyncWebSocketClient, string, Task> onServerTextReceived = null,
+            Func<AsyncWebSocketClient, byte[], int, int, Task> onServerBinaryReceived = null,
             Func<AsyncWebSocketClient, Task> onServerConnected = null,
             Func<AsyncWebSocketClient, Task> onServerDisconnected = null,
             AsyncWebSocketClientConfiguration configuration = null)
             : this(uri, subProtocol,
-                 new InternalAsyncWebSocketClientMessageDispatcherImplementation(onServerDataReceived, onServerConnected, onServerDisconnected),
+                 new InternalAsyncWebSocketClientMessageDispatcherImplementation(
+                     onServerTextReceived, onServerBinaryReceived, onServerConnected, onServerDisconnected),
                  configuration)
         {
         }
@@ -278,7 +281,38 @@ namespace Cowboy.Sockets.WebSockets
                         var header = Frame.Decode(_sessionBuffer, _sessionBufferCount);
                         if (header != null && header.Length + header.PayloadLength <= _sessionBufferCount)
                         {
-                            await _dispatcher.OnServerDataReceived(this, _sessionBuffer, header.Length, header.PayloadLength);
+                            try
+                            {
+                                switch (header.OpCode)
+                                {
+                                    case FrameOpCode.Continuation:
+                                        break;
+                                    case FrameOpCode.Text:
+                                        {
+                                            var text = Encoding.UTF8.GetString(_sessionBuffer, header.Length, header.PayloadLength);
+                                            await _dispatcher.OnServerTextReceived(this, text);
+                                        }
+                                        break;
+                                    case FrameOpCode.Binary:
+                                        {
+                                            await _dispatcher.OnServerBinaryReceived(this, _sessionBuffer, header.Length, header.PayloadLength);
+                                        }
+                                        break;
+                                    case FrameOpCode.Close:
+                                        break;
+                                    case FrameOpCode.Ping:
+                                        break;
+                                    case FrameOpCode.Pong:
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                _log.Error(ex.Message, ex);
+                            }
+
                             BufferDeflector.ShiftBuffer(_bufferManager, header.Length + header.PayloadLength, ref _sessionBuffer, ref _sessionBufferCount);
                         }
                         else

@@ -42,6 +42,9 @@
     </Compile>
     <Compile Include="AsyncWebSocketClientConfiguration.cs" />
     <Compile Include="AsyncWebSocketClient.cs" />
+    <Compile Include="Framing\PingFrame.cs" />
+    <Compile Include="Framing\PongFrame.cs" />
+    <Compile Include="Framing\CloseFrame.cs" />
     <Compile Include="Framing\ControlFrame.cs" />
     <Compile Include="Framing\DataFrame.cs" />
     <Compile Include="Framing\TextFragmentation.cs" />
@@ -49,7 +52,7 @@
     <Compile Include="Framing\TextFrame.cs" />
     <Compile Include="Framing\BinaryFrame.cs" />
     <Compile Include="Framing\Frame.cs" />
-    <Compile Include="Framing\OpCode.cs" />
+    <Compile Include="Framing\FrameOpCode.cs" />
     <Compile Include="IAsyncWebSocketClientMessageDispatcher.cs" />
     <Compile Include="InternalAsyncWebSocketClientMessageDispatcherImplementation.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

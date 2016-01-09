@@ -31,9 +31,14 @@ namespace Cowboy.Sockets.WebSockets
         public int Offset { get; private set; }
         public int Count { get; private set; }
 
+        public override FrameOpCode OpCode
+        {
+            get { return FrameOpCode.Binary; }
+        }
+
         public byte[] ToArray()
         {
-            return Encode(OpCode.Binary, Data, Offset, Count);
+            return Encode(OpCode, Data, Offset, Count);
         }
     }
 }

@@ -18,10 +18,15 @@ namespace Cowboy.Sockets.WebSockets
 
         public string Text { get; private set; }
 
+        public override FrameOpCode OpCode
+        {
+            get { return FrameOpCode.Text; }
+        }
+
         public byte[] ToArray()
         {
             var data = Encoding.UTF8.GetBytes(Text);
-            return Encode(OpCode.Text, data, 0, data.Length);
+            return Encode(OpCode, data, 0, data.Length);
         }
     }
 }

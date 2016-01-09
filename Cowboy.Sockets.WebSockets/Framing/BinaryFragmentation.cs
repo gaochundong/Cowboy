@@ -22,7 +22,7 @@ namespace Cowboy.Sockets.WebSockets
             for (int i = 0; i < Fragments.Count; i++)
             {
                 yield return Frame.Encode(
-                    i == 0 ? OpCode.Binary : OpCode.Continuation,
+                    i == 0 ? FrameOpCode.Binary : FrameOpCode.Continuation,
                     Fragments[i].Array,
                     Fragments[i].Offset,
                     Fragments[i].Count);

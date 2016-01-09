@@ -5,7 +5,8 @@ namespace Cowboy.Sockets.WebSockets
 {
     internal class InternalAsyncWebSocketClientMessageDispatcherImplementation : IAsyncWebSocketClientMessageDispatcher
     {
-        private Func<AsyncWebSocketClient, byte[], int, int, Task> _onServerDataReceived;
+        private Func<AsyncWebSocketClient, string, Task> _onServerTextReceived;
+        private Func<AsyncWebSocketClient, byte[], int, int, Task> _onServerBinaryReceived;
         private Func<AsyncWebSocketClient, Task> _onServerConnected;
         private Func<AsyncWebSocketClient, Task> _onServerDisconnected;
 
@@ -14,12 +15,14 @@ namespace Cowboy.Sockets.WebSockets
         }
 
         public InternalAsyncWebSocketClientMessageDispatcherImplementation(
+            Func<AsyncWebSocketClient, string, Task> onServerTextReceived,
             Func<AsyncWebSocketClient, byte[], int, int, Task> onServerDataReceived,
             Func<AsyncWebSocketClient, Task> onServerConnected,
             Func<AsyncWebSocketClient, Task> onServerDisconnected)
             : this()
         {
-            _onServerDataReceived = onServerDataReceived;
+            _onServerTextReceived = onServerTextReceived;
+            _onServerBinaryReceived = onServerDataReceived;
             _onServerConnected = onServerConnected;
             _onServerDisconnected = onServerDisconnected;
         }
@@ -30,10 +33,16 @@ namespace Cowboy.Sockets.WebSockets
                 await _onServerConnected(client);
         }
 
-        public async Task OnServerDataReceived(AsyncWebSocketClient client, byte[] data, int offset, int count)
+        public async Task OnServerTextReceived(AsyncWebSocketClient client, string text)
         {
-            if (_onServerDataReceived != null)
-                await _onServerDataReceived(client, data, offset, count);
+            if (_onServerTextReceived != null)
+                await _onServerTextReceived(client, text);
+        }
+
+        public async Task OnServerBinaryReceived(AsyncWebSocketClient client, byte[] data, int offset, int count)
+        {
+            if (_onServerBinaryReceived != null)
+                await _onServerBinaryReceived(client, data, offset, count);
         }
 
         public async Task OnServerDisconnected(AsyncWebSocketClient client)

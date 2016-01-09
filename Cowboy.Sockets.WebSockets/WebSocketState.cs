@@ -11,8 +11,8 @@ namespace Cowboy.Sockets.WebSockets
         None = 0,
         Connecting = 1,
         Open = 2,
-        CloseSent = 3, // WebSocket close handshake started form local endpoint
-        CloseReceived = 4, // WebSocket close message received from remote endpoint. Waiting for app to call close
+        CloseSent = 3, // WebSocket close handshake started from local endpoint
+        CloseReceived = 4, // WebSocket close message received from remote endpoint.
         Closed = 5,
         Aborted = 6,
     }

@@ -324,6 +324,7 @@ namespace Cowboy.Sockets
                 //   3. using a delimiter; for example many text-based protocols append
                 //      a newline (or CR LF pair) after every message.
                 BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
+
                 while (true)
                 {
                     var frameHeader = TcpFrameHeader.ReadHeader(_sessionBuffer);

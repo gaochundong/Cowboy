@@ -24,7 +24,12 @@ namespace Cowboy.Sockets.WebSockets.TestAsyncWebSocketClient
                     //config.SslPolicyErrorsBypassed = false;
 
                     Uri uri = new Uri("ws://echo.websocket.org/");
-                    _client = new AsyncWebSocketClient(uri, OnServerDataReceived, OnServerConnected, OnServerDisconnected, config);
+                    _client = new AsyncWebSocketClient(uri,
+                        OnServerTextReceived,
+                        OnServerBinaryReceived,
+                        OnServerConnected,
+                        OnServerDisconnected,
+                        config);
                     await _client.Connect();
 
                     Console.WriteLine("WebSocket client has connected to server [{0}].", uri);
@@ -66,10 +71,18 @@ namespace Cowboy.Sockets.WebSockets.TestAsyncWebSocketClient
             await Task.CompletedTask;
         }
 
-        private static async Task OnServerDataReceived(AsyncWebSocketClient client, byte[] data, int offset, int count)
+        private static async Task OnServerTextReceived(AsyncWebSocketClient client, string text)
+        {
+            Console.Write(string.Format("WebSocket server {0} received Text --> ", client.RemoteEndPoint));
+            Console.WriteLine(string.Format("{0}", text));
+
+            await Task.CompletedTask;
+        }
+
+        private static async Task OnServerBinaryReceived(AsyncWebSocketClient client, byte[] data, int offset, int count)
         {
             var text = Encoding.UTF8.GetString(data, offset, count);
-            Console.Write(string.Format("WebSocket server : {0} --> ", client.RemoteEndPoint));
+            Console.Write(string.Format("WebSocket server {0} received Binary --> ", client.RemoteEndPoint));
             Console.WriteLine(string.Format("{0}", text));
 
             await Task.CompletedTask;
