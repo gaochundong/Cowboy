@@ -38,8 +38,8 @@ namespace Cowboy.Sockets.WebSockets.TestAsyncWebSocketClient
                                 break;
                             Task.Run(async () =>
                             {
-                                await _client.Send(Encoding.UTF8.GetBytes(text));
-                                Console.WriteLine("Client [{0}] send data -> [{1}].", _client.LocalEndPoint, text);
+                                await _client.SendText(text);
+                                Console.WriteLine("Client [{0}] send text -> [{1}].", _client.LocalEndPoint, text);
                             }).Forget();
                         }
                         catch (Exception ex)

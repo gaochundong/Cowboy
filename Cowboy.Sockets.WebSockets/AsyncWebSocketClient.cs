@@ -453,16 +453,46 @@ namespace Cowboy.Sockets.WebSockets
 
         #region Send
 
-        public async Task Send(byte[] data)
+        public async Task SendText(string text)
         {
-            await Send(data, 0, data.Length);
+            await SendFrame(new TextFrame(text).ToArray());
         }
 
-        public async Task Send(byte[] data, int offset, int count)
+        public async Task SendBinary(byte[] data)
         {
-            if (data == null)
-                throw new ArgumentNullException("data");
+            await SendBinary(data, 0, data.Length);
+        }
 
+        public async Task SendBinary(byte[] data, int offset, int count)
+        {
+            await SendFrame(new BinaryFrame(data, offset, count).ToArray());
+        }
+
+        public async Task SendBinary(ArraySegment<byte> segment)
+        {
+            await SendFrame(new BinaryFrame(segment).ToArray());
+        }
+
+        public async Task SendTextFragments(IEnumerable<string> fragments)
+        {
+            var frames = new TextFragmentation(fragments.ToList()).ToArrayList();
+            foreach (var frame in frames)
+            {
+                await SendFrame(frame);
+            }
+        }
+
+        public async Task SendBinaryFragments(IEnumerable<ArraySegment<byte>> fragments)
+        {
+            var frames = new BinaryFragmentation(fragments.ToList()).ToArrayList();
+            foreach (var frame in frames)
+            {
+                await SendFrame(frame);
+            }
+        }
+
+        private async Task SendFrame(byte[] frame)
+        {
             if (!Connected)
             {
                 throw new InvalidProgramException("This client has not connected to server.");
@@ -472,7 +502,7 @@ namespace Cowboy.Sockets.WebSockets
             {
                 if (_stream.CanWrite)
                 {
-                    await _stream.WriteAsync(data, offset, count);
+                    await _stream.WriteAsync(frame, 0, frame.Length);
                 }
             }
             catch (Exception ex) when (!ShouldThrow(ex)) { }
