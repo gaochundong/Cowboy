@@ -29,7 +29,7 @@ namespace Cowboy.Sockets.WebSockets
             "WWW-Authenticate",
         };
 
-        public static byte[] CreateOpenningHandshakeRequest(AsyncWebSocketClient client, out string secWebSocketKey)
+        internal static byte[] CreateOpenningHandshakeRequest(AsyncWebSocketClient client, out string secWebSocketKey)
         {
             if (client == null)
                 throw new ArgumentNullException("client");
@@ -115,7 +115,7 @@ namespace Cowboy.Sockets.WebSockets
             return Encoding.UTF8.GetBytes(message);
         }
 
-        public static bool VerifyOpenningHandshakeResponse(AsyncWebSocketClient client, byte[] buffer, int offset, int count, string secWebSocketKey)
+        internal static bool VerifyOpenningHandshakeResponse(AsyncWebSocketClient client, byte[] buffer, int offset, int count, string secWebSocketKey)
         {
             if (client == null)
                 throw new ArgumentNullException("client");
