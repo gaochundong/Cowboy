@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Cowboy.Sockets.WebSockets
 {
-    public sealed class TextFrame : Frame
+    public sealed class TextFrame : DataFrame
     {
         public TextFrame(string text)
         {

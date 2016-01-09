@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Cowboy.Sockets.WebSockets
 {
-    public sealed class BinaryFrame : Frame
+    public sealed class BinaryFrame : DataFrame
     {
         public BinaryFrame(ArraySegment<byte> segment)
             : this(segment.Array, segment.Offset, segment.Count)
