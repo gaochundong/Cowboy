@@ -305,7 +305,11 @@ namespace Cowboy.Sockets.WebSockets
                                     case FrameOpCode.Pong:
                                         break;
                                     default:
-                                        break;
+                                        {
+                                            await Close();
+                                            throw new NotSupportedException(
+                                                string.Format("Not support received opcode [{0}].", (byte)header.OpCode));
+                                        }
                                 }
                             }
                             catch (Exception ex)
