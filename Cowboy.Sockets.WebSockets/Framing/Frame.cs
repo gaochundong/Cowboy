@@ -38,11 +38,11 @@ namespace Cowboy.Sockets.WebSockets
     public abstract class Frame
     {
         private static readonly Random _rng = new Random(DateTime.UtcNow.Millisecond);
+        private static readonly int MaskingKeyLength = 4;
 
         public static byte[] Encode(int opCode, byte[] playload, int offset, int count, bool isFinal = true)
         {
             byte[] fragment;
-            int maskingKeyLength = 4;
 
             // Payload length:  7 bits, 7+16 bits, or 7+64 bits.
             // The length of the "Payload data", in bytes: if 0-125, that is the
@@ -52,28 +52,26 @@ namespace Cowboy.Sockets.WebSockets
             // most significant bit MUST be 0) are the payload length.
             if (count < 126)
             {
-                fragment = new byte[2 + maskingKeyLength + count];
+                fragment = new byte[2 + MaskingKeyLength + count];
                 fragment[1] = (byte)count;
             }
             else if (count < 65536)
             {
-                fragment = new byte[2 + 2 + maskingKeyLength + count];
+                fragment = new byte[2 + 2 + MaskingKeyLength + count];
                 fragment[1] = (byte)126;
                 fragment[2] = (byte)(count / 256);
                 fragment[3] = (byte)(count % 256);
             }
             else
             {
-                fragment = new byte[2 + 8 + maskingKeyLength + count];
+                fragment = new byte[2 + 8 + MaskingKeyLength + count];
                 fragment[1] = (byte)127;
 
                 int left = count;
-                int unit = 256;
-
                 for (int i = 9; i > 1; i--)
                 {
-                    fragment[i] = (byte)(left % unit);
-                    left = left / unit;
+                    fragment[i] = (byte)(left % 256);
+                    left = left / 256;
 
                     if (left == 0)
                         break;
@@ -121,8 +119,8 @@ namespace Cowboy.Sockets.WebSockets
             // essential to prevent authors of malicious applications from selecting
             // the bytes that appear on the wire.  RFC 4086 [RFC4086] discusses what
             // entails a suitable source of entropy for security-sensitive applications.
-            int maskingKeyIndex = fragment.Length - (maskingKeyLength + count);
-            for (var i = maskingKeyIndex; i < maskingKeyIndex + maskingKeyLength; i++)
+            int maskingKeyIndex = fragment.Length - (MaskingKeyLength + count);
+            for (var i = maskingKeyIndex; i < maskingKeyIndex + MaskingKeyLength; i++)
             {
                 fragment[i] = (byte)_rng.Next(0, 255);
             }
@@ -136,6 +134,89 @@ namespace Cowboy.Sockets.WebSockets
             }
 
             return fragment;
+        }
+
+        public sealed class Header
+        {
+            public Header()
+            {
+                MaskingKey = new byte[MaskingKeyLength];
+            }
+
+            public bool IsFIN { get; set; }
+            public bool IsRSV1 { get; set; }
+            public bool IsRSV2 { get; set; }
+            public bool IsRSV3 { get; set; }
+            public int OpCode { get; set; }
+            public bool IsMasked { get; set; }
+            public int PayloadLength { get; set; }
+            public byte[] MaskingKey { get; set; }
+            public int Length { get; set; }
+        }
+
+        public static Header Decode(byte[] buffer, int count)
+        {
+            if (count < 2)
+                return null;
+
+            // parse fixed header
+            var header = new Header()
+            {
+                IsFIN = ((buffer[0] & 0x80) == 0x80),
+                IsRSV1 = ((buffer[0] & 0x40) == 0x40),
+                IsRSV2 = ((buffer[0] & 0x20) == 0x20),
+                IsRSV3 = ((buffer[0] & 0x10) == 0x10),
+                OpCode = (buffer[0] & 0x0f),
+                IsMasked = ((buffer[1] & 0x80) == 0x80),
+                PayloadLength = (buffer[1] & 0x7f),
+                Length = 2,
+            };
+
+            // parse extended payload length
+            if (header.PayloadLength >= 126)
+            {
+                if (header.PayloadLength == 126)
+                    header.Length += 2;
+                else
+                    header.Length += 8;
+
+                if (count < header.Length)
+                    return null;
+
+                if (header.PayloadLength == 126)
+                {
+                    header.PayloadLength = buffer[2] * 256 + buffer[3];
+                }
+                else
+                {
+                    int totalLength = 0;
+                    int level = 1;
+
+                    for (int i = 7; i >= 0; i--)
+                    {
+                        totalLength += buffer[i + 2] * level;
+                        level *= 256;
+                    }
+
+                    header.PayloadLength = totalLength;
+                }
+            }
+
+            // parse masking key
+            if (header.IsMasked)
+            {
+                if (count < header.Length + MaskingKeyLength)
+                    return null;
+
+                for (int i = 0; i < MaskingKeyLength; i++)
+                {
+                    header.MaskingKey[i] = buffer[header.Length + i];
+                }
+
+                header.Length += MaskingKeyLength;
+            }
+
+            return header;
         }
     }
 }
