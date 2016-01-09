@@ -184,7 +184,7 @@ namespace Cowboy.Sockets.WebSockets
                         if (!handshaker.Result)
                         {
                             throw new WebSocketException(string.Format(
-                                "Handshake with remote [{0}] failed due to mismatched security key.", _remoteEndPoint));
+                                "Handshake with remote [{0}] failed.", _remoteEndPoint));
                         }
 
                         _log.DebugFormat("Connected to server [{0}] with dispatcher [{1}] on [{2}].",
@@ -273,19 +273,19 @@ namespace Cowboy.Sockets.WebSockets
 
                     BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
 
-                    while (true)
-                    {
-                        //var frameHeader = ReadFrameHeader();
-                        //if (TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize <= _sessionBufferCount)
-                        //{
-                        //    await _dispatcher.OnServerDataReceived(this, _sessionBuffer, TcpFrameHeader.HEADER_SIZE, frameHeader.PayloadSize);
-                        //    BufferDeflector.ShiftBuffer(_bufferManager, TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize, ref _sessionBuffer, ref _sessionBufferCount);
-                        //}
-                        //else
-                        //{
-                        //    break;
-                        //}
-                    }
+                    //while (true)
+                    //{
+                    //    //var frameHeader = ReadFrameHeader();
+                    //    //if (TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize <= _sessionBufferCount)
+                    //    //{
+                    //    //    await _dispatcher.OnServerDataReceived(this, _sessionBuffer, TcpFrameHeader.HEADER_SIZE, frameHeader.PayloadSize);
+                    //    //    BufferDeflector.ShiftBuffer(_bufferManager, TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize, ref _sessionBuffer, ref _sessionBufferCount);
+                    //    //}
+                    //    //else
+                    //    //{
+                    //    //    break;
+                    //    //}
+                    //}
                 }
             }
             catch (Exception ex) when (!ShouldThrow(ex)) { }

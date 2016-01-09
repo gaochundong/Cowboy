@@ -42,13 +42,13 @@
     </Compile>
     <Compile Include="AsyncWebSocketClientConfiguration.cs" />
     <Compile Include="AsyncWebSocketClient.cs" />
+    <Compile Include="Framing\Frame.cs" />
+    <Compile Include="Framing\OpCode.cs" />
     <Compile Include="IAsyncWebSocketClientMessageDispatcher.cs" />
     <Compile Include="InternalAsyncWebSocketClientMessageDispatcherImplementation.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="WebSocketCloseStatus.cs" />
     <Compile Include="WebSocketException.cs" />
     <Compile Include="WebSocketClientHandshaker.cs" />
-    <Compile Include="WebSocketMessageType.cs" />
     <Compile Include="WebSocketState.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -65,9 +65,7 @@
       <Name>Cowboy.Logging</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Framing\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
