@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -8,9 +9,11 @@ namespace Cowboy.Sockets.WebSockets
 {
     internal class WebSocketClientHandshaker
     {
-        public const string MagicHandeshakeAcceptedKey = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+        internal const string SecWebSocketKeyGuid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+        internal const string WebSocketUpgradeToken = "websocket";
+        internal const string WebSocketConnectionToken = "Upgrade";
 
-        private static readonly List<string> HeaderItems = new List<string>()
+        private static readonly List<string> HttpKnownHeaderNames = new List<string>()
         {
             "Upgrade",
             "Connection",
@@ -25,28 +28,18 @@ namespace Cowboy.Sockets.WebSockets
             "WWW-Authenticate",
         };
 
-        public static byte[] CreateOpenningHandshakeRequest(
-            string host,
-            string path,
-            out string key,
-            string protocol = null,
-            string version = null,
-            string extensions = null,
-            string origin = null,
-            IEnumerable<KeyValuePair<string, string>> cookies = null)
+        public static byte[] CreateOpenningHandshakeRequest(AsyncWebSocketClient client, out string secWebSocketKey)
         {
-            if (string.IsNullOrEmpty(host))
-                throw new ArgumentNullException("host");
-            if (string.IsNullOrEmpty(path))
-                throw new ArgumentNullException("path");
+            if (client == null)
+                throw new ArgumentNullException("client");
 
             var sb = new StringBuilder();
 
-            sb.AppendFormatWithCrCf("GET {0} HTTP/1.1", path);
-            sb.AppendFormatWithCrCf("Host: {0}", host);
+            sb.AppendFormatWithCrCf("GET {0} HTTP/1.1", client.Uri.Query);
+            sb.AppendFormatWithCrCf("Host: {0}", client.Uri.Host);
 
-            sb.AppendWithCrCf("Upgrade: websocket");
-            sb.AppendWithCrCf("Connection: Upgrade");
+            sb.AppendFormatWithCrCf("Upgrade: {0}", WebSocketUpgradeToken);
+            sb.AppendFormatWithCrCf("Connection: {0}", WebSocketConnectionToken);
 
             // In addition to Upgrade headers, the client sends a Sec-WebSocket-Key header 
             // containing base64-encoded random bytes, and the server replies with a hash of the key 
@@ -56,8 +49,8 @@ namespace Cowboy.Sockets.WebSockets
             // fixed string 258EAFA5-E914-47DA-95CA-C5AB0DC85B11 (a GUID) to the value 
             // from Sec-WebSocket-Key header (which is not decoded from base64), 
             // applies the SHA-1 hashing function, and encodes the result using base64.
-            key = Convert.ToBase64String(Encoding.ASCII.GetBytes(Guid.NewGuid().ToString().Substring(0, 16)));
-            sb.AppendFormatWithCrCf("Sec-WebSocket-Key: {0}", key);
+            secWebSocketKey = Convert.ToBase64String(Encoding.ASCII.GetBytes(Guid.NewGuid().ToString().Substring(0, 16)));
+            sb.AppendFormatWithCrCf("Sec-WebSocket-Key: {0}", secWebSocketKey);
 
             // The |Sec-WebSocket-Version| header field in the client's
             // handshake includes the version of the WebSocket Protocol with
@@ -67,8 +60,8 @@ namespace Cowboy.Sockets.WebSockets
             // section and instead send an appropriate HTTP error code(such
             // as 426 Upgrade Required) and a |Sec-WebSocket-Version| header
             // field indicating the version(s)the server is capable of understanding.
-            if (!string.IsNullOrEmpty(version))
-                sb.AppendFormatWithCrCf("Sec-WebSocket-Version: {0}", version);
+            if (!string.IsNullOrEmpty(client.Version))
+                sb.AppendFormatWithCrCf("Sec-WebSocket-Version: {0}", client.Version);
             else
                 sb.AppendFormatWithCrCf("Sec-WebSocket-Version: {0}", 13);
 
@@ -76,14 +69,14 @@ namespace Cowboy.Sockets.WebSockets
             // The |Sec-WebSocket-Protocol| request-header field can be
             // used to indicate what subprotocols(application - level protocols
             // layered over the WebSocket Protocol) are acceptable to the client.
-            if (!string.IsNullOrEmpty(protocol))
-                sb.AppendFormatWithCrCf("Sec-WebSocket-Protocol: {0}", protocol);
+            if (!string.IsNullOrEmpty(client.SubProtocol))
+                sb.AppendFormatWithCrCf("Sec-WebSocket-Protocol: {0}", client.SubProtocol);
 
             // Optionally
             // A (possibly empty) list representing the protocol-level
             // extensions the server is ready to use.
-            if (!string.IsNullOrEmpty(extensions))
-                sb.AppendFormatWithCrCf("Sec-WebSocket-Extensions: {0}", extensions);
+            if (!string.IsNullOrEmpty(client.Extensions))
+                sb.AppendFormatWithCrCf("Sec-WebSocket-Extensions: {0}", client.Extensions);
 
             // Optionally
             // The |Origin| header field is used to protect against
@@ -91,16 +84,16 @@ namespace Cowboy.Sockets.WebSockets
             // the WebSocket API in a web browser.
             // This header field is sent by browser clients; for non-browser clients, 
             // this header field may be sent if it makes sense in the context of those clients.
-            if (!string.IsNullOrEmpty(origin))
-                sb.AppendFormatWithCrCf("Origin: {0}", origin);
+            if (!string.IsNullOrEmpty(client.Origin))
+                sb.AppendFormatWithCrCf("Origin: {0}", client.Origin);
 
-            if (cookies != null && cookies.Any())
+            if (client.Cookies != null && client.Cookies.Any())
             {
-                string[] pairs = new string[cookies.Count()];
+                string[] pairs = new string[client.Cookies.Count()];
 
-                for (int i = 0; i < cookies.Count(); i++)
+                for (int i = 0; i < client.Cookies.Count(); i++)
                 {
-                    var item = cookies.ElementAt(i);
+                    var item = client.Cookies.ElementAt(i);
                     pairs[i] = item.Key + "=" + Uri.EscapeUriString(item.Value);
                 }
 
@@ -121,12 +114,14 @@ namespace Cowboy.Sockets.WebSockets
             return Encoding.UTF8.GetBytes(message);
         }
 
-        public static bool VerifyOpenningHandshakeResponse(byte[] buffer, int offset, int count, string secWebSocketKey)
+        public static bool VerifyOpenningHandshakeResponse(AsyncWebSocketClient client, byte[] buffer, int offset, int count, string secWebSocketKey)
         {
+            if (client == null)
+                throw new ArgumentNullException("client");
             if (buffer == null)
                 throw new ArgumentNullException("buffer");
             if (string.IsNullOrEmpty(secWebSocketKey))
-                throw new ArgumentNullException("context.SecWebSocketKey");
+                throw new ArgumentNullException("secWebSocketKey");
 
             var response = Encoding.UTF8.GetString(buffer, offset, count);
 
@@ -138,13 +133,17 @@ namespace Cowboy.Sockets.WebSockets
             var headerItems = ParseOpenningHandshakeResponseHeaderItems(response);
 
             if (!headerItems.ContainsKey("HttpStatusCode"))
-                return false;
+                throw new WebSocketException(string.Format(
+                    "Handshake with remote [{0}] failed due to lack of status code.", client.RemoteEndPoint));
             if (!headerItems.ContainsKey("Connection"))
-                return false;
+                throw new WebSocketException(string.Format(
+                    "Handshake with remote [{0}] failed due to lack of connection header item.", client.RemoteEndPoint));
             if (!headerItems.ContainsKey("Upgrade"))
-                return false;
+                throw new WebSocketException(string.Format(
+                    "Handshake with remote [{0}] failed due to lack of upgrade header item.", client.RemoteEndPoint));
             if (!headerItems.ContainsKey("Sec-WebSocket-Accept"))
-                return false;
+                throw new WebSocketException(string.Format(
+                    "Handshake with remote [{0}] failed due to lack of Sec-WebSocket-Accept header item.", client.RemoteEndPoint));
 
             // If the status code received from the server is not 101, the
             // client handles the response per HTTP [RFC2616] procedures.  In
@@ -159,15 +158,19 @@ namespace Cowboy.Sockets.WebSockets
             // header field contains a value that is not an ASCII case-
             // insensitive match for the value "websocket", the client MUST
             // _Fail the WebSocket Connection_.
-            if (headerItems["Connection"].ToLowerInvariant() != "upgrade")
-                return false;
+            if (headerItems["Connection"].ToLowerInvariant() != WebSocketConnectionToken.ToLowerInvariant())
+                throw new WebSocketException(string.Format(
+                    "Handshake with remote [{0}] failed due to invalid connection header item value [{1}].",
+                    client.RemoteEndPoint, headerItems["Connection"]));
 
             // If the response lacks a |Connection| header field or the
             // |Connection| header field doesn't contain a token that is an
             // ASCII case-insensitive match for the value "Upgrade", the client
             // MUST _Fail the WebSocket Connection_.
-            if (headerItems["Upgrade"].ToLowerInvariant() != "websocket")
-                return false;
+            if (headerItems["Upgrade"].ToLowerInvariant() != WebSocketUpgradeToken.ToLowerInvariant())
+                throw new WebSocketException(string.Format(
+                    "Handshake with remote [{0}] failed due to invalid upgrade header item value [{1}].",
+                    client.RemoteEndPoint, headerItems["Upgrade"]));
 
             // If the response lacks a |Sec-WebSocket-Accept| header field or
             // the |Sec-WebSocket-Accept| contains a value other than the
@@ -175,13 +178,11 @@ namespace Cowboy.Sockets.WebSockets
             // Key| (as a string, not base64-decoded) with the string "258EAFA5-
             // E914-47DA-95CA-C5AB0DC85B11" but ignoring any leading and
             // trailing whitespace, the client MUST _Fail the WebSocket Connection_.
-            string challenge =
-                Convert.ToBase64String(
-                    SHA1.Create().ComputeHash(
-                        Encoding.ASCII.GetBytes(
-                            secWebSocketKey + MagicHandeshakeAcceptedKey)));
+            string challenge = GetSecWebSocketAcceptString(secWebSocketKey);
             if (!headerItems["Sec-WebSocket-Accept"].Equals(challenge, StringComparison.OrdinalIgnoreCase))
-                return false;
+                throw new WebSocketException(string.Format(
+                    "Handshake with remote [{0}] failed due to invalid Sec-WebSocket-Accept header item value [{1}].",
+                    client.RemoteEndPoint, headerItems["Sec-WebSocket-Accept"]));
 
             // If the response includes a |Sec-WebSocket-Extensions| header
             // field and this header field indicates the use of an extension
@@ -215,7 +216,7 @@ namespace Cowboy.Sockets.WebSockets
                 }
                 else
                 {
-                    foreach (var item in HeaderItems)
+                    foreach (var item in HttpKnownHeaderNames)
                     {
                         if (line.StartsWith(item + ":"))
                         {
@@ -231,6 +232,20 @@ namespace Cowboy.Sockets.WebSockets
             }
 
             return headerItems;
+        }
+
+        private static string GetSecWebSocketAcceptString(string secWebSocketKey)
+        {
+            string retVal;
+
+            using (SHA1 sha1 = SHA1.Create())
+            {
+                string acceptString = string.Concat(secWebSocketKey, SecWebSocketKeyGuid);
+                byte[] toHash = Encoding.UTF8.GetBytes(acceptString);
+                retVal = Convert.ToBase64String(sha1.ComputeHash(toHash));
+            }
+
+            return retVal;
         }
     }
 }

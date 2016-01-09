@@ -9,18 +9,17 @@ namespace Cowboy.Sockets.WebSockets
     public sealed class BinaryFrame : DataFrame
     {
         public BinaryFrame(ArraySegment<byte> segment)
-            : this(segment.Array, segment.Offset, segment.Count)
         {
+            WebSocketHelpers.ValidateArraySegment(segment, "segment");
+
+            this.Data = segment.Array;
+            this.Offset = segment.Offset;
+            this.Count = segment.Count;
         }
 
         public BinaryFrame(byte[] data, int offset, int count)
         {
-            if (data == null)
-                throw new ArgumentNullException("data");
-            if (offset < 0)
-                throw new ArgumentOutOfRangeException("offset");
-            if (count < 0)
-                throw new ArgumentOutOfRangeException("count");
+            WebSocketHelpers.ValidateBuffer(data, offset, count);
 
             this.Data = data;
             this.Offset = offset;

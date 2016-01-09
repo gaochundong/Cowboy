@@ -35,7 +35,7 @@ namespace Cowboy.Sockets.WebSockets
         private static readonly byte[] HeaderTerminator = Encoding.UTF8.GetBytes("\r\n\r\n");
         private readonly string[] AllowedSchemes = new string[] { "ws", "wss" };
         private readonly Uri _uri;
-        private bool _isSecure = false;
+        private bool _isSsl = false;
         private string _secWebSocketKey;
 
         #endregion
@@ -85,7 +85,7 @@ namespace Cowboy.Sockets.WebSockets
 
             _dispatcher = dispatcher;
             _configuration = configuration ?? new AsyncWebSocketClientConfiguration();
-            _isSecure = uri.Scheme.ToLowerInvariant() == "wss";
+            _isSsl = uri.Scheme.ToLowerInvariant() == "wss";
 
             this.ConnectTimeout = TimeSpan.FromSeconds(5);
 
@@ -137,7 +137,6 @@ namespace Cowboy.Sockets.WebSockets
         public Dictionary<string, string> Cookies { get; set; }
 
         public Uri Uri { get { return _uri; } }
-        public bool Handshaked { get; private set; }
         //public WebSocketCloseStatus? CloseStatus;
         //public string CloseStatusDescription;
         //public WebSocketState State;
@@ -369,7 +368,7 @@ namespace Cowboy.Sockets.WebSockets
 
         private async Task<Stream> NegotiateStream(Stream stream)
         {
-            if (!_isSecure)
+            if (!_isSsl)
                 return stream;
 
             var validateRemoteCertificate = new RemoteCertificateValidationCallback(
@@ -428,15 +427,7 @@ namespace Cowboy.Sockets.WebSockets
 
         private async Task<bool> Handshake()
         {
-            var requestBuffer = WebSocketClientHandshaker.CreateOpenningHandshakeRequest(
-                this.Uri.Host,
-                this.Uri.PathAndQuery,
-                out _secWebSocketKey,
-                this.SubProtocol,
-                this.Version,
-                this.Extensions,
-                this.Origin,
-                this.Cookies);
+            var requestBuffer = WebSocketClientHandshaker.CreateOpenningHandshakeRequest(this, out _secWebSocketKey);
 
             await _stream.WriteAsync(requestBuffer, 0, requestBuffer.Length);
 
@@ -459,7 +450,7 @@ namespace Cowboy.Sockets.WebSockets
                 }
             }
 
-            var result = WebSocketClientHandshaker.VerifyOpenningHandshakeResponse(_sessionBuffer, 0, terminatorIndex + HeaderTerminator.Length, _secWebSocketKey);
+            var result = WebSocketClientHandshaker.VerifyOpenningHandshakeResponse(this, _sessionBuffer, 0, terminatorIndex + HeaderTerminator.Length, _secWebSocketKey);
 
             BufferDeflector.ShiftBuffer(_bufferManager, terminatorIndex + HeaderTerminator.Length, ref _sessionBuffer, ref _sessionBufferCount);
 
