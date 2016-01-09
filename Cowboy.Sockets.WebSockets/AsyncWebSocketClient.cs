@@ -273,19 +273,19 @@ namespace Cowboy.Sockets.WebSockets
 
                     BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
 
-                    //while (true)
-                    //{
-                    //    //var frameHeader = ReadFrameHeader();
-                    //    //if (TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize <= _sessionBufferCount)
-                    //    //{
-                    //    //    await _dispatcher.OnServerDataReceived(this, _sessionBuffer, TcpFrameHeader.HEADER_SIZE, frameHeader.PayloadSize);
-                    //    //    BufferDeflector.ShiftBuffer(_bufferManager, TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize, ref _sessionBuffer, ref _sessionBufferCount);
-                    //    //}
-                    //    //else
-                    //    //{
-                    //    //    break;
-                    //    //}
-                    //}
+                    while (true)
+                    {
+                        var header = Frame.Decode(_sessionBuffer, _sessionBufferCount);
+                        if (header != null && header.Length + header.PayloadLength <= _sessionBufferCount)
+                        {
+                            await _dispatcher.OnServerDataReceived(this, _sessionBuffer, header.Length, header.PayloadLength);
+                            BufferDeflector.ShiftBuffer(_bufferManager, header.Length + header.PayloadLength, ref _sessionBuffer, ref _sessionBufferCount);
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
                 }
             }
             catch (Exception ex) when (!ShouldThrow(ex)) { }
