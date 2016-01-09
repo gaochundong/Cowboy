@@ -205,6 +205,7 @@ namespace Cowboy.Sockets.WebSockets
                 {
                     _log.Error(ex.Message, ex);
                     await Close();
+                    throw;
                 }
                 finally
                 {
@@ -241,8 +242,10 @@ namespace Cowboy.Sockets.WebSockets
                             _log.Error(ex.Message, ex);
                         }
 
-                        _bufferManager.ReturnBuffer(_receiveBuffer);
-                        _bufferManager.ReturnBuffer(_sessionBuffer);
+                        if (_receiveBuffer != null)
+                            _bufferManager.ReturnBuffer(_receiveBuffer);
+                        if (_sessionBuffer != null)
+                            _bufferManager.ReturnBuffer(_sessionBuffer);
 
                         _log.DebugFormat("Disconnected from server [{0}] with dispatcher [{1}] on [{2}].",
                             this.RemoteEndPoint,
@@ -375,7 +378,7 @@ namespace Cowboy.Sockets.WebSockets
 
         private async Task<bool> Handshake()
         {
-            var requestBuffer = WebSocketClientHandshaker.CreateHandshakeRequest(
+            var requestBuffer = WebSocketClientHandshaker.CreateOpenningHandshakeRequest(
                 this.Uri.Host,
                 this.Uri.PathAndQuery,
                 out _secWebSocketKey,
@@ -406,7 +409,7 @@ namespace Cowboy.Sockets.WebSockets
                 }
             }
 
-            var result = WebSocketClientHandshaker.VerifyHandshakeResponse(_sessionBuffer, 0, terminatorIndex + HeaderTerminator.Length, _secWebSocketKey);
+            var result = WebSocketClientHandshaker.VerifyOpenningHandshakeResponse(_sessionBuffer, 0, terminatorIndex + HeaderTerminator.Length, _secWebSocketKey);
 
             BufferDeflector.ShiftBuffer(_bufferManager, terminatorIndex + HeaderTerminator.Length, ref _sessionBuffer, ref _sessionBufferCount);
 

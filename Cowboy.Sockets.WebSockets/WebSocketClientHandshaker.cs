@@ -25,7 +25,7 @@ namespace Cowboy.Sockets.WebSockets
             "WWW-Authenticate",
         };
 
-        public static byte[] CreateHandshakeRequest(
+        public static byte[] CreateOpenningHandshakeRequest(
             string host,
             string path,
             out string key,
@@ -121,7 +121,7 @@ namespace Cowboy.Sockets.WebSockets
             return Encoding.UTF8.GetBytes(message);
         }
 
-        public static bool VerifyHandshakeResponse(byte[] buffer, int offset, int count, string secWebSocketKey)
+        public static bool VerifyOpenningHandshakeResponse(byte[] buffer, int offset, int count, string secWebSocketKey)
         {
             if (buffer == null)
                 throw new ArgumentNullException("buffer");

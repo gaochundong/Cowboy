@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Cowboy.Logging;
@@ -15,45 +14,48 @@ namespace Cowboy.Sockets.WebSockets.TestAsyncWebSocketClient
         {
             NLogLogger.Use();
 
-            try
+            Task.Run(async () =>
             {
-                var config = new AsyncWebSocketClientConfiguration();
-                config.SslTargetHost = "Cowboy";
-                config.SslClientCertificates.Add(new System.Security.Cryptography.X509Certificates.X509Certificate2(@"D:\\Cowboy.cer"));
-                config.SslPolicyErrorsBypassed = false;
-
-                Uri uri = new Uri("ws://echo.websocket.org/");
-                _client = new AsyncWebSocketClient(uri, OnServerDataReceived, OnServerConnected, OnServerDisconnected, config);
-                _client.Connect().Wait();
-
-                Console.WriteLine("WebSocket client has connected to server [{0}].", uri);
-                Console.WriteLine("Type something to send to server...");
-                while (true)
+                try
                 {
-                    try
-                    {
-                        string text = Console.ReadLine();
-                        if (text == "quit")
-                            break;
-                        Task.Run(async () =>
-                        {
-                            await _client.Send(Encoding.UTF8.GetBytes(text));
-                            Console.WriteLine("Client [{0}] send data -> [{1}].", _client.LocalEndPoint, text);
-                        });
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.Message);
-                    }
-                }
+                    var config = new AsyncWebSocketClientConfiguration();
+                    //config.SslTargetHost = "Cowboy";
+                    //config.SslClientCertificates.Add(new System.Security.Cryptography.X509Certificates.X509Certificate2(@"D:\\Cowboy.cer"));
+                    //config.SslPolicyErrorsBypassed = false;
 
-                _client.Close().Wait();
-                Console.WriteLine("WebSocket client has disconnected from server [{0}].", uri);
-            }
-            catch (Exception ex)
-            {
-                Logger.Get<Program>().Error(ex.Message, ex);
-            }
+                    Uri uri = new Uri("ws://echo.websocket.org/");
+                    _client = new AsyncWebSocketClient(uri, OnServerDataReceived, OnServerConnected, OnServerDisconnected, config);
+                    await _client.Connect();
+
+                    Console.WriteLine("WebSocket client has connected to server [{0}].", uri);
+                    Console.WriteLine("Type something to send to server...");
+                    while (_client.Connected)
+                    {
+                        try
+                        {
+                            string text = Console.ReadLine();
+                            if (text == "quit")
+                                break;
+                            Task.Run(async () =>
+                            {
+                                await _client.Send(Encoding.UTF8.GetBytes(text));
+                                Console.WriteLine("Client [{0}] send data -> [{1}].", _client.LocalEndPoint, text);
+                            }).Forget();
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex.Message);
+                        }
+                    }
+
+                    await _client.Close();
+                    Console.WriteLine("WebSocket client has disconnected from server [{0}].", uri);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Get<Program>().Error(ex.Message, ex);
+                }
+            }).Wait();
 
             Console.ReadKey();
         }

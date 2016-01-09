@@ -139,8 +139,10 @@ namespace Cowboy.Sockets
                             _log.Error(ex.Message, ex);
                         }
 
-                        _bufferManager.ReturnBuffer(_receiveBuffer);
-                        _bufferManager.ReturnBuffer(_sessionBuffer);
+                        if (_receiveBuffer != null)
+                            _bufferManager.ReturnBuffer(_receiveBuffer);
+                        if (_sessionBuffer != null)
+                            _bufferManager.ReturnBuffer(_sessionBuffer);
 
                         _log.DebugFormat("Session closed for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
                             this.RemoteEndPoint,

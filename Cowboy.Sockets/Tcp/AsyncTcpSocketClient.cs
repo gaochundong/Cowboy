@@ -226,8 +226,10 @@ namespace Cowboy.Sockets
                             _log.Error(ex.Message, ex);
                         }
 
-                        _bufferManager.ReturnBuffer(_receiveBuffer);
-                        _bufferManager.ReturnBuffer(_sessionBuffer);
+                        if (_receiveBuffer != null)
+                            _bufferManager.ReturnBuffer(_receiveBuffer);
+                        if (_sessionBuffer != null)
+                            _bufferManager.ReturnBuffer(_sessionBuffer);
 
                         _log.DebugFormat("Disconnected from server [{0}] with dispatcher [{1}] on [{2}].",
                             this.RemoteEndPoint,
