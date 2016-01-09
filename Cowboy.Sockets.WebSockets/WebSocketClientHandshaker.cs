@@ -135,7 +135,7 @@ namespace Cowboy.Sockets.WebSockets
             // Connection: Upgrade
             // Sec-WebSocket-Accept: 1tGBmA9p0DQDgmFll6P0/UcVS/E=
             // Sec-WebSocket-Protocol: chat
-            var headerItems = ParseWebSocketResponseHeaderItems(response);
+            var headerItems = ParseOpenningHandshakeResponseHeaderItems(response);
 
             if (!headerItems.ContainsKey("HttpStatusCode"))
                 return false;
@@ -198,7 +198,7 @@ namespace Cowboy.Sockets.WebSockets
             return true;
         }
 
-        private static Dictionary<string, string> ParseWebSocketResponseHeaderItems(string response)
+        private static Dictionary<string, string> ParseOpenningHandshakeResponseHeaderItems(string response)
         {
             var headerItems = new Dictionary<string, string>();
 

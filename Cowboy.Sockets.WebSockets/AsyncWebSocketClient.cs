@@ -299,10 +299,21 @@ namespace Cowboy.Sockets.WebSockets
                                         }
                                         break;
                                     case FrameOpCode.Close:
+                                        {
+
+                                        }
                                         break;
                                     case FrameOpCode.Ping:
+                                        {
+                                            var ping = Encoding.UTF8.GetString(_sessionBuffer, header.Length, header.PayloadLength);
+                                            var pong = new PongFrame(ping).ToArray();
+                                            await SendFrame(pong);
+                                        }
                                         break;
                                     case FrameOpCode.Pong:
+                                        {
+
+                                        }
                                         break;
                                     default:
                                         {
