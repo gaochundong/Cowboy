@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -130,18 +131,18 @@ namespace Cowboy.Sockets.WebSockets
             // Connection: Upgrade
             // Sec-WebSocket-Accept: 1tGBmA9p0DQDgmFll6P0/UcVS/E=
             // Sec-WebSocket-Protocol: chat
-            var headerItems = ParseOpenningHandshakeResponseHeaderItems(response);
+            var headers = ParseOpenningHandshakeResponseHeaders(response);
 
-            if (!headerItems.ContainsKey("HttpStatusCode"))
+            if (!headers.ContainsKey("HttpStatusCode"))
                 throw new WebSocketException(string.Format(
                     "Handshake with remote [{0}] failed due to lack of status code.", client.RemoteEndPoint));
-            if (!headerItems.ContainsKey("Connection"))
+            if (!headers.ContainsKey("Connection"))
                 throw new WebSocketException(string.Format(
                     "Handshake with remote [{0}] failed due to lack of connection header item.", client.RemoteEndPoint));
-            if (!headerItems.ContainsKey("Upgrade"))
+            if (!headers.ContainsKey("Upgrade"))
                 throw new WebSocketException(string.Format(
                     "Handshake with remote [{0}] failed due to lack of upgrade header item.", client.RemoteEndPoint));
-            if (!headerItems.ContainsKey("Sec-WebSocket-Accept"))
+            if (!headers.ContainsKey("Sec-WebSocket-Accept"))
                 throw new WebSocketException(string.Format(
                     "Handshake with remote [{0}] failed due to lack of Sec-WebSocket-Accept header item.", client.RemoteEndPoint));
 
@@ -151,26 +152,28 @@ namespace Cowboy.Sockets.WebSockets
             // receives a 401 status code; the server might redirect the client
             // using a 3xx status code (but clients are not required to follow
             // them), etc.
-            if (headerItems["HttpStatusCode"] != "101")
-                return false;
+            if (headers["HttpStatusCode"] != ((int)HttpStatusCode.SwitchingProtocols).ToString())
+                throw new WebSocketException(string.Format(
+                    "Handshake with remote [{0}] failed due to expected 101 Switching Protocols but received [{1}].",
+                    client.RemoteEndPoint, headers["HttpStatusCode"]));
 
             // If the response lacks an |Upgrade| header field or the |Upgrade|
             // header field contains a value that is not an ASCII case-
             // insensitive match for the value "websocket", the client MUST
             // _Fail the WebSocket Connection_.
-            if (headerItems["Connection"].ToLowerInvariant() != WebSocketConnectionToken.ToLowerInvariant())
+            if (headers["Connection"].ToLowerInvariant() != WebSocketConnectionToken.ToLowerInvariant())
                 throw new WebSocketException(string.Format(
                     "Handshake with remote [{0}] failed due to invalid connection header item value [{1}].",
-                    client.RemoteEndPoint, headerItems["Connection"]));
+                    client.RemoteEndPoint, headers["Connection"]));
 
             // If the response lacks a |Connection| header field or the
             // |Connection| header field doesn't contain a token that is an
             // ASCII case-insensitive match for the value "Upgrade", the client
             // MUST _Fail the WebSocket Connection_.
-            if (headerItems["Upgrade"].ToLowerInvariant() != WebSocketUpgradeToken.ToLowerInvariant())
+            if (headers["Upgrade"].ToLowerInvariant() != WebSocketUpgradeToken.ToLowerInvariant())
                 throw new WebSocketException(string.Format(
                     "Handshake with remote [{0}] failed due to invalid upgrade header item value [{1}].",
-                    client.RemoteEndPoint, headerItems["Upgrade"]));
+                    client.RemoteEndPoint, headers["Upgrade"]));
 
             // If the response lacks a |Sec-WebSocket-Accept| header field or
             // the |Sec-WebSocket-Accept| contains a value other than the
@@ -179,29 +182,71 @@ namespace Cowboy.Sockets.WebSockets
             // E914-47DA-95CA-C5AB0DC85B11" but ignoring any leading and
             // trailing whitespace, the client MUST _Fail the WebSocket Connection_.
             string challenge = GetSecWebSocketAcceptString(secWebSocketKey);
-            if (!headerItems["Sec-WebSocket-Accept"].Equals(challenge, StringComparison.OrdinalIgnoreCase))
+            if (!headers["Sec-WebSocket-Accept"].Equals(challenge, StringComparison.OrdinalIgnoreCase))
                 throw new WebSocketException(string.Format(
                     "Handshake with remote [{0}] failed due to invalid Sec-WebSocket-Accept header item value [{1}].",
-                    client.RemoteEndPoint, headerItems["Sec-WebSocket-Accept"]));
-
-            // If the response includes a |Sec-WebSocket-Extensions| header
-            // field and this header field indicates the use of an extension
-            // that was not present in the client's handshake (the server has
-            // indicated an extension not requested by the client), the client
-            // MUST _Fail the WebSocket Connection_.
+                    client.RemoteEndPoint, headers["Sec-WebSocket-Accept"]));
 
             // If the response includes a |Sec-WebSocket-Protocol| header field
             // and this header field indicates the use of a subprotocol that was
             // not present in the client's handshake (the server has indicated a
             // subprotocol not requested by the client), the client MUST _Fail
             // the WebSocket Connection_.
+            string subProtocol = headers["Sec-WebSocket-Protocol"];
+            if (!string.IsNullOrWhiteSpace(subProtocol) && !string.IsNullOrWhiteSpace(client.SubProtocol))
+            {
+                var requestedSubProtocols = client.SubProtocol.Split(',').Select(p => p.Trim());
+
+                bool foundMatch = false;
+                foreach (string requestedSubProtocol in requestedSubProtocols)
+                {
+                    if (string.Equals(requestedSubProtocol, subProtocol, StringComparison.OrdinalIgnoreCase))
+                    {
+                        foundMatch = true;
+                        break;
+                    }
+                }
+                if (!foundMatch)
+                {
+                    throw new WebSocketException(string.Format(
+                        "Handshake with remote [{0}] failed due to accept unsupported sub-protocol [{1}].",
+                        client.RemoteEndPoint, headers["Sec-WebSocket-Protocol"]));
+                }
+            }
+
+            // If the response includes a |Sec-WebSocket-Extensions| header
+            // field and this header field indicates the use of an extension
+            // that was not present in the client's handshake (the server has
+            // indicated an extension not requested by the client), the client
+            // MUST _Fail the WebSocket Connection_.
+            string extensions = headers["Sec-WebSocket-Extensions"];
+            if (!string.IsNullOrWhiteSpace(extensions) && !string.IsNullOrWhiteSpace(client.Extensions))
+            {
+                var requestedExtensions = client.Extensions.Split(',').Select(p => p.Trim());
+
+                bool foundMatch = false;
+                foreach (string requestedExtension in requestedExtensions)
+                {
+                    if (string.Equals(requestedExtension, extensions, StringComparison.OrdinalIgnoreCase))
+                    {
+                        foundMatch = true;
+                        break;
+                    }
+                }
+                if (!foundMatch)
+                {
+                    throw new WebSocketException(string.Format(
+                        "Handshake with remote [{0}] failed due to accept unsupported extensions [{1}].",
+                        client.RemoteEndPoint, headers["Sec-WebSocket-Extensions"]));
+                }
+            }
 
             return true;
         }
 
-        private static Dictionary<string, string> ParseOpenningHandshakeResponseHeaderItems(string response)
+        private static Dictionary<string, string> ParseOpenningHandshakeResponseHeaders(string response)
         {
-            var headerItems = new Dictionary<string, string>();
+            var headers = new Dictionary<string, string>();
 
             var lines = response.Split(new char[] { '\r', '\n' }).Where(l => l.Length > 0);
             foreach (var line in lines)
@@ -211,7 +256,7 @@ namespace Cowboy.Sockets.WebSockets
                     var segements = line.Split(' ');
                     if (segements.Length > 1)
                     {
-                        headerItems.Add("HttpStatusCode", segements[1]);
+                        headers.Add("HttpStatusCode", segements[1]);
                     }
                 }
                 else
@@ -224,14 +269,14 @@ namespace Cowboy.Sockets.WebSockets
                             if (index != -1)
                             {
                                 var value = line.Substring(index + 1);
-                                headerItems.Add(item, value.Trim());
+                                headers.Add(item, value.Trim());
                             }
                         }
                     }
                 }
             }
 
-            return headerItems;
+            return headers;
         }
 
         private static string GetSecWebSocketAcceptString(string secWebSocketKey)
