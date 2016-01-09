@@ -422,7 +422,7 @@ namespace Cowboy.Sockets.WebSockets
 
             for (int i = 0; i < _sessionBufferCount; i++)
             {
-                if (i + HeaderTerminator.Length < _sessionBufferCount)
+                if (i + HeaderTerminator.Length <= _sessionBufferCount)
                 {
                     bool matched = true;
                     for (int j = 0; j < HeaderTerminator.Length; j++)
