@@ -67,13 +67,13 @@ namespace Cowboy.Sockets.WebSockets.TestAsyncWebSocketClient
 
         private static async Task OnServerConnected(AsyncWebSocketClient client)
         {
-            Console.WriteLine(string.Format("WebSocket server {0} has connected.", client.RemoteEndPoint));
+            Console.WriteLine(string.Format("WebSocket server [{0}] has connected.", client.RemoteEndPoint));
             await Task.CompletedTask;
         }
 
         private static async Task OnServerTextReceived(AsyncWebSocketClient client, string text)
         {
-            Console.Write(string.Format("WebSocket server {0} received Text --> ", client.RemoteEndPoint));
+            Console.Write(string.Format("WebSocket server [{0}] received Text --> ", client.RemoteEndPoint));
             Console.WriteLine(string.Format("{0}", text));
 
             await Task.CompletedTask;
@@ -82,7 +82,7 @@ namespace Cowboy.Sockets.WebSockets.TestAsyncWebSocketClient
         private static async Task OnServerBinaryReceived(AsyncWebSocketClient client, byte[] data, int offset, int count)
         {
             var text = Encoding.UTF8.GetString(data, offset, count);
-            Console.Write(string.Format("WebSocket server {0} received Binary --> ", client.RemoteEndPoint));
+            Console.Write(string.Format("WebSocket server [{0}] received Binary --> ", client.RemoteEndPoint));
             Console.WriteLine(string.Format("{0}", text));
 
             await Task.CompletedTask;
@@ -90,7 +90,7 @@ namespace Cowboy.Sockets.WebSockets.TestAsyncWebSocketClient
 
         private static async Task OnServerDisconnected(AsyncWebSocketClient client)
         {
-            Console.WriteLine(string.Format("WebSocket server {0} has disconnected.", client.RemoteEndPoint));
+            Console.WriteLine(string.Format("WebSocket server [{0}] has disconnected.", client.RemoteEndPoint));
             await Task.CompletedTask;
         }
     }
