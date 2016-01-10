@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Cowboy.Sockets.WebSockets
 {
     internal class WebSocketHelpers
     {
-        internal static void ValidateSubprotocol(string subProtocol)
+        internal static bool ValidateSubprotocol(string subProtocol)
         {
             if (string.IsNullOrWhiteSpace(subProtocol))
                 throw new ArgumentNullException("subProtocol");
@@ -37,10 +33,7 @@ namespace Cowboy.Sockets.WebSockets
                 i++;
             }
 
-            if (invalidChar != null)
-            {
-                throw new ArgumentException(string.Format("Invalid char [{0}] in sub-protocol string [{1}].", invalidChar, subProtocol), "subProtocol");
-            }
+            return invalidChar == null;
         }
     }
 }

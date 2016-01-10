@@ -42,6 +42,9 @@ namespace Cowboy.Sockets.WebSockets
         private const int _closing = 3;
         private const int _disposed = 5;
 
+        private readonly object _keepAliveLocker = new object();
+        private KeepAliveTracker _keepAliveTracker;
+
         #endregion
 
         #region Constructors
@@ -121,6 +124,8 @@ namespace Cowboy.Sockets.WebSockets
         private void Initialize()
         {
             _bufferManager = new GrowingByteBufferManager(_configuration.InitialBufferAllocationCount, _configuration.ReceiveBufferSize);
+
+            _keepAliveTracker = KeepAliveTracker.Create(KeepAliveInterval, new TimerCallback(OnKeepAlive));
         }
 
         #endregion
@@ -303,6 +308,10 @@ namespace Cowboy.Sockets.WebSockets
 
             try
             {
+                if (_keepAliveTracker != null)
+                {
+                    _keepAliveTracker.Dispose();
+                }
                 if (_stream != null)
                 {
                     _stream.Dispose();
@@ -377,18 +386,18 @@ namespace Cowboy.Sockets.WebSockets
                                             {
                                                 closeStatusDescription = Encoding.UTF8.GetString(_sessionBuffer, header.Length + 2, header.PayloadLength - 2);
                                             }
-
+#if DEBUG
                                             _log.DebugFormat("Received server side close frame [{0}] [{1}].", closeStatus, closeStatusDescription);
-
+#endif
                                             await Close(closeStatus, closeStatusDescription);
                                         }
                                         break;
                                     case FrameOpCode.Ping:
                                         {
                                             var ping = Encoding.UTF8.GetString(_sessionBuffer, header.Length, header.PayloadLength);
-
+#if DEBUG
                                             _log.DebugFormat("Received server side ping frame [{0}].", ping);
-
+#endif
                                             var pong = new PongFrame(ping).ToArray();
                                             await SendFrame(pong);
                                         }
@@ -636,6 +645,41 @@ namespace Cowboy.Sockets.WebSockets
                 }
             }
             catch (Exception ex) when (!ShouldThrow(ex)) { }
+        }
+
+        #endregion
+
+        #region Keep Alive
+
+        private async void OnKeepAlive(object sender)
+        {
+            if (Monitor.TryEnter(_keepAliveLocker))
+            {
+                try
+                {
+                    if (State != WebSocketState.Open)
+                        return;
+
+                    if (_keepAliveTracker.ShouldSendKeepAlive())
+                    {
+                        var keepAliveFrame = new PingFrame().ToArray();
+                        await SendFrame(keepAliveFrame);
+#if DEBUG
+                        _log.DebugFormat("Send client side ping frame [{0}].", DateTime.UtcNow);
+#endif
+                        _keepAliveTracker.ResetTimer();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _log.Error(ex.Message, ex);
+                    await Close(WebSocketCloseStatus.AbnormalClosure);
+                }
+                finally
+                {
+                    Monitor.Exit(_keepAliveLocker);
+                }
+            }
         }
 
         #endregion

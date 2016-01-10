@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Cowboy.Sockets.WebSockets
+﻿namespace Cowboy.Sockets.WebSockets
 {
     // 0 - 999 Status codes in the range 0-999 are not used.
     // 1000 - 1999 Status codes in the range 1000-1999 are reserved for definition by this protocol.

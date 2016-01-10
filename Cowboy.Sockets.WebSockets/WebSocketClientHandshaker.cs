@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
@@ -197,6 +196,11 @@ namespace Cowboy.Sockets.WebSockets
                 string subProtocol = headers["Sec-WebSocket-Protocol"];
                 if (!string.IsNullOrWhiteSpace(subProtocol) && !string.IsNullOrWhiteSpace(client.SubProtocol))
                 {
+                    if (!WebSocketHelpers.ValidateSubprotocol(subProtocol))
+                        throw new WebSocketException(string.Format(
+                            "Handshake with remote [{0}] failed due to invalid char in sub-protocol [{1}] with requested [{2}].",
+                            client.RemoteEndPoint, headers["Sec-WebSocket-Protocol"], client.SubProtocol));
+
                     var requestedSubProtocols = client.SubProtocol.Split(',').Select(p => p.Trim());
 
                     bool foundMatch = false;
