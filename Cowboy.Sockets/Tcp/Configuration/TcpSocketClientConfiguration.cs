@@ -19,7 +19,7 @@ namespace Cowboy.Sockets
             NoDelay = true;
             LingerState = new LingerOption(false, 0);
 
-            UseSsl = false;
+            SslEnabled = false;
             SslTargetHost = null;
             SslClientCertificates = new X509CertificateCollection();
             SslEncryptionPolicy = EncryptionPolicy.RequireEncryption;
@@ -39,7 +39,7 @@ namespace Cowboy.Sockets
         public bool NoDelay { get; set; }
         public LingerOption LingerState { get; set; }
 
-        public bool UseSsl { get; set; }
+        public bool SslEnabled { get; set; }
         public string SslTargetHost { get; set; }
         public X509CertificateCollection SslClientCertificates { get; set; }
         public EncryptionPolicy SslEncryptionPolicy { get; set; }

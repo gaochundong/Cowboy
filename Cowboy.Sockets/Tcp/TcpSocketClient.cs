@@ -189,7 +189,7 @@ namespace Cowboy.Sockets
 
         private Stream NegotiateStream(Stream stream)
         {
-            if (!_configuration.UseSsl)
+            if (!_configuration.SslEnabled)
                 return stream;
 
             var validateRemoteCertificate = new RemoteCertificateValidationCallback(

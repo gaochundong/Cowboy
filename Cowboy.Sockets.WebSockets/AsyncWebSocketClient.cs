@@ -32,7 +32,7 @@ namespace Cowboy.Sockets.WebSockets
         private static readonly byte[] HeaderTerminator = Encoding.UTF8.GetBytes("\r\n\r\n");
         private readonly string[] AllowedSchemes = new string[] { "ws", "wss" };
         private readonly Uri _uri;
-        private bool _isSsl = false;
+        private bool _sslEnabled = false;
         private string _secWebSocketKey;
 
         private int _state;
@@ -89,7 +89,7 @@ namespace Cowboy.Sockets.WebSockets
 
             _dispatcher = dispatcher;
             _configuration = configuration ?? new AsyncWebSocketClientConfiguration();
-            _isSsl = uri.Scheme.ToLowerInvariant() == "wss";
+            _sslEnabled = uri.Scheme.ToLowerInvariant() == "wss";
 
             Initialize();
         }
@@ -427,7 +427,7 @@ namespace Cowboy.Sockets.WebSockets
 
         private async Task<Stream> NegotiateStream(Stream stream)
         {
-            if (!_isSsl)
+            if (!_sslEnabled)
                 return stream;
 
             var validateRemoteCertificate = new RemoteCertificateValidationCallback(
