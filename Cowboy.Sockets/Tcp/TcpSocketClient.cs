@@ -54,8 +54,6 @@ namespace Cowboy.Sockets
             _localEndPoint = localEP;
             _configuration = configuration ?? new TcpSocketClientConfiguration();
 
-            this.ConnectTimeout = TimeSpan.FromSeconds(5);
-
             Initialize();
         }
 
@@ -68,7 +66,7 @@ namespace Cowboy.Sockets
 
         #region Properties
 
-        public TimeSpan ConnectTimeout { get; set; }
+        public TimeSpan ConnectTimeout { get { return _configuration.ConnectTimeout; } }
         public bool Connected { get { return _tcpClient != null && _tcpClient.Client.Connected; } }
         public IPEndPoint RemoteEndPoint { get { return Connected ? (IPEndPoint)_tcpClient.Client.RemoteEndPoint : _remoteEndPoint; } }
         public IPEndPoint LocalEndPoint { get { return Connected ? (IPEndPoint)_tcpClient.Client.LocalEndPoint : _localEndPoint; } }

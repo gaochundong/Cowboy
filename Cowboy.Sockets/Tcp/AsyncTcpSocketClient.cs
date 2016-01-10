@@ -69,8 +69,6 @@ namespace Cowboy.Sockets
             _dispatcher = dispatcher;
             _configuration = configuration ?? new AsyncTcpSocketClientConfiguration();
 
-            this.ConnectTimeout = TimeSpan.FromSeconds(30);
-
             Initialize();
         }
 
@@ -134,7 +132,8 @@ namespace Cowboy.Sockets
 
         #region Properties
 
-        public TimeSpan ConnectTimeout { get; set; }
+        public TimeSpan ConnectTimeout { get { return _configuration.ConnectTimeout; } }
+
         public IPEndPoint RemoteEndPoint
         {
             get

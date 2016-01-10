@@ -26,6 +26,8 @@ namespace Cowboy.Sockets
             SslEnabledProtocols = SslProtocols.Ssl3 | SslProtocols.Tls;
             SslCheckCertificateRevocation = false;
             SslPolicyErrorsBypassed = false;
+
+            ConnectTimeout = TimeSpan.FromSeconds(15);
         }
 
         public bool Framing { get; set; }
@@ -44,5 +46,7 @@ namespace Cowboy.Sockets
         public SslProtocols SslEnabledProtocols { get; set; }
         public bool SslCheckCertificateRevocation { get; set; }
         public bool SslPolicyErrorsBypassed { get; set; }
+
+        public TimeSpan ConnectTimeout { get; set; }
     }
 }

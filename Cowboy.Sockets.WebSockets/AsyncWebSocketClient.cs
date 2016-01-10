@@ -91,8 +91,6 @@ namespace Cowboy.Sockets.WebSockets
             _configuration = configuration ?? new AsyncWebSocketClientConfiguration();
             _isSsl = uri.Scheme.ToLowerInvariant() == "wss";
 
-            this.ConnectTimeout = TimeSpan.FromSeconds(5);
-
             Initialize();
         }
 
@@ -129,7 +127,9 @@ namespace Cowboy.Sockets.WebSockets
 
         #region Properties
 
-        public TimeSpan ConnectTimeout { get; set; }
+        public TimeSpan ConnectTimeout { get { return _configuration.ConnectTimeout; } }
+        public TimeSpan KeepAliveInterval { get { return _configuration.KeepAliveInterval; } }
+
         public IPEndPoint RemoteEndPoint
         {
             get
@@ -271,8 +271,8 @@ namespace Cowboy.Sockets.WebSockets
             {
                 try
                 {
-                    var closingFrame = new CloseFrame(closeStatus, closeStatusDescription).ToArray();
-                    await SendFrame(closingFrame);
+                    var closingHandshake = new CloseFrame(closeStatus, closeStatusDescription).ToArray();
+                    await SendFrame(closingHandshake);
                 }
                 catch (Exception) { }
             }
