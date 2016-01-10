@@ -42,7 +42,7 @@ namespace Cowboy.Sockets.WebSockets
         private const int _closing = 3;
         private const int _disposed = 5;
 
-        private readonly object _keepAliveLocker = new object();
+        private readonly SemaphoreSlim _keepAliveLocker = new SemaphoreSlim(1, 1);
         private KeepAliveTracker _keepAliveTracker;
 
         #endregion
@@ -125,7 +125,7 @@ namespace Cowboy.Sockets.WebSockets
         {
             _bufferManager = new GrowingByteBufferManager(_configuration.InitialBufferAllocationCount, _configuration.ReceiveBufferSize);
 
-            _keepAliveTracker = KeepAliveTracker.Create(KeepAliveInterval, new TimerCallback(OnKeepAlive));
+            _keepAliveTracker = KeepAliveTracker.Create(KeepAliveInterval, new TimerCallback((s) => OnKeepAlive()));
         }
 
         #endregion
@@ -244,6 +244,8 @@ namespace Cowboy.Sockets.WebSockets
                     DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
                 await _dispatcher.OnServerConnected(this);
 
+                _keepAliveTracker.StartTimer();
+
                 Task.Run(async () =>
                 {
                     await Process();
@@ -281,6 +283,9 @@ namespace Cowboy.Sockets.WebSockets
                             if (_stream.CanWrite)
                             {
                                 await _stream.WriteAsync(closingHandshake, 0, closingHandshake.Length);
+#if DEBUG
+                                _log.DebugFormat("Send client side close frame [{0}] [{1}].", closeStatus, closeStatusDescription);
+#endif
                             }
                         }
                         catch (Exception ex) when (!ShouldThrow(ex)) { }
@@ -352,6 +357,7 @@ namespace Cowboy.Sockets.WebSockets
                     if (receiveCount == 0)
                         break;
 
+                    _keepAliveTracker.OnDataReceived();
                     BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
 
                     while (true)
@@ -387,7 +393,7 @@ namespace Cowboy.Sockets.WebSockets
                                                 closeStatusDescription = Encoding.UTF8.GetString(_sessionBuffer, header.Length + 2, header.PayloadLength - 2);
                                             }
 #if DEBUG
-                                            _log.DebugFormat("Received server side close frame [{0}] [{1}].", closeStatus, closeStatusDescription);
+                                            _log.DebugFormat("Receive server side close frame [{0}] [{1}].", closeStatus, closeStatusDescription);
 #endif
                                             await Close(closeStatus, closeStatusDescription);
                                         }
@@ -396,15 +402,21 @@ namespace Cowboy.Sockets.WebSockets
                                         {
                                             var ping = Encoding.UTF8.GetString(_sessionBuffer, header.Length, header.PayloadLength);
 #if DEBUG
-                                            _log.DebugFormat("Received server side ping frame [{0}].", ping);
+                                            _log.DebugFormat("Receive server side ping frame [{0}].", ping);
 #endif
                                             var pong = new PongFrame(ping).ToArray();
                                             await SendFrame(pong);
+#if DEBUG
+                                            _log.DebugFormat("Send client side pong frame [{0}].", string.Empty);
+#endif
                                         }
                                         break;
                                     case FrameOpCode.Pong:
                                         {
-
+                                            var pong = Encoding.UTF8.GetString(_sessionBuffer, header.Length, header.PayloadLength);
+#if DEBUG
+                                            _log.DebugFormat("Receive server side pong frame [{0}].", pong);
+#endif
                                         }
                                         break;
                                     default:
@@ -642,6 +654,7 @@ namespace Cowboy.Sockets.WebSockets
                 if (_stream.CanWrite)
                 {
                     await _stream.WriteAsync(frame, 0, frame.Length);
+                    _keepAliveTracker.OnDataSent();
                 }
             }
             catch (Exception ex) when (!ShouldThrow(ex)) { }
@@ -651,9 +664,9 @@ namespace Cowboy.Sockets.WebSockets
 
         #region Keep Alive
 
-        private async void OnKeepAlive(object sender)
+        private async void OnKeepAlive()
         {
-            if (Monitor.TryEnter(_keepAliveLocker))
+            if (await _keepAliveLocker.WaitAsync(0))
             {
                 try
                 {
@@ -665,7 +678,7 @@ namespace Cowboy.Sockets.WebSockets
                         var keepAliveFrame = new PingFrame().ToArray();
                         await SendFrame(keepAliveFrame);
 #if DEBUG
-                        _log.DebugFormat("Send client side ping frame [{0}].", DateTime.UtcNow);
+                        _log.DebugFormat("Send client side ping frame [{0}].", string.Empty);
 #endif
                         _keepAliveTracker.ResetTimer();
                     }
@@ -677,7 +690,7 @@ namespace Cowboy.Sockets.WebSockets
                 }
                 finally
                 {
-                    Monitor.Exit(_keepAliveLocker);
+                    _keepAliveLocker.Release();
                 }
             }
         }

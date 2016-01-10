@@ -9,7 +9,7 @@ namespace Cowboy.Sockets.WebSockets
         public abstract void OnDataReceived();
         public abstract void OnDataSent();
         public abstract void Dispose();
-        public abstract void StartTimer(AsyncWebSocketClient webSocket);
+        public abstract void StartTimer();
         public abstract void ResetTimer();
         public abstract bool ShouldSendKeepAlive();
 
@@ -37,7 +37,7 @@ namespace Cowboy.Sockets.WebSockets
             {
             }
 
-            public override void StartTimer(AsyncWebSocketClient webSocket)
+            public override void StartTimer()
             {
             }
 
@@ -82,20 +82,20 @@ namespace Cowboy.Sockets.WebSockets
                 ResetTimer((int)_keepAliveInterval.TotalMilliseconds);
             }
 
-            public override void StartTimer(AsyncWebSocketClient webSocket)
+            public override void StartTimer()
             {
                 int keepAliveIntervalMilliseconds = (int)_keepAliveInterval.TotalMilliseconds;
 
                 if (ExecutionContext.IsFlowSuppressed())
                 {
-                    _keepAliveTimer = new Timer(_keepAliveTimerElapsedCallback, webSocket, Timeout.Infinite, Timeout.Infinite);
+                    _keepAliveTimer = new Timer(_keepAliveTimerElapsedCallback, null, Timeout.Infinite, Timeout.Infinite);
                     _keepAliveTimer.Change(keepAliveIntervalMilliseconds, Timeout.Infinite);
                 }
                 else
                 {
                     using (ExecutionContext.SuppressFlow())
                     {
-                        _keepAliveTimer = new Timer(_keepAliveTimerElapsedCallback, webSocket, Timeout.Infinite, Timeout.Infinite);
+                        _keepAliveTimer = new Timer(_keepAliveTimerElapsedCallback, null, Timeout.Infinite, Timeout.Infinite);
                         _keepAliveTimer.Change(keepAliveIntervalMilliseconds, Timeout.Infinite);
                     }
                 }

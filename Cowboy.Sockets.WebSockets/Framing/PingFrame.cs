@@ -23,8 +23,15 @@ namespace Cowboy.Sockets.WebSockets
 
         public byte[] ToArray()
         {
-            var data = Encoding.UTF8.GetBytes(ApplicationData);
-            return Encode(OpCode, data, 0, data.Length);
+            if (!string.IsNullOrEmpty(ApplicationData))
+            {
+                var data = Encoding.UTF8.GetBytes(ApplicationData);
+                return Encode(OpCode, data, 0, data.Length);
+            }
+            else
+            {
+                return Encode(OpCode, new byte[0], 0, 0);
+            }
         }
     }
 }
