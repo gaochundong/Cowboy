@@ -36,7 +36,7 @@ namespace Cowboy.Sockets.WebSockets
 
             var sb = new StringBuilder();
 
-            sb.AppendFormatWithCrCf("GET {0} HTTP/1.1", !string.IsNullOrEmpty(client.Uri.PathAndQuery) ? client.Uri.PathAndQuery : "/");
+            sb.AppendFormatWithCrCf("GET {0} HTTP/1.1", !string.IsNullOrEmpty(client.Uri.AbsolutePath) ? client.Uri.AbsolutePath : "/");
             sb.AppendFormatWithCrCf("Host: {0}", client.Uri.Host);
 
             sb.AppendFormatWithCrCf("Upgrade: {0}", WebSocketUpgradeToken);
