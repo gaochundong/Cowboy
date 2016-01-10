@@ -166,6 +166,8 @@ namespace Cowboy.Sockets.WebSockets
                         return WebSocketState.Connecting;
                     case _connected:
                         return WebSocketState.Open;
+                    case _closing:
+                        return WebSocketState.Closing;
                     case _disposed:
                         return WebSocketState.Closed;
                     default:
