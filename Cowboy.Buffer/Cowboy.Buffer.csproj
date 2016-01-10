@@ -41,6 +41,7 @@
       <Link>SolutionVersion.cs</Link>
     </Compile>
     <Compile Include="BufferDeflector.cs" />
+    <Compile Include="BufferValidator.cs" />
     <Compile Include="FixedByteBufferManager.cs" />
     <Compile Include="GrowingByteBufferManager.cs" />
     <Compile Include="IBufferManager.cs" />

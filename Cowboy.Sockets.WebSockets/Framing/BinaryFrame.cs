@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Cowboy.Buffer;
 
 namespace Cowboy.Sockets.WebSockets
 {
@@ -10,7 +11,7 @@ namespace Cowboy.Sockets.WebSockets
     {
         public BinaryFrame(ArraySegment<byte> segment)
         {
-            WebSocketHelpers.ValidateArraySegment(segment, "segment");
+            BufferValidator.ValidateArraySegment(segment, "segment");
 
             this.Data = segment.Array;
             this.Offset = segment.Offset;
@@ -19,7 +20,7 @@ namespace Cowboy.Sockets.WebSockets
 
         public BinaryFrame(byte[] data, int offset, int count)
         {
-            WebSocketHelpers.ValidateBuffer(data, offset, count);
+            BufferValidator.ValidateBuffer(data, offset, count, "data");
 
             this.Data = data;
             this.Offset = offset;

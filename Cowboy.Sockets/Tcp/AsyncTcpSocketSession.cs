@@ -15,9 +15,6 @@ namespace Cowboy.Sockets
     {
         private static readonly ILog _log = Logger.Get<AsyncTcpSocketSession>();
         private TcpClient _tcpClient;
-        private readonly SemaphoreSlim _opsLock = new SemaphoreSlim(1, 1);
-        private readonly object _closeLock = new object();
-        private bool _closed = false;
         private readonly AsyncTcpSocketServerConfiguration _configuration;
         private readonly IBufferManager _bufferManager;
         private readonly IAsyncTcpSocketServerMessageDispatcher _dispatcher;
@@ -27,6 +24,12 @@ namespace Cowboy.Sockets
         private byte[] _receiveBuffer;
         private byte[] _sessionBuffer;
         private int _sessionBufferCount = 0;
+
+        private int _state;
+        private const int _none = 0;
+        private const int _connecting = 1;
+        private const int _connected = 2;
+        private const int _disposed = 5;
 
         public AsyncTcpSocketSession(
             TcpClient tcpClient,
@@ -58,112 +61,135 @@ namespace Cowboy.Sockets
 
         public string SessionKey { get { return _sessionKey; } }
         public DateTime StartTime { get; private set; }
-        public bool Connected { get { return _tcpClient != null && _tcpClient.Connected; } }
-        public IPEndPoint RemoteEndPoint { get { return Connected ? (IPEndPoint)_tcpClient.Client.RemoteEndPoint : null; } }
-        public IPEndPoint LocalEndPoint { get { return Connected ? (IPEndPoint)_tcpClient.Client.LocalEndPoint : null; } }
+        public IPEndPoint RemoteEndPoint
+        {
+            get
+            {
+                return (_tcpClient != null && _tcpClient.Client.Connected) ?
+                    (IPEndPoint)_tcpClient.Client.RemoteEndPoint : null;
+            }
+        }
+        public IPEndPoint LocalEndPoint
+        {
+            get
+            {
+                return (_tcpClient != null && _tcpClient.Client.Connected) ?
+                    (IPEndPoint)_tcpClient.Client.LocalEndPoint : null;
+            }
+        }
         public AsyncTcpSocketServer Server { get { return _server; } }
+
+        public TcpSocketState State
+        {
+            get
+            {
+                switch (_state)
+                {
+                    case _none:
+                        return TcpSocketState.None;
+                    case _connecting:
+                        return TcpSocketState.Connecting;
+                    case _connected:
+                        return TcpSocketState.Connected;
+                    case _disposed:
+                        return TcpSocketState.Closed;
+                    default:
+                        return TcpSocketState.Closed;
+                }
+            }
+        }
 
         internal async Task Start()
         {
-            if (await _opsLock.WaitAsync(0))
+            int origin = Interlocked.CompareExchange(ref _state, _connecting, _none);
+            if (origin == _disposed)
             {
-                try
+                throw new ObjectDisposedException(GetType().FullName);
+            }
+            else if (origin != _none)
+            {
+                throw new InvalidOperationException("This tcp socket session has already started.");
+            }
+
+            try
+            {
+                ConfigureClient();
+
+                var negotiatorTimeout = TimeSpan.FromSeconds(30);
+                var negotiator = NegotiateStream(_tcpClient.GetStream());
+                if (!negotiator.Wait(negotiatorTimeout))
                 {
-                    if (Connected)
-                    {
-                        _closed = false;
-
-                        ConfigureClient();
-
-                        var negotiatorTimeout = TimeSpan.FromSeconds(30);
-                        var negotiator = NegotiateStream(_tcpClient.GetStream());
-                        if (!negotiator.Wait(negotiatorTimeout))
-                        {
-                            throw new TimeoutException(string.Format(
-                                "Negotiate SSL/TSL with remote [{0}] timeout [{1}].", this.RemoteEndPoint, negotiatorTimeout));
-                        }
-                        _stream = negotiator.Result;
-
-                        _receiveBuffer = _bufferManager.BorrowBuffer();
-                        _sessionBuffer = _bufferManager.BorrowBuffer();
-                        _sessionBufferCount = 0;
-
-                        _log.DebugFormat("Session started for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
-                            this.RemoteEndPoint,
-                            this.StartTime.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"),
-                            _dispatcher.GetType().Name,
-                            this.Server.SessionCount);
-                        await _dispatcher.OnSessionStarted(this);
-
-                        await Process();
-                    }
+                    throw new TimeoutException(string.Format(
+                        "Negotiate SSL/TSL with remote [{0}] timeout [{1}].", this.RemoteEndPoint, negotiatorTimeout));
                 }
-                catch (Exception ex)
-                when (ex is TimeoutException)
+                _stream = negotiator.Result;
+
+                _receiveBuffer = _bufferManager.BorrowBuffer();
+                _sessionBuffer = _bufferManager.BorrowBuffer();
+                _sessionBufferCount = 0;
+
+                if (Interlocked.CompareExchange(ref _state, _connected, _connecting) != _connecting)
                 {
-                    _log.Error(ex.Message, ex);
-                    await Close();
+                    throw new ObjectDisposedException(GetType().FullName);
                 }
-                finally
-                {
-                    _opsLock.Release();
-                }
+
+                _log.DebugFormat("Session started for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
+                    this.RemoteEndPoint,
+                    this.StartTime.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"),
+                    _dispatcher.GetType().Name,
+                    this.Server.SessionCount);
+                await _dispatcher.OnSessionStarted(this);
+
+                await Process();
+            }
+            catch (Exception ex)
+            when (ex is TimeoutException)
+            {
+                _log.Error(ex.Message, ex);
+                await Close();
             }
         }
 
         public async Task Close()
         {
-            if (Monitor.TryEnter(_closeLock))
+            if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
             {
-                try
+                return;
+            }
+
+            try
+            {
+                if (_stream != null)
                 {
-                    if (!_closed)
-                    {
-                        _closed = true;
-
-                        try
-                        {
-                            if (_stream != null)
-                            {
-                                _stream.Close();
-                                _stream = null;
-                            }
-                            if (_tcpClient != null && _tcpClient.Connected)
-                            {
-                                _tcpClient.Close();
-                                _tcpClient = null;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            _log.Error(ex.Message, ex);
-                        }
-
-                        if (_receiveBuffer != null)
-                            _bufferManager.ReturnBuffer(_receiveBuffer);
-                        if (_sessionBuffer != null)
-                            _bufferManager.ReturnBuffer(_sessionBuffer);
-
-                        _log.DebugFormat("Session closed for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
-                            this.RemoteEndPoint,
-                            DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"),
-                            _dispatcher.GetType().Name,
-                            this.Server.SessionCount - 1);
-                        await _dispatcher.OnSessionClosed(this);
-                    }
+                    _stream.Dispose();
+                    _stream = null;
                 }
-                finally
+                if (_tcpClient != null && _tcpClient.Connected)
                 {
-                    Monitor.Exit(_closeLock);
+                    _tcpClient.Dispose();
+                    _tcpClient = null;
                 }
             }
+            catch (Exception) { }
+
+            if (_receiveBuffer != null)
+                _bufferManager.ReturnBuffer(_receiveBuffer);
+            if (_sessionBuffer != null)
+                _bufferManager.ReturnBuffer(_sessionBuffer);
+
+            _log.DebugFormat("Session closed for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
+                this.RemoteEndPoint,
+                DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"),
+                _dispatcher.GetType().Name,
+                this.Server.SessionCount - 1);
+            await _dispatcher.OnSessionClosed(this);
         }
 
         private async Task Process()
         {
             try
             {
-                while (Connected)
+                while (State == TcpSocketState.Connected)
                 {
                     int receiveCount = await _stream.ReadAsync(_receiveBuffer, 0, _receiveBuffer.Length);
                     if (receiveCount == 0)
@@ -207,12 +233,11 @@ namespace Cowboy.Sockets
 
         public async Task Send(byte[] data, int offset, int count)
         {
-            if (data == null)
-                throw new ArgumentNullException("data");
+            BufferValidator.ValidateBuffer(data, offset, count, "data");
 
-            if (!Connected)
+            if (State != TcpSocketState.Connected)
             {
-                throw new InvalidProgramException("This session has been closed.");
+                throw new InvalidOperationException("This session has not connected.");
             }
 
             try

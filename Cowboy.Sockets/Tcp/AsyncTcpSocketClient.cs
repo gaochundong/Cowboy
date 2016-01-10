@@ -405,10 +405,7 @@ namespace Cowboy.Sockets
 
         public async Task Send(byte[] data, int offset, int count)
         {
-            if (data == null)
-            {
-                throw new ArgumentNullException("data");
-            }
+            BufferValidator.ValidateBuffer(data, offset, count, "data");
 
             if (State != TcpSocketState.Connected)
             {
