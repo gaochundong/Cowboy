@@ -262,60 +262,82 @@ namespace Cowboy.Sockets.WebSockets
 
         public async Task Close(WebSocketCloseStatus closeStatus, string closeStatusDescription)
         {
+            if (State == WebSocketState.Closed || State == WebSocketState.None)
+                return;
+
             var priorState = Interlocked.Exchange(ref _state, _closing);
-            if (priorState == _disposed)
+            switch (priorState)
+            {
+                case _connected:
+                    {
+                        var closingHandshake = new CloseFrame(closeStatus, closeStatusDescription).ToArray();
+                        try
+                        {
+                            if (_stream.CanWrite)
+                            {
+                                await _stream.WriteAsync(closingHandshake, 0, closingHandshake.Length);
+                            }
+                        }
+                        catch (Exception ex) when (!ShouldThrow(ex)) { }
+                        return;
+                    }
+                case _connecting:
+                case _closing:
+                    {
+                        await Close();
+                        return;
+                    }
+                case _disposed:
+                case _none:
+                default:
+                    return;
+            }
+        }
+
+        private async Task Close()
+        {
+            if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
             {
                 return;
             }
-            else if (priorState == _connected)
+
+            try
             {
-                try
+                if (_stream != null)
                 {
-                    var closingHandshake = new CloseFrame(closeStatus, closeStatusDescription).ToArray();
-                    await SendFrame(closingHandshake);
+                    _stream.Dispose();
+                    _stream = null;
                 }
-                catch (Exception) { }
+                if (_tcpClient != null && _tcpClient.Connected)
+                {
+                    _tcpClient.Dispose();
+                    _tcpClient = null;
+                }
             }
-            else
-            {
-                if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
-                {
-                    return;
-                }
+            catch (Exception) { }
 
-                try
-                {
-                    if (_stream != null)
-                    {
-                        _stream.Dispose();
-                        _stream = null;
-                    }
-                    if (_tcpClient != null && _tcpClient.Connected)
-                    {
-                        _tcpClient.Dispose();
-                        _tcpClient = null;
-                    }
-                }
-                catch (Exception) { }
+            if (_receiveBuffer != null)
+                _bufferManager.ReturnBuffer(_receiveBuffer);
+            if (_sessionBuffer != null)
+                _bufferManager.ReturnBuffer(_sessionBuffer);
 
-                if (_receiveBuffer != null)
-                    _bufferManager.ReturnBuffer(_receiveBuffer);
-                if (_sessionBuffer != null)
-                    _bufferManager.ReturnBuffer(_sessionBuffer);
+            _log.DebugFormat("Disconnected from server [{0}] with dispatcher [{1}] on [{2}].",
+                this.RemoteEndPoint,
+                _dispatcher.GetType().Name,
+                DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
+            await _dispatcher.OnServerDisconnected(this);
+        }
 
-                _log.DebugFormat("Disconnected from server [{0}] with dispatcher [{1}] on [{2}].",
-                    this.RemoteEndPoint,
-                    _dispatcher.GetType().Name,
-                    DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
-                await _dispatcher.OnServerDisconnected(this);
-            }
+        public async Task Abort()
+        {
+            await Close();
         }
 
         private async Task Process()
         {
             try
             {
-                while (State == WebSocketState.Open)
+                while (State == WebSocketState.Open || State == WebSocketState.Closing)
                 {
                     int receiveCount = await _stream.ReadAsync(_receiveBuffer, 0, _receiveBuffer.Length);
                     if (receiveCount == 0)
@@ -349,22 +371,24 @@ namespace Cowboy.Sockets.WebSockets
                                         {
                                             var statusCode = _sessionBuffer[header.Length] * 256 + _sessionBuffer[header.Length + 1];
                                             var closeStatus = (WebSocketCloseStatus)statusCode;
+                                            var closeStatusDescription = string.Empty;
 
                                             if (header.PayloadLength > 2)
                                             {
-                                                var closeStatusDescription = Encoding.UTF8.GetString(_sessionBuffer, header.Length + 2, header.PayloadLength - 2);
-                                                await Close(closeStatus, closeStatusDescription);
+                                                closeStatusDescription = Encoding.UTF8.GetString(_sessionBuffer, header.Length + 2, header.PayloadLength - 2);
                                             }
-                                            else
-                                            {
-                                                await Close(closeStatus);
-                                            }
+
+                                            _log.DebugFormat("Received server side close frame [{0}] [{1}].", closeStatus, closeStatusDescription);
+
+                                            await Close(closeStatus, closeStatusDescription);
                                         }
                                         break;
                                     case FrameOpCode.Ping:
                                         {
                                             var ping = Encoding.UTF8.GetString(_sessionBuffer, header.Length, header.PayloadLength);
-                                            _log.DebugFormat("Received server side ping [{0}].", ping);
+
+                                            _log.DebugFormat("Received server side ping frame [{0}].", ping);
+
                                             var pong = new PongFrame(ping).ToArray();
                                             await SendFrame(pong);
                                         }
@@ -385,6 +409,8 @@ namespace Cowboy.Sockets.WebSockets
                             catch (Exception ex)
                             {
                                 _log.Error(ex.Message, ex);
+                                await Close(WebSocketCloseStatus.AbnormalClosure);
+                                throw;
                             }
 
                             BufferDeflector.ShiftBuffer(_bufferManager, header.Length + header.PayloadLength, ref _sessionBuffer, ref _sessionBufferCount);
