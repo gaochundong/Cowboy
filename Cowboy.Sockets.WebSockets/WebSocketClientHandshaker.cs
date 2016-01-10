@@ -192,25 +192,34 @@ namespace Cowboy.Sockets.WebSockets
             // not present in the client's handshake (the server has indicated a
             // subprotocol not requested by the client), the client MUST _Fail
             // the WebSocket Connection_.
-            string subProtocol = headers["Sec-WebSocket-Protocol"];
-            if (!string.IsNullOrWhiteSpace(subProtocol) && !string.IsNullOrWhiteSpace(client.SubProtocol))
+            if (headers.ContainsKey("Sec-WebSocket-Protocol"))
             {
-                var requestedSubProtocols = client.SubProtocol.Split(',').Select(p => p.Trim());
-
-                bool foundMatch = false;
-                foreach (string requestedSubProtocol in requestedSubProtocols)
+                string subProtocol = headers["Sec-WebSocket-Protocol"];
+                if (!string.IsNullOrWhiteSpace(subProtocol) && !string.IsNullOrWhiteSpace(client.SubProtocol))
                 {
-                    if (string.Equals(requestedSubProtocol, subProtocol, StringComparison.OrdinalIgnoreCase))
+                    var requestedSubProtocols = client.SubProtocol.Split(',').Select(p => p.Trim());
+
+                    bool foundMatch = false;
+                    foreach (string requestedSubProtocol in requestedSubProtocols)
                     {
-                        foundMatch = true;
-                        break;
+                        if (string.Equals(requestedSubProtocol, subProtocol, StringComparison.OrdinalIgnoreCase))
+                        {
+                            foundMatch = true;
+                            break;
+                        }
+                    }
+                    if (!foundMatch)
+                    {
+                        throw new WebSocketException(string.Format(
+                            "Handshake with remote [{0}] failed due to accept unsupported sub-protocol [{1}] not in requested [{2}].",
+                            client.RemoteEndPoint, headers["Sec-WebSocket-Protocol"], client.SubProtocol));
                     }
                 }
-                if (!foundMatch)
+                else
                 {
                     throw new WebSocketException(string.Format(
-                        "Handshake with remote [{0}] failed due to accept unsupported sub-protocol [{1}].",
-                        client.RemoteEndPoint, headers["Sec-WebSocket-Protocol"]));
+                        "Handshake with remote [{0}] failed due to mismatched sub-protocol [{1}] with requested [{2}].",
+                        client.RemoteEndPoint, headers["Sec-WebSocket-Protocol"], client.SubProtocol));
                 }
             }
 
@@ -219,25 +228,34 @@ namespace Cowboy.Sockets.WebSockets
             // that was not present in the client's handshake (the server has
             // indicated an extension not requested by the client), the client
             // MUST _Fail the WebSocket Connection_.
-            string extensions = headers["Sec-WebSocket-Extensions"];
-            if (!string.IsNullOrWhiteSpace(extensions) && !string.IsNullOrWhiteSpace(client.Extensions))
+            if (headers.ContainsKey("Sec-WebSocket-Extensions"))
             {
-                var requestedExtensions = client.Extensions.Split(',').Select(p => p.Trim());
-
-                bool foundMatch = false;
-                foreach (string requestedExtension in requestedExtensions)
+                string extensions = headers["Sec-WebSocket-Extensions"];
+                if (!string.IsNullOrWhiteSpace(extensions) && !string.IsNullOrWhiteSpace(client.Extensions))
                 {
-                    if (string.Equals(requestedExtension, extensions, StringComparison.OrdinalIgnoreCase))
+                    var requestedExtensions = client.Extensions.Split(',').Select(p => p.Trim());
+
+                    bool foundMatch = false;
+                    foreach (string requestedExtension in requestedExtensions)
                     {
-                        foundMatch = true;
-                        break;
+                        if (string.Equals(requestedExtension, extensions, StringComparison.OrdinalIgnoreCase))
+                        {
+                            foundMatch = true;
+                            break;
+                        }
+                    }
+                    if (!foundMatch)
+                    {
+                        throw new WebSocketException(string.Format(
+                            "Handshake with remote [{0}] failed due to accept unsupported extensions [{1}] not in requested [{2}].",
+                            client.RemoteEndPoint, headers["Sec-WebSocket-Extensions"], client.Extensions));
                     }
                 }
-                if (!foundMatch)
+                else
                 {
                     throw new WebSocketException(string.Format(
-                        "Handshake with remote [{0}] failed due to accept unsupported extensions [{1}].",
-                        client.RemoteEndPoint, headers["Sec-WebSocket-Extensions"]));
+                        "Handshake with remote [{0}] failed due to mismatched extensions [{1}] with requested [{2}].",
+                        client.RemoteEndPoint, headers["Sec-WebSocket-Extensions"], client.Extensions));
                 }
             }
 
