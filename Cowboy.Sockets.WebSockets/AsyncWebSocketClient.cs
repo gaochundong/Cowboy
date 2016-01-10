@@ -282,10 +282,7 @@ namespace Cowboy.Sockets.WebSockets
                     _tcpClient = null;
                 }
             }
-            catch (Exception ex)
-            {
-                _log.Error(ex.Message, ex);
-            }
+            catch (Exception) { }
 
             if (_receiveBuffer != null)
                 _bufferManager.ReturnBuffer(_receiveBuffer);
@@ -572,7 +569,7 @@ namespace Cowboy.Sockets.WebSockets
         {
             if (State != WebSocketState.Open)
             {
-                throw new InvalidProgramException("This client has not connected to server.");
+                throw new InvalidOperationException("This client has not connected to server.");
             }
 
             try

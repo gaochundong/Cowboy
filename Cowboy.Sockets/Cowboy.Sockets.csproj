@@ -63,6 +63,7 @@
     <Compile Include="Tcp\TcpSocketClient.cs" />
     <Compile Include="Tcp\AsyncTcpSocketServer.cs" />
     <Compile Include="Tcp\TcpSocketServer.cs" />
+    <Compile Include="Tcp\TcpSocketState.cs" />
     <Compile Include="TplExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
