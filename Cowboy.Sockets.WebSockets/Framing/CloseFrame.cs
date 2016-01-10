@@ -13,15 +13,15 @@ namespace Cowboy.Sockets.WebSockets
         {
         }
 
-        public CloseFrame(int statusCode, string closeReason)
+        public CloseFrame(WebSocketCloseStatus closeStatus, string closeStatusDescription)
             : this()
         {
-            this.StatusCode = statusCode;
-            this.CloseReason = closeReason;
+            this.CloseStatus = closeStatus;
+            this.CloseStatusDescription = closeStatusDescription;
         }
 
-        public int StatusCode { get; private set; }
-        public string CloseReason { get; private set; }
+        public WebSocketCloseStatus CloseStatus { get; private set; }
+        public string CloseStatusDescription { get; private set; }
 
         public override FrameOpCode OpCode
         {
@@ -43,19 +43,19 @@ namespace Cowboy.Sockets.WebSockets
             // may be useful for debugging or passing information relevant to the
             // script that opened the connection.  As the data is not guaranteed to
             // be human readable, clients MUST NOT show it to end users.
-            int payloadLength = (string.IsNullOrEmpty(CloseReason) ? 0 : Encoding.UTF8.GetMaxByteCount(CloseReason.Length)) + 2;
+            int payloadLength = (string.IsNullOrEmpty(CloseStatusDescription) ? 0 : Encoding.UTF8.GetMaxByteCount(CloseStatusDescription.Length)) + 2;
 
             byte[] payload = new byte[payloadLength];
 
-            int higherByte = StatusCode / 256;
-            int lowerByte = StatusCode % 256;
+            int higherByte = (int)CloseStatus / 256;
+            int lowerByte = (int)CloseStatus % 256;
 
             payload[0] = (byte)higherByte;
             payload[1] = (byte)lowerByte;
 
-            if (!string.IsNullOrEmpty(CloseReason))
+            if (!string.IsNullOrEmpty(CloseStatusDescription))
             {
-                int count = Encoding.UTF8.GetBytes(CloseReason, 0, CloseReason.Length, payload, 2);
+                int count = Encoding.UTF8.GetBytes(CloseStatusDescription, 0, CloseStatusDescription.Length, payload, 2);
                 return Encode(OpCode, payload, 0, 2 + count);
             }
             else

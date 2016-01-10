@@ -39,6 +39,7 @@ namespace Cowboy.Sockets.WebSockets
         private const int _none = 0;
         private const int _connecting = 1;
         private const int _connected = 2;
+        private const int _closing = 3;
         private const int _disposed = 5;
 
         #endregion
@@ -247,14 +248,9 @@ namespace Cowboy.Sockets.WebSockets
             when (ex is TimeoutException || ex is WebSocketException)
             {
                 _log.Error(ex.Message, ex);
-                await Close();
+                await Close(WebSocketCloseStatus.EndpointUnavailable);
                 throw;
             }
-        }
-
-        internal async Task Close()
-        {
-            await Close(WebSocketCloseStatus.AbnormalClosure);
         }
 
         public async Task Close(WebSocketCloseStatus closeStatus)
@@ -262,38 +258,55 @@ namespace Cowboy.Sockets.WebSockets
             await Close(closeStatus, null);
         }
 
-        public async Task Close(WebSocketCloseStatus closeStatus, string closeDescription)
+        public async Task Close(WebSocketCloseStatus closeStatus, string closeStatusDescription)
         {
-            if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
+            var priorState = Interlocked.Exchange(ref _state, _closing);
+            if (priorState == _disposed)
             {
                 return;
             }
-
-            try
+            else if (priorState == _connected)
             {
-                if (_stream != null)
+                try
                 {
-                    _stream.Dispose();
-                    _stream = null;
+                    var closingFrame = new CloseFrame(closeStatus, closeStatusDescription).ToArray();
+                    await SendFrame(closingFrame);
                 }
-                if (_tcpClient != null && _tcpClient.Connected)
-                {
-                    _tcpClient.Dispose();
-                    _tcpClient = null;
-                }
+                catch (Exception) { }
             }
-            catch (Exception) { }
+            else
+            {
+                if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
+                {
+                    return;
+                }
 
-            if (_receiveBuffer != null)
-                _bufferManager.ReturnBuffer(_receiveBuffer);
-            if (_sessionBuffer != null)
-                _bufferManager.ReturnBuffer(_sessionBuffer);
+                try
+                {
+                    if (_stream != null)
+                    {
+                        _stream.Dispose();
+                        _stream = null;
+                    }
+                    if (_tcpClient != null && _tcpClient.Connected)
+                    {
+                        _tcpClient.Dispose();
+                        _tcpClient = null;
+                    }
+                }
+                catch (Exception) { }
 
-            _log.DebugFormat("Disconnected from server [{0}] with dispatcher [{1}] on [{2}].",
-                this.RemoteEndPoint,
-                _dispatcher.GetType().Name,
-                DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
-            await _dispatcher.OnServerDisconnected(this);
+                if (_receiveBuffer != null)
+                    _bufferManager.ReturnBuffer(_receiveBuffer);
+                if (_sessionBuffer != null)
+                    _bufferManager.ReturnBuffer(_sessionBuffer);
+
+                _log.DebugFormat("Disconnected from server [{0}] with dispatcher [{1}] on [{2}].",
+                    this.RemoteEndPoint,
+                    _dispatcher.GetType().Name,
+                    DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
+                await _dispatcher.OnServerDisconnected(this);
+            }
         }
 
         private async Task Process()
@@ -332,7 +345,18 @@ namespace Cowboy.Sockets.WebSockets
                                         break;
                                     case FrameOpCode.Close:
                                         {
+                                            var statusCode = _sessionBuffer[header.Length] * 256 + _sessionBuffer[header.Length + 1];
+                                            var closeStatus = (WebSocketCloseStatus)statusCode;
 
+                                            if (header.PayloadLength > 2)
+                                            {
+                                                var closeStatusDescription = Encoding.UTF8.GetString(_sessionBuffer, header.Length + 2, header.PayloadLength - 2);
+                                                await Close(closeStatus, closeStatusDescription);
+                                            }
+                                            else
+                                            {
+                                                await Close(closeStatus);
+                                            }
                                         }
                                         break;
                                     case FrameOpCode.Ping:
@@ -350,7 +374,7 @@ namespace Cowboy.Sockets.WebSockets
                                         break;
                                     default:
                                         {
-                                            await Close();
+                                            await Close(WebSocketCloseStatus.InvalidMessageType);
                                             throw new NotSupportedException(
                                                 string.Format("Not support received opcode [{0}].", (byte)header.OpCode));
                                         }
@@ -373,7 +397,7 @@ namespace Cowboy.Sockets.WebSockets
             catch (Exception ex) when (!ShouldThrow(ex)) { }
             finally
             {
-                await Close();
+                await Close(WebSocketCloseStatus.AbnormalClosure);
             }
         }
 
@@ -567,9 +591,13 @@ namespace Cowboy.Sockets.WebSockets
 
         private async Task SendFrame(byte[] frame)
         {
+            if (frame == null)
+            {
+                throw new ArgumentNullException("frame");
+            }
             if (State != WebSocketState.Open)
             {
-                throw new InvalidOperationException("This client has not connected to server.");
+                throw new InvalidOperationException("This websocket client has not connected to server.");
             }
 
             try
