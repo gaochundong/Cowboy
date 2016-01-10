@@ -228,36 +228,6 @@ namespace Cowboy.Sockets.WebSockets
             // that was not present in the client's handshake (the server has
             // indicated an extension not requested by the client), the client
             // MUST _Fail the WebSocket Connection_.
-            if (headers.ContainsKey("Sec-WebSocket-Extensions"))
-            {
-                string extensions = headers["Sec-WebSocket-Extensions"];
-                if (!string.IsNullOrWhiteSpace(extensions) && !string.IsNullOrWhiteSpace(client.Extensions))
-                {
-                    var requestedExtensions = client.Extensions.Split(',').Select(p => p.Trim());
-
-                    bool foundMatch = false;
-                    foreach (string requestedExtension in requestedExtensions)
-                    {
-                        if (string.Equals(requestedExtension, extensions, StringComparison.OrdinalIgnoreCase))
-                        {
-                            foundMatch = true;
-                            break;
-                        }
-                    }
-                    if (!foundMatch)
-                    {
-                        throw new WebSocketException(string.Format(
-                            "Handshake with remote [{0}] failed due to accept unsupported extensions [{1}] not in requested [{2}].",
-                            client.RemoteEndPoint, headers["Sec-WebSocket-Extensions"], client.Extensions));
-                    }
-                }
-                else
-                {
-                    throw new WebSocketException(string.Format(
-                        "Handshake with remote [{0}] failed due to mismatched extensions [{1}] with requested [{2}].",
-                        client.RemoteEndPoint, headers["Sec-WebSocket-Extensions"], client.Extensions));
-                }
-            }
 
             return true;
         }

@@ -21,9 +21,6 @@ namespace Cowboy.Sockets.WebSockets
         private static readonly ILog _log = Logger.Get<AsyncWebSocketClient>();
         private IBufferManager _bufferManager;
         private TcpClient _tcpClient;
-        private readonly SemaphoreSlim _opsLock = new SemaphoreSlim(1, 1);
-        private readonly object _closeLock = new object();
-        private bool _closed = false;
         private readonly IAsyncWebSocketClientMessageDispatcher _dispatcher;
         private readonly AsyncWebSocketClientConfiguration _configuration;
         private IPEndPoint _remoteEndPoint;
@@ -37,6 +34,12 @@ namespace Cowboy.Sockets.WebSockets
         private readonly Uri _uri;
         private bool _isSsl = false;
         private string _secWebSocketKey;
+
+        private int _state;
+        private const int _none = 0;
+        private const int _connecting = 1;
+        private const int _connected = 2;
+        private const int _disposed = 5;
 
         #endregion
 
@@ -126,20 +129,49 @@ namespace Cowboy.Sockets.WebSockets
         #region Properties
 
         public TimeSpan ConnectTimeout { get; set; }
-        public bool Connected { get { return _tcpClient != null && _tcpClient.Client.Connected; } }
-        public IPEndPoint RemoteEndPoint { get { return Connected ? (IPEndPoint)_tcpClient.Client.RemoteEndPoint : _remoteEndPoint; } }
-        public IPEndPoint LocalEndPoint { get { return Connected ? (IPEndPoint)_tcpClient.Client.LocalEndPoint : null; } }
+        public IPEndPoint RemoteEndPoint
+        {
+            get
+            {
+                return (_tcpClient != null && _tcpClient.Client.Connected) ?
+                    (IPEndPoint)_tcpClient.Client.RemoteEndPoint : _remoteEndPoint;
+            }
+        }
+        public IPEndPoint LocalEndPoint
+        {
+            get
+            {
+                return (_tcpClient != null && _tcpClient.Client.Connected) ?
+                    (IPEndPoint)_tcpClient.Client.LocalEndPoint : null;
+            }
+        }
 
+        public Uri Uri { get { return _uri; } }
         public string SubProtocol { get; private set; }
         public string Version { get { return "13"; } }
         public string Extensions { get; set; }
         public string Origin { get; set; }
         public Dictionary<string, string> Cookies { get; set; }
 
-        public Uri Uri { get { return _uri; } }
-        //public WebSocketCloseStatus? CloseStatus;
-        //public string CloseStatusDescription;
-        //public WebSocketState State;
+        public WebSocketState State
+        {
+            get
+            {
+                switch (_state)
+                {
+                    case _none:
+                        return WebSocketState.None;
+                    case _connecting:
+                        return WebSocketState.Connecting;
+                    case _connected:
+                        return WebSocketState.Open;
+                    case _disposed:
+                        return WebSocketState.Closed;
+                    default:
+                        return WebSocketState.Closed;
+                }
+            }
+        }
 
         #endregion
 
@@ -147,127 +179,131 @@ namespace Cowboy.Sockets.WebSockets
 
         public async Task Connect()
         {
-            if (await _opsLock.WaitAsync(0))
+            int origin = Interlocked.CompareExchange(ref _state, _connecting, _none);
+            if (origin == _disposed)
             {
-                try
+                throw new ObjectDisposedException(GetType().FullName);
+            }
+            else if (origin != _none)
+            {
+                throw new InvalidOperationException("This websocket client has already connected to server.");
+            }
+
+            try
+            {
+                _tcpClient = new TcpClient();
+
+                var awaiter = _tcpClient.ConnectAsync(_remoteEndPoint.Address, _remoteEndPoint.Port);
+                if (!awaiter.Wait(ConnectTimeout))
                 {
-                    if (!Connected)
-                    {
-                        _closed = false;
-
-                        _tcpClient = new TcpClient();
-
-                        var awaiter = _tcpClient.ConnectAsync(_remoteEndPoint.Address, _remoteEndPoint.Port);
-                        if (!awaiter.Wait(ConnectTimeout))
-                        {
-                            throw new TimeoutException(string.Format(
-                                "Connect to [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
-                        }
-
-                        ConfigureClient();
-                        var negotiator = NegotiateStream(_tcpClient.GetStream());
-                        if (!negotiator.Wait(ConnectTimeout))
-                        {
-                            throw new TimeoutException(string.Format(
-                                "Negotiate SSL/TSL with remote [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
-                        }
-                        _stream = negotiator.Result;
-
-                        _receiveBuffer = _bufferManager.BorrowBuffer();
-                        _sessionBuffer = _bufferManager.BorrowBuffer();
-                        _sessionBufferCount = 0;
-
-                        var handshaker = Handshake();
-                        if (!handshaker.Wait(ConnectTimeout))
-                        {
-                            throw new TimeoutException(string.Format(
-                                "Handshake with remote [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
-                        }
-                        if (!handshaker.Result)
-                        {
-                            throw new WebSocketException(string.Format(
-                                "Handshake with remote [{0}] failed.", _remoteEndPoint));
-                        }
-
-                        _log.DebugFormat("Connected to server [{0}] with dispatcher [{1}] on [{2}].",
-                            this.RemoteEndPoint,
-                            _dispatcher.GetType().Name,
-                            DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
-                        await _dispatcher.OnServerConnected(this);
-
-                        Task.Run(async () =>
-                        {
-                            await Process();
-                        })
-                        .Forget();
-                    }
+                    throw new TimeoutException(string.Format(
+                        "Connect to [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
                 }
-                catch (Exception ex)
-                when (ex is TimeoutException || ex is WebSocketException)
+
+                ConfigureClient();
+                var negotiator = NegotiateStream(_tcpClient.GetStream());
+                if (!negotiator.Wait(ConnectTimeout))
                 {
-                    _log.Error(ex.Message, ex);
-                    await Close();
-                    throw;
+                    throw new TimeoutException(string.Format(
+                        "Negotiate SSL/TSL with remote [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
                 }
-                finally
+                _stream = negotiator.Result;
+
+                _receiveBuffer = _bufferManager.BorrowBuffer();
+                _sessionBuffer = _bufferManager.BorrowBuffer();
+                _sessionBufferCount = 0;
+
+                var handshaker = OpenHandshake();
+                if (!handshaker.Wait(ConnectTimeout))
                 {
-                    _opsLock.Release();
+                    throw new TimeoutException(string.Format(
+                        "Handshake with remote [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
                 }
+                if (!handshaker.Result)
+                {
+                    throw new WebSocketException(string.Format(
+                        "Handshake with remote [{0}] failed.", _remoteEndPoint));
+                }
+
+                if (Interlocked.CompareExchange(ref _state, _connected, _connecting) != _connecting)
+                {
+                    throw new ObjectDisposedException(GetType().FullName);
+                }
+
+                _log.DebugFormat("Connected to server [{0}] with dispatcher [{1}] on [{2}].",
+                    this.RemoteEndPoint,
+                    _dispatcher.GetType().Name,
+                    DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
+                await _dispatcher.OnServerConnected(this);
+
+                Task.Run(async () =>
+                {
+                    await Process();
+                })
+                .Forget();
+            }
+            catch (ObjectDisposedException) { }
+            catch (Exception ex)
+            when (ex is TimeoutException || ex is WebSocketException)
+            {
+                _log.Error(ex.Message, ex);
+                await Close();
+                throw;
             }
         }
 
-        public async Task Close()
+        internal async Task Close()
         {
-            if (Monitor.TryEnter(_closeLock))
+            await Close(WebSocketCloseStatus.AbnormalClosure);
+        }
+
+        public async Task Close(WebSocketCloseStatus closeStatus)
+        {
+            await Close(closeStatus, null);
+        }
+
+        public async Task Close(WebSocketCloseStatus closeStatus, string closeDescription)
+        {
+            if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
             {
-                try
+                return;
+            }
+
+            try
+            {
+                if (_stream != null)
                 {
-                    if (!_closed)
-                    {
-                        _closed = true;
-
-                        try
-                        {
-                            if (_stream != null)
-                            {
-                                _stream.Close();
-                                _stream = null;
-                            }
-                            if (_tcpClient != null && _tcpClient.Connected)
-                            {
-                                _tcpClient.Close();
-                                _tcpClient = null;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            _log.Error(ex.Message, ex);
-                        }
-
-                        if (_receiveBuffer != null)
-                            _bufferManager.ReturnBuffer(_receiveBuffer);
-                        if (_sessionBuffer != null)
-                            _bufferManager.ReturnBuffer(_sessionBuffer);
-
-                        _log.DebugFormat("Disconnected from server [{0}] with dispatcher [{1}] on [{2}].",
-                            this.RemoteEndPoint,
-                            _dispatcher.GetType().Name,
-                            DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
-                        await _dispatcher.OnServerDisconnected(this);
-                    }
+                    _stream.Dispose();
+                    _stream = null;
                 }
-                finally
+                if (_tcpClient != null && _tcpClient.Connected)
                 {
-                    Monitor.Exit(_closeLock);
+                    _tcpClient.Dispose();
+                    _tcpClient = null;
                 }
             }
+            catch (Exception ex)
+            {
+                _log.Error(ex.Message, ex);
+            }
+
+            if (_receiveBuffer != null)
+                _bufferManager.ReturnBuffer(_receiveBuffer);
+            if (_sessionBuffer != null)
+                _bufferManager.ReturnBuffer(_sessionBuffer);
+
+            _log.DebugFormat("Disconnected from server [{0}] with dispatcher [{1}] on [{2}].",
+                this.RemoteEndPoint,
+                _dispatcher.GetType().Name,
+                DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
+            await _dispatcher.OnServerDisconnected(this);
         }
 
         private async Task Process()
         {
             try
             {
-                while (Connected)
+                while (State == WebSocketState.Open)
                 {
                     int receiveCount = await _stream.ReadAsync(_receiveBuffer, 0, _receiveBuffer.Length);
                     if (receiveCount == 0)
@@ -425,7 +461,7 @@ namespace Cowboy.Sockets.WebSockets
             return sslStream;
         }
 
-        private async Task<bool> Handshake()
+        private async Task<bool> OpenHandshake()
         {
             var requestBuffer = WebSocketClientHandshaker.CreateOpenningHandshakeRequest(this, out _secWebSocketKey);
 
@@ -534,7 +570,7 @@ namespace Cowboy.Sockets.WebSockets
 
         private async Task SendFrame(byte[] frame)
         {
-            if (!Connected)
+            if (State != WebSocketState.Open)
             {
                 throw new InvalidProgramException("This client has not connected to server.");
             }

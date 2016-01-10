@@ -34,7 +34,7 @@ namespace Cowboy.Sockets.WebSockets.TestAsyncWebSocketClient
 
                     Console.WriteLine("WebSocket client has connected to server [{0}].", uri);
                     Console.WriteLine("Type something to send to server...");
-                    while (_client.Connected)
+                    while (_client.State == WebSocketState.Open)
                     {
                         try
                         {
@@ -53,7 +53,7 @@ namespace Cowboy.Sockets.WebSockets.TestAsyncWebSocketClient
                         }
                     }
 
-                    await _client.Close();
+                    await _client.Close(WebSocketCloseStatus.NormalClosure);
                     Console.WriteLine("WebSocket client has disconnected from server [{0}].", uri);
                 }
                 catch (Exception ex)
