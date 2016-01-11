@@ -135,11 +135,6 @@ namespace Cowboy.Sockets.WebSockets
 
         public sealed class Header
         {
-            public Header()
-            {
-                MaskingKey = new byte[MaskingKeyLength];
-            }
-
             public bool IsFIN { get; set; }
             public bool IsRSV1 { get; set; }
             public bool IsRSV2 { get; set; }
@@ -147,7 +142,7 @@ namespace Cowboy.Sockets.WebSockets
             public FrameOpCode OpCode { get; set; }
             public bool IsMasked { get; set; }
             public int PayloadLength { get; set; }
-            public byte[] MaskingKey { get; set; }
+            public int MaskingKeyOffset { get; set; }
             public int Length { get; set; }
         }
 
@@ -205,11 +200,7 @@ namespace Cowboy.Sockets.WebSockets
                 if (count < header.Length + MaskingKeyLength)
                     return null;
 
-                for (int i = 0; i < MaskingKeyLength; i++)
-                {
-                    header.MaskingKey[i] = buffer[header.Length + i];
-                }
-
+                header.MaskingKeyOffset = header.Length;
                 header.Length += MaskingKeyLength;
             }
 

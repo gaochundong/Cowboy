@@ -291,11 +291,20 @@ namespace Cowboy.Sockets
 
                         while (true)
                         {
-                            var frameHeader = TcpFrameHeader.ReadHeader(_sessionBuffer);
-                            if (TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize <= _sessionBufferCount)
+                            var frameHeader = Frame.DecodeHeader(_sessionBuffer, _sessionBufferCount);
+                            if (frameHeader != null && frameHeader.Length + frameHeader.PayloadLength <= _sessionBufferCount)
                             {
-                                await _dispatcher.OnServerDataReceived(this, _sessionBuffer, TcpFrameHeader.HEADER_SIZE, frameHeader.PayloadSize);
-                                BufferDeflector.ShiftBuffer(_bufferManager, TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize, ref _sessionBuffer, ref _sessionBufferCount);
+                                if (frameHeader.IsMasked)
+                                {
+                                    var unmaskedPayload = Frame.DecodeMaskedPayload(_sessionBuffer, frameHeader.MaskingKeyOffset, frameHeader.Length, frameHeader.PayloadLength);
+                                    await _dispatcher.OnServerDataReceived(this, unmaskedPayload, 0, unmaskedPayload.Length);
+                                }
+                                else
+                                {
+                                    await _dispatcher.OnServerDataReceived(this, _sessionBuffer, frameHeader.Length, frameHeader.PayloadLength);
+                                }
+
+                                BufferDeflector.ShiftBuffer(_bufferManager, frameHeader.Length + frameHeader.PayloadLength, ref _sessionBuffer, ref _sessionBufferCount);
                             }
                             else
                             {
@@ -421,9 +430,8 @@ namespace Cowboy.Sockets
                     }
                     else
                     {
-                        var frame = TcpFrame.FromPayload(data, offset, count);
-                        var frameBuffer = frame.ToArray();
-                        await _stream.WriteAsync(frameBuffer, 0, frameBuffer.Length);
+                        var frame = Frame.Encode(data, offset, count, _configuration.Masking);
+                        await _stream.WriteAsync(frame, 0, frame.Length);
                     }
                 }
             }

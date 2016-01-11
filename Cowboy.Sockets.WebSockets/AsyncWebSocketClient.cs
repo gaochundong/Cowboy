@@ -362,35 +362,35 @@ namespace Cowboy.Sockets.WebSockets
 
                     while (true)
                     {
-                        var header = Frame.DecodeHeader(_sessionBuffer, _sessionBufferCount);
-                        if (header != null && header.Length + header.PayloadLength <= _sessionBufferCount)
+                        var frameHeader = Frame.DecodeHeader(_sessionBuffer, _sessionBufferCount);
+                        if (frameHeader != null && frameHeader.Length + frameHeader.PayloadLength <= _sessionBufferCount)
                         {
                             try
                             {
-                                switch (header.OpCode)
+                                switch (frameHeader.OpCode)
                                 {
                                     case FrameOpCode.Continuation:
                                         break;
                                     case FrameOpCode.Text:
                                         {
-                                            var text = Encoding.UTF8.GetString(_sessionBuffer, header.Length, header.PayloadLength);
+                                            var text = Encoding.UTF8.GetString(_sessionBuffer, frameHeader.Length, frameHeader.PayloadLength);
                                             await _dispatcher.OnServerTextReceived(this, text);
                                         }
                                         break;
                                     case FrameOpCode.Binary:
                                         {
-                                            await _dispatcher.OnServerBinaryReceived(this, _sessionBuffer, header.Length, header.PayloadLength);
+                                            await _dispatcher.OnServerBinaryReceived(this, _sessionBuffer, frameHeader.Length, frameHeader.PayloadLength);
                                         }
                                         break;
                                     case FrameOpCode.Close:
                                         {
-                                            var statusCode = _sessionBuffer[header.Length] * 256 + _sessionBuffer[header.Length + 1];
+                                            var statusCode = _sessionBuffer[frameHeader.Length] * 256 + _sessionBuffer[frameHeader.Length + 1];
                                             var closeStatus = (WebSocketCloseStatus)statusCode;
                                             var closeStatusDescription = string.Empty;
 
-                                            if (header.PayloadLength > 2)
+                                            if (frameHeader.PayloadLength > 2)
                                             {
-                                                closeStatusDescription = Encoding.UTF8.GetString(_sessionBuffer, header.Length + 2, header.PayloadLength - 2);
+                                                closeStatusDescription = Encoding.UTF8.GetString(_sessionBuffer, frameHeader.Length + 2, frameHeader.PayloadLength - 2);
                                             }
 #if DEBUG
                                             _log.DebugFormat("Receive server side close frame [{0}] [{1}].", closeStatus, closeStatusDescription);
@@ -400,7 +400,7 @@ namespace Cowboy.Sockets.WebSockets
                                         break;
                                     case FrameOpCode.Ping:
                                         {
-                                            var ping = Encoding.UTF8.GetString(_sessionBuffer, header.Length, header.PayloadLength);
+                                            var ping = Encoding.UTF8.GetString(_sessionBuffer, frameHeader.Length, frameHeader.PayloadLength);
 #if DEBUG
                                             _log.DebugFormat("Receive server side ping frame [{0}].", ping);
 #endif
@@ -413,7 +413,7 @@ namespace Cowboy.Sockets.WebSockets
                                         break;
                                     case FrameOpCode.Pong:
                                         {
-                                            var pong = Encoding.UTF8.GetString(_sessionBuffer, header.Length, header.PayloadLength);
+                                            var pong = Encoding.UTF8.GetString(_sessionBuffer, frameHeader.Length, frameHeader.PayloadLength);
 #if DEBUG
                                             _log.DebugFormat("Receive server side pong frame [{0}].", pong);
 #endif
@@ -423,7 +423,7 @@ namespace Cowboy.Sockets.WebSockets
                                         {
                                             await Close(WebSocketCloseStatus.InvalidMessageType);
                                             throw new NotSupportedException(
-                                                string.Format("Not support received opcode [{0}].", (byte)header.OpCode));
+                                                string.Format("Not support received opcode [{0}].", (byte)frameHeader.OpCode));
                                         }
                                 }
                             }
@@ -434,7 +434,7 @@ namespace Cowboy.Sockets.WebSockets
                                 throw;
                             }
 
-                            BufferDeflector.ShiftBuffer(_bufferManager, header.Length + header.PayloadLength, ref _sessionBuffer, ref _sessionBufferCount);
+                            BufferDeflector.ShiftBuffer(_bufferManager, frameHeader.Length + frameHeader.PayloadLength, ref _sessionBuffer, ref _sessionBufferCount);
                         }
                         else
                         {

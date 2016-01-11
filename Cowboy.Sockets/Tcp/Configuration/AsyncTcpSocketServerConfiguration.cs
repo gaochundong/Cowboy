@@ -11,6 +11,8 @@ namespace Cowboy.Sockets
         public AsyncTcpSocketServerConfiguration()
         {
             Framing = true;
+            Masking = false;
+
             InitialBufferAllocationCount = 100;
             ReceiveBufferSize = 8192;
             SendBufferSize = 8192;
@@ -32,6 +34,8 @@ namespace Cowboy.Sockets
         }
 
         public bool Framing { get; set; }
+        public bool Masking { get; set; }
+
         public int InitialBufferAllocationCount { get; set; }
         public int ReceiveBufferSize { get; set; }
         public int SendBufferSize { get; set; }
@@ -41,7 +45,7 @@ namespace Cowboy.Sockets
         public LingerOption LingerState { get; set; }
 
         public int PendingConnectionBacklog { get; set; }
-        public bool AllowNatTraversal { get; set; }        
+        public bool AllowNatTraversal { get; set; }
 
         public bool SslEnabled { get; set; }
         public X509Certificate2 SslServerCertificate { get; set; }

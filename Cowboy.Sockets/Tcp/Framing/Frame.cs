@@ -67,7 +67,7 @@ namespace Cowboy.Sockets
             // Mask:  1 bit
             // Defines whether the "Payload data" is masked.
             if (isMasked)
-                fragment[1] = (byte)(fragment[1] | 0x80);
+                fragment[0] = (byte)(fragment[0] | 0x80);
 
             // Masking-key:  0 or 4 bytes
             // The masking key is a 32-bit value chosen at random by the client.
@@ -104,14 +104,9 @@ namespace Cowboy.Sockets
 
         public sealed class Header
         {
-            public Header()
-            {
-                MaskingKey = new byte[MaskingKeyLength];
-            }
-
             public bool IsMasked { get; set; }
             public int PayloadLength { get; set; }
-            public byte[] MaskingKey { get; set; }
+            public int MaskingKeyOffset { get; set; }
             public int Length { get; set; }
         }
 
@@ -164,11 +159,7 @@ namespace Cowboy.Sockets
                 if (count < header.Length + MaskingKeyLength)
                     return null;
 
-                for (int i = 0; i < MaskingKeyLength; i++)
-                {
-                    header.MaskingKey[i] = buffer[header.Length + i];
-                }
-
+                header.MaskingKeyOffset = header.Length;
                 header.Length += MaskingKeyLength;
             }
 
