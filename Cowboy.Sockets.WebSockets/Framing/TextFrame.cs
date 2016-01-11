@@ -17,9 +17,9 @@ namespace Cowboy.Sockets.WebSockets
         public string Text { get; private set; }
         public bool IsMasked { get; private set; }
 
-        public override FrameOpCode OpCode
+        public override OpCode OpCode
         {
-            get { return FrameOpCode.Text; }
+            get { return OpCode.Text; }
         }
 
         public byte[] ToArray()

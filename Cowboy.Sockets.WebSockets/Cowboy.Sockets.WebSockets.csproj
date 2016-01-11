@@ -52,7 +52,7 @@
     <Compile Include="Framing\TextFrame.cs" />
     <Compile Include="Framing\BinaryFrame.cs" />
     <Compile Include="Framing\Frame.cs" />
-    <Compile Include="Framing\FrameOpCode.cs" />
+    <Compile Include="Framing\OpCode.cs" />
     <Compile Include="Client\IAsyncWebSocketClientMessageDispatcher.cs" />
     <Compile Include="Client\InternalAsyncWebSocketClientMessageDispatcherImplementation.cs" />
     <Compile Include="Helper\KeepAliveTracker.cs" />

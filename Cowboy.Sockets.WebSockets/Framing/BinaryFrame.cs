@@ -30,9 +30,9 @@ namespace Cowboy.Sockets.WebSockets
         public int Count { get; private set; }
         public bool IsMasked { get; private set; }
 
-        public override FrameOpCode OpCode
+        public override OpCode OpCode
         {
-            get { return FrameOpCode.Binary; }
+            get { return OpCode.Binary; }
         }
 
         public byte[] ToArray()

@@ -35,9 +35,9 @@ namespace Cowboy.Sockets.WebSockets
         private static readonly Random _rng = new Random(DateTime.UtcNow.Millisecond);
         private static readonly int MaskingKeyLength = 4;
 
-        public abstract FrameOpCode OpCode { get; }
+        public abstract OpCode OpCode { get; }
 
-        public static byte[] Encode(FrameOpCode opCode, byte[] playload, int offset, int count, bool isFinal = true, bool isMasked = true)
+        public static byte[] Encode(OpCode opCode, byte[] playload, int offset, int count, bool isFinal = true, bool isMasked = true)
         {
             byte[] fragment;
 
@@ -151,7 +151,7 @@ namespace Cowboy.Sockets.WebSockets
             public bool IsRSV1 { get; set; }
             public bool IsRSV2 { get; set; }
             public bool IsRSV3 { get; set; }
-            public FrameOpCode OpCode { get; set; }
+            public OpCode OpCode { get; set; }
             public bool IsMasked { get; set; }
             public int PayloadLength { get; set; }
             public int MaskingKeyOffset { get; set; }
@@ -170,7 +170,7 @@ namespace Cowboy.Sockets.WebSockets
                 IsRSV1 = ((buffer[0] & 0x40) == 0x40),
                 IsRSV2 = ((buffer[0] & 0x20) == 0x20),
                 IsRSV3 = ((buffer[0] & 0x10) == 0x10),
-                OpCode = (FrameOpCode)(buffer[0] & 0x0f),
+                OpCode = (OpCode)(buffer[0] & 0x0f),
                 IsMasked = ((buffer[1] & 0x80) == 0x80),
                 PayloadLength = (buffer[1] & 0x7f),
                 Length = 2,

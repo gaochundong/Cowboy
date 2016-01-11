@@ -369,20 +369,20 @@ namespace Cowboy.Sockets.WebSockets
                             {
                                 switch (frameHeader.OpCode)
                                 {
-                                    case FrameOpCode.Continuation:
+                                    case OpCode.Continuation:
                                         break;
-                                    case FrameOpCode.Text:
+                                    case OpCode.Text:
                                         {
                                             var text = Encoding.UTF8.GetString(_sessionBuffer, frameHeader.Length, frameHeader.PayloadLength);
                                             await _dispatcher.OnServerTextReceived(this, text);
                                         }
                                         break;
-                                    case FrameOpCode.Binary:
+                                    case OpCode.Binary:
                                         {
                                             await _dispatcher.OnServerBinaryReceived(this, _sessionBuffer, frameHeader.Length, frameHeader.PayloadLength);
                                         }
                                         break;
-                                    case FrameOpCode.Close:
+                                    case OpCode.Close:
                                         {
                                             var statusCode = _sessionBuffer[frameHeader.Length] * 256 + _sessionBuffer[frameHeader.Length + 1];
                                             var closeStatus = (WebSocketCloseStatus)statusCode;
@@ -398,7 +398,7 @@ namespace Cowboy.Sockets.WebSockets
                                             await Close(closeStatus, closeStatusDescription);
                                         }
                                         break;
-                                    case FrameOpCode.Ping:
+                                    case OpCode.Ping:
                                         {
                                             var ping = Encoding.UTF8.GetString(_sessionBuffer, frameHeader.Length, frameHeader.PayloadLength);
 #if DEBUG
@@ -411,7 +411,7 @@ namespace Cowboy.Sockets.WebSockets
 #endif
                                         }
                                         break;
-                                    case FrameOpCode.Pong:
+                                    case OpCode.Pong:
                                         {
                                             var pong = Encoding.UTF8.GetString(_sessionBuffer, frameHeader.Length, frameHeader.PayloadLength);
 #if DEBUG
