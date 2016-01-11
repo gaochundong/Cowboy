@@ -40,8 +40,8 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>SolutionVersion.cs</Link>
     </Compile>
-    <Compile Include="AsyncWebSocketClientConfiguration.cs" />
-    <Compile Include="AsyncWebSocketClient.cs" />
+    <Compile Include="Client\AsyncWebSocketClientConfiguration.cs" />
+    <Compile Include="Client\AsyncWebSocketClient.cs" />
     <Compile Include="Framing\PingFrame.cs" />
     <Compile Include="Framing\PongFrame.cs" />
     <Compile Include="Framing\CloseFrame.cs" />
@@ -53,14 +53,19 @@
     <Compile Include="Framing\BinaryFrame.cs" />
     <Compile Include="Framing\Frame.cs" />
     <Compile Include="Framing\FrameOpCode.cs" />
-    <Compile Include="IAsyncWebSocketClientMessageDispatcher.cs" />
-    <Compile Include="InternalAsyncWebSocketClientMessageDispatcherImplementation.cs" />
-    <Compile Include="KeepAliveTracker.cs" />
+    <Compile Include="Client\IAsyncWebSocketClientMessageDispatcher.cs" />
+    <Compile Include="Client\InternalAsyncWebSocketClientMessageDispatcherImplementation.cs" />
+    <Compile Include="Helper\KeepAliveTracker.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Server\AsyncWebSocketServerConfiguration.cs" />
+    <Compile Include="Server\AsyncWebSocketServer.cs" />
+    <Compile Include="Server\AsyncWebSocketSession.cs" />
+    <Compile Include="Server\IAsyncWebSocketServerMessageDispatcher.cs" />
+    <Compile Include="Server\InternalAsyncWebSocketServerMessageDispatcherImplementation.cs" />
     <Compile Include="WebSocketCloseStatus.cs" />
     <Compile Include="WebSocketException.cs" />
-    <Compile Include="WebSocketClientHandshaker.cs" />
-    <Compile Include="WebSocketHelpers.cs" />
+    <Compile Include="Helper\WebSocketClientHandshaker.cs" />
+    <Compile Include="Helper\WebSocketHelpers.cs" />
     <Compile Include="WebSocketState.cs" />
   </ItemGroup>
   <ItemGroup>
