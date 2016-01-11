@@ -11,6 +11,8 @@ namespace Cowboy.Sockets
         public TcpSocketServerConfiguration()
         {
             Framing = true;
+            Masking = false;
+
             InitialBufferAllocationCount = 100;
             ReceiveBufferSize = 8192;
             SendBufferSize = 8192;
@@ -32,6 +34,8 @@ namespace Cowboy.Sockets
         }
 
         public bool Framing { get; set; }
+        public bool Masking { get; set; }
+
         public int InitialBufferAllocationCount { get; set; }
         public int ReceiveBufferSize { get; set; }
         public int SendBufferSize { get; set; }

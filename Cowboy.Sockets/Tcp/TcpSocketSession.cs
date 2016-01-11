@@ -283,13 +283,23 @@ namespace Cowboy.Sockets
                 //   3. using a delimiter; for example many text-based protocols append
                 //      a newline (or CR LF pair) after every message.
                 BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
+
                 while (true)
                 {
-                    var frameHeader = TcpFrameHeader.ReadHeader(_sessionBuffer);
-                    if (TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize <= _sessionBufferCount)
+                    var frameHeader = Frame.DecodeHeader(_sessionBuffer, _sessionBufferCount);
+                    if (frameHeader != null && frameHeader.Length + frameHeader.PayloadLength <= _sessionBufferCount)
                     {
-                        _server.RaiseClientDataReceived(this, _sessionBuffer, TcpFrameHeader.HEADER_SIZE, frameHeader.PayloadSize);
-                        BufferDeflector.ShiftBuffer(_bufferManager, TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize, ref _sessionBuffer, ref _sessionBufferCount);
+                        if (frameHeader.IsMasked)
+                        {
+                            var unmaskedPayload = Frame.DecodeMaskedPayload(_sessionBuffer, frameHeader.MaskingKeyOffset, frameHeader.Length, frameHeader.PayloadLength);
+                            _server.RaiseClientDataReceived(this, unmaskedPayload, 0, unmaskedPayload.Length);
+                        }
+                        else
+                        {
+                            _server.RaiseClientDataReceived(this, _sessionBuffer, frameHeader.Length, frameHeader.PayloadLength);
+                        }
+
+                        BufferDeflector.ShiftBuffer(_bufferManager, frameHeader.Length + frameHeader.PayloadLength, ref _sessionBuffer, ref _sessionBufferCount);
                     }
                     else
                     {
@@ -327,9 +337,8 @@ namespace Cowboy.Sockets
                     }
                     else
                     {
-                        var frame = TcpFrame.FromPayload(data, offset, count);
-                        var frameBuffer = frame.ToArray();
-                        _stream.BeginWrite(frameBuffer, 0, frameBuffer.Length, HandleDataWritten, _stream);
+                        var frame = Frame.Encode(data, offset, count, _configuration.Masking);
+                        _stream.BeginWrite(frame, 0, frame.Length, HandleDataWritten, _stream);
                     }
                 }
             }

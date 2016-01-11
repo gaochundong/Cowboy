@@ -325,11 +325,20 @@ namespace Cowboy.Sockets
 
                 while (true)
                 {
-                    var frameHeader = TcpFrameHeader.ReadHeader(_sessionBuffer);
-                    if (TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize <= _sessionBufferCount)
+                    var frameHeader = Frame.DecodeHeader(_sessionBuffer, _sessionBufferCount);
+                    if (frameHeader != null && frameHeader.Length + frameHeader.PayloadLength <= _sessionBufferCount)
                     {
-                        RaiseServerDataReceived(_sessionBuffer, TcpFrameHeader.HEADER_SIZE, frameHeader.PayloadSize);
-                        BufferDeflector.ShiftBuffer(_bufferManager, TcpFrameHeader.HEADER_SIZE + frameHeader.PayloadSize, ref _sessionBuffer, ref _sessionBufferCount);
+                        if (frameHeader.IsMasked)
+                        {
+                            var unmaskedPayload = Frame.DecodeMaskedPayload(_sessionBuffer, frameHeader.MaskingKeyOffset, frameHeader.Length, frameHeader.PayloadLength);
+                            RaiseServerDataReceived(unmaskedPayload, 0, unmaskedPayload.Length);
+                        }
+                        else
+                        {
+                            RaiseServerDataReceived(_sessionBuffer, frameHeader.Length, frameHeader.PayloadLength);
+                        }
+
+                        BufferDeflector.ShiftBuffer(_bufferManager, frameHeader.Length + frameHeader.PayloadLength, ref _sessionBuffer, ref _sessionBufferCount);
                     }
                     else
                     {
@@ -369,9 +378,8 @@ namespace Cowboy.Sockets
                 }
                 else
                 {
-                    var frame = TcpFrame.FromPayload(data, offset, count);
-                    var frameBuffer = frame.ToArray();
-                    _stream.BeginWrite(frameBuffer, 0, frameBuffer.Length, HandleDataWritten, _tcpClient);
+                    var frame = Frame.Encode(data, offset, count, _configuration.Masking);
+                    _stream.BeginWrite(frame, 0, frame.Length, HandleDataWritten, _tcpClient);
                 }
             }
             catch (Exception ex)
