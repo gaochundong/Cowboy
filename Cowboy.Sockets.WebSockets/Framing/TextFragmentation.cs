@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Cowboy.Sockets.WebSockets
 {
-    public sealed class TextFragmentation
+    internal sealed class TextFragmentation
     {
         public TextFragmentation(List<string> fragments, bool isMasked = true)
         {

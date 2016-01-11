@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Cowboy.Sockets.WebSockets
 {
-    public sealed class BinaryFragmentation
+    internal sealed class BinaryFragmentation
     {
         public BinaryFragmentation(List<ArraySegment<byte>> fragments, bool isMasked = true)
         {

@@ -30,7 +30,7 @@ namespace Cowboy.Sockets.WebSockets
     // + - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - +
     // |                     Payload Data continued ...                |
     // +---------------------------------------------------------------+
-    public abstract class Frame
+    internal abstract class Frame
     {
         private static readonly Random _rng = new Random(DateTime.UtcNow.Millisecond);
         private static readonly int MaskingKeyLength = 4;

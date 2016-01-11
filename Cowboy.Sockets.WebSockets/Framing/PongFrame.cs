@@ -2,7 +2,7 @@
 
 namespace Cowboy.Sockets.WebSockets
 {
-    public sealed class PongFrame : ControlFrame
+    internal sealed class PongFrame : ControlFrame
     {
         public PongFrame(bool isMasked = true)
         {

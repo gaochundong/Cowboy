@@ -2,7 +2,7 @@
 
 namespace Cowboy.Sockets.WebSockets
 {
-    public sealed class PingFrame : ControlFrame
+    internal sealed class PingFrame : ControlFrame
     {
         public PingFrame(bool isMasked = true)
         {
