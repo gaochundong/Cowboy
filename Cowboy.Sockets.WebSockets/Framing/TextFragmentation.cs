@@ -6,14 +6,16 @@ namespace Cowboy.Sockets.WebSockets
 {
     public sealed class TextFragmentation
     {
-        public TextFragmentation(List<string> fragments)
+        public TextFragmentation(List<string> fragments, bool isMasked = true)
         {
             if (fragments == null)
                 throw new ArgumentNullException("fragments");
             this.Fragments = fragments;
+            this.IsMasked = isMasked;
         }
 
         public List<string> Fragments { get; private set; }
+        public bool IsMasked { get; private set; }
 
         public IEnumerable<byte[]> ToArrayList()
         {
@@ -24,7 +26,8 @@ namespace Cowboy.Sockets.WebSockets
                     i == 0 ? FrameOpCode.Text : FrameOpCode.Continuation,
                     data,
                     0,
-                    data.Length);
+                    data.Length,
+                    IsMasked);
             }
         }
     }

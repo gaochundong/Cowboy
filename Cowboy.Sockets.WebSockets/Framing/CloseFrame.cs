@@ -4,12 +4,13 @@ namespace Cowboy.Sockets.WebSockets
 {
     public sealed class CloseFrame : ControlFrame
     {
-        public CloseFrame()
+        public CloseFrame(bool isMasked = true)
         {
+            this.IsMasked = isMasked;
         }
 
-        public CloseFrame(WebSocketCloseStatus closeStatus, string closeStatusDescription)
-            : this()
+        public CloseFrame(WebSocketCloseStatus closeStatus, string closeStatusDescription, bool isMasked = true)
+            : this(isMasked)
         {
             this.CloseStatus = closeStatus;
             this.CloseStatusDescription = closeStatusDescription;
@@ -17,6 +18,7 @@ namespace Cowboy.Sockets.WebSockets
 
         public WebSocketCloseStatus CloseStatus { get; private set; }
         public string CloseStatusDescription { get; private set; }
+        public bool IsMasked { get; private set; }
 
         public override FrameOpCode OpCode
         {
@@ -51,11 +53,11 @@ namespace Cowboy.Sockets.WebSockets
             if (!string.IsNullOrEmpty(CloseStatusDescription))
             {
                 int count = Encoding.UTF8.GetBytes(CloseStatusDescription, 0, CloseStatusDescription.Length, payload, 2);
-                return Encode(OpCode, payload, 0, 2 + count);
+                return Encode(OpCode, payload, 0, 2 + count, IsMasked);
             }
             else
             {
-                return Encode(OpCode, payload, 0, payload.Length);
+                return Encode(OpCode, payload, 0, payload.Length, IsMasked);
             }
         }
     }

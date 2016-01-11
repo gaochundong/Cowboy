@@ -5,14 +5,16 @@ namespace Cowboy.Sockets.WebSockets
 {
     public sealed class BinaryFragmentation
     {
-        public BinaryFragmentation(List<ArraySegment<byte>> fragments)
+        public BinaryFragmentation(List<ArraySegment<byte>> fragments, bool isMasked = true)
         {
             if (fragments == null)
                 throw new ArgumentNullException("fragments");
             this.Fragments = fragments;
+            this.IsMasked = isMasked;
         }
 
         public List<ArraySegment<byte>> Fragments { get; private set; }
+        public bool IsMasked { get; private set; }
 
         public IEnumerable<byte[]> ToArrayList()
         {
@@ -22,7 +24,8 @@ namespace Cowboy.Sockets.WebSockets
                     i == 0 ? FrameOpCode.Binary : FrameOpCode.Continuation,
                     Fragments[i].Array,
                     Fragments[i].Offset,
-                    Fragments[i].Count);
+                    Fragments[i].Count,
+                    IsMasked);
             }
         }
     }
