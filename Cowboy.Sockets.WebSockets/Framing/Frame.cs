@@ -126,7 +126,7 @@ namespace Cowboy.Sockets.WebSockets
                 int payloadIndex = fragment.Length - count;
                 for (var i = 0; i < count; i++)
                 {
-                    fragment[payloadIndex + i] = (byte)(playload[offset + i] ^ fragment[maskingKeyIndex + i % 4]);
+                    fragment[payloadIndex + i] = (byte)(playload[offset + i] ^ fragment[maskingKeyIndex + i % MaskingKeyLength]);
                 }
             }
 

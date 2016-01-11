@@ -620,24 +620,6 @@ namespace Cowboy.Sockets.WebSockets
             await SendFrame(new BinaryFrame(segment).ToArray());
         }
 
-        public async Task SendTextFragments(IEnumerable<string> fragments)
-        {
-            var frames = new TextFragmentation(fragments.ToList()).ToArrayList();
-            foreach (var frame in frames)
-            {
-                await SendFrame(frame);
-            }
-        }
-
-        public async Task SendBinaryFragments(IEnumerable<ArraySegment<byte>> fragments)
-        {
-            var frames = new BinaryFragmentation(fragments.ToList()).ToArrayList();
-            foreach (var frame in frames)
-            {
-                await SendFrame(frame);
-            }
-        }
-
         private async Task SendFrame(byte[] frame)
         {
             if (frame == null)
