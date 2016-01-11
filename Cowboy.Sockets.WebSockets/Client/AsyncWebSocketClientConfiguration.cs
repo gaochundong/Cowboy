@@ -4,7 +4,7 @@ using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 
-namespace Cowboy.Sockets
+namespace Cowboy.Sockets.WebSockets
 {
     public sealed class AsyncWebSocketClientConfiguration
     {

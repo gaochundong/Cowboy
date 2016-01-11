@@ -1,7 +1,6 @@
 ﻿using System;
-using Cowboy.Buffer;
 
-namespace Cowboy.Sockets
+namespace Cowboy.Buffer
 {
     public class BufferDeflector
     {
