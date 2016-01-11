@@ -24,6 +24,8 @@ namespace Cowboy.Sockets
         private byte[] _receiveBuffer;
         private byte[] _sessionBuffer;
         private int _sessionBufferCount = 0;
+        private IPEndPoint _remoteEndPoint;
+        private IPEndPoint _localEndPoint;
 
         private int _state;
         private const int _none = 0;
@@ -57,6 +59,11 @@ namespace Cowboy.Sockets
 
             _sessionKey = Guid.NewGuid().ToString();
             this.StartTime = DateTime.UtcNow;
+
+            _remoteEndPoint = (_tcpClient != null && _tcpClient.Client.Connected) ?
+                    (IPEndPoint)_tcpClient.Client.RemoteEndPoint : null;
+            _localEndPoint = (_tcpClient != null && _tcpClient.Client.Connected) ?
+                    (IPEndPoint)_tcpClient.Client.LocalEndPoint : null;
         }
 
         public string SessionKey { get { return _sessionKey; } }
@@ -66,7 +73,7 @@ namespace Cowboy.Sockets
             get
             {
                 return (_tcpClient != null && _tcpClient.Client.Connected) ?
-                    (IPEndPoint)_tcpClient.Client.RemoteEndPoint : null;
+                    (IPEndPoint)_tcpClient.Client.RemoteEndPoint : _remoteEndPoint;
             }
         }
         public IPEndPoint LocalEndPoint
@@ -74,7 +81,7 @@ namespace Cowboy.Sockets
             get
             {
                 return (_tcpClient != null && _tcpClient.Client.Connected) ?
-                    (IPEndPoint)_tcpClient.Client.LocalEndPoint : null;
+                    (IPEndPoint)_tcpClient.Client.LocalEndPoint : _localEndPoint;
             }
         }
         public AsyncTcpSocketServer Server { get { return _server; } }

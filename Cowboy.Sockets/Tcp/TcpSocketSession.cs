@@ -23,6 +23,8 @@ namespace Cowboy.Sockets
         private byte[] _receiveBuffer;
         private byte[] _sessionBuffer;
         private int _sessionBufferCount = 0;
+        private IPEndPoint _remoteEndPoint;
+        private IPEndPoint _localEndPoint;
 
         public TcpSocketSession(
             TcpClient tcpClient,
@@ -48,13 +50,16 @@ namespace Cowboy.Sockets
             this.StartTime = DateTime.UtcNow;
 
             ConfigureClient();
+
+            _remoteEndPoint = Connected ? (IPEndPoint)_tcpClient.Client.RemoteEndPoint : null;
+            _localEndPoint = Connected ? (IPEndPoint)_tcpClient.Client.LocalEndPoint : null;
         }
 
         public string SessionKey { get { return _sessionKey; } }
         public DateTime StartTime { get; private set; }
         public bool Connected { get { return _tcpClient != null && _tcpClient.Connected; } }
-        public IPEndPoint RemoteEndPoint { get { return Connected ? (IPEndPoint)_tcpClient.Client.RemoteEndPoint : null; } }
-        public IPEndPoint LocalEndPoint { get { return Connected ? (IPEndPoint)_tcpClient.Client.LocalEndPoint : null; } }
+        public IPEndPoint RemoteEndPoint { get { return Connected ? (IPEndPoint)_tcpClient.Client.RemoteEndPoint : _remoteEndPoint; } }
+        public IPEndPoint LocalEndPoint { get { return Connected ? (IPEndPoint)_tcpClient.Client.LocalEndPoint : _localEndPoint; } }
         public TcpSocketServer Server { get { return _server; } }
 
         internal void Start()
