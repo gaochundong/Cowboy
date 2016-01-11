@@ -92,10 +92,7 @@ namespace Cowboy.Sockets
                 if (count > 0)
                 {
                     int payloadIndex = fragment.Length - count;
-                    for (var i = 0; i < count; i++)
-                    {
-                        fragment[payloadIndex + i] = playload[offset + i];
-                    }
+                    Array.Copy(playload, offset, fragment, payloadIndex, count);
                 }
             }
 

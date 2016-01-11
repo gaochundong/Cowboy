@@ -37,7 +37,7 @@ namespace Cowboy.Sockets.WebSockets
 
         public abstract FrameOpCode OpCode { get; }
 
-        public static byte[] Encode(FrameOpCode opCode, byte[] playload, int offset, int count, bool isFinal = true)
+        public static byte[] Encode(FrameOpCode opCode, byte[] playload, int offset, int count, bool isFinal = true, bool isMasked = true)
         {
             byte[] fragment;
 
@@ -101,7 +101,8 @@ namespace Cowboy.Sockets.WebSockets
             // masking key is present in masking-key, and this is used to unmask
             // the "Payload data" as per Section 5.3.  All frames sent from
             // client to server have this bit set to 1.
-            fragment[1] = (byte)(fragment[1] | 0x80);
+            if (isMasked)
+                fragment[1] = (byte)(fragment[1] | 0x80);
 
             // Masking-key:  0 or 4 bytes
             // All frames sent from the client to the server are masked by a
@@ -116,17 +117,28 @@ namespace Cowboy.Sockets.WebSockets
             // essential to prevent authors of malicious applications from selecting
             // the bytes that appear on the wire.  RFC 4086 [RFC4086] discusses what
             // entails a suitable source of entropy for security-sensitive applications.
-            int maskingKeyIndex = fragment.Length - (MaskingKeyLength + count);
-            for (var i = maskingKeyIndex; i < maskingKeyIndex + MaskingKeyLength; i++)
+            if (isMasked)
             {
-                fragment[i] = (byte)_rng.Next(0, 255);
-            }
-            if (count > 0)
-            {
-                int payloadIndex = fragment.Length - count;
-                for (var i = 0; i < count; i++)
+                int maskingKeyIndex = fragment.Length - (MaskingKeyLength + count);
+                for (var i = maskingKeyIndex; i < maskingKeyIndex + MaskingKeyLength; i++)
                 {
-                    fragment[payloadIndex + i] = (byte)(playload[offset + i] ^ fragment[maskingKeyIndex + i % MaskingKeyLength]);
+                    fragment[i] = (byte)_rng.Next(0, 255);
+                }
+                if (count > 0)
+                {
+                    int payloadIndex = fragment.Length - count;
+                    for (var i = 0; i < count; i++)
+                    {
+                        fragment[payloadIndex + i] = (byte)(playload[offset + i] ^ fragment[maskingKeyIndex + i % MaskingKeyLength]);
+                    }
+                }
+            }
+            else
+            {
+                if (count > 0)
+                {
+                    int payloadIndex = fragment.Length - count;
+                    Array.Copy(playload, offset, fragment, payloadIndex, count);
                 }
             }
 
