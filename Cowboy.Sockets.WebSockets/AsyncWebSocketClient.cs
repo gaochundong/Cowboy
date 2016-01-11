@@ -362,7 +362,7 @@ namespace Cowboy.Sockets.WebSockets
 
                     while (true)
                     {
-                        var header = Frame.Decode(_sessionBuffer, _sessionBufferCount);
+                        var header = Frame.DecodeHeader(_sessionBuffer, _sessionBufferCount);
                         if (header != null && header.Length + header.PayloadLength <= _sessionBufferCount)
                         {
                             try

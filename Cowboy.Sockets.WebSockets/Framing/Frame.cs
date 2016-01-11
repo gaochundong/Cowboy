@@ -151,7 +151,7 @@ namespace Cowboy.Sockets.WebSockets
             public int Length { get; set; }
         }
 
-        public static Header Decode(byte[] buffer, int count)
+        public static Header DecodeHeader(byte[] buffer, int count)
         {
             if (count < 2)
                 return null;
@@ -214,6 +214,18 @@ namespace Cowboy.Sockets.WebSockets
             }
 
             return header;
+        }
+
+        public static byte[] DecodeMaskedPayload(byte[] buffer, int maskingKeyOffset, int payloadOffset, int payloadCount)
+        {
+            var payload = new byte[payloadCount];
+
+            for (var i = 0; i < payloadCount; i++)
+            {
+                payload[i] = (byte)(buffer[payloadOffset + i] ^ buffer[maskingKeyOffset + i % MaskingKeyLength]);
+            }
+
+            return payload;
         }
 
         public override string ToString()
