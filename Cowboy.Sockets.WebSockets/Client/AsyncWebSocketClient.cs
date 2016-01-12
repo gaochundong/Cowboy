@@ -76,15 +76,22 @@ namespace Cowboy.Sockets.WebSockets
             }
             else
             {
-                IPAddress[] addresses = Dns.GetHostAddresses(host);
-                if (addresses.Any())
+                if (host.ToLowerInvariant() == "localhost")
                 {
-                    _remoteEndPoint = new IPEndPoint(addresses.First(), port);
+                    _remoteEndPoint = new IPEndPoint(IPAddress.Parse(@"127.0.0.1"), port);
                 }
                 else
                 {
-                    throw new InvalidOperationException(
-                        string.Format("Cannot resolve host [{0}] by DNS.", host));
+                    IPAddress[] addresses = Dns.GetHostAddresses(host);
+                    if (addresses.Any())
+                    {
+                        _remoteEndPoint = new IPEndPoint(addresses.First(), port);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException(
+                            string.Format("Cannot resolve host [{0}] by DNS.", host));
+                    }
                 }
             }
 
