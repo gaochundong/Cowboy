@@ -264,91 +264,6 @@ namespace Cowboy.Sockets.WebSockets
             }
         }
 
-        public async Task Close(WebSocketCloseCode closeCode)
-        {
-            await Close(closeCode, null);
-        }
-
-        public async Task Close(WebSocketCloseCode closeCode, string closeReason)
-        {
-            if (State == WebSocketState.Closed || State == WebSocketState.None)
-                return;
-
-            var priorState = Interlocked.Exchange(ref _state, _closing);
-            switch (priorState)
-            {
-                case _connected:
-                    {
-                        var closingHandshake = new CloseFrame(closeCode, closeReason).ToArray();
-                        try
-                        {
-                            if (_stream.CanWrite)
-                            {
-                                await _stream.WriteAsync(closingHandshake, 0, closingHandshake.Length);
-#if DEBUG
-                                _log.DebugFormat("Send client side close frame [{0}] [{1}].", closeCode, closeReason);
-#endif
-                            }
-                        }
-                        catch (Exception ex) when (!ShouldThrow(ex)) { }
-                        return;
-                    }
-                case _connecting:
-                case _closing:
-                    {
-                        await Abort();
-                        return;
-                    }
-                case _disposed:
-                case _none:
-                default:
-                    return;
-            }
-        }
-
-        private async Task Close()
-        {
-            if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
-            {
-                return;
-            }
-
-            try
-            {
-                if (_keepAliveTracker != null)
-                {
-                    _keepAliveTracker.Dispose();
-                }
-                if (_stream != null)
-                {
-                    _stream.Dispose();
-                    _stream = null;
-                }
-                if (_tcpClient != null && _tcpClient.Connected)
-                {
-                    _tcpClient.Dispose();
-                    _tcpClient = null;
-                }
-            }
-            catch (Exception) { }
-
-            if (_receiveBuffer != null)
-                _bufferManager.ReturnBuffer(_receiveBuffer);
-            if (_sessionBuffer != null)
-                _bufferManager.ReturnBuffer(_sessionBuffer);
-
-            _log.DebugFormat("Disconnected from server [{0}] with dispatcher [{1}] on [{2}].",
-                this.RemoteEndPoint,
-                _dispatcher.GetType().Name,
-                DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
-            await _dispatcher.OnServerDisconnected(this);
-        }
-
-        public async Task Abort()
-        {
-            await Close();
-        }
-
         private async Task Process()
         {
             try
@@ -578,6 +493,95 @@ namespace Cowboy.Sockets.WebSockets
             }
 
             return handshakeResult;
+        }
+
+        #endregion
+
+        #region Close
+
+        public async Task Close(WebSocketCloseCode closeCode)
+        {
+            await Close(closeCode, null);
+        }
+
+        public async Task Close(WebSocketCloseCode closeCode, string closeReason)
+        {
+            if (State == WebSocketState.Closed || State == WebSocketState.None)
+                return;
+
+            var priorState = Interlocked.Exchange(ref _state, _closing);
+            switch (priorState)
+            {
+                case _connected:
+                    {
+                        var closingHandshake = new CloseFrame(closeCode, closeReason).ToArray();
+                        try
+                        {
+                            if (_stream.CanWrite)
+                            {
+                                await _stream.WriteAsync(closingHandshake, 0, closingHandshake.Length);
+#if DEBUG
+                                _log.DebugFormat("Send client side close frame [{0}] [{1}].", closeCode, closeReason);
+#endif
+                            }
+                        }
+                        catch (Exception ex) when (!ShouldThrow(ex)) { }
+                        return;
+                    }
+                case _connecting:
+                case _closing:
+                    {
+                        await Abort();
+                        return;
+                    }
+                case _disposed:
+                case _none:
+                default:
+                    return;
+            }
+        }
+
+        private async Task Close()
+        {
+            if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
+            {
+                return;
+            }
+
+            try
+            {
+                if (_keepAliveTracker != null)
+                {
+                    _keepAliveTracker.Dispose();
+                }
+                if (_stream != null)
+                {
+                    _stream.Dispose();
+                    _stream = null;
+                }
+                if (_tcpClient != null && _tcpClient.Connected)
+                {
+                    _tcpClient.Dispose();
+                    _tcpClient = null;
+                }
+            }
+            catch (Exception) { }
+
+            if (_receiveBuffer != null)
+                _bufferManager.ReturnBuffer(_receiveBuffer);
+            if (_sessionBuffer != null)
+                _bufferManager.ReturnBuffer(_sessionBuffer);
+
+            _log.DebugFormat("Disconnected from server [{0}] with dispatcher [{1}] on [{2}].",
+                this.RemoteEndPoint,
+                _dispatcher.GetType().Name,
+                DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
+            await _dispatcher.OnServerDisconnected(this);
+        }
+
+        public async Task Abort()
+        {
+            await Close();
         }
 
         #endregion

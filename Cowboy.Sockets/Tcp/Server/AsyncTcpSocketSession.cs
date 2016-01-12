@@ -107,6 +107,8 @@ namespace Cowboy.Sockets
             }
         }
 
+        #region Start
+
         internal async Task Start()
         {
             int origin = Interlocked.CompareExchange(ref _state, _connecting, _none);
@@ -156,41 +158,6 @@ namespace Cowboy.Sockets
                 _log.Error(ex.Message, ex);
                 await Close();
             }
-        }
-
-        public async Task Close()
-        {
-            if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
-            {
-                return;
-            }
-
-            try
-            {
-                if (_stream != null)
-                {
-                    _stream.Dispose();
-                    _stream = null;
-                }
-                if (_tcpClient != null && _tcpClient.Connected)
-                {
-                    _tcpClient.Dispose();
-                    _tcpClient = null;
-                }
-            }
-            catch (Exception) { }
-
-            if (_receiveBuffer != null)
-                _bufferManager.ReturnBuffer(_receiveBuffer);
-            if (_sessionBuffer != null)
-                _bufferManager.ReturnBuffer(_sessionBuffer);
-
-            _log.DebugFormat("Session closed for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
-                this.RemoteEndPoint,
-                DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"),
-                _dispatcher.GetType().Name,
-                this.Server.SessionCount - 1);
-            await _dispatcher.OnSessionClosed(this);
         }
 
         private async Task Process()
@@ -328,6 +295,47 @@ namespace Cowboy.Sockets
         {
             return SessionKey;
         }
+
+        #endregion
+
+        #region Close
+
+        public async Task Close()
+        {
+            if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
+            {
+                return;
+            }
+
+            try
+            {
+                if (_stream != null)
+                {
+                    _stream.Dispose();
+                    _stream = null;
+                }
+                if (_tcpClient != null && _tcpClient.Connected)
+                {
+                    _tcpClient.Dispose();
+                    _tcpClient = null;
+                }
+            }
+            catch (Exception) { }
+
+            if (_receiveBuffer != null)
+                _bufferManager.ReturnBuffer(_receiveBuffer);
+            if (_sessionBuffer != null)
+                _bufferManager.ReturnBuffer(_sessionBuffer);
+
+            _log.DebugFormat("Session closed for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
+                this.RemoteEndPoint,
+                DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"),
+                _dispatcher.GetType().Name,
+                this.Server.SessionCount - 1);
+            await _dispatcher.OnSessionClosed(this);
+        }
+
+        #endregion
 
         #region Send
 

@@ -121,6 +121,8 @@ namespace Cowboy.Sockets.WebSockets
             }
         }
 
+        #region Start
+
         internal async Task Start()
         {
             int origin = Interlocked.CompareExchange(ref _state, _connecting, _none);
@@ -186,92 +188,6 @@ namespace Cowboy.Sockets.WebSockets
                 await Abort();
                 throw;
             }
-        }
-
-        public async Task Close(WebSocketCloseCode closeCode)
-        {
-            await Close(closeCode, null);
-        }
-
-        public async Task Close(WebSocketCloseCode closeCode, string closeReason)
-        {
-            if (State == WebSocketState.Closed || State == WebSocketState.None)
-                return;
-
-            var priorState = Interlocked.Exchange(ref _state, _closing);
-            switch (priorState)
-            {
-                case _connected:
-                    {
-                        var closingHandshake = new CloseFrame(closeCode, closeReason, false).ToArray();
-                        try
-                        {
-                            if (_stream.CanWrite)
-                            {
-                                await _stream.WriteAsync(closingHandshake, 0, closingHandshake.Length);
-#if DEBUG
-                                _log.DebugFormat("Send server side close frame [{0}] [{1}].", closeCode, closeReason);
-#endif
-                            }
-                        }
-                        catch (Exception ex) when (!ShouldThrow(ex)) { }
-                        return;
-                    }
-                case _connecting:
-                case _closing:
-                    {
-                        await Abort();
-                        return;
-                    }
-                case _disposed:
-                case _none:
-                default:
-                    return;
-            }
-        }
-
-        private async Task Close()
-        {
-            if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
-            {
-                return;
-            }
-
-            try
-            {
-                if (_keepAliveTracker != null)
-                {
-                    _keepAliveTracker.Dispose();
-                }
-                if (_stream != null)
-                {
-                    _stream.Dispose();
-                    _stream = null;
-                }
-                if (_tcpClient != null && _tcpClient.Connected)
-                {
-                    _tcpClient.Dispose();
-                    _tcpClient = null;
-                }
-            }
-            catch (Exception) { }
-
-            if (_receiveBuffer != null)
-                _bufferManager.ReturnBuffer(_receiveBuffer);
-            if (_sessionBuffer != null)
-                _bufferManager.ReturnBuffer(_sessionBuffer);
-
-            _log.DebugFormat("Session closed for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
-                this.RemoteEndPoint,
-                DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"),
-                _dispatcher.GetType().Name,
-                this.Server.SessionCount - 1);
-            await _dispatcher.OnSessionClosed(this);
-        }
-
-        public async Task Abort()
-        {
-            await Close();
         }
 
         private async Task Process()
@@ -516,6 +432,98 @@ namespace Cowboy.Sockets.WebSockets
         {
             return SessionKey;
         }
+
+        #endregion
+
+        #region Close
+
+        public async Task Close(WebSocketCloseCode closeCode)
+        {
+            await Close(closeCode, null);
+        }
+
+        public async Task Close(WebSocketCloseCode closeCode, string closeReason)
+        {
+            if (State == WebSocketState.Closed || State == WebSocketState.None)
+                return;
+
+            var priorState = Interlocked.Exchange(ref _state, _closing);
+            switch (priorState)
+            {
+                case _connected:
+                    {
+                        var closingHandshake = new CloseFrame(closeCode, closeReason, false).ToArray();
+                        try
+                        {
+                            if (_stream.CanWrite)
+                            {
+                                await _stream.WriteAsync(closingHandshake, 0, closingHandshake.Length);
+#if DEBUG
+                                _log.DebugFormat("Send server side close frame [{0}] [{1}].", closeCode, closeReason);
+#endif
+                            }
+                        }
+                        catch (Exception ex) when (!ShouldThrow(ex)) { }
+                        return;
+                    }
+                case _connecting:
+                case _closing:
+                    {
+                        await Abort();
+                        return;
+                    }
+                case _disposed:
+                case _none:
+                default:
+                    return;
+            }
+        }
+
+        private async Task Close()
+        {
+            if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
+            {
+                return;
+            }
+
+            try
+            {
+                if (_keepAliveTracker != null)
+                {
+                    _keepAliveTracker.Dispose();
+                }
+                if (_stream != null)
+                {
+                    _stream.Dispose();
+                    _stream = null;
+                }
+                if (_tcpClient != null && _tcpClient.Connected)
+                {
+                    _tcpClient.Dispose();
+                    _tcpClient = null;
+                }
+            }
+            catch (Exception) { }
+
+            if (_receiveBuffer != null)
+                _bufferManager.ReturnBuffer(_receiveBuffer);
+            if (_sessionBuffer != null)
+                _bufferManager.ReturnBuffer(_sessionBuffer);
+
+            _log.DebugFormat("Session closed for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
+                this.RemoteEndPoint,
+                DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"),
+                _dispatcher.GetType().Name,
+                this.Server.SessionCount - 1);
+            await _dispatcher.OnSessionClosed(this);
+        }
+
+        public async Task Abort()
+        {
+            await Close();
+        }
+
+        #endregion
 
         #region Send
 

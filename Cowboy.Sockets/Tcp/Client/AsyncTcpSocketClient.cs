@@ -237,40 +237,6 @@ namespace Cowboy.Sockets
             }
         }
 
-        public async Task Close()
-        {
-            if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
-            {
-                return;
-            }
-
-            try
-            {
-                if (_stream != null)
-                {
-                    _stream.Dispose();
-                    _stream = null;
-                }
-                if (_tcpClient != null && _tcpClient.Connected)
-                {
-                    _tcpClient.Dispose();
-                    _tcpClient = null;
-                }
-            }
-            catch (Exception) { }
-
-            if (_receiveBuffer != null)
-                _bufferManager.ReturnBuffer(_receiveBuffer);
-            if (_sessionBuffer != null)
-                _bufferManager.ReturnBuffer(_sessionBuffer);
-
-            _log.DebugFormat("Disconnected from server [{0}] with dispatcher [{1}] on [{2}].",
-                this.RemoteEndPoint,
-                _dispatcher.GetType().Name,
-                DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
-            await _dispatcher.OnServerDisconnected(this);
-        }
-
         private async Task Process()
         {
             try
@@ -400,6 +366,44 @@ namespace Cowboy.Sockets
                 sslStream.CipherStrength);
 
             return sslStream;
+        }
+
+        #endregion
+
+        #region Close
+
+        public async Task Close()
+        {
+            if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
+            {
+                return;
+            }
+
+            try
+            {
+                if (_stream != null)
+                {
+                    _stream.Dispose();
+                    _stream = null;
+                }
+                if (_tcpClient != null && _tcpClient.Connected)
+                {
+                    _tcpClient.Dispose();
+                    _tcpClient = null;
+                }
+            }
+            catch (Exception) { }
+
+            if (_receiveBuffer != null)
+                _bufferManager.ReturnBuffer(_receiveBuffer);
+            if (_sessionBuffer != null)
+                _bufferManager.ReturnBuffer(_sessionBuffer);
+
+            _log.DebugFormat("Disconnected from server [{0}] with dispatcher [{1}] on [{2}].",
+                this.RemoteEndPoint,
+                _dispatcher.GetType().Name,
+                DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
+            await _dispatcher.OnServerDisconnected(this);
         }
 
         #endregion
