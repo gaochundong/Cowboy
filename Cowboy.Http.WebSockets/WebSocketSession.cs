@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.WebSockets;
 using System.Text;
@@ -53,6 +54,13 @@ namespace Cowboy.Http.WebSockets
         public Encoding Encoding { get; private set; }
         public CancellationToken CancellationToken { get; private set; }
         public DateTime StartTime { get; private set; }
+
+        public Uri RequestUri { get { return this.Context.RequestUri; } }
+        public bool IsSecureConnection { get { return this.Context.IsSecureConnection; } }
+        public string Origin { get { return this.Context.Origin; } }
+        public string SecWebSocketVersion { get { return this.Context.SecWebSocketVersion; } }
+        public IEnumerable<string> SecWebSocketProtocols { get { return this.Context.SecWebSocketProtocols; } }
+
         public IPEndPoint RemoteEndPoint { get { return _httpContext.Request.RemoteEndPoint; } }
         public IPEndPoint LocalEndPoint { get { return _httpContext.Request.LocalEndPoint; } }
 
