@@ -23,7 +23,7 @@ namespace Cowboy.Sockets.TestAsyncTcpSocketServer
                 config.Masking = false;
 
                 _server = new AsyncTcpSocketServer(22222, new SimpleMessageDispatcher(), config);
-                _server.Start().Wait();
+                _server.Start();
 
                 Console.WriteLine("TCP server has been started on [{0}].", _server.ListenedEndPoint);
                 Console.WriteLine("Type something to send to clients...");

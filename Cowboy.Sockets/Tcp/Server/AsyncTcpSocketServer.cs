@@ -18,9 +18,13 @@ namespace Cowboy.Sockets
         private IBufferManager _bufferManager;
         private TcpListener _listener;
         private readonly ConcurrentDictionary<string, AsyncTcpSocketSession> _sessions = new ConcurrentDictionary<string, AsyncTcpSocketSession>();
-        private readonly SemaphoreSlim _opsLock = new SemaphoreSlim(1, 1);
         private readonly IAsyncTcpSocketServerMessageDispatcher _dispatcher;
         private readonly AsyncTcpSocketServerConfiguration _configuration;
+
+        private int _state;
+        private const int _none = 0;
+        private const int _listening = 1;
+        private const int _disposed = 5;
 
         #endregion
 
@@ -92,72 +96,59 @@ namespace Cowboy.Sockets
         #region Properties
 
         public IPEndPoint ListenedEndPoint { get; private set; }
-        public bool Active { get; private set; }
+        public bool Active { get { return _state == _listening; } }
         public int SessionCount { get { return _sessions.Count; } }
 
         #endregion
 
         #region Server
 
-        public async Task Start()
+        public void Start()
         {
-            if (await _opsLock.WaitAsync(0))
+            int origin = Interlocked.CompareExchange(ref _state, _listening, _none);
+            if (origin == _disposed)
             {
-                try
-                {
-                    if (Active)
-                        return;
-
-                    try
-                    {
-                        _listener = new TcpListener(this.ListenedEndPoint);
-                        ConfigureListener();
-
-                        _listener.Start(_configuration.PendingConnectionBacklog);
-                        Active = true;
-
-                        Task.Run(async () =>
-                        {
-                            await Accept();
-                        })
-                        .Forget();
-                    }
-                    catch (Exception ex) when (!ShouldThrow(ex)) { }
-                }
-                finally
-                {
-                    _opsLock.Release();
-                }
+                throw new ObjectDisposedException(GetType().FullName);
             }
+            else if (origin != _none)
+            {
+                throw new InvalidOperationException("This tcp server has already started.");
+            }
+
+            try
+            {
+                _listener = new TcpListener(this.ListenedEndPoint);
+                ConfigureListener();
+
+                _listener.Start(_configuration.PendingConnectionBacklog);
+
+                Task.Run(async () =>
+                {
+                    await Accept();
+                })
+                .Forget();
+            }
+            catch (Exception ex) when (!ShouldThrow(ex)) { }
         }
 
         public async Task Stop()
         {
-            if (await _opsLock.WaitAsync(0))
+            if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
             {
-                try
-                {
-                    if (!Active)
-                        return;
+                return;
+            }
 
-                    try
-                    {
-                        Active = false;
-                        _listener.Stop();
-                        _listener = null;
+            try
+            {
+                _listener.Stop();
+                _listener = null;
 
-                        foreach (var session in _sessions.Values)
-                        {
-                            await session.Close();
-                        }
-                    }
-                    catch (Exception ex) when (!ShouldThrow(ex)) { }
-                }
-                finally
+                foreach (var session in _sessions.Values)
                 {
-                    _opsLock.Release();
+                    await session.Close();
                 }
             }
+            catch (Exception ex) when (!ShouldThrow(ex)) { }
         }
 
         private void ConfigureListener()
@@ -167,14 +158,11 @@ namespace Cowboy.Sockets
 
         public bool Pending()
         {
-            lock (_opsLock)
-            {
-                if (!Active)
-                    throw new InvalidOperationException("The TCP server is not active.");
+            if (!Active)
+                throw new InvalidOperationException("The tcp server is not active.");
 
-                // determine if there are pending connection requests.
-                return _listener.Pending();
-            }
+            // determine if there are pending connection requests.
+            return _listener.Pending();
         }
 
         private async Task Accept()

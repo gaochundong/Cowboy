@@ -118,7 +118,7 @@ namespace Cowboy.Sockets
             lock (_opsLock)
             {
                 if (!Active)
-                    throw new InvalidOperationException("The TCP server is not active.");
+                    throw new InvalidOperationException("The tcp server is not active.");
 
                 // determine if there are pending connection requests.
                 return _listener.Pending();
@@ -203,7 +203,7 @@ namespace Cowboy.Sockets
         private void GuardRunning()
         {
             if (!Active)
-                throw new InvalidProgramException("This TCP server has not been started yet.");
+                throw new InvalidProgramException("This tcp server has not been started yet.");
         }
 
         public void SendTo(string sessionKey, byte[] data)
