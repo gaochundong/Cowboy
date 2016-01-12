@@ -17,6 +17,7 @@ namespace Cowboy.Sockets.WebSockets.TestAsyncWebSocketServer
             try
             {
                 var catalog = new AsyncWebSocketServerModuleCatalog();
+                catalog.RegisterModule(new TestWebSocketModule());
 
                 var config = new AsyncWebSocketServerConfiguration();
                 //config.SslServerCertificate = new System.Security.Cryptography.X509Certificates.X509Certificate2(@"D:\\Cowboy.pfx", "Cowboy");
