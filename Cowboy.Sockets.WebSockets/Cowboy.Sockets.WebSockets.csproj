@@ -58,7 +58,7 @@
     <Compile Include="Helper\Consts.cs" />
     <Compile Include="Helper\HttpKnownHeaderNames.cs" />
     <Compile Include="Helper\KeepAliveTracker.cs" />
-    <Compile Include="Helper\WebSocketServerHandshaker.cs" />
+    <Compile Include="Server\WebSocketServerHandshaker.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server\AsyncWebSocketServerConfiguration.cs" />
     <Compile Include="Server\AsyncWebSocketServer.cs" />
@@ -69,7 +69,7 @@
     <Compile Include="Server\Module\AsyncWebSocketRouteResolver.cs" />
     <Compile Include="WebSocketCloseCode.cs" />
     <Compile Include="WebSocketException.cs" />
-    <Compile Include="Helper\WebSocketClientHandshaker.cs" />
+    <Compile Include="Client\WebSocketClientHandshaker.cs" />
     <Compile Include="Helper\WebSocketHelpers.cs" />
     <Compile Include="WebSocketState.cs" />
   </ItemGroup>
