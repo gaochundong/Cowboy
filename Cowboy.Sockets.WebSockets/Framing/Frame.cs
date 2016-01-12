@@ -49,19 +49,19 @@ namespace Cowboy.Sockets.WebSockets
             // most significant bit MUST be 0) are the payload length.
             if (count < 126)
             {
-                fragment = new byte[2 + MaskingKeyLength + count];
+                fragment = new byte[2 + (isMasked ? MaskingKeyLength : 0) + count];
                 fragment[1] = (byte)count;
             }
             else if (count < 65536)
             {
-                fragment = new byte[2 + 2 + MaskingKeyLength + count];
+                fragment = new byte[2 + 2 + (isMasked ? MaskingKeyLength : 0) + count];
                 fragment[1] = (byte)126;
                 fragment[2] = (byte)(count / 256);
                 fragment[3] = (byte)(count % 256);
             }
             else
             {
-                fragment = new byte[2 + 8 + MaskingKeyLength + count];
+                fragment = new byte[2 + 8 + (isMasked ? MaskingKeyLength : 0) + count];
                 fragment[1] = (byte)127;
 
                 int left = count;
