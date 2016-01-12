@@ -76,11 +76,15 @@ namespace Cowboy.Hosting.Self
                 {
                     var webSocketContext = await httpContext.AcceptWebSocketAsync(_webSocketSubProtocol);
                     var baseUri = GetBaseUri(webSocketContext.RequestUri);
-                    await _engine.HandleWebSocket(httpContext, webSocketContext, baseUri, cancellationToken);
+                    if (baseUri == null)
+                        throw new InvalidOperationException(string.Format("Unable to locate base URI for request: {0}", webSocketContext.RequestUri));
+                    await _engine.HandleWebSocket(httpContext, webSocketContext, cancellationToken);
                 }
                 else
                 {
                     var baseUri = GetBaseUri(httpContext.Request.Url);
+                    if (baseUri == null)
+                        throw new InvalidOperationException(string.Format("Unable to locate base URI for request: {0}", httpContext.Request.Url));
                     await _engine.HandleHttp(httpContext, baseUri, cancellationToken);
                 }
             }

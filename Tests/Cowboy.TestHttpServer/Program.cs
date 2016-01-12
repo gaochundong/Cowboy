@@ -17,12 +17,12 @@ namespace Cowboy.TestHttpServer
 
             var engine = bootstrapper.Boot();
 
-            string uriString = "http://localhost:3202/";
-            var host = new SelfHost(engine, new Uri(uriString));
+            string uri = "http://localhost:3202/";
+            var host = new SelfHost(engine, new Uri(uri));
             host.Start();
-            Console.WriteLine("Server is listening.");
+            Console.WriteLine("Server is listening on [{0}].", uri);
 
-            //AutoNavigateTo(uriString);
+            //AutoNavigateTo(uri);
 
             Console.ReadKey();
             Console.WriteLine("Stopped. Goodbye!");

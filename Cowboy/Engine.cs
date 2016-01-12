@@ -37,8 +37,6 @@ namespace Cowboy
         {
             if (httpContext == null)
                 throw new ArgumentNullException("httpContext");
-            if (baseUri == null)
-                throw new ArgumentNullException("baseUri", string.Format("Unable to locate base URI for request: {0}", httpContext.Request.Url));
 
             var request = ConvertRequest(baseUri, httpContext.Request);
 
@@ -60,14 +58,12 @@ namespace Cowboy
             ConvertResponse(context.Response, httpContext.Response);
         }
 
-        public async Task HandleWebSocket(HttpListenerContext httpContext, HttpListenerWebSocketContext webSocketContext, Uri baseUri, CancellationToken cancellationToken)
+        public async Task HandleWebSocket(HttpListenerContext httpContext, HttpListenerWebSocketContext webSocketContext, CancellationToken cancellationToken)
         {
             if (httpContext == null)
                 throw new ArgumentNullException("httpContext");
             if (webSocketContext == null)
                 throw new ArgumentNullException("webSocketContext");
-            if (baseUri == null)
-                throw new ArgumentNullException("baseUri", string.Format("Unable to locate base URI for request: {0}", webSocketContext.RequestUri));
 
             await _webSocketDispatcher.Dispatch(httpContext, webSocketContext, cancellationToken);
         }

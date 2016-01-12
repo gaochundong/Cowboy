@@ -18,7 +18,12 @@ namespace Cowboy.Http.WebSockets
         public WebSocketModule Resolve(WebSocketContext context)
         {
             var modules = _moduleCatalog.GetAllModules();
-            return modules.FirstOrDefault(m => m.ModulePath == context.RequestUri.AbsolutePath);
+            return modules.FirstOrDefault(m =>
+                string.Compare(
+                    m.ModulePath.Trim().TrimStart('/').TrimEnd('/').ToLowerInvariant(),
+                    context.RequestUri.AbsolutePath.Trim().TrimStart('/').TrimEnd('/').ToLowerInvariant(),
+                    StringComparison.OrdinalIgnoreCase
+                    ) == 0);
         }
     }
 }
