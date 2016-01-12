@@ -25,6 +25,7 @@ namespace Cowboy.Sockets.WebSockets
                     Fragments[i].Array,
                     Fragments[i].Offset,
                     Fragments[i].Count,
+                    i + 1 == Fragments.Count,
                     IsMasked);
             }
         }

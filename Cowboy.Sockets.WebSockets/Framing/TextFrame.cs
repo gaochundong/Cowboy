@@ -25,7 +25,7 @@ namespace Cowboy.Sockets.WebSockets
         public byte[] ToArray()
         {
             var data = Encoding.UTF8.GetBytes(Text);
-            return Encode(OpCode, data, 0, data.Length, IsMasked);
+            return Encode(OpCode, data, 0, data.Length, true, IsMasked);
         }
     }
 }

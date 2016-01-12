@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text;
 using System.Threading.Tasks;
 using Cowboy.Logging;
 using Cowboy.Logging.NLogIntegration;
@@ -20,6 +19,7 @@ namespace Cowboy.Sockets.WebSockets.TestAsyncWebSocketServer
                 catalog.RegisterModule(new TestWebSocketModule());
 
                 var config = new AsyncWebSocketServerConfiguration();
+                //config.SslEnabled = true;
                 //config.SslServerCertificate = new System.Security.Cryptography.X509Certificates.X509Certificate2(@"D:\\Cowboy.pfx", "Cowboy");
                 //config.SslPolicyErrorsBypassed = false;
 
@@ -56,35 +56,6 @@ namespace Cowboy.Sockets.WebSockets.TestAsyncWebSocketServer
             }
 
             Console.ReadKey();
-        }
-
-        private static async Task OnSessionStarted(AsyncWebSocketSession session)
-        {
-            Console.WriteLine(string.Format("WebSocket session [{0}] has connected [{1}].", session.RemoteEndPoint, session));
-            await Task.CompletedTask;
-        }
-
-        private static async Task OnSessionTextReceived(AsyncWebSocketSession session, string text)
-        {
-            Console.Write(string.Format("WebSocket session [{0}] received Text --> ", session.RemoteEndPoint));
-            Console.WriteLine(string.Format("{0}", text));
-
-            await session.SendText("Echo -> " + text);
-        }
-
-        private static async Task OnSessionDataReceived(AsyncWebSocketSession session, byte[] data, int offset, int count)
-        {
-            var text = Encoding.UTF8.GetString(data, offset, count);
-            Console.Write(string.Format("WebSocket session [{0}] received Binary --> ", session.RemoteEndPoint));
-            Console.WriteLine(string.Format("{0}", text));
-
-            await session.SendText("Echo -> " + text);
-        }
-
-        private static async Task OnSessionClosed(AsyncWebSocketSession session)
-        {
-            Console.WriteLine(string.Format("WebSocket session [{0}] has disconnected.", session.RemoteEndPoint));
-            await Task.CompletedTask;
         }
     }
 }

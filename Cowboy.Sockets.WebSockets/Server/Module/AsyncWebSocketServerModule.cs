@@ -42,23 +42,30 @@ namespace Cowboy.Sockets.WebSockets
 
         public int SessionCount { get { return _sessions.Count; } }
 
-        public void AcceptSession(AsyncWebSocketSession session)
+        #region Dispatcher
+
+        public virtual async Task OnSessionStarted(AsyncWebSocketSession session)
         {
             _sessions.TryAdd(session.SessionKey, session);
+            await Task.CompletedTask;
         }
 
-        public void RemoveSession(AsyncWebSocketSession session)
+        public virtual async Task OnSessionTextReceived(AsyncWebSocketSession session, string text)
+        {
+            await Task.CompletedTask;
+        }
+
+        public virtual async Task OnSessionBinaryReceived(AsyncWebSocketSession session, byte[] data, int offset, int count)
+        {
+            await Task.CompletedTask;
+        }
+
+        public virtual async Task OnSessionClosed(AsyncWebSocketSession session)
         {
             AsyncWebSocketSession throwAway;
             _sessions.TryRemove(session.SessionKey, out throwAway);
+            await Task.CompletedTask;
         }
-
-        #region Dispatcher
-
-        public abstract Task OnSessionStarted(AsyncWebSocketSession session);
-        public abstract Task OnSessionTextReceived(AsyncWebSocketSession session, string text);
-        public abstract Task OnSessionBinaryReceived(AsyncWebSocketSession session, byte[] data, int offset, int count);
-        public abstract Task OnSessionClosed(AsyncWebSocketSession session);
 
         #endregion
 

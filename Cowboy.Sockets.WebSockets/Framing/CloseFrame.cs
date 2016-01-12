@@ -53,11 +53,11 @@ namespace Cowboy.Sockets.WebSockets
             if (!string.IsNullOrEmpty(CloseReason))
             {
                 int count = Encoding.UTF8.GetBytes(CloseReason, 0, CloseReason.Length, payload, 2);
-                return Encode(OpCode, payload, 0, 2 + count, IsMasked);
+                return Encode(OpCode, payload, 0, 2 + count, true, IsMasked);
             }
             else
             {
-                return Encode(OpCode, payload, 0, payload.Length, IsMasked);
+                return Encode(OpCode, payload, 0, payload.Length, true, IsMasked);
             }
         }
     }

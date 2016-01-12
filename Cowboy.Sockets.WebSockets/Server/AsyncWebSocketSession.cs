@@ -212,7 +212,7 @@ namespace Cowboy.Sockets.WebSockets
                                 {
                                     await Close(WebSocketCloseCode.ProtocolError, "A server MUST close the connection upon receiving a frame that is not masked.");
                                     throw new WebSocketException(string.Format(
-                                        "Server received unmasked frame from remote [{0}].", RemoteEndPoint));
+                                        "Server received unmasked frame [{0}] from remote [{1}].", frameHeader.OpCode, RemoteEndPoint));
                                 }
 
                                 var payload = Frame.DecodeMaskedPayload(_sessionBuffer, frameHeader.MaskingKeyOffset, frameHeader.Length, frameHeader.PayloadLength);
@@ -418,7 +418,6 @@ namespace Cowboy.Sockets.WebSockets
                     throw new WebSocketException(string.Format(
                         "Handshake with remote [{0}] failed due to invalid url [{1}{2}].", RemoteEndPoint, path, query));
                 }
-                _module.AcceptSession(this);
 
                 if (handshakeResult)
                 {
@@ -497,10 +496,6 @@ namespace Cowboy.Sockets.WebSockets
 
             try
             {
-                if (_module != null)
-                {
-                    _module.RemoveSession(this);
-                }
                 if (_keepAliveTracker != null)
                 {
                     _keepAliveTracker.Dispose();

@@ -37,7 +37,7 @@ namespace Cowboy.Sockets.WebSockets
 
         public byte[] ToArray()
         {
-            return Encode(OpCode, Data, Offset, Count, IsMasked);
+            return Encode(OpCode, Data, Offset, Count, true, IsMasked);
         }
     }
 }

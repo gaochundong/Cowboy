@@ -288,7 +288,7 @@ namespace Cowboy.Sockets.WebSockets
                                 {
                                     await Close(WebSocketCloseCode.ProtocolError, "A client MUST close a connection if it detects a masked frame.");
                                     throw new WebSocketException(string.Format(
-                                        "Client received masked frame from remote [{0}].", RemoteEndPoint));
+                                        "Client received masked frame [{0}] from remote [{1}].", frameHeader.OpCode, RemoteEndPoint));
                                 }
 
                                 switch (frameHeader.OpCode)

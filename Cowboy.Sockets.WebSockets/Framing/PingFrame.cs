@@ -28,11 +28,11 @@ namespace Cowboy.Sockets.WebSockets
             if (!string.IsNullOrEmpty(Data))
             {
                 var data = Encoding.UTF8.GetBytes(Data);
-                return Encode(OpCode, data, 0, data.Length, IsMasked);
+                return Encode(OpCode, data, 0, data.Length, true, IsMasked);
             }
             else
             {
-                return Encode(OpCode, new byte[0], 0, 0, IsMasked);
+                return Encode(OpCode, new byte[0], 0, 0, true, IsMasked);
             }
         }
     }
