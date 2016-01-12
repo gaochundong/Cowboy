@@ -3,21 +3,21 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Cowboy.Http.WebSockets
+namespace Cowboy.Sockets.WebSockets
 {
-    public abstract class WebSocketModule : IHideObjectMembers
+    public abstract class WebSocketServerModule : IHideObjectMembers
     {
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private static readonly Regex ModuleNameExpression = new Regex(@"(?<name>[\w]+)Module$", RegexOptions.Compiled);
 
-        private ConcurrentDictionary<string, WebSocketSession> _sessions = new ConcurrentDictionary<string, WebSocketSession>();
+        private ConcurrentDictionary<string, AsyncWebSocketSession> _sessions = new ConcurrentDictionary<string, AsyncWebSocketSession>();
 
-        protected WebSocketModule()
+        protected WebSocketServerModule()
             : this(string.Empty)
         {
         }
 
-        protected WebSocketModule(string modulePath)
+        protected WebSocketServerModule(string modulePath)
         {
             this.ModulePath = modulePath;
             this.ModuleName = GetModuleName();
@@ -42,7 +42,7 @@ namespace Cowboy.Http.WebSockets
 
         public int SessionCount { get { return _sessions.Count; } }
 
-        public async Task AcceptSession(WebSocketSession session)
+        public async Task AcceptSession(AsyncWebSocketSession session)
         {
             string sessionKey = session.RemoteEndPoint.ToString();
             if (_sessions.TryAdd(sessionKey, session))
@@ -53,7 +53,7 @@ namespace Cowboy.Http.WebSockets
                 }
                 finally
                 {
-                    WebSocketSession throwAway;
+                    AsyncWebSocketSession throwAway;
                     _sessions.TryRemove(sessionKey, out throwAway);
                 }
             }
@@ -71,10 +71,10 @@ namespace Cowboy.Http.WebSockets
 
         public async Task SendTo(string endpoint, string text)
         {
-            WebSocketSession session;
+            AsyncWebSocketSession session;
             if (_sessions.TryGetValue(endpoint, out session))
             {
-                await session.Send(text);
+                await session.SendText(text);
             }
         }
 
@@ -85,10 +85,10 @@ namespace Cowboy.Http.WebSockets
 
         public async Task SendTo(string endpoint, byte[] binary, int offset, int count)
         {
-            WebSocketSession session;
+            AsyncWebSocketSession session;
             if (_sessions.TryGetValue(endpoint, out session))
             {
-                await session.Send(binary, offset, count);
+                await session.SendBinary(binary, offset, count);
             }
         }
 
@@ -96,7 +96,7 @@ namespace Cowboy.Http.WebSockets
         {
             foreach (var session in _sessions.Values)
             {
-                await session.Send(text);
+                await session.SendText(text);
             }
         }
 
@@ -109,7 +109,7 @@ namespace Cowboy.Http.WebSockets
         {
             foreach (var session in _sessions.Values)
             {
-                await session.Send(binary, offset, count);
+                await session.SendBinary(binary, offset, count);
             }
         }
 

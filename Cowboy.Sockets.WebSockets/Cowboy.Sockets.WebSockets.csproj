@@ -65,6 +65,10 @@
     <Compile Include="Server\AsyncWebSocketSession.cs" />
     <Compile Include="Server\IAsyncWebSocketServerMessageDispatcher.cs" />
     <Compile Include="Server\InternalAsyncWebSocketServerMessageDispatcherImplementation.cs" />
+    <Compile Include="Server\Message\WebSocketBinaryMessage.cs" />
+    <Compile Include="Server\Message\WebSocketTextMessage.cs" />
+    <Compile Include="Server\Module\WebSocketServerModule.cs" />
+    <Compile Include="Server\Module\WebSocketServerModuleCatalog.cs" />
     <Compile Include="WebSocketCloseCode.cs" />
     <Compile Include="WebSocketException.cs" />
     <Compile Include="Helper\WebSocketClientHandshaker.cs" />
