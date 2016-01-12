@@ -16,12 +16,14 @@ namespace Cowboy.Sockets.WebSockets.TestAsyncWebSocketServer
 
             try
             {
+                var catalog = new AsyncWebSocketServerModuleCatalog();
+
                 var config = new AsyncWebSocketServerConfiguration();
                 //config.SslServerCertificate = new System.Security.Cryptography.X509Certificates.X509Certificate2(@"D:\\Cowboy.pfx", "Cowboy");
                 //config.SslPolicyErrorsBypassed = false;
 
-                _server = new AsyncWebSocketServer(22222);
-                _server.Start().Wait();
+                _server = new AsyncWebSocketServer(22222, catalog);
+                _server.Start();
 
                 Console.WriteLine("WebSocket server has been started on [{0}].", _server.ListenedEndPoint);
                 Console.WriteLine("Type something to send to clients...");

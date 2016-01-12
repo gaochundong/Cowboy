@@ -58,7 +58,8 @@ namespace Cowboy.Sockets.WebSockets
                 throw new ArgumentNullException("uri");
             if (dispatcher == null)
                 throw new ArgumentNullException("dispatcher");
-            if (!Consts.AllowedSchemes.Contains(uri.Scheme.ToLowerInvariant()))
+
+            if (!Consts.WebSocketSchemes.Contains(uri.Scheme.ToLowerInvariant()))
                 throw new NotSupportedException(
                     string.Format("Not support the specified scheme [{0}].", uri.Scheme));
 
@@ -67,7 +68,6 @@ namespace Cowboy.Sockets.WebSockets
 
             var host = _uri.Host;
             var port = _uri.Port > 0 ? _uri.Port : uri.Scheme.ToLowerInvariant() == "wss" ? 443 : 80;
-            var path = _uri.PathAndQuery;
 
             IPAddress ipAddress;
             if (IPAddress.TryParse(host, out ipAddress))

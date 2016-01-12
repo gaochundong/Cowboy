@@ -19,8 +19,8 @@ namespace Cowboy.Sockets
         private TcpListener _listener;
         private readonly ConcurrentDictionary<string, AsyncTcpSocketSession> _sessions = new ConcurrentDictionary<string, AsyncTcpSocketSession>();
         private readonly SemaphoreSlim _opsLock = new SemaphoreSlim(1, 1);
-        private readonly AsyncTcpSocketServerConfiguration _configuration;
         private readonly IAsyncTcpSocketServerMessageDispatcher _dispatcher;
+        private readonly AsyncTcpSocketServerConfiguration _configuration;
 
         #endregion
 

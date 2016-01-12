@@ -13,7 +13,10 @@ namespace Cowboy.Sockets.WebSockets
     {
         private static readonly ILog _log = Logger.Get<WebSocketServerHandshaker>();
 
-        internal static bool HandleOpenningHandshakeRequest(AsyncWebSocketSession session, byte[] buffer, int offset, int count, out string secWebSocketKey)
+        internal static bool HandleOpenningHandshakeRequest(AsyncWebSocketSession session, byte[] buffer, int offset, int count,
+            out string secWebSocketKey,
+            out string path,
+            out string query)
         {
             BufferValidator.ValidateBuffer(buffer, offset, count, "buffer");
 
@@ -32,6 +35,8 @@ namespace Cowboy.Sockets.WebSockets
             var headers = ParseOpenningHandshakeRequestHeaders(request);
 
             secWebSocketKey = headers[HttpKnownHeaderNames.SecWebSocketKey];
+            path = headers[Consts.HttpGetMethod];
+            query = headers[Consts.HttpGetMethod];
 
             return true;
         }

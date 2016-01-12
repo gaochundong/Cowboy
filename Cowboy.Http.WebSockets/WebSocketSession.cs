@@ -15,6 +15,7 @@ namespace Cowboy.Http.WebSockets
         private ILog _log = Logger.Get<WebSocketSession>();
         private HttpListenerContext _httpContext;
         private IBufferManager _bufferManager;
+        private readonly string _sessionKey;
 
         public WebSocketSession(
             WebSocketModule module, HttpListenerContext httpContext, WebSocketContext webSocketContext,
@@ -46,6 +47,7 @@ namespace Cowboy.Http.WebSockets
             _bufferManager = bufferManager;
             this.Encoding = encoding;
 
+            _sessionKey = Guid.NewGuid().ToString();
             this.StartTime = DateTime.UtcNow;
         }
 
@@ -53,6 +55,8 @@ namespace Cowboy.Http.WebSockets
         public WebSocketContext Context { get; private set; }
         public Encoding Encoding { get; private set; }
         public CancellationToken CancellationToken { get; private set; }
+
+        public string SessionKey { get { return _sessionKey; } }
         public DateTime StartTime { get; private set; }
 
         public Uri RequestUri { get { return this.Context.RequestUri; } }

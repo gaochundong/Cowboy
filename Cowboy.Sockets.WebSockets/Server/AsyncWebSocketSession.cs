@@ -18,7 +18,8 @@ namespace Cowboy.Sockets.WebSockets
         private TcpClient _tcpClient;
         private readonly AsyncWebSocketServerConfiguration _configuration;
         private readonly IBufferManager _bufferManager;
-        private readonly IAsyncWebSocketServerMessageDispatcher _dispatcher;
+        private readonly AsyncWebSocketRouteResolver _routeResolver;
+        private AsyncWebSocketServerModule _module;
         private readonly AsyncWebSocketServer _server;
         private readonly string _sessionKey;
         private Stream _stream;
@@ -42,8 +43,7 @@ namespace Cowboy.Sockets.WebSockets
             TcpClient tcpClient,
             AsyncWebSocketServerConfiguration configuration,
             IBufferManager bufferManager,
-            IAsyncWebSocketServerMessageDispatcher dispatcher,
-            bool sslEnabled,
+            AsyncWebSocketRouteResolver routeResolver,
             AsyncWebSocketServer server)
         {
             if (tcpClient == null)
@@ -52,16 +52,15 @@ namespace Cowboy.Sockets.WebSockets
                 throw new ArgumentNullException("configuration");
             if (bufferManager == null)
                 throw new ArgumentNullException("bufferManager");
-            if (dispatcher == null)
-                throw new ArgumentNullException("dispatcher");
+            if (routeResolver == null)
+                throw new ArgumentNullException("routeResolver");
             if (server == null)
                 throw new ArgumentNullException("server");
 
             _tcpClient = tcpClient;
             _configuration = configuration;
             _bufferManager = bufferManager;
-            _dispatcher = dispatcher;
-            this.SslEnabled = sslEnabled;
+            _routeResolver = routeResolver;
             _server = server;
 
             _sessionKey = Guid.NewGuid().ToString();
@@ -95,7 +94,6 @@ namespace Cowboy.Sockets.WebSockets
         }
         public AsyncWebSocketServer Server { get { return _server; } }
 
-        public bool SslEnabled { get; private set; }
         public TimeSpan ConnectTimeout { get { return _configuration.ConnectTimeout; } }
         public TimeSpan KeepAliveInterval { get { return _configuration.KeepAliveInterval; } }
 
@@ -169,12 +167,12 @@ namespace Cowboy.Sockets.WebSockets
                     throw new ObjectDisposedException(GetType().FullName);
                 }
 
-                _log.DebugFormat("Session started for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
+                _log.DebugFormat("Session started for [{0}] on [{1}] in module [{2}] with session count [{3}].",
                     this.RemoteEndPoint,
                     this.StartTime.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"),
-                    _dispatcher.GetType().Name,
+                    _module.GetType().Name,
                     this.Server.SessionCount);
-                await _dispatcher.OnSessionStarted(this);
+                await _module.OnSessionStarted(this);
 
                 _keepAliveTracker.StartTimer();
 
@@ -226,12 +224,12 @@ namespace Cowboy.Sockets.WebSockets
                                     case OpCode.Text:
                                         {
                                             var text = Encoding.UTF8.GetString(payload, 0, payload.Length);
-                                            await _dispatcher.OnSessionTextReceived(this, text);
+                                            await _module.OnSessionTextReceived(this, text);
                                         }
                                         break;
                                     case OpCode.Binary:
                                         {
-                                            await _dispatcher.OnSessionBinaryReceived(this, payload, 0, payload.Length);
+                                            await _module.OnSessionBinaryReceived(this, payload, 0, payload.Length);
                                         }
                                         break;
                                     case OpCode.Close:
@@ -325,7 +323,7 @@ namespace Cowboy.Sockets.WebSockets
 
         private async Task<Stream> NegotiateStream(Stream stream)
         {
-            if (!this.SslEnabled)
+            if (!_configuration.SslEnabled)
                 return stream;
 
             var validateRemoteCertificate = new RemoteCertificateValidationCallback(
@@ -408,8 +406,19 @@ namespace Cowboy.Sockets.WebSockets
                 }
 
                 string secWebSocketKey = string.Empty;
+                string path = string.Empty;
+                string query = string.Empty;
                 handshakeResult = WebSocketServerHandshaker.HandleOpenningHandshakeRequest(this,
-                    _sessionBuffer, 0, terminatorIndex + Consts.HeaderTerminator.Length, out secWebSocketKey);
+                    _sessionBuffer, 0, terminatorIndex + Consts.HeaderTerminator.Length,
+                    out secWebSocketKey, out path, out query);
+
+                _module = _routeResolver.Resolve(path, query);
+                if (_module == null)
+                {
+                    throw new WebSocketException(string.Format(
+                        "Handshake with remote [{0}] failed due to invalid url [{1}{2}].", RemoteEndPoint, path, query));
+                }
+                _module.AcceptSession(this);
 
                 if (handshakeResult)
                 {
@@ -488,6 +497,10 @@ namespace Cowboy.Sockets.WebSockets
 
             try
             {
+                if (_module != null)
+                {
+                    _module.RemoveSession(this);
+                }
                 if (_keepAliveTracker != null)
                 {
                     _keepAliveTracker.Dispose();
@@ -513,9 +526,9 @@ namespace Cowboy.Sockets.WebSockets
             _log.DebugFormat("Session closed for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
                 this.RemoteEndPoint,
                 DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"),
-                _dispatcher.GetType().Name,
+                _module.GetType().Name,
                 this.Server.SessionCount - 1);
-            await _dispatcher.OnSessionClosed(this);
+            await _module.OnSessionClosed(this);
         }
 
         public async Task Abort()

@@ -21,6 +21,7 @@ namespace Cowboy.Sockets.WebSockets
             PendingConnectionBacklog = 200;
             AllowNatTraversal = true;
 
+            SslEnabled = false;
             SslServerCertificate = null;
             SslEncryptionPolicy = EncryptionPolicy.RequireEncryption;
             SslEnabledProtocols = SslProtocols.Ssl3 | SslProtocols.Tls;
@@ -43,6 +44,7 @@ namespace Cowboy.Sockets.WebSockets
         public int PendingConnectionBacklog { get; set; }
         public bool AllowNatTraversal { get; set; }
 
+        public bool SslEnabled { get; set; }
         public X509Certificate2 SslServerCertificate { get; set; }
         public EncryptionPolicy SslEncryptionPolicy { get; set; }
         public SslProtocols SslEnabledProtocols { get; set; }

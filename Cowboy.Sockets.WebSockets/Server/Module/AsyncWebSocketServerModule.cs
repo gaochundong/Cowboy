@@ -1,23 +1,24 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Cowboy.Sockets.WebSockets
 {
-    public abstract class WebSocketServerModule : IHideObjectMembers
+    public abstract class AsyncWebSocketServerModule : IAsyncWebSocketServerMessageDispatcher, IHideObjectMembers
     {
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private static readonly Regex ModuleNameExpression = new Regex(@"(?<name>[\w]+)Module$", RegexOptions.Compiled);
 
         private ConcurrentDictionary<string, AsyncWebSocketSession> _sessions = new ConcurrentDictionary<string, AsyncWebSocketSession>();
 
-        protected WebSocketServerModule()
+        protected AsyncWebSocketServerModule()
             : this(string.Empty)
         {
         }
 
-        protected WebSocketServerModule(string modulePath)
+        protected AsyncWebSocketServerModule(string modulePath)
         {
             this.ModulePath = modulePath;
             this.ModuleName = GetModuleName();
@@ -42,28 +43,23 @@ namespace Cowboy.Sockets.WebSockets
 
         public int SessionCount { get { return _sessions.Count; } }
 
-        public async Task AcceptSession(AsyncWebSocketSession session)
+        public void AcceptSession(AsyncWebSocketSession session)
         {
-            string sessionKey = session.RemoteEndPoint.ToString();
-            if (_sessions.TryAdd(sessionKey, session))
-            {
-                try
-                {
-                    await session.Start();
-                }
-                finally
-                {
-                    AsyncWebSocketSession throwAway;
-                    _sessions.TryRemove(sessionKey, out throwAway);
-                }
-            }
+            _sessions.TryAdd(session.SessionKey, session);
         }
 
-        #region Receive
+        public void RemoveSession(AsyncWebSocketSession session)
+        {
+            AsyncWebSocketSession throwAway;
+            _sessions.TryRemove(session.SessionKey, out throwAway);
+        }
 
-        public abstract Task ReceiveTextMessage(WebSocketTextMessage message);
+        #region Dispatcher
 
-        public abstract Task ReceiveBinaryMessage(WebSocketBinaryMessage message);
+        public abstract Task OnSessionStarted(AsyncWebSocketSession session);
+        public abstract Task OnSessionTextReceived(AsyncWebSocketSession session, string text);
+        public abstract Task OnSessionBinaryReceived(AsyncWebSocketSession session, byte[] data, int offset, int count);
+        public abstract Task OnSessionClosed(AsyncWebSocketSession session);
 
         #endregion
 

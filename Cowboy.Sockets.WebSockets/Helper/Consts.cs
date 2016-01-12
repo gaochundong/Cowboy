@@ -5,7 +5,7 @@ namespace Cowboy.Sockets.WebSockets
     internal class Consts
     {
         internal static readonly byte[] HeaderTerminator = Encoding.UTF8.GetBytes("\r\n\r\n");
-        internal static readonly string[] AllowedSchemes = new string[] { "ws", "wss" };
+        internal static readonly string[] WebSocketSchemes = new string[] { "ws", "wss" };
         internal const string HeaderLineFormat = "{0}: {1}";
         internal const string HttpStatusCodeName = "HttpStatusCode";
         internal const string HttpStatusCodeDescription = "HttpStatusCodeDescription";
