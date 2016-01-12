@@ -70,6 +70,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.TestHttpClient", "Te
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.TestHttpServer", "Tests\Cowboy.TestHttpServer\Cowboy.TestHttpServer.csproj", "{1DFCD593-8814-4DCE-82D8-7F7DC9BE5BD4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Sockets.WebSockets.TestAsyncWebSocketServer", "Tests\Cowboy.Sockets.WebSockets.TestAsyncWebSocketServer\Cowboy.Sockets.WebSockets.TestAsyncWebSocketServer.csproj", "{31C790E5-1BB5-4004-82B8-43D1FCAF97C3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -168,6 +170,10 @@ Global
 		{1DFCD593-8814-4DCE-82D8-7F7DC9BE5BD4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1DFCD593-8814-4DCE-82D8-7F7DC9BE5BD4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1DFCD593-8814-4DCE-82D8-7F7DC9BE5BD4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31C790E5-1BB5-4004-82B8-43D1FCAF97C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31C790E5-1BB5-4004-82B8-43D1FCAF97C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31C790E5-1BB5-4004-82B8-43D1FCAF97C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31C790E5-1BB5-4004-82B8-43D1FCAF97C3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -180,5 +186,6 @@ Global
 		{95639F67-5297-4D55-B126-2CB9226226CB} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
 		{3231D52B-1EE7-4CD5-B72D-96E8DC267E68} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
 		{1DFCD593-8814-4DCE-82D8-7F7DC9BE5BD4} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
+		{31C790E5-1BB5-4004-82B8-43D1FCAF97C3} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
 	EndGlobalSection
 EndGlobal
