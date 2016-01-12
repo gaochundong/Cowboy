@@ -154,7 +154,7 @@ namespace Cowboy.Sockets.WebSockets
 
                         foreach (var session in _sessions.Values)
                         {
-                            await session.Close();
+                            await session.Close(WebSocketCloseCode.NormalClosure);
                         }
                     }
                     catch (Exception ex) when (!ShouldThrow(ex)) { }
@@ -190,7 +190,7 @@ namespace Cowboy.Sockets.WebSockets
                 while (Active)
                 {
                     var tcpClient = await _listener.AcceptTcpClientAsync();
-                    var session = new AsyncWebSocketSession(tcpClient, _configuration, _bufferManager, _dispatcher, this);
+                    var session = new AsyncWebSocketSession(tcpClient, _configuration, _bufferManager, _dispatcher, false, this);
                     Task.Run(async () =>
                     {
                         await Process(session);
@@ -210,7 +210,8 @@ namespace Cowboy.Sockets.WebSockets
                 {
                     await session.Start();
                 }
-                catch (TimeoutException ex)
+                catch (Exception ex)
+                when (ex is TimeoutException || ex is WebSocketException)
                 {
                     _log.Error(ex.Message, ex);
                 }
@@ -238,44 +239,70 @@ namespace Cowboy.Sockets.WebSockets
 
         #region Send
 
-        public async Task SendTo(string sessionKey, byte[] data)
-        {
-            await SendTo(sessionKey, data, 0, data.Length);
-        }
-
-        public async Task SendTo(string sessionKey, byte[] data, int offset, int count)
+        public async Task SendTextTo(string sessionKey, string text)
         {
             AsyncWebSocketSession sessionFound;
             if (_sessions.TryGetValue(sessionKey, out sessionFound))
             {
-                await sessionFound.Send(data, offset, count);
+                await sessionFound.SendText(text);
             }
         }
 
-        public async Task SendTo(AsyncWebSocketSession session, byte[] data)
-        {
-            await SendTo(session, data, 0, data.Length);
-        }
-
-        public async Task SendTo(AsyncWebSocketSession session, byte[] data, int offset, int count)
+        public async Task SendTextTo(AsyncWebSocketSession session, string text)
         {
             AsyncWebSocketSession sessionFound;
             if (_sessions.TryGetValue(session.SessionKey, out sessionFound))
             {
-                await sessionFound.Send(data, offset, count);
+                await sessionFound.SendText(text);
             }
         }
 
-        public async Task Broadcast(byte[] data)
+        public async Task SendBinaryTo(string sessionKey, byte[] data)
         {
-            await Broadcast(data, 0, data.Length);
+            await SendBinaryTo(sessionKey, data, 0, data.Length);
         }
 
-        public async Task Broadcast(byte[] data, int offset, int count)
+        public async Task SendBinaryTo(string sessionKey, byte[] data, int offset, int count)
+        {
+            AsyncWebSocketSession sessionFound;
+            if (_sessions.TryGetValue(sessionKey, out sessionFound))
+            {
+                await sessionFound.SendBinary(data, offset, count);
+            }
+        }
+
+        public async Task SendBinaryTo(AsyncWebSocketSession session, byte[] data)
+        {
+            await SendBinaryTo(session, data, 0, data.Length);
+        }
+
+        public async Task SendBinaryTo(AsyncWebSocketSession session, byte[] data, int offset, int count)
+        {
+            AsyncWebSocketSession sessionFound;
+            if (_sessions.TryGetValue(session.SessionKey, out sessionFound))
+            {
+                await sessionFound.SendBinary(data, offset, count);
+            }
+        }
+
+        public async Task BroadcastText(string text)
         {
             foreach (var session in _sessions.Values)
             {
-                await session.Send(data, offset, count);
+                await session.SendText(text);
+            }
+        }
+
+        public async Task BroadcastBinary(byte[] data)
+        {
+            await BroadcastBinary(data, 0, data.Length);
+        }
+
+        public async Task BroadcastBinary(byte[] data, int offset, int count)
+        {
+            foreach (var session in _sessions.Values)
+            {
+                await session.SendBinary(data, offset, count);
             }
         }
 

@@ -20,7 +20,6 @@ namespace Cowboy.Sockets.WebSockets.TestAsyncWebSocketServer
                 //config.UseSsl = true;
                 //config.SslServerCertificate = new System.Security.Cryptography.X509Certificates.X509Certificate2(@"D:\\Cowboy.pfx", "Cowboy");
                 //config.SslPolicyErrorsBypassed = false;
-                config.Masking = false;
 
                 _server = new AsyncWebSocketServer(22222);
                 _server.Start().Wait();
@@ -36,7 +35,7 @@ namespace Cowboy.Sockets.WebSockets.TestAsyncWebSocketServer
                             break;
                         Task.Run(async () =>
                         {
-                            await _server.Broadcast(Encoding.UTF8.GetBytes(text));
+                            await _server.BroadcastText(text);
                             Console.WriteLine("WebSocket server [{0}] broadcasts data -> [{1}].", _server.ListenedEndPoint, text);
                         });
                     }
@@ -68,7 +67,7 @@ namespace Cowboy.Sockets.WebSockets.TestAsyncWebSocketServer
             Console.Write(string.Format("WebSocket session [{0}] received Text --> ", session.RemoteEndPoint));
             Console.WriteLine(string.Format("{0}", text));
 
-            await session.Send(Encoding.UTF8.GetBytes("Echo -> " + text));
+            await session.SendText("Echo -> " + text);
         }
 
         private static async Task OnSessionDataReceived(AsyncWebSocketSession session, byte[] data, int offset, int count)
@@ -77,7 +76,7 @@ namespace Cowboy.Sockets.WebSockets.TestAsyncWebSocketServer
             Console.Write(string.Format("WebSocket session [{0}] received Binary --> ", session.RemoteEndPoint));
             Console.WriteLine(string.Format("{0}", text));
 
-            await session.Send(Encoding.UTF8.GetBytes("Echo -> " + text));
+            await session.SendText("Echo -> " + text);
         }
 
         private static async Task OnSessionClosed(AsyncWebSocketSession session)

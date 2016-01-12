@@ -61,6 +61,7 @@ namespace Cowboy.Sockets
         public IPEndPoint RemoteEndPoint { get { return Connected ? (IPEndPoint)_tcpClient.Client.RemoteEndPoint : _remoteEndPoint; } }
         public IPEndPoint LocalEndPoint { get { return Connected ? (IPEndPoint)_tcpClient.Client.LocalEndPoint : _localEndPoint; } }
         public TcpSocketServer Server { get { return _server; } }
+        public TimeSpan ConnectTimeout { get { return _configuration.ConnectTimeout; } }
 
         internal void Start()
         {
@@ -117,6 +118,24 @@ namespace Cowboy.Sockets
             }
         }
 
+        private bool CloseIfShould(Exception ex)
+        {
+            if (ex is ObjectDisposedException
+                || ex is InvalidOperationException
+                || ex is SocketException
+                || ex is IOException)
+            {
+                _log.Error(ex.Message, ex);
+
+                // connection has been closed
+                Close();
+
+                return true;
+            }
+
+            return false;
+        }
+
         private void ConfigureClient()
         {
             _tcpClient.ReceiveBufferSize = _configuration.ReceiveBufferSize;
@@ -158,11 +177,18 @@ namespace Cowboy.Sockets
                 null,
                 _configuration.SslEncryptionPolicy);
 
-            sslStream.AuthenticateAsServer(
+            var ar = sslStream.BeginAuthenticateAsServer(
                 _configuration.SslServerCertificate, // The X509Certificate used to authenticate the server.
                 _configuration.SslClientCertificateRequired, // A Boolean value that specifies whether the client must supply a certificate for authentication.
                 _configuration.SslEnabledProtocols, // The SslProtocols value that represents the protocol used for authentication.
-                _configuration.SslCheckCertificateRevocation); // A Boolean value that specifies whether the certificate revocation list is checked during authentication.
+                _configuration.SslCheckCertificateRevocation, // A Boolean value that specifies whether the certificate revocation list is checked during authentication.
+                null, _tcpClient);
+            if (!ar.AsyncWaitHandle.WaitOne(ConnectTimeout))
+            {
+                Close();
+                throw new TimeoutException(string.Format(
+                    "Negotiate SSL/TSL with remote [{0}] timeout [{1}].", this.RemoteEndPoint, ConnectTimeout));
+            }
 
             // When authentication succeeds, you must check the IsEncrypted and IsSigned properties 
             // to determine what security services are used by the SslStream. 
@@ -184,24 +210,6 @@ namespace Cowboy.Sockets
                 sslStream.CipherStrength);
 
             return sslStream;
-        }
-
-        private bool CloseIfShould(Exception ex)
-        {
-            if (ex is ObjectDisposedException
-                || ex is InvalidOperationException
-                || ex is SocketException
-                || ex is IOException)
-            {
-                _log.Error(ex.Message, ex);
-
-                // connection has been closed
-                Close();
-
-                return true;
-            }
-
-            return false;
         }
 
         private void ContinueReadBuffer()
@@ -309,6 +317,13 @@ namespace Cowboy.Sockets
             }
         }
 
+        public override string ToString()
+        {
+            return SessionKey;
+        }
+
+        #region Send
+
         public void Send(byte[] data)
         {
             if (data == null)
@@ -319,8 +334,7 @@ namespace Cowboy.Sockets
 
         public void Send(byte[] data, int offset, int count)
         {
-            if (data == null)
-                throw new ArgumentNullException("data");
+            BufferValidator.ValidateBuffer(data, offset, count, "data");
 
             if (!Connected)
             {
@@ -362,9 +376,6 @@ namespace Cowboy.Sockets
             }
         }
 
-        public override string ToString()
-        {
-            return SessionKey;
-        }
+        #endregion
     }
 }

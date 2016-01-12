@@ -10,9 +10,6 @@ namespace Cowboy.Sockets.WebSockets
     {
         public AsyncWebSocketServerConfiguration()
         {
-            Framing = true;
-            Masking = false;
-
             InitialBufferAllocationCount = 100;
             ReceiveBufferSize = 8192;
             SendBufferSize = 8192;
@@ -24,17 +21,16 @@ namespace Cowboy.Sockets.WebSockets
             PendingConnectionBacklog = 200;
             AllowNatTraversal = true;
 
-            SslEnabled = false;
             SslServerCertificate = null;
             SslEncryptionPolicy = EncryptionPolicy.RequireEncryption;
             SslEnabledProtocols = SslProtocols.Ssl3 | SslProtocols.Tls;
             SslClientCertificateRequired = true;
             SslCheckCertificateRevocation = false;
             SslPolicyErrorsBypassed = false;
-        }
 
-        public bool Framing { get; set; }
-        public bool Masking { get; set; }
+            ConnectTimeout = TimeSpan.FromSeconds(15);
+            KeepAliveInterval = TimeSpan.FromSeconds(30);
+        }
 
         public int InitialBufferAllocationCount { get; set; }
         public int ReceiveBufferSize { get; set; }
@@ -47,12 +43,14 @@ namespace Cowboy.Sockets.WebSockets
         public int PendingConnectionBacklog { get; set; }
         public bool AllowNatTraversal { get; set; }
 
-        public bool SslEnabled { get; set; }
         public X509Certificate2 SslServerCertificate { get; set; }
         public EncryptionPolicy SslEncryptionPolicy { get; set; }
         public SslProtocols SslEnabledProtocols { get; set; }
         public bool SslClientCertificateRequired { get; set; }
         public bool SslCheckCertificateRevocation { get; set; }
         public bool SslPolicyErrorsBypassed { get; set; }
+
+        public TimeSpan ConnectTimeout { get; set; }
+        public TimeSpan KeepAliveInterval { get; set; }
     }
 }

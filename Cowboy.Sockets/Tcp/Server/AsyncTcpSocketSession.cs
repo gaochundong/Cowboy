@@ -85,6 +85,7 @@ namespace Cowboy.Sockets
             }
         }
         public AsyncTcpSocketServer Server { get { return _server; } }
+        public TimeSpan ConnectTimeout { get { return _configuration.ConnectTimeout; } }
 
         public TcpSocketState State
         {
@@ -122,12 +123,12 @@ namespace Cowboy.Sockets
             {
                 ConfigureClient();
 
-                var negotiatorTimeout = TimeSpan.FromSeconds(30);
                 var negotiator = NegotiateStream(_tcpClient.GetStream());
-                if (!negotiator.Wait(negotiatorTimeout))
+                if (!negotiator.Wait(ConnectTimeout))
                 {
+                    await Close();
                     throw new TimeoutException(string.Format(
-                        "Negotiate SSL/TSL with remote [{0}] timeout [{1}].", this.RemoteEndPoint, negotiatorTimeout));
+                        "Negotiate SSL/TSL with remote [{0}] timeout [{1}].", this.RemoteEndPoint, ConnectTimeout));
                 }
                 _stream = negotiator.Result;
 
@@ -242,36 +243,16 @@ namespace Cowboy.Sockets
             }
         }
 
-        public async Task Send(byte[] data)
+        private bool ShouldThrow(Exception ex)
         {
-            await Send(data, 0, data.Length);
-        }
-
-        public async Task Send(byte[] data, int offset, int count)
-        {
-            BufferValidator.ValidateBuffer(data, offset, count, "data");
-
-            if (State != TcpSocketState.Connected)
+            if (ex is ObjectDisposedException
+                || ex is InvalidOperationException
+                || ex is SocketException
+                || ex is IOException)
             {
-                throw new InvalidOperationException("This session has not connected.");
+                return false;
             }
-
-            try
-            {
-                if (_stream.CanWrite)
-                {
-                    if (!_configuration.Framing)
-                    {
-                        await _stream.WriteAsync(data, offset, count);
-                    }
-                    else
-                    {
-                        var frame = Frame.Encode(data, offset, count, _configuration.Masking);
-                        await _stream.WriteAsync(frame, 0, frame.Length);
-                    }
-                }
-            }
-            catch (Exception ex) when (!ShouldThrow(ex)) { }
+            return true;
         }
 
         private void ConfigureClient()
@@ -343,21 +324,45 @@ namespace Cowboy.Sockets
             return sslStream;
         }
 
-        private bool ShouldThrow(Exception ex)
-        {
-            if (ex is ObjectDisposedException
-                || ex is InvalidOperationException
-                || ex is SocketException
-                || ex is IOException)
-            {
-                return false;
-            }
-            return true;
-        }
-
         public override string ToString()
         {
             return SessionKey;
         }
+
+        #region Send
+
+        public async Task Send(byte[] data)
+        {
+            await Send(data, 0, data.Length);
+        }
+
+        public async Task Send(byte[] data, int offset, int count)
+        {
+            BufferValidator.ValidateBuffer(data, offset, count, "data");
+
+            if (State != TcpSocketState.Connected)
+            {
+                throw new InvalidOperationException("This session has not connected.");
+            }
+
+            try
+            {
+                if (_stream.CanWrite)
+                {
+                    if (!_configuration.Framing)
+                    {
+                        await _stream.WriteAsync(data, offset, count);
+                    }
+                    else
+                    {
+                        var frame = Frame.Encode(data, offset, count, _configuration.Masking);
+                        await _stream.WriteAsync(frame, 0, frame.Length);
+                    }
+                }
+            }
+            catch (Exception ex) when (!ShouldThrow(ex)) { }
+        }
+
+        #endregion
     }
 }

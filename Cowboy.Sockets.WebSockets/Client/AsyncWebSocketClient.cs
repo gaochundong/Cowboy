@@ -29,8 +29,6 @@ namespace Cowboy.Sockets.WebSockets
         private byte[] _sessionBuffer;
         private int _sessionBufferCount = 0;
 
-        private static readonly byte[] HeaderTerminator = Encoding.UTF8.GetBytes("\r\n\r\n");
-        private readonly string[] AllowedSchemes = new string[] { "ws", "wss" };
         private readonly Uri _uri;
         private bool _sslEnabled = false;
         private string _secWebSocketKey;
@@ -60,7 +58,7 @@ namespace Cowboy.Sockets.WebSockets
                 throw new ArgumentNullException("uri");
             if (dispatcher == null)
                 throw new ArgumentNullException("dispatcher");
-            if (!AllowedSchemes.Contains(uri.Scheme.ToLowerInvariant()))
+            if (!Consts.AllowedSchemes.Contains(uri.Scheme.ToLowerInvariant()))
                 throw new NotSupportedException(
                     string.Format("Not support the specified scheme [{0}].", uri.Scheme));
 
@@ -132,9 +130,6 @@ namespace Cowboy.Sockets.WebSockets
 
         #region Properties
 
-        public TimeSpan ConnectTimeout { get { return _configuration.ConnectTimeout; } }
-        public TimeSpan KeepAliveInterval { get { return _configuration.KeepAliveInterval; } }
-
         public IPEndPoint RemoteEndPoint
         {
             get
@@ -158,6 +153,9 @@ namespace Cowboy.Sockets.WebSockets
         public string Extensions { get; set; }
         public string Origin { get; set; }
         public Dictionary<string, string> Cookies { get; set; }
+
+        public TimeSpan ConnectTimeout { get { return _configuration.ConnectTimeout; } }
+        public TimeSpan KeepAliveInterval { get { return _configuration.KeepAliveInterval; } }
 
         public WebSocketState State
         {
@@ -204,6 +202,7 @@ namespace Cowboy.Sockets.WebSockets
                 var awaiter = _tcpClient.ConnectAsync(_remoteEndPoint.Address, _remoteEndPoint.Port);
                 if (!awaiter.Wait(ConnectTimeout))
                 {
+                    await Abort();
                     throw new TimeoutException(string.Format(
                         "Connect to [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
                 }
@@ -212,8 +211,9 @@ namespace Cowboy.Sockets.WebSockets
                 var negotiator = NegotiateStream(_tcpClient.GetStream());
                 if (!negotiator.Wait(ConnectTimeout))
                 {
+                    await Close(WebSocketCloseCode.TlsHandshakeFailed, "SSL/TLS handshake timeout.");
                     throw new TimeoutException(string.Format(
-                        "Negotiate SSL/TSL with remote [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
+                        "Negotiate SSL/TSL with remote [{0}] timeout [{1}].", RemoteEndPoint, ConnectTimeout));
                 }
                 _stream = negotiator.Result;
 
@@ -224,13 +224,15 @@ namespace Cowboy.Sockets.WebSockets
                 var handshaker = OpenHandshake();
                 if (!handshaker.Wait(ConnectTimeout))
                 {
+                    await Close(WebSocketCloseCode.ProtocolError, "Opening handshake timeout.");
                     throw new TimeoutException(string.Format(
-                        "Handshake with remote [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
+                        "Handshake with remote [{0}] timeout [{1}].", RemoteEndPoint, ConnectTimeout));
                 }
                 if (!handshaker.Result)
                 {
+                    await Close(WebSocketCloseCode.ProtocolError, "Opening handshake failed.");
                     throw new WebSocketException(string.Format(
-                        "Handshake with remote [{0}] failed.", _remoteEndPoint));
+                        "Handshake with remote [{0}] failed.", RemoteEndPoint));
                 }
 
                 if (Interlocked.CompareExchange(ref _state, _connected, _connecting) != _connecting)
@@ -257,7 +259,7 @@ namespace Cowboy.Sockets.WebSockets
             when (ex is TimeoutException || ex is WebSocketException)
             {
                 _log.Error(ex.Message, ex);
-                await Close(WebSocketCloseCode.EndpointUnavailable);
+                await Abort();
                 throw;
             }
         }
@@ -294,7 +296,7 @@ namespace Cowboy.Sockets.WebSockets
                 case _connecting:
                 case _closing:
                     {
-                        await Close();
+                        await Abort();
                         return;
                     }
                 case _disposed:
@@ -367,6 +369,13 @@ namespace Cowboy.Sockets.WebSockets
                         {
                             try
                             {
+                                if (frameHeader.IsMasked)
+                                {
+                                    await Close(WebSocketCloseCode.ProtocolError, "A client MUST close a connection if it detects a masked frame.");
+                                    throw new WebSocketException(string.Format(
+                                        "Client received masked frame from remote [{0}].", RemoteEndPoint));
+                                }
+
                                 switch (frameHeader.OpCode)
                                 {
                                     case OpCode.Continuation:
@@ -430,7 +439,6 @@ namespace Cowboy.Sockets.WebSockets
                             catch (Exception ex)
                             {
                                 _log.Error(ex.Message, ex);
-                                await Close(WebSocketCloseCode.AbnormalClosure);
                                 throw;
                             }
 
@@ -446,7 +454,7 @@ namespace Cowboy.Sockets.WebSockets
             catch (Exception ex) when (!ShouldThrow(ex)) { }
             finally
             {
-                await Close(WebSocketCloseCode.AbnormalClosure);
+                await Abort();
             }
         }
 
@@ -533,34 +541,43 @@ namespace Cowboy.Sockets.WebSockets
 
         private async Task<bool> OpenHandshake()
         {
-            var requestBuffer = WebSocketClientHandshaker.CreateOpenningHandshakeRequest(this, out _secWebSocketKey);
+            bool handshakeResult = false;
 
-            await _stream.WriteAsync(requestBuffer, 0, requestBuffer.Length);
-
-            int terminatorIndex = -1;
-            while (!FindHeaderTerminator(out terminatorIndex))
+            try
             {
-                int receiveCount = await _stream.ReadAsync(_receiveBuffer, 0, _receiveBuffer.Length);
-                if (receiveCount == 0)
+                var requestBuffer = WebSocketClientHandshaker.CreateOpenningHandshakeRequest(this, out _secWebSocketKey);
+                await _stream.WriteAsync(requestBuffer, 0, requestBuffer.Length);
+
+                int terminatorIndex = -1;
+                while (!FindHeaderTerminator(out terminatorIndex))
                 {
-                    throw new WebSocketException(string.Format(
-                        "Handshake with remote [{0}] failed due to receive zero bytes.", _remoteEndPoint));
+                    int receiveCount = await _stream.ReadAsync(_receiveBuffer, 0, _receiveBuffer.Length);
+                    if (receiveCount == 0)
+                    {
+                        throw new WebSocketException(string.Format(
+                            "Handshake with remote [{0}] failed due to receive zero bytes.", RemoteEndPoint));
+                    }
+
+                    BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
+
+                    if (_sessionBufferCount > 2048)
+                    {
+                        throw new WebSocketException(string.Format(
+                            "Handshake with remote [{0}] failed due to receive weird stream.", RemoteEndPoint));
+                    }
                 }
 
-                BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
+                handshakeResult = WebSocketClientHandshaker.VerifyOpenningHandshakeResponse(this, _sessionBuffer, 0, terminatorIndex + Consts.HeaderTerminator.Length, _secWebSocketKey);
 
-                if (_sessionBufferCount > 2048)
-                {
-                    throw new WebSocketException(string.Format(
-                        "Handshake with remote [{0}] failed due to receive weird stream.", _remoteEndPoint));
-                }
+                BufferDeflector.ShiftBuffer(_bufferManager, terminatorIndex + Consts.HeaderTerminator.Length, ref _sessionBuffer, ref _sessionBufferCount);
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex.Message, ex);
+                handshakeResult = false;
             }
 
-            var result = WebSocketClientHandshaker.VerifyOpenningHandshakeResponse(this, _sessionBuffer, 0, terminatorIndex + HeaderTerminator.Length, _secWebSocketKey);
-
-            BufferDeflector.ShiftBuffer(_bufferManager, terminatorIndex + HeaderTerminator.Length, ref _sessionBuffer, ref _sessionBufferCount);
-
-            return result;
+            return handshakeResult;
         }
 
         private bool FindHeaderTerminator(out int index)
@@ -569,12 +586,12 @@ namespace Cowboy.Sockets.WebSockets
 
             for (int i = 0; i < _sessionBufferCount; i++)
             {
-                if (i + HeaderTerminator.Length <= _sessionBufferCount)
+                if (i + Consts.HeaderTerminator.Length <= _sessionBufferCount)
                 {
                     bool matched = true;
-                    for (int j = 0; j < HeaderTerminator.Length; j++)
+                    for (int j = 0; j < Consts.HeaderTerminator.Length; j++)
                     {
-                        if (_sessionBuffer[i + j] != HeaderTerminator[j])
+                        if (_sessionBuffer[i + j] != Consts.HeaderTerminator[j])
                         {
                             matched = false;
                             break;
@@ -668,7 +685,7 @@ namespace Cowboy.Sockets.WebSockets
                 catch (Exception ex)
                 {
                     _log.Error(ex.Message, ex);
-                    await Close(WebSocketCloseCode.AbnormalClosure);
+                    await Close(WebSocketCloseCode.EndpointUnavailable);
                 }
                 finally
                 {

@@ -55,7 +55,10 @@
     <Compile Include="Framing\OpCode.cs" />
     <Compile Include="Client\IAsyncWebSocketClientMessageDispatcher.cs" />
     <Compile Include="Client\InternalAsyncWebSocketClientMessageDispatcherImplementation.cs" />
+    <Compile Include="Helper\Consts.cs" />
+    <Compile Include="Helper\HttpKnownHeaderNames.cs" />
     <Compile Include="Helper\KeepAliveTracker.cs" />
+    <Compile Include="Helper\WebSocketServerHandshaker.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server\AsyncWebSocketServerConfiguration.cs" />
     <Compile Include="Server\AsyncWebSocketServer.cs" />

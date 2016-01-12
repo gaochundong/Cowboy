@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Cowboy.Buffer;
@@ -34,11 +35,15 @@ namespace Cowboy.Sockets.WebSockets
         private const int _closing = 3;
         private const int _disposed = 5;
 
+        private readonly SemaphoreSlim _keepAliveLocker = new SemaphoreSlim(1, 1);
+        private KeepAliveTracker _keepAliveTracker;
+
         public AsyncWebSocketSession(
             TcpClient tcpClient,
             AsyncWebSocketServerConfiguration configuration,
             IBufferManager bufferManager,
             IAsyncWebSocketServerMessageDispatcher dispatcher,
+            bool sslEnabled,
             AsyncWebSocketServer server)
         {
             if (tcpClient == null)
@@ -56,6 +61,7 @@ namespace Cowboy.Sockets.WebSockets
             _configuration = configuration;
             _bufferManager = bufferManager;
             _dispatcher = dispatcher;
+            this.SslEnabled = sslEnabled;
             _server = server;
 
             _sessionKey = Guid.NewGuid().ToString();
@@ -65,6 +71,8 @@ namespace Cowboy.Sockets.WebSockets
                     (IPEndPoint)_tcpClient.Client.RemoteEndPoint : null;
             _localEndPoint = (_tcpClient != null && _tcpClient.Client.Connected) ?
                     (IPEndPoint)_tcpClient.Client.LocalEndPoint : null;
+
+            _keepAliveTracker = KeepAliveTracker.Create(KeepAliveInterval, new TimerCallback((s) => OnKeepAlive()));
         }
 
         public string SessionKey { get { return _sessionKey; } }
@@ -86,6 +94,10 @@ namespace Cowboy.Sockets.WebSockets
             }
         }
         public AsyncWebSocketServer Server { get { return _server; } }
+
+        public bool SslEnabled { get; private set; }
+        public TimeSpan ConnectTimeout { get { return _configuration.ConnectTimeout; } }
+        public TimeSpan KeepAliveInterval { get { return _configuration.KeepAliveInterval; } }
 
         public WebSocketState State
         {
@@ -118,25 +130,37 @@ namespace Cowboy.Sockets.WebSockets
             }
             else if (origin != _none)
             {
-                throw new InvalidOperationException("This tcp socket session has already started.");
+                throw new InvalidOperationException("This websocket socket session has already started.");
             }
 
             try
             {
                 ConfigureClient();
 
-                var negotiatorTimeout = TimeSpan.FromSeconds(30);
                 var negotiator = NegotiateStream(_tcpClient.GetStream());
-                if (!negotiator.Wait(negotiatorTimeout))
+                if (!negotiator.Wait(ConnectTimeout))
                 {
+                    await Close(WebSocketCloseCode.TlsHandshakeFailed, "SSL/TLS handshake timeout.");
                     throw new TimeoutException(string.Format(
-                        "Negotiate SSL/TSL with remote [{0}] timeout [{1}].", this.RemoteEndPoint, negotiatorTimeout));
+                        "Negotiate SSL/TSL with remote [{0}] timeout [{1}].", this.RemoteEndPoint, ConnectTimeout));
                 }
                 _stream = negotiator.Result;
 
                 _receiveBuffer = _bufferManager.BorrowBuffer();
                 _sessionBuffer = _bufferManager.BorrowBuffer();
                 _sessionBufferCount = 0;
+
+                var handshaker = OpenHandshake();
+                if (!handshaker.Wait(ConnectTimeout))
+                {
+                    throw new TimeoutException(string.Format(
+                        "Handshake with remote [{0}] timeout [{1}].", this.RemoteEndPoint, ConnectTimeout));
+                }
+                if (!handshaker.Result)
+                {
+                    throw new WebSocketException(string.Format(
+                        "Handshake with remote [{0}] failed.", this.RemoteEndPoint));
+                }
 
                 if (Interlocked.CompareExchange(ref _state, _connected, _connecting) != _connecting)
                 {
@@ -150,17 +174,63 @@ namespace Cowboy.Sockets.WebSockets
                     this.Server.SessionCount);
                 await _dispatcher.OnSessionStarted(this);
 
+                _keepAliveTracker.StartTimer();
+
                 await Process();
             }
+            catch (ObjectDisposedException) { }
             catch (Exception ex)
-            when (ex is TimeoutException)
+            when (ex is TimeoutException || ex is WebSocketException)
             {
                 _log.Error(ex.Message, ex);
-                await Close();
+                await Abort();
+                throw;
             }
         }
 
-        public async Task Close()
+        public async Task Close(WebSocketCloseCode closeCode)
+        {
+            await Close(closeCode, null);
+        }
+
+        public async Task Close(WebSocketCloseCode closeCode, string closeReason)
+        {
+            if (State == WebSocketState.Closed || State == WebSocketState.None)
+                return;
+
+            var priorState = Interlocked.Exchange(ref _state, _closing);
+            switch (priorState)
+            {
+                case _connected:
+                    {
+                        var closingHandshake = new CloseFrame(closeCode, closeReason, false).ToArray();
+                        try
+                        {
+                            if (_stream.CanWrite)
+                            {
+                                await _stream.WriteAsync(closingHandshake, 0, closingHandshake.Length);
+#if DEBUG
+                                _log.DebugFormat("Send server side close frame [{0}] [{1}].", closeCode, closeReason);
+#endif
+                            }
+                        }
+                        catch (Exception ex) when (!ShouldThrow(ex)) { }
+                        return;
+                    }
+                case _connecting:
+                case _closing:
+                    {
+                        await Abort();
+                        return;
+                    }
+                case _disposed:
+                case _none:
+                default:
+                    return;
+            }
+        }
+
+        private async Task Close()
         {
             if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
             {
@@ -169,6 +239,10 @@ namespace Cowboy.Sockets.WebSockets
 
             try
             {
+                if (_keepAliveTracker != null)
+                {
+                    _keepAliveTracker.Dispose();
+                }
                 if (_stream != null)
                 {
                     _stream.Dispose();
@@ -195,45 +269,111 @@ namespace Cowboy.Sockets.WebSockets
             await _dispatcher.OnSessionClosed(this);
         }
 
+        public async Task Abort()
+        {
+            await Close();
+        }
+
         private async Task Process()
         {
             try
             {
-                while (State == WebSocketState.Open)
+                while (State == WebSocketState.Open || State == WebSocketState.Closing)
                 {
                     int receiveCount = await _stream.ReadAsync(_receiveBuffer, 0, _receiveBuffer.Length);
                     if (receiveCount == 0)
                         break;
 
-                    if (!_configuration.Framing)
-                    {
-                        await _dispatcher.OnSessionBinaryReceived(this, _receiveBuffer, 0, receiveCount);
-                    }
-                    else
-                    {
-                        BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
+                    _keepAliveTracker.OnDataReceived();
+                    BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
 
-                        while (true)
+                    while (true)
+                    {
+                        var frameHeader = Frame.DecodeHeader(_sessionBuffer, _sessionBufferCount);
+                        if (frameHeader != null && frameHeader.Length + frameHeader.PayloadLength <= _sessionBufferCount)
                         {
-                            var frameHeader = Frame.DecodeHeader(_sessionBuffer, _sessionBufferCount);
-                            if (frameHeader != null && frameHeader.Length + frameHeader.PayloadLength <= _sessionBufferCount)
+                            try
                             {
-                                if (frameHeader.IsMasked)
+                                if (!frameHeader.IsMasked)
                                 {
-                                    var unmaskedPayload = Frame.DecodeMaskedPayload(_sessionBuffer, frameHeader.MaskingKeyOffset, frameHeader.Length, frameHeader.PayloadLength);
-                                    await _dispatcher.OnSessionBinaryReceived(this, unmaskedPayload, 0, unmaskedPayload.Length);
-                                }
-                                else
-                                {
-                                    await _dispatcher.OnSessionBinaryReceived(this, _sessionBuffer, frameHeader.Length, frameHeader.PayloadLength);
+                                    await Close(WebSocketCloseCode.ProtocolError, "A server MUST close the connection upon receiving a frame that is not masked.");
+                                    throw new WebSocketException(string.Format(
+                                        "Server received unmasked frame from remote [{0}].", RemoteEndPoint));
                                 }
 
-                                BufferDeflector.ShiftBuffer(_bufferManager, frameHeader.Length + frameHeader.PayloadLength, ref _sessionBuffer, ref _sessionBufferCount);
+                                var payload = Frame.DecodeMaskedPayload(_sessionBuffer, frameHeader.MaskingKeyOffset, frameHeader.Length, frameHeader.PayloadLength);
+
+                                switch (frameHeader.OpCode)
+                                {
+                                    case OpCode.Continuation:
+                                        break;
+                                    case OpCode.Text:
+                                        {
+                                            var text = Encoding.UTF8.GetString(payload, 0, payload.Length);
+                                            await _dispatcher.OnSessionTextReceived(this, text);
+                                        }
+                                        break;
+                                    case OpCode.Binary:
+                                        {
+                                            await _dispatcher.OnSessionBinaryReceived(this, payload, 0, payload.Length);
+                                        }
+                                        break;
+                                    case OpCode.Close:
+                                        {
+                                            var statusCode = payload[0] * 256 + payload[1];
+                                            var closeCode = (WebSocketCloseCode)statusCode;
+                                            var closeReason = string.Empty;
+
+                                            if (payload.Length > 2)
+                                            {
+                                                closeReason = Encoding.UTF8.GetString(payload, 2, payload.Length - 2);
+                                            }
+#if DEBUG
+                                            _log.DebugFormat("Receive client side close frame [{0}] [{1}].", closeCode, closeReason);
+#endif
+                                            await Close(closeCode, closeReason);
+                                        }
+                                        break;
+                                    case OpCode.Ping:
+                                        {
+                                            var ping = Encoding.UTF8.GetString(payload, 0, payload.Length);
+#if DEBUG
+                                            _log.DebugFormat("Receive client side ping frame [{0}].", ping);
+#endif
+                                            var pong = new PongFrame(ping, false).ToArray();
+                                            await SendFrame(pong);
+#if DEBUG
+                                            _log.DebugFormat("Send server side pong frame [{0}].", string.Empty);
+#endif
+                                        }
+                                        break;
+                                    case OpCode.Pong:
+                                        {
+                                            var pong = Encoding.UTF8.GetString(payload, 0, payload.Length);
+#if DEBUG
+                                            _log.DebugFormat("Receive client side pong frame [{0}].", pong);
+#endif
+                                        }
+                                        break;
+                                    default:
+                                        {
+                                            await Close(WebSocketCloseCode.InvalidMessageType);
+                                            throw new NotSupportedException(
+                                                string.Format("Not support received opcode [{0}].", (byte)frameHeader.OpCode));
+                                        }
+                                }
                             }
-                            else
+                            catch (Exception ex)
                             {
-                                break;
+                                _log.Error(ex.Message, ex);
+                                throw;
                             }
+
+                            BufferDeflector.ShiftBuffer(_bufferManager, frameHeader.Length + frameHeader.PayloadLength, ref _sessionBuffer, ref _sessionBufferCount);
+                        }
+                        else
+                        {
+                            break;
                         }
                     }
                 }
@@ -241,40 +381,20 @@ namespace Cowboy.Sockets.WebSockets
             catch (Exception ex) when (!ShouldThrow(ex)) { }
             finally
             {
-                await Close();
+                await Abort();
             }
         }
 
-        public async Task Send(byte[] data)
+        private bool ShouldThrow(Exception ex)
         {
-            await Send(data, 0, data.Length);
-        }
-
-        public async Task Send(byte[] data, int offset, int count)
-        {
-            BufferValidator.ValidateBuffer(data, offset, count, "data");
-
-            if (State != WebSocketState.Open)
+            if (ex is ObjectDisposedException
+                || ex is InvalidOperationException
+                || ex is SocketException
+                || ex is IOException)
             {
-                throw new InvalidOperationException("This session has not connected.");
+                return false;
             }
-
-            try
-            {
-                if (_stream.CanWrite)
-                {
-                    if (!_configuration.Framing)
-                    {
-                        await _stream.WriteAsync(data, offset, count);
-                    }
-                    else
-                    {
-                        //var frame = Frame.Encode(data, offset, count, _configuration.Masking);
-                        //await _stream.WriteAsync(frame, 0, frame.Length);
-                    }
-                }
-            }
-            catch (Exception ex) when (!ShouldThrow(ex)) { }
+            return true;
         }
 
         private void ConfigureClient()
@@ -289,7 +409,7 @@ namespace Cowboy.Sockets.WebSockets
 
         private async Task<Stream> NegotiateStream(Stream stream)
         {
-            if (!_configuration.SslEnabled)
+            if (!this.SslEnabled)
                 return stream;
 
             var validateRemoteCertificate = new RemoteCertificateValidationCallback(
@@ -346,21 +466,169 @@ namespace Cowboy.Sockets.WebSockets
             return sslStream;
         }
 
-        private bool ShouldThrow(Exception ex)
+        private async Task<bool> OpenHandshake()
         {
-            if (ex is ObjectDisposedException
-                || ex is InvalidOperationException
-                || ex is SocketException
-                || ex is IOException)
+            bool handshakeResult = false;
+
+            try
             {
-                return false;
+                int terminatorIndex = -1;
+                while (!FindHeaderTerminator(out terminatorIndex))
+                {
+                    int receiveCount = await _stream.ReadAsync(_receiveBuffer, 0, _receiveBuffer.Length);
+                    if (receiveCount == 0)
+                    {
+                        throw new WebSocketException(string.Format(
+                            "Handshake with remote [{0}] failed due to receive zero bytes.", RemoteEndPoint));
+                    }
+
+                    BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
+
+                    if (_sessionBufferCount > 2048)
+                    {
+                        throw new WebSocketException(string.Format(
+                            "Handshake with remote [{0}] failed due to receive weird stream.", RemoteEndPoint));
+                    }
+                }
+
+                string secWebSocketKey = string.Empty;
+                handshakeResult = WebSocketServerHandshaker.HandleOpenningHandshakeRequest(this,
+                    _sessionBuffer, 0, terminatorIndex + Consts.HeaderTerminator.Length, out secWebSocketKey);
+
+                if (handshakeResult)
+                {
+                    var responseBuffer = WebSocketServerHandshaker.CreateOpenningHandshakeResponse(this, secWebSocketKey);
+                    await _stream.WriteAsync(responseBuffer, 0, responseBuffer.Length);
+                }
+
+                BufferDeflector.ShiftBuffer(_bufferManager, terminatorIndex + Consts.HeaderTerminator.Length, ref _sessionBuffer, ref _sessionBufferCount);
             }
-            return true;
+            catch (Exception ex)
+            {
+                _log.Error(ex.Message, ex);
+                handshakeResult = false;
+            }
+
+            return handshakeResult;
+        }
+
+        private bool FindHeaderTerminator(out int index)
+        {
+            index = -1;
+
+            for (int i = 0; i < _sessionBufferCount; i++)
+            {
+                if (i + Consts.HeaderTerminator.Length <= _sessionBufferCount)
+                {
+                    bool matched = true;
+                    for (int j = 0; j < Consts.HeaderTerminator.Length; j++)
+                    {
+                        if (_sessionBuffer[i + j] != Consts.HeaderTerminator[j])
+                        {
+                            matched = false;
+                            break;
+                        }
+                    }
+
+                    if (matched)
+                    {
+                        index = i;
+                        return true;
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return false;
         }
 
         public override string ToString()
         {
             return SessionKey;
         }
+
+        #region Send
+
+        public async Task SendText(string text)
+        {
+            await SendFrame(new TextFrame(text, false).ToArray());
+        }
+
+        public async Task SendBinary(byte[] data)
+        {
+            await SendBinary(data, 0, data.Length);
+        }
+
+        public async Task SendBinary(byte[] data, int offset, int count)
+        {
+            await SendFrame(new BinaryFrame(data, offset, count, false).ToArray());
+        }
+
+        public async Task SendBinary(ArraySegment<byte> segment)
+        {
+            await SendFrame(new BinaryFrame(segment, false).ToArray());
+        }
+
+        private async Task SendFrame(byte[] frame)
+        {
+            if (frame == null)
+            {
+                throw new ArgumentNullException("frame");
+            }
+            if (State != WebSocketState.Open)
+            {
+                throw new InvalidOperationException("This websocket session has not connected.");
+            }
+
+            try
+            {
+                if (_stream.CanWrite)
+                {
+                    await _stream.WriteAsync(frame, 0, frame.Length);
+                    _keepAliveTracker.OnDataSent();
+                }
+            }
+            catch (Exception ex) when (!ShouldThrow(ex)) { }
+        }
+
+        #endregion
+
+        #region Keep Alive
+
+        private async void OnKeepAlive()
+        {
+            if (await _keepAliveLocker.WaitAsync(0))
+            {
+                try
+                {
+                    if (State != WebSocketState.Open)
+                        return;
+
+                    if (_keepAliveTracker.ShouldSendKeepAlive())
+                    {
+                        var keepAliveFrame = new PingFrame(false).ToArray();
+                        await SendFrame(keepAliveFrame);
+#if DEBUG
+                        _log.DebugFormat("Send server side ping frame [{0}].", string.Empty);
+#endif
+                        _keepAliveTracker.ResetTimer();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _log.Error(ex.Message, ex);
+                    await Close(WebSocketCloseCode.EndpointUnavailable);
+                }
+                finally
+                {
+                    _keepAliveLocker.Release();
+                }
+            }
+        }
+
+        #endregion
     }
 }

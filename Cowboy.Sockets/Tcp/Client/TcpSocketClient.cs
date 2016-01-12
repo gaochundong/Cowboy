@@ -97,7 +97,6 @@ namespace Cowboy.Sockets
                     else
                     {
                         Close();
-
                         throw new TimeoutException(string.Format(
                             "Connect to [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
                     }
@@ -137,16 +136,6 @@ namespace Cowboy.Sockets
             }
         }
 
-        private void ConfigureClient()
-        {
-            _tcpClient.ReceiveBufferSize = _configuration.ReceiveBufferSize;
-            _tcpClient.SendBufferSize = _configuration.SendBufferSize;
-            _tcpClient.ReceiveTimeout = (int)_configuration.ReceiveTimeout.TotalMilliseconds;
-            _tcpClient.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
-            _tcpClient.NoDelay = _configuration.NoDelay;
-            _tcpClient.LingerState = _configuration.LingerState;
-        }
-
         private bool CloseIfShould(Exception ex)
         {
             if (ex is ObjectDisposedException
@@ -162,6 +151,16 @@ namespace Cowboy.Sockets
             }
 
             return false;
+        }
+
+        private void ConfigureClient()
+        {
+            _tcpClient.ReceiveBufferSize = _configuration.ReceiveBufferSize;
+            _tcpClient.SendBufferSize = _configuration.SendBufferSize;
+            _tcpClient.ReceiveTimeout = (int)_configuration.ReceiveTimeout.TotalMilliseconds;
+            _tcpClient.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
+            _tcpClient.NoDelay = _configuration.NoDelay;
+            _tcpClient.LingerState = _configuration.LingerState;
         }
 
         #endregion
@@ -218,11 +217,18 @@ namespace Cowboy.Sockets
                 null,
                 _configuration.SslEncryptionPolicy);
 
-            sslStream.AuthenticateAsClient(
+            var ar = sslStream.BeginAuthenticateAsClient(
                 _configuration.SslTargetHost, // The name of the server that will share this SslStream.
                 _configuration.SslClientCertificates, // The X509CertificateCollection that contains client certificates.
                 _configuration.SslEnabledProtocols, // The SslProtocols value that represents the protocol used for authentication.
-                _configuration.SslCheckCertificateRevocation); // A Boolean value that specifies whether the certificate revocation list is checked during authentication.
+                _configuration.SslCheckCertificateRevocation, // A Boolean value that specifies whether the certificate revocation list is checked during authentication.
+                null, _tcpClient);
+            if (!ar.AsyncWaitHandle.WaitOne(ConnectTimeout))
+            {
+                Close();
+                throw new TimeoutException(string.Format(
+                    "Negotiate SSL/TSL with remote [{0}] timeout [{1}].", this.RemoteEndPoint, ConnectTimeout));
+            }
 
             // When authentication succeeds, you must check the IsEncrypted and IsSigned properties 
             // to determine what security services are used by the SslStream. 
@@ -362,8 +368,7 @@ namespace Cowboy.Sockets
 
         public void Send(byte[] data, int offset, int count)
         {
-            if (data == null)
-                throw new ArgumentNullException("data");
+            BufferValidator.ValidateBuffer(data, offset, count, "data");
 
             if (!Connected)
             {

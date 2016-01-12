@@ -31,6 +31,8 @@ namespace Cowboy.Sockets
             SslClientCertificateRequired = true;
             SslCheckCertificateRevocation = false;
             SslPolicyErrorsBypassed = false;
+
+            ConnectTimeout = TimeSpan.FromSeconds(15);
         }
 
         public bool Framing { get; set; }
@@ -54,5 +56,7 @@ namespace Cowboy.Sockets
         public bool SslClientCertificateRequired { get; set; }
         public bool SslCheckCertificateRevocation { get; set; }
         public bool SslPolicyErrorsBypassed { get; set; }
+
+        public TimeSpan ConnectTimeout { get; set; }
     }
 }
