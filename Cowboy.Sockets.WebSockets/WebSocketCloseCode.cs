@@ -8,7 +8,7 @@
     //             NOT use status codes in this range.       
     // 4000 - 4999 Status codes in the range 4000-4999 MAY be used by application code. The interpretation
     //             of these codes is undefined by this protocol.
-    public enum WebSocketCloseStatus
+    public enum WebSocketCloseCode
     {
         NormalClosure = 1000,
         EndpointUnavailable = 1001,

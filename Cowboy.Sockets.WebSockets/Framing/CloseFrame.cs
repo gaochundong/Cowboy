@@ -9,15 +9,15 @@ namespace Cowboy.Sockets.WebSockets
             this.IsMasked = isMasked;
         }
 
-        public CloseFrame(WebSocketCloseStatus closeStatus, string closeStatusDescription, bool isMasked = true)
+        public CloseFrame(WebSocketCloseCode closeCode, string closeReason, bool isMasked = true)
             : this(isMasked)
         {
-            this.CloseStatus = closeStatus;
-            this.CloseStatusDescription = closeStatusDescription;
+            this.CloseCode = closeCode;
+            this.CloseReason = closeReason;
         }
 
-        public WebSocketCloseStatus CloseStatus { get; private set; }
-        public string CloseStatusDescription { get; private set; }
+        public WebSocketCloseCode CloseCode { get; private set; }
+        public string CloseReason { get; private set; }
         public bool IsMasked { get; private set; }
 
         public override OpCode OpCode
@@ -40,19 +40,19 @@ namespace Cowboy.Sockets.WebSockets
             // may be useful for debugging or passing information relevant to the
             // script that opened the connection.  As the data is not guaranteed to
             // be human readable, clients MUST NOT show it to end users.
-            int payloadLength = (string.IsNullOrEmpty(CloseStatusDescription) ? 0 : Encoding.UTF8.GetMaxByteCount(CloseStatusDescription.Length)) + 2;
+            int payloadLength = (string.IsNullOrEmpty(CloseReason) ? 0 : Encoding.UTF8.GetMaxByteCount(CloseReason.Length)) + 2;
 
             byte[] payload = new byte[payloadLength];
 
-            int higherByte = (int)CloseStatus / 256;
-            int lowerByte = (int)CloseStatus % 256;
+            int higherByte = (int)CloseCode / 256;
+            int lowerByte = (int)CloseCode % 256;
 
             payload[0] = (byte)higherByte;
             payload[1] = (byte)lowerByte;
 
-            if (!string.IsNullOrEmpty(CloseStatusDescription))
+            if (!string.IsNullOrEmpty(CloseReason))
             {
-                int count = Encoding.UTF8.GetBytes(CloseStatusDescription, 0, CloseStatusDescription.Length, payload, 2);
+                int count = Encoding.UTF8.GetBytes(CloseReason, 0, CloseReason.Length, payload, 2);
                 return Encode(OpCode, payload, 0, 2 + count, IsMasked);
             }
             else

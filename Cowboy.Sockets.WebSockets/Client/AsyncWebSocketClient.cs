@@ -257,17 +257,17 @@ namespace Cowboy.Sockets.WebSockets
             when (ex is TimeoutException || ex is WebSocketException)
             {
                 _log.Error(ex.Message, ex);
-                await Close(WebSocketCloseStatus.EndpointUnavailable);
+                await Close(WebSocketCloseCode.EndpointUnavailable);
                 throw;
             }
         }
 
-        public async Task Close(WebSocketCloseStatus closeStatus)
+        public async Task Close(WebSocketCloseCode closeCode)
         {
-            await Close(closeStatus, null);
+            await Close(closeCode, null);
         }
 
-        public async Task Close(WebSocketCloseStatus closeStatus, string closeStatusDescription)
+        public async Task Close(WebSocketCloseCode closeCode, string closeReason)
         {
             if (State == WebSocketState.Closed || State == WebSocketState.None)
                 return;
@@ -277,14 +277,14 @@ namespace Cowboy.Sockets.WebSockets
             {
                 case _connected:
                     {
-                        var closingHandshake = new CloseFrame(closeStatus, closeStatusDescription).ToArray();
+                        var closingHandshake = new CloseFrame(closeCode, closeReason).ToArray();
                         try
                         {
                             if (_stream.CanWrite)
                             {
                                 await _stream.WriteAsync(closingHandshake, 0, closingHandshake.Length);
 #if DEBUG
-                                _log.DebugFormat("Send client side close frame [{0}] [{1}].", closeStatus, closeStatusDescription);
+                                _log.DebugFormat("Send client side close frame [{0}] [{1}].", closeCode, closeReason);
 #endif
                             }
                         }
@@ -385,17 +385,17 @@ namespace Cowboy.Sockets.WebSockets
                                     case OpCode.Close:
                                         {
                                             var statusCode = _sessionBuffer[frameHeader.Length] * 256 + _sessionBuffer[frameHeader.Length + 1];
-                                            var closeStatus = (WebSocketCloseStatus)statusCode;
-                                            var closeStatusDescription = string.Empty;
+                                            var closeCode = (WebSocketCloseCode)statusCode;
+                                            var closeReason = string.Empty;
 
                                             if (frameHeader.PayloadLength > 2)
                                             {
-                                                closeStatusDescription = Encoding.UTF8.GetString(_sessionBuffer, frameHeader.Length + 2, frameHeader.PayloadLength - 2);
+                                                closeReason = Encoding.UTF8.GetString(_sessionBuffer, frameHeader.Length + 2, frameHeader.PayloadLength - 2);
                                             }
 #if DEBUG
-                                            _log.DebugFormat("Receive server side close frame [{0}] [{1}].", closeStatus, closeStatusDescription);
+                                            _log.DebugFormat("Receive server side close frame [{0}] [{1}].", closeCode, closeReason);
 #endif
-                                            await Close(closeStatus, closeStatusDescription);
+                                            await Close(closeCode, closeReason);
                                         }
                                         break;
                                     case OpCode.Ping:
@@ -421,7 +421,7 @@ namespace Cowboy.Sockets.WebSockets
                                         break;
                                     default:
                                         {
-                                            await Close(WebSocketCloseStatus.InvalidMessageType);
+                                            await Close(WebSocketCloseCode.InvalidMessageType);
                                             throw new NotSupportedException(
                                                 string.Format("Not support received opcode [{0}].", (byte)frameHeader.OpCode));
                                         }
@@ -430,7 +430,7 @@ namespace Cowboy.Sockets.WebSockets
                             catch (Exception ex)
                             {
                                 _log.Error(ex.Message, ex);
-                                await Close(WebSocketCloseStatus.AbnormalClosure);
+                                await Close(WebSocketCloseCode.AbnormalClosure);
                                 throw;
                             }
 
@@ -446,7 +446,7 @@ namespace Cowboy.Sockets.WebSockets
             catch (Exception ex) when (!ShouldThrow(ex)) { }
             finally
             {
-                await Close(WebSocketCloseStatus.AbnormalClosure);
+                await Close(WebSocketCloseCode.AbnormalClosure);
             }
         }
 
@@ -668,7 +668,7 @@ namespace Cowboy.Sockets.WebSockets
                 catch (Exception ex)
                 {
                     _log.Error(ex.Message, ex);
-                    await Close(WebSocketCloseStatus.AbnormalClosure);
+                    await Close(WebSocketCloseCode.AbnormalClosure);
                 }
                 finally
                 {

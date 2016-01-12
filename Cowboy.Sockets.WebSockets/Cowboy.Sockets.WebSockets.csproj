@@ -62,7 +62,7 @@
     <Compile Include="Server\AsyncWebSocketSession.cs" />
     <Compile Include="Server\IAsyncWebSocketServerMessageDispatcher.cs" />
     <Compile Include="Server\InternalAsyncWebSocketServerMessageDispatcherImplementation.cs" />
-    <Compile Include="WebSocketCloseStatus.cs" />
+    <Compile Include="WebSocketCloseCode.cs" />
     <Compile Include="WebSocketException.cs" />
     <Compile Include="Helper\WebSocketClientHandshaker.cs" />
     <Compile Include="Helper\WebSocketHelpers.cs" />
