@@ -5,11 +5,14 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using Cowboy.Buffer;
+using Cowboy.Logging;
 
 namespace Cowboy.Sockets.WebSockets
 {
     internal class WebSocketClientHandshaker
     {
+        private static readonly ILog _log = Logger.Get<WebSocketClientHandshaker>();
+
         internal static byte[] CreateOpenningHandshakeRequest(AsyncWebSocketClient client, out string secWebSocketKey)
         {
             var sb = new StringBuilder();
@@ -91,8 +94,11 @@ namespace Cowboy.Sockets.WebSockets
             // Sec-WebSocket-Protocol: chat, superchat
             // Sec-WebSocket-Version: 13
             // Origin: http://example.com
-            var message = sb.ToString();
-            return Encoding.UTF8.GetBytes(message);
+            var request = sb.ToString();
+#if DEBUG
+            _log.DebugFormat("{0}{1}", Environment.NewLine, request);
+#endif
+            return Encoding.UTF8.GetBytes(request);
         }
 
         internal static bool VerifyOpenningHandshakeResponse(AsyncWebSocketClient client, byte[] buffer, int offset, int count, string secWebSocketKey)
@@ -102,7 +108,9 @@ namespace Cowboy.Sockets.WebSockets
                 throw new ArgumentNullException("secWebSocketKey");
 
             var response = Encoding.UTF8.GetString(buffer, offset, count);
-
+#if DEBUG
+            _log.DebugFormat("{0}{1}", Environment.NewLine, response);
+#endif
             // HTTP/1.1 101 Switching Protocols
             // Upgrade: websocket
             // Connection: Upgrade

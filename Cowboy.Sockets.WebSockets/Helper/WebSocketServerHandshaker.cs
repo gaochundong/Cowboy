@@ -5,17 +5,22 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using Cowboy.Buffer;
+using Cowboy.Logging;
 
 namespace Cowboy.Sockets.WebSockets
 {
     internal class WebSocketServerHandshaker
     {
+        private static readonly ILog _log = Logger.Get<WebSocketServerHandshaker>();
+
         internal static bool HandleOpenningHandshakeRequest(AsyncWebSocketSession session, byte[] buffer, int offset, int count, out string secWebSocketKey)
         {
             BufferValidator.ValidateBuffer(buffer, offset, count, "buffer");
 
             var request = Encoding.UTF8.GetString(buffer, offset, count);
-
+#if DEBUG
+            _log.DebugFormat("{0}{1}", Environment.NewLine, request);
+#endif
             // GET /chat HTTP/1.1
             // Host: server.example.com
             // Upgrade: websocket
@@ -53,8 +58,11 @@ namespace Cowboy.Sockets.WebSockets
             // Connection: Upgrade
             // Sec-WebSocket-Accept: 1tGBmA9p0DQDgmFll6P0/UcVS/E=
             // Sec-WebSocket-Protocol: chat
-            var message = sb.ToString();
-            return Encoding.UTF8.GetBytes(message);
+            var response = sb.ToString();
+#if DEBUG
+            _log.DebugFormat("{0}{1}", Environment.NewLine, response);
+#endif
+            return Encoding.UTF8.GetBytes(response);
         }
 
         private static Dictionary<string, string> ParseOpenningHandshakeRequestHeaders(string request)
