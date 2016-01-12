@@ -17,7 +17,6 @@ namespace Cowboy.Sockets.WebSockets.TestAsyncWebSocketServer
             try
             {
                 var config = new AsyncWebSocketServerConfiguration();
-                //config.UseSsl = true;
                 //config.SslServerCertificate = new System.Security.Cryptography.X509Certificates.X509Certificate2(@"D:\\Cowboy.pfx", "Cowboy");
                 //config.SslPolicyErrorsBypassed = false;
 

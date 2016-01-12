@@ -549,7 +549,7 @@ namespace Cowboy.Sockets.WebSockets
                 await _stream.WriteAsync(requestBuffer, 0, requestBuffer.Length);
 
                 int terminatorIndex = -1;
-                while (!FindHeaderTerminator(out terminatorIndex))
+                while (!WebSocketHelpers.FindHeaderTerminator(_sessionBuffer, _sessionBufferCount, out terminatorIndex))
                 {
                     int receiveCount = await _stream.ReadAsync(_receiveBuffer, 0, _receiveBuffer.Length);
                     if (receiveCount == 0)
@@ -578,39 +578,6 @@ namespace Cowboy.Sockets.WebSockets
             }
 
             return handshakeResult;
-        }
-
-        private bool FindHeaderTerminator(out int index)
-        {
-            index = -1;
-
-            for (int i = 0; i < _sessionBufferCount; i++)
-            {
-                if (i + Consts.HeaderTerminator.Length <= _sessionBufferCount)
-                {
-                    bool matched = true;
-                    for (int j = 0; j < Consts.HeaderTerminator.Length; j++)
-                    {
-                        if (_sessionBuffer[i + j] != Consts.HeaderTerminator[j])
-                        {
-                            matched = false;
-                            break;
-                        }
-                    }
-
-                    if (matched)
-                    {
-                        index = i;
-                        return true;
-                    }
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            return false;
         }
 
         #endregion
