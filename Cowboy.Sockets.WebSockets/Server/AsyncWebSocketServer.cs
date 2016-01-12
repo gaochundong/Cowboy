@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -130,7 +129,7 @@ namespace Cowboy.Sockets.WebSockets
         public bool Pending()
         {
             if (!Active)
-                throw new InvalidOperationException("The TCP server is not active.");
+                throw new InvalidOperationException("The websocket server is not active.");
 
             // determine if there are pending connection requests.
             return _listener.Pending();

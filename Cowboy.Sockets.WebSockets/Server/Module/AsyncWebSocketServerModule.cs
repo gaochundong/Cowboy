@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -64,29 +63,6 @@ namespace Cowboy.Sockets.WebSockets
         #endregion
 
         #region Send
-
-        public async Task SendTo(string endpoint, string text)
-        {
-            AsyncWebSocketSession session;
-            if (_sessions.TryGetValue(endpoint, out session))
-            {
-                await session.SendText(text);
-            }
-        }
-
-        public async Task SendTo(string endpoint, byte[] binary)
-        {
-            await SendTo(endpoint, binary, 0, binary.Length);
-        }
-
-        public async Task SendTo(string endpoint, byte[] binary, int offset, int count)
-        {
-            AsyncWebSocketSession session;
-            if (_sessions.TryGetValue(endpoint, out session))
-            {
-                await session.SendBinary(binary, offset, count);
-            }
-        }
 
         public async Task Broadcast(string text)
         {

@@ -68,29 +68,6 @@ namespace Cowboy.Http.WebSockets
 
         #region Send
 
-        public async Task SendTo(string endpoint, string text)
-        {
-            WebSocketSession session;
-            if (_sessions.TryGetValue(endpoint, out session))
-            {
-                await session.Send(text);
-            }
-        }
-
-        public async Task SendTo(string endpoint, byte[] binary)
-        {
-            await SendTo(endpoint, binary, 0, binary.Length);
-        }
-
-        public async Task SendTo(string endpoint, byte[] binary, int offset, int count)
-        {
-            WebSocketSession session;
-            if (_sessions.TryGetValue(endpoint, out session))
-            {
-                await session.Send(binary, offset, count);
-            }
-        }
-
         public async Task Broadcast(string text)
         {
             foreach (var session in _sessions.Values)

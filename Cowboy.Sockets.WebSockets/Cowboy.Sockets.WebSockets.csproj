@@ -64,7 +64,6 @@
     <Compile Include="Server\AsyncWebSocketServer.cs" />
     <Compile Include="Server\AsyncWebSocketSession.cs" />
     <Compile Include="Server\IAsyncWebSocketServerMessageDispatcher.cs" />
-    <Compile Include="Server\InternalAsyncWebSocketServerMessageDispatcherImplementation.cs" />
     <Compile Include="Server\Module\AsyncWebSocketServerModule.cs" />
     <Compile Include="Server\Module\AsyncWebSocketServerModuleCatalog.cs" />
     <Compile Include="Server\Module\AsyncWebSocketRouteResolver.cs" />
