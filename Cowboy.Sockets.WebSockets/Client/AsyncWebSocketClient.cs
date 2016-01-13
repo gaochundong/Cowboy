@@ -304,6 +304,10 @@ namespace Cowboy.Sockets.WebSockets
 #if DEBUG
                                             _log.DebugFormat("Receive server side close frame [{0}] [{1}].", closeCode, closeReason);
 #endif
+                                            // If an endpoint receives a Close frame and did not previously send a
+                                            // Close frame, the endpoint MUST send a Close frame in response.  (When
+                                            // sending a Close frame in response, the endpoint typically echos the
+                                            // status code it received.)  It SHOULD do so as soon as practical.
                                             await Close(closeCode, closeReason);
                                         }
                                         break;
@@ -551,7 +555,7 @@ namespace Cowboy.Sockets.WebSockets
                 case _connecting:
                 case _closing:
                     {
-                        await Abort();
+                        await Close();
                         return;
                     }
                 case _disposed:
@@ -618,6 +622,13 @@ namespace Cowboy.Sockets.WebSockets
 
         private async void OnClose()
         {
+            // After both sending and receiving a Close message, an endpoint
+            // considers the WebSocket connection closed and MUST close the
+            // underlying TCP connection.  The server MUST close the underlying TCP
+            // connection immediately; the client SHOULD wait for the server to
+            // close the connection but MAY close the connection at any time after
+            // sending and receiving a Close message, e.g., if it has not received a
+            // TCP Close from the server in a reasonable time period.
             _log.WarnFormat("Closing timer timeout [{0}] then close automatically.", CloseTimeout);
             await Close();
         }
