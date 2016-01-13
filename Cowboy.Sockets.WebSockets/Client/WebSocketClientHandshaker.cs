@@ -13,11 +13,6 @@ namespace Cowboy.Sockets.WebSockets
     {
         private static readonly ILog _log = Logger.Get<WebSocketClientHandshaker>();
 
-        // Once a connection to the server has been established (including a
-        // connection via a proxy or over a TLS-encrypted tunnel), the client
-        // MUST send an opening handshake to the server.  The handshake consists
-        // of an HTTP Upgrade request, along with a list of required and
-        // optional header fields.  The requirements for this handshake are as follows.
         internal static byte[] CreateOpenningHandshakeRequest(AsyncWebSocketClient client, out string secWebSocketKey)
         {
             var sb = new StringBuilder();
