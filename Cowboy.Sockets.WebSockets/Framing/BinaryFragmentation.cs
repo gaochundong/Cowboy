@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Cowboy.Sockets.WebSockets
+namespace Cowboy.WebSockets
 {
     public sealed class BinaryFragmentation
     {

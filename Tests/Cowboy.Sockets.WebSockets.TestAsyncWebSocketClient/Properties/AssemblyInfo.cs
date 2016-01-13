@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Cowboy.Sockets.WebSockets.TestAsyncWebSocketClient")]
+[assembly: AssemblyTitle("Cowboy.WebSockets.TestAsyncWebSocketClient")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Cowboy.Sockets.WebSockets.TestAsyncWebSocketClient")]
+[assembly: AssemblyProduct("Cowboy.WebSockets.TestAsyncWebSocketClient")]
 [assembly: AssemblyCopyright("")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

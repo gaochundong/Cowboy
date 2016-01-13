@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text;
 
-namespace Cowboy.Sockets.WebSockets
+namespace Cowboy.WebSockets
 {
     public sealed class TextFrame : DataFrame
     {

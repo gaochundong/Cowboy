@@ -1,4 +1,4 @@
-﻿namespace Cowboy.Sockets.WebSockets
+﻿namespace Cowboy.WebSockets
 {
     // https://www.iana.org/assignments/websocket/websocket.xhtml
     // The opcode denotes the frame type of the WebSocket frame.

@@ -1,7 +1,7 @@
 ﻿using System;
 using Cowboy.Buffer;
 
-namespace Cowboy.Sockets.WebSockets
+namespace Cowboy.WebSockets
 {
     public sealed class BinaryFrame : DataFrame
     {

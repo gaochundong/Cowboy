@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 
-namespace Cowboy.Sockets.WebSockets
+namespace Cowboy.WebSockets
 {
     public class AsyncWebSocketRouteResolver
     {

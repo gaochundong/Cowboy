@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Cowboy.Logging;
 using Cowboy.Logging.NLogIntegration;
 
-namespace Cowboy.Sockets.WebSockets.TestAsyncWebSocketClient
+namespace Cowboy.WebSockets.TestAsyncWebSocketClient
 {
     class Program
     {

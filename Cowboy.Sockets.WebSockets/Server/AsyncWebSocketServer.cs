@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Cowboy.Buffer;
 using Cowboy.Logging;
 
-namespace Cowboy.Sockets.WebSockets
+namespace Cowboy.WebSockets
 {
     public class AsyncWebSocketServer
     {

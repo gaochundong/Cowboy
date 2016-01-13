@@ -1,4 +1,4 @@
-﻿namespace Cowboy.Sockets.WebSockets
+﻿namespace Cowboy.WebSockets
 {
     public abstract class DataFrame : Frame
     {

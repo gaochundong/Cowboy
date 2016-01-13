@@ -7,7 +7,7 @@ using System.Text;
 using Cowboy.Buffer;
 using Cowboy.Logging;
 
-namespace Cowboy.Sockets.WebSockets
+namespace Cowboy.WebSockets
 {
     internal class WebSocketServerHandshaker
     {

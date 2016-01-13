@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Cowboy.Logging;
 using Cowboy.Logging.NLogIntegration;
 
-namespace Cowboy.Sockets.WebSockets.TestAsyncWebSocketServer
+namespace Cowboy.WebSockets.TestAsyncWebSocketServer
 {
     class Program
     {

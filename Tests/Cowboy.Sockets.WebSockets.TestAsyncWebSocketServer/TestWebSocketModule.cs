@@ -2,7 +2,7 @@
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Cowboy.Sockets.WebSockets.TestAsyncWebSocketServer
+namespace Cowboy.WebSockets.TestAsyncWebSocketServer
 {
     public class TestWebSocketModule : AsyncWebSocketServerModule
     {

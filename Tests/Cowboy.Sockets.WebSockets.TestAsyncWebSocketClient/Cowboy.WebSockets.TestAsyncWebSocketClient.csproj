@@ -7,8 +7,8 @@
     <ProjectGuid>{95639F67-5297-4D55-B126-2CB9226226CB}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Cowboy.Sockets.WebSockets.TestAsyncWebSocketClient</RootNamespace>
-    <AssemblyName>Cowboy.Sockets.WebSockets.TestAsyncWebSocketClient</AssemblyName>
+    <RootNamespace>Cowboy.WebSockets.TestAsyncWebSocketClient</RootNamespace>
+    <AssemblyName>Cowboy.WebSockets.TestAsyncWebSocketClient</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -59,9 +59,9 @@
       <Project>{7ada144a-a176-437b-812e-889b6aa2536e}</Project>
       <Name>Cowboy.Logging</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Cowboy.Sockets.WebSockets\Cowboy.Sockets.WebSockets.csproj">
+    <ProjectReference Include="..\..\Cowboy.Sockets.WebSockets\Cowboy.WebSockets.csproj">
       <Project>{3a79448c-5d23-4325-8076-576e64ba65be}</Project>
-      <Name>Cowboy.Sockets.WebSockets</Name>
+      <Name>Cowboy.WebSockets</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

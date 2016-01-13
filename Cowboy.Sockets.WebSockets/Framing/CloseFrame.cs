@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace Cowboy.Sockets.WebSockets
+namespace Cowboy.WebSockets
 {
     public sealed class CloseFrame : ControlFrame
     {

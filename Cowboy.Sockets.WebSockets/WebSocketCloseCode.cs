@@ -1,4 +1,4 @@
-﻿namespace Cowboy.Sockets.WebSockets
+﻿namespace Cowboy.WebSockets
 {
     // 0 - 999 Status codes in the range 0-999 are not used.
     // 1000 - 1999 Status codes in the range 1000-1999 are reserved for definition by this protocol.

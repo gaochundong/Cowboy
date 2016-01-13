@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Cowboy.Sockets.WebSockets
+namespace Cowboy.WebSockets
 {
     public class WebSocketHandshakeException : WebSocketException
     {

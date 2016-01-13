@@ -7,8 +7,8 @@
     <ProjectGuid>{3A79448C-5D23-4325-8076-576E64BA65BE}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Cowboy.Sockets.WebSockets</RootNamespace>
-    <AssemblyName>Cowboy.Sockets.WebSockets</AssemblyName>
+    <RootNamespace>Cowboy.WebSockets</RootNamespace>
+    <AssemblyName>Cowboy.WebSockets</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
