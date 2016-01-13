@@ -48,11 +48,6 @@ namespace Cowboy.Sockets.WebSockets
         #region Constructors
 
         public AsyncWebSocketClient(Uri uri, IAsyncWebSocketClientMessageDispatcher dispatcher, AsyncWebSocketClientConfiguration configuration = null)
-            : this(uri, null, dispatcher, configuration)
-        {
-        }
-
-        public AsyncWebSocketClient(Uri uri, string subProtocol, IAsyncWebSocketClientMessageDispatcher dispatcher, AsyncWebSocketClientConfiguration configuration = null)
         {
             if (uri == null)
                 throw new ArgumentNullException("uri");
@@ -64,7 +59,6 @@ namespace Cowboy.Sockets.WebSockets
                     string.Format("Not support the specified scheme [{0}].", uri.Scheme));
 
             _uri = uri;
-            SubProtocol = subProtocol;
 
             var host = _uri.Host;
             var port = _uri.Port > 0 ? _uri.Port : uri.Scheme.ToLowerInvariant() == "wss" ? 443 : 80;
@@ -108,18 +102,7 @@ namespace Cowboy.Sockets.WebSockets
             Func<AsyncWebSocketClient, Task> onServerConnected = null,
             Func<AsyncWebSocketClient, Task> onServerDisconnected = null,
             AsyncWebSocketClientConfiguration configuration = null)
-            : this(uri, null,
-                  onServerTextReceived, onServerBinaryReceived, onServerConnected, onServerDisconnected, configuration)
-        {
-        }
-
-        public AsyncWebSocketClient(Uri uri, string subProtocol,
-            Func<AsyncWebSocketClient, string, Task> onServerTextReceived = null,
-            Func<AsyncWebSocketClient, byte[], int, int, Task> onServerBinaryReceived = null,
-            Func<AsyncWebSocketClient, Task> onServerConnected = null,
-            Func<AsyncWebSocketClient, Task> onServerDisconnected = null,
-            AsyncWebSocketClientConfiguration configuration = null)
-            : this(uri, subProtocol,
+            : this(uri,
                  new InternalAsyncWebSocketClientMessageDispatcherImplementation(
                      onServerTextReceived, onServerBinaryReceived, onServerConnected, onServerDisconnected),
                  configuration)
@@ -155,11 +138,6 @@ namespace Cowboy.Sockets.WebSockets
         }
 
         public Uri Uri { get { return _uri; } }
-        public string SubProtocol { get; private set; }
-        public string Version { get { return "13"; } }
-        public string Extensions { get; set; }
-        public string Origin { get; set; }
-        public Dictionary<string, string> Cookies { get; set; }
 
         public TimeSpan ConnectTimeout { get { return _configuration.ConnectTimeout; } }
         public TimeSpan KeepAliveInterval { get { return _configuration.KeepAliveInterval; } }

@@ -46,6 +46,10 @@ namespace Cowboy.Sockets.WebSockets
             secWebSocketKey = Convert.ToBase64String(Encoding.ASCII.GetBytes(Guid.NewGuid().ToString().Substring(0, 16)));
             sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.SecWebSocketKey, secWebSocketKey);
 
+            // The request MUST include a header field with the name
+            // |Sec-WebSocket-Version|.  The value of this header field MUST be 13.
+            sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.SecWebSocketVersion, Consts.WebSocketVersion);
+
             // The request MUST include a header field with the name |Origin|
             // [RFC6454] if the request is coming from a browser client.  If
             // the connection is from a non-browser client, the request MAY
@@ -55,15 +59,6 @@ namespace Cowboy.Sockets.WebSockets
             // context in which the code establishing the connection is
             // running.  See [RFC6454] for the details of how this header field
             // value is constructed.
-            if (!string.IsNullOrEmpty(client.Origin))
-                sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.Origin, client.Origin);
-
-            // The request MUST include a header field with the name
-            // |Sec-WebSocket-Version|.  The value of this header field MUST be 13.
-            if (!string.IsNullOrEmpty(client.Version))
-                sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.SecWebSocketVersion, client.Version);
-            else
-                sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.SecWebSocketVersion, Consts.WebSocketVersion);
 
             // The request MAY include a header field with the name
             // |Sec-WebSocket-Protocol|.  If present, this value indicates one
@@ -74,32 +69,16 @@ namespace Cowboy.Sockets.WebSockets
             // [RFC2616] and MUST all be unique strings.  The ABNF for the
             // value of this header field is 1#token, where the definitions of
             // constructs and rules are as given in [RFC2616].
-            if (!string.IsNullOrEmpty(client.SubProtocol))
-                sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.SecWebSocketProtocol, client.SubProtocol);
 
             // The request MAY include a header field with the name
             // |Sec-WebSocket-Extensions|.  If present, this value indicates
             // the protocol-level extension(s) the client wishes to speak.  The
             // interpretation and format of this header field is described in Section 9.1.
-            if (!string.IsNullOrEmpty(client.Extensions))
-                sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.SecWebSocketExtensions, client.Extensions);
 
             // The request MAY include any other header fields, for example,
             // cookies [RFC6265] and/or authentication-related header fields
             // such as the |Authorization| header field [RFC2616], which are
             // processed according to documents that define them.
-            if (client.Cookies != null && client.Cookies.Any())
-            {
-                string[] pairs = new string[client.Cookies.Count()];
-
-                for (int i = 0; i < client.Cookies.Count(); i++)
-                {
-                    var item = client.Cookies.ElementAt(i);
-                    pairs[i] = item.Key + "=" + Uri.EscapeUriString(item.Value);
-                }
-
-                sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.Cookie, string.Join(";", pairs));
-            }
 
             sb.AppendWithCrCf();
 
@@ -199,41 +178,6 @@ namespace Cowboy.Sockets.WebSockets
             // not present in the client's handshake (the server has indicated a
             // subprotocol not requested by the client), the client MUST _Fail
             // the WebSocket Connection_.
-            if (headers.ContainsKey(HttpKnownHeaderNames.SecWebSocketProtocol))
-            {
-                string subProtocol = headers[HttpKnownHeaderNames.SecWebSocketProtocol];
-                if (!string.IsNullOrWhiteSpace(subProtocol) && !string.IsNullOrWhiteSpace(client.SubProtocol))
-                {
-                    if (!WebSocketHelpers.ValidateSubprotocol(subProtocol))
-                        throw new WebSocketHandshakeException(string.Format(
-                            "Handshake with remote [{0}] failed due to invalid char in sub-protocol [{1}] with requested [{2}].",
-                            client.RemoteEndPoint, headers[HttpKnownHeaderNames.SecWebSocketProtocol], client.SubProtocol));
-
-                    var requestedSubProtocols = client.SubProtocol.Split(',').Select(p => p.Trim());
-
-                    bool foundMatch = false;
-                    foreach (string requestedSubProtocol in requestedSubProtocols)
-                    {
-                        if (string.Equals(requestedSubProtocol, subProtocol, StringComparison.OrdinalIgnoreCase))
-                        {
-                            foundMatch = true;
-                            break;
-                        }
-                    }
-                    if (!foundMatch)
-                    {
-                        throw new WebSocketHandshakeException(string.Format(
-                            "Handshake with remote [{0}] failed due to accept unsupported sub-protocol [{1}] not in requested [{2}].",
-                            client.RemoteEndPoint, headers[HttpKnownHeaderNames.SecWebSocketProtocol], client.SubProtocol));
-                    }
-                }
-                else
-                {
-                    throw new WebSocketHandshakeException(string.Format(
-                        "Handshake with remote [{0}] failed due to mismatched sub-protocol [{1}] with requested [{2}].",
-                        client.RemoteEndPoint, headers[HttpKnownHeaderNames.SecWebSocketProtocol], client.SubProtocol));
-                }
-            }
 
             // If the response includes a |Sec-WebSocket-Extensions| header
             // field and this header field indicates the use of an extension
@@ -268,15 +212,22 @@ namespace Cowboy.Sockets.WebSockets
                 }
                 else
                 {
-                    foreach (var item in HttpKnownHeaderNames.All)
+                    foreach (var key in HttpKnownHeaderNames.All)
                     {
-                        if (line.StartsWith(item + ":"))
+                        if (line.StartsWith(key + ":"))
                         {
                             var index = line.IndexOf(':');
                             if (index != -1)
                             {
                                 var value = line.Substring(index + 1);
-                                headers.Add(item, value.Trim());
+                                if (headers.ContainsKey(key))
+                                {
+                                    headers[key] = string.Join(",", headers[key], value.Trim());
+                                }
+                                else
+                                {
+                                    headers.Add(key, value.Trim());
+                                }
                             }
                         }
                     }
