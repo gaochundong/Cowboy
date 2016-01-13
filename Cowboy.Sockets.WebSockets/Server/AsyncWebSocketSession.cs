@@ -438,7 +438,8 @@ namespace Cowboy.Sockets.WebSockets
 
         public override string ToString()
         {
-            return SessionKey;
+            return string.Format("SessionKey[{0}], RemoteEndPoint[{1}], LocalEndPoint[{2}]",
+                this.SessionKey, this.RemoteEndPoint, this.LocalEndPoint);
         }
 
         #endregion

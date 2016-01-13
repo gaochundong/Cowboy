@@ -1,6 +1,6 @@
 ﻿namespace Cowboy.Sockets.WebSockets
 {
-    internal abstract class ControlFrame : Frame
+    public abstract class ControlFrame : Frame
     {
     }
 }

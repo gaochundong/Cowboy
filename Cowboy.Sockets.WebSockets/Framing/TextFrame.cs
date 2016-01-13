@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Cowboy.Sockets.WebSockets
 {
-    internal sealed class TextFrame : DataFrame
+    public sealed class TextFrame : DataFrame
     {
         public TextFrame(string text, bool isMasked = true)
         {

@@ -2,7 +2,7 @@
 
 namespace Cowboy.Sockets.WebSockets
 {
-    internal sealed class CloseFrame : ControlFrame
+    public sealed class CloseFrame : ControlFrame
     {
         public CloseFrame(bool isMasked = true)
         {

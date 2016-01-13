@@ -3,7 +3,7 @@ using Cowboy.Buffer;
 
 namespace Cowboy.Sockets.WebSockets
 {
-    internal sealed class BinaryFrame : DataFrame
+    public sealed class BinaryFrame : DataFrame
     {
         public BinaryFrame(ArraySegment<byte> segment, bool isMasked = true)
         {

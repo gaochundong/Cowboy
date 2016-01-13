@@ -1,6 +1,6 @@
 ﻿namespace Cowboy.Sockets.WebSockets
 {
-    internal abstract class DataFrame : Frame
+    public abstract class DataFrame : Frame
     {
     }
 }
