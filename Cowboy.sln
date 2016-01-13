@@ -52,8 +52,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{D27BF0
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.WebSockets", "Cowboy.Sockets.WebSockets\Cowboy.WebSockets.csproj", "{3A79448C-5D23-4325-8076-576E64BA65BE}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Http.WebSockets", "Cowboy.Http.WebSockets\Cowboy.Http.WebSockets.csproj", "{47E06681-38E9-46C0-8AAE-00535845D42D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Sockets.TestAsyncTcpSocketClient", "Tests\Cowboy.Sockets.TestAsyncTcpSocketClient\Cowboy.Sockets.TestAsyncTcpSocketClient.csproj", "{80CA6A09-A08C-490B-A99F-6D972358968B}"
@@ -64,13 +62,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Sockets.TestTcpSocke
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Sockets.TestTcpSocketServer", "Tests\Cowboy.Sockets.TestTcpSocketServer\Cowboy.Sockets.TestTcpSocketServer.csproj", "{B07B5EB4-1892-465E-BC17-150EDC281EB5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.WebSockets.TestAsyncWebSocketClient", "Tests\Cowboy.Sockets.WebSockets.TestAsyncWebSocketClient\Cowboy.WebSockets.TestAsyncWebSocketClient.csproj", "{95639F67-5297-4D55-B126-2CB9226226CB}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.TestHttpClient", "Tests\Cowboy.TestHttpClient\Cowboy.TestHttpClient.csproj", "{3231D52B-1EE7-4CD5-B72D-96E8DC267E68}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.TestHttpServer", "Tests\Cowboy.TestHttpServer\Cowboy.TestHttpServer.csproj", "{1DFCD593-8814-4DCE-82D8-7F7DC9BE5BD4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.WebSockets.TestAsyncWebSocketServer", "Tests\Cowboy.Sockets.WebSockets.TestAsyncWebSocketServer\Cowboy.WebSockets.TestAsyncWebSocketServer.csproj", "{31C790E5-1BB5-4004-82B8-43D1FCAF97C3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.WebSockets", "Cowboy.WebSockets\Cowboy.WebSockets.csproj", "{3A79448C-5D23-4325-8076-576E64BA65BE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.WebSockets.TestAsyncWebSocketClient", "Tests\Cowboy.WebSockets.TestAsyncWebSocketClient\Cowboy.WebSockets.TestAsyncWebSocketClient.csproj", "{95639F67-5297-4D55-B126-2CB9226226CB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.WebSockets.TestAsyncWebSocketServer", "Tests\Cowboy.WebSockets.TestAsyncWebSocketServer\Cowboy.WebSockets.TestAsyncWebSocketServer.csproj", "{31C790E5-1BB5-4004-82B8-43D1FCAF97C3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -134,10 +134,6 @@ Global
 		{E7A41D23-4F6B-4BE2-A311-0D3D25BFE6E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E7A41D23-4F6B-4BE2-A311-0D3D25BFE6E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E7A41D23-4F6B-4BE2-A311-0D3D25BFE6E7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3A79448C-5D23-4325-8076-576E64BA65BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3A79448C-5D23-4325-8076-576E64BA65BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3A79448C-5D23-4325-8076-576E64BA65BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3A79448C-5D23-4325-8076-576E64BA65BE}.Release|Any CPU.Build.0 = Release|Any CPU
 		{47E06681-38E9-46C0-8AAE-00535845D42D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{47E06681-38E9-46C0-8AAE-00535845D42D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{47E06681-38E9-46C0-8AAE-00535845D42D}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -158,10 +154,6 @@ Global
 		{B07B5EB4-1892-465E-BC17-150EDC281EB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B07B5EB4-1892-465E-BC17-150EDC281EB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B07B5EB4-1892-465E-BC17-150EDC281EB5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{95639F67-5297-4D55-B126-2CB9226226CB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{95639F67-5297-4D55-B126-2CB9226226CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{95639F67-5297-4D55-B126-2CB9226226CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{95639F67-5297-4D55-B126-2CB9226226CB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{3231D52B-1EE7-4CD5-B72D-96E8DC267E68}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{3231D52B-1EE7-4CD5-B72D-96E8DC267E68}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3231D52B-1EE7-4CD5-B72D-96E8DC267E68}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -170,6 +162,14 @@ Global
 		{1DFCD593-8814-4DCE-82D8-7F7DC9BE5BD4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1DFCD593-8814-4DCE-82D8-7F7DC9BE5BD4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1DFCD593-8814-4DCE-82D8-7F7DC9BE5BD4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3A79448C-5D23-4325-8076-576E64BA65BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A79448C-5D23-4325-8076-576E64BA65BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A79448C-5D23-4325-8076-576E64BA65BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A79448C-5D23-4325-8076-576E64BA65BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{95639F67-5297-4D55-B126-2CB9226226CB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{95639F67-5297-4D55-B126-2CB9226226CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{95639F67-5297-4D55-B126-2CB9226226CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{95639F67-5297-4D55-B126-2CB9226226CB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{31C790E5-1BB5-4004-82B8-43D1FCAF97C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{31C790E5-1BB5-4004-82B8-43D1FCAF97C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{31C790E5-1BB5-4004-82B8-43D1FCAF97C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -183,9 +183,9 @@ Global
 		{A1E6F527-386A-46C0-9A04-92CD0129662F} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
 		{4A35D220-0CD3-4514-86E1-E55B8F517E24} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
 		{B07B5EB4-1892-465E-BC17-150EDC281EB5} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
-		{95639F67-5297-4D55-B126-2CB9226226CB} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
 		{3231D52B-1EE7-4CD5-B72D-96E8DC267E68} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
 		{1DFCD593-8814-4DCE-82D8-7F7DC9BE5BD4} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
+		{95639F67-5297-4D55-B126-2CB9226226CB} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
 		{31C790E5-1BB5-4004-82B8-43D1FCAF97C3} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
 	EndGlobalSection
 EndGlobal
