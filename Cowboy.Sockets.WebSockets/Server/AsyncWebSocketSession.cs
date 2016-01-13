@@ -392,7 +392,7 @@ namespace Cowboy.Sockets.WebSockets
                     int receiveCount = await _stream.ReadAsync(_receiveBuffer, 0, _receiveBuffer.Length);
                     if (receiveCount == 0)
                     {
-                        throw new WebSocketException(string.Format(
+                        throw new WebSocketHandshakeException(string.Format(
                             "Handshake with remote [{0}] failed due to receive zero bytes.", RemoteEndPoint));
                     }
 
@@ -400,7 +400,7 @@ namespace Cowboy.Sockets.WebSockets
 
                     if (_sessionBufferCount > 2048)
                     {
-                        throw new WebSocketException(string.Format(
+                        throw new WebSocketHandshakeException(string.Format(
                             "Handshake with remote [{0}] failed due to receive weird stream.", RemoteEndPoint));
                     }
                 }
@@ -415,8 +415,8 @@ namespace Cowboy.Sockets.WebSockets
                 _module = _routeResolver.Resolve(path, query);
                 if (_module == null)
                 {
-                    throw new WebSocketException(string.Format(
-                        "Handshake with remote [{0}] failed due to invalid url [{1}{2}].", RemoteEndPoint, path, query));
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Handshake with remote [{0}] failed due to cannot identify the resource name [{1}{2}].", RemoteEndPoint, path, query));
                 }
 
                 if (handshakeResult)
@@ -427,7 +427,7 @@ namespace Cowboy.Sockets.WebSockets
 
                 BufferDeflector.ShiftBuffer(_bufferManager, terminatorIndex + Consts.HeaderTerminator.Length, ref _sessionBuffer, ref _sessionBufferCount);
             }
-            catch (Exception ex)
+            catch (WebSocketHandshakeException ex)
             {
                 _log.Error(ex.Message, ex);
                 handshakeResult = false;
