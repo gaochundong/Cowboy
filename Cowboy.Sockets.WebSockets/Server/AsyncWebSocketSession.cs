@@ -158,6 +158,9 @@ namespace Cowboy.Sockets.WebSockets
                 }
                 if (!handshaker.Result)
                 {
+                    var responseBuffer = WebSocketServerHandshaker.CreateOpenningHandshakeBadRequestResponse(this);
+                    await _stream.WriteAsync(responseBuffer, 0, responseBuffer.Length);
+
                     throw new WebSocketException(string.Format(
                         "Handshake with remote [{0}] failed.", this.RemoteEndPoint));
                 }

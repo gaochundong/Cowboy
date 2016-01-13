@@ -118,8 +118,7 @@ namespace Cowboy.Sockets.WebSockets
             var sb = new StringBuilder();
 
             // A Status-Line with a 101 response code as per RFC 2616
-            // [RFC2616].  Such a response could look like "HTTP/1.1 101
-            // Switching Protocols".
+            // [RFC2616].  Such a response could look like "HTTP/1.1 101 Switching Protocols".
             sb.AppendFormatWithCrCf("HTTP/{0} {1} {2}",
                 Consts.HttpVersion,
                 (int)HttpStatusCode.SwitchingProtocols,
@@ -156,6 +155,34 @@ namespace Cowboy.Sockets.WebSockets
             // Connection: Upgrade
             // Sec-WebSocket-Accept: 1tGBmA9p0DQDgmFll6P0/UcVS/E=
             // Sec-WebSocket-Protocol: chat
+            var response = sb.ToString();
+#if DEBUG
+            _log.DebugFormat("{0}{1}", Environment.NewLine, response);
+#endif
+            return Encoding.UTF8.GetBytes(response);
+        }
+
+        internal static byte[] CreateOpenningHandshakeBadRequestResponse(AsyncWebSocketSession session)
+        {
+            var sb = new StringBuilder();
+
+            // HTTP/1.1 400 Bad Request
+            sb.AppendFormatWithCrCf("HTTP/{0} {1} {2}",
+                Consts.HttpVersion,
+                (int)HttpStatusCode.BadRequest,
+                @"Bad Request");
+
+            // Upgrade: websocket
+            sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.Upgrade, Consts.WebSocketUpgradeToken);
+
+            // Connection: Upgrade
+            sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.Connection, Consts.WebSocketConnectionToken);
+
+            // Sec-WebSocket-Version: 13
+            sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.SecWebSocketVersion, Consts.WebSocketVersion);
+
+            sb.AppendWithCrCf();
+
             var response = sb.ToString();
 #if DEBUG
             _log.DebugFormat("{0}{1}", Environment.NewLine, response);
