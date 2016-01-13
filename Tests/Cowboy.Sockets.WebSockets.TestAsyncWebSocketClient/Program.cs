@@ -24,7 +24,7 @@ namespace Cowboy.Sockets.WebSockets.TestAsyncWebSocketClient
                     //config.SslPolicyErrorsBypassed = false;
 
                     //var uri = new Uri("ws://echo.websocket.org/");
-                    var uri = new Uri("ws://127.0.0.1:22222/test");
+                    var uri = new Uri("ws://127.0.0.1:22222/test?type=test");
                     _client = new AsyncWebSocketClient(uri,
                         OnServerTextReceived,
                         OnServerBinaryReceived,
