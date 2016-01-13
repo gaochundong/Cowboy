@@ -105,7 +105,7 @@ namespace Cowboy.Sockets
                     }
                     catch (Exception ex)
                     {
-                        _log.Error(ex.Message, ex);
+                        _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
                     }
                     finally
                     {
@@ -125,7 +125,7 @@ namespace Cowboy.Sockets
                 || ex is SocketException
                 || ex is IOException)
             {
-                _log.Error(ex.Message, ex);
+                _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
 
                 // connection has been closed
                 Close();
@@ -164,8 +164,8 @@ namespace Cowboy.Sockets
                     if (_configuration.SslPolicyErrorsBypassed)
                         return true;
                     else
-                        _log.ErrorFormat("Error occurred when validating remote certificate: [{0}], [{1}].",
-                            this.RemoteEndPoint, sslPolicyErrors);
+                        _log.ErrorFormat("Session [{0}] error occurred when validating remote certificate: [{1}], [{2}].",
+                            this, this.RemoteEndPoint, sslPolicyErrors);
 
                     return false;
                 });

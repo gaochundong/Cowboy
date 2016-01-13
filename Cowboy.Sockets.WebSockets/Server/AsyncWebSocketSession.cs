@@ -14,6 +14,8 @@ namespace Cowboy.Sockets.WebSockets
 {
     public sealed class AsyncWebSocketSession
     {
+        #region Fields
+
         private static readonly ILog _log = Logger.Get<AsyncWebSocketSession>();
         private TcpClient _tcpClient;
         private readonly AsyncWebSocketServerConfiguration _configuration;
@@ -38,6 +40,11 @@ namespace Cowboy.Sockets.WebSockets
 
         private readonly SemaphoreSlim _keepAliveLocker = new SemaphoreSlim(1, 1);
         private KeepAliveTracker _keepAliveTracker;
+        private Timer _closingTimer;
+
+        #endregion
+
+        #region Constructors
 
         public AsyncWebSocketSession(
             TcpClient tcpClient,
@@ -74,6 +81,10 @@ namespace Cowboy.Sockets.WebSockets
             _keepAliveTracker = KeepAliveTracker.Create(KeepAliveInterval, new TimerCallback((s) => OnKeepAlive()));
         }
 
+        #endregion
+
+        #region Properties
+
         public string SessionKey { get { return _sessionKey; } }
         public DateTime StartTime { get; private set; }
         public IPEndPoint RemoteEndPoint
@@ -95,6 +106,7 @@ namespace Cowboy.Sockets.WebSockets
         public AsyncWebSocketServer Server { get { return _server; } }
 
         public TimeSpan ConnectTimeout { get { return _configuration.ConnectTimeout; } }
+        public TimeSpan CloseTimeout { get { return _configuration.CloseTimeout; } }
         public TimeSpan KeepAliveInterval { get { return _configuration.KeepAliveInterval; } }
 
         public WebSocketState State
@@ -118,6 +130,8 @@ namespace Cowboy.Sockets.WebSockets
                 }
             }
         }
+
+        #endregion
 
         #region Start
 
@@ -185,7 +199,7 @@ namespace Cowboy.Sockets.WebSockets
             catch (Exception ex)
             when (ex is TimeoutException || ex is WebSocketException)
             {
-                _log.Error(ex.Message, ex);
+                _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
                 await Abort();
                 throw;
             }
@@ -246,34 +260,68 @@ namespace Cowboy.Sockets.WebSockets
                                                 closeReason = Encoding.UTF8.GetString(payload, 2, payload.Length - 2);
                                             }
 #if DEBUG
-                                            _log.DebugFormat("Receive client side close frame [{0}] [{1}].", closeCode, closeReason);
+                                            _log.DebugFormat("Session [{0}] received client side close frame [{1}] [{2}].", this, closeCode, closeReason);
 #endif
                                             await Close(closeCode, closeReason);
                                         }
                                         break;
                                     case OpCode.Ping:
                                         {
+                                            // Upon receipt of a Ping frame, an endpoint MUST send a Pong frame in
+                                            // response, unless it already received a Close frame.  It SHOULD
+                                            // respond with Pong frame as soon as is practical.  Pong frames are
+                                            // discussed in Section 5.5.3.
+                                            // 
+                                            // An endpoint MAY send a Ping frame any time after the connection is
+                                            // established and before the connection is closed.
+                                            // 
+                                            // A Ping frame may serve either as a keep-alive or as a means to
+                                            // verify that the remote endpoint is still responsive.
                                             var ping = Encoding.UTF8.GetString(payload, 0, payload.Length);
 #if DEBUG
-                                            _log.DebugFormat("Receive client side ping frame [{0}].", ping);
+                                            _log.DebugFormat("Session [{0}] received client side ping frame [{1}].", this, ping);
 #endif
-                                            var pong = new PongFrame(ping, false).ToArray();
-                                            await SendFrame(pong);
+                                            if (State == WebSocketState.Open)
+                                            {
+                                                // A Pong frame sent in response to a Ping frame must have identical
+                                                // "Application data" as found in the message body of the Ping frame being replied to.
+                                                var pong = new PongFrame(ping, false).ToArray();
+                                                await SendFrame(pong);
 #if DEBUG
-                                            _log.DebugFormat("Send server side pong frame [{0}].", string.Empty);
+                                                _log.DebugFormat("Session [{0}] sends server side pong frame [{1}].", string.Empty);
 #endif
+                                            }
                                         }
                                         break;
                                     case OpCode.Pong:
                                         {
+                                            // If an endpoint receives a Ping frame and has not yet sent Pong
+                                            // frame(s) in response to previous Ping frame(s), the endpoint MAY
+                                            // elect to send a Pong frame for only the most recently processed Ping frame.
+                                            // 
+                                            // A Pong frame MAY be sent unsolicited.  This serves as a
+                                            // unidirectional heartbeat.  A response to an unsolicited Pong frame is not expected.
                                             var pong = Encoding.UTF8.GetString(payload, 0, payload.Length);
 #if DEBUG
-                                            _log.DebugFormat("Receive client side pong frame [{0}].", pong);
+                                            _log.DebugFormat("Session [{0}] received client side pong frame [{1}].", this, pong);
 #endif
                                         }
                                         break;
                                     default:
                                         {
+                                            // Incoming data MUST always be validated by both clients and servers.
+                                            // If, at any time, an endpoint is faced with data that it does not
+                                            // understand or that violates some criteria by which the endpoint
+                                            // determines safety of input, or when the endpoint sees an opening
+                                            // handshake that does not correspond to the values it is expecting
+                                            // (e.g., incorrect path or origin in the client request), the endpoint
+                                            // MAY drop the TCP connection.  If the invalid data was received after
+                                            // a successful WebSocket handshake, the endpoint SHOULD send a Close
+                                            // frame with an appropriate status code (Section 7.4) before proceeding
+                                            // to _Close the WebSocket Connection_.  Use of a Close frame with an
+                                            // appropriate status code can help in diagnosing the problem.  If the
+                                            // invalid data is sent during the WebSocket handshake, the server
+                                            // SHOULD return an appropriate HTTP [RFC2616] status code.
                                             await Close(WebSocketCloseCode.InvalidMessageType);
                                             throw new NotSupportedException(
                                                 string.Format("Not support received opcode [{0}].", (byte)frameHeader.OpCode));
@@ -282,7 +330,7 @@ namespace Cowboy.Sockets.WebSockets
                             }
                             catch (Exception ex)
                             {
-                                _log.Error(ex.Message, ex);
+                                _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
                                 throw;
                             }
 
@@ -342,8 +390,8 @@ namespace Cowboy.Sockets.WebSockets
                     if (_configuration.SslPolicyErrorsBypassed)
                         return true;
                     else
-                        _log.ErrorFormat("Error occurred when validating remote certificate: [{0}], [{1}].",
-                            this.RemoteEndPoint, sslPolicyErrors);
+                        _log.ErrorFormat("Session [{0}] error occurred when validating remote certificate: [{1}], [{2}].",
+                            this, this.RemoteEndPoint, sslPolicyErrors);
 
                     return false;
                 });
@@ -432,7 +480,7 @@ namespace Cowboy.Sockets.WebSockets
             }
             catch (WebSocketHandshakeException ex)
             {
-                _log.Error(ex.Message, ex);
+                _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
                 handshakeResult = false;
             }
 
@@ -470,8 +518,9 @@ namespace Cowboy.Sockets.WebSockets
                             if (_stream.CanWrite)
                             {
                                 await _stream.WriteAsync(closingHandshake, 0, closingHandshake.Length);
+                                StartClosingTimer();
 #if DEBUG
-                                _log.DebugFormat("Send server side close frame [{0}] [{1}].", closeCode, closeReason);
+                                _log.DebugFormat("Session [{0}] sends server side close frame [{1}] [{2}].", this, closeCode, closeReason);
 #endif
                             }
                         }
@@ -504,6 +553,10 @@ namespace Cowboy.Sockets.WebSockets
                 {
                     _keepAliveTracker.Dispose();
                 }
+                if (_closingTimer != null)
+                {
+                    _closingTimer.Dispose();
+                }
                 if (_stream != null)
                 {
                     _stream.Dispose();
@@ -532,6 +585,20 @@ namespace Cowboy.Sockets.WebSockets
 
         public async Task Abort()
         {
+            await Close();
+        }
+
+        private void StartClosingTimer()
+        {
+            // In abnormal cases (such as not having received a TCP Close 
+            // from the server after a reasonable amount of time) a client MAY initiate the TCP Close.
+            _closingTimer = new Timer(new TimerCallback((s) => OnClose()), null, Timeout.Infinite, Timeout.Infinite);
+            _closingTimer.Change((int)CloseTimeout.TotalMilliseconds, Timeout.Infinite);
+        }
+
+        private async void OnClose()
+        {
+            _log.WarnFormat("Session [{0}] closing timer timeout [{1}] then close automatically.", this, CloseTimeout);
             await Close();
         }
 
@@ -599,14 +666,14 @@ namespace Cowboy.Sockets.WebSockets
                         var keepAliveFrame = new PingFrame(false).ToArray();
                         await SendFrame(keepAliveFrame);
 #if DEBUG
-                        _log.DebugFormat("Send server side ping frame [{0}].", string.Empty);
+                        _log.DebugFormat("Session [{0}] sends server side ping frame [{1}].", this, string.Empty);
 #endif
                         _keepAliveTracker.ResetTimer();
                     }
                 }
                 catch (Exception ex)
                 {
-                    _log.Error(ex.Message, ex);
+                    _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
                     await Close(WebSocketCloseCode.EndpointUnavailable);
                 }
                 finally

@@ -105,6 +105,22 @@ namespace Cowboy.Sockets.WebSockets
             // Optionally, an |Origin| header field.  This header field is sent
             // by all browser clients.  A connection attempt lacking this
             // header field SHOULD NOT be interpreted as coming from a browser client.
+            //
+            // Servers that are not intended to process input from any web page but
+            // only for certain sites SHOULD verify the |Origin| field is an origin
+            // they expect.  If the origin indicated is unacceptable to the server,
+            // then it SHOULD respond to the WebSocket handshake with a reply
+            // containing HTTP 403 Forbidden status code.
+            // 
+            // The |Origin| header field protects from the attack cases when the
+            // untrusted party is typically the author of a JavaScript application
+            // that is executing in the context of the trusted client.  The client
+            // itself can contact the server and, via the mechanism of the |Origin|
+            // header field, determine whether to extend those communication
+            // privileges to the JavaScript application.  The intent is not to
+            // prevent non-browsers from establishing connections but rather to
+            // ensure that trusted browsers under the control of potentially
+            // malicious JavaScript cannot fake a WebSocket handshake.
 
             // Optionally, other header fields, such as those used to send
             // cookies or request authentication to a server.  Unknown header

@@ -42,6 +42,7 @@ namespace Cowboy.Sockets.WebSockets
 
         private readonly SemaphoreSlim _keepAliveLocker = new SemaphoreSlim(1, 1);
         private KeepAliveTracker _keepAliveTracker;
+        private Timer _closingTimer;
 
         #endregion
 
@@ -112,7 +113,6 @@ namespace Cowboy.Sockets.WebSockets
         private void Initialize()
         {
             _bufferManager = new GrowingByteBufferManager(_configuration.InitialBufferAllocationCount, _configuration.ReceiveBufferSize);
-
             _keepAliveTracker = KeepAliveTracker.Create(KeepAliveInterval, new TimerCallback((s) => OnKeepAlive()));
         }
 
@@ -140,6 +140,7 @@ namespace Cowboy.Sockets.WebSockets
         public Uri Uri { get { return _uri; } }
 
         public TimeSpan ConnectTimeout { get { return _configuration.ConnectTimeout; } }
+        public TimeSpan CloseTimeout { get { return _configuration.CloseTimeout; } }
         public TimeSpan KeepAliveInterval { get { return _configuration.KeepAliveInterval; } }
 
         public WebSocketState State
@@ -309,19 +310,40 @@ namespace Cowboy.Sockets.WebSockets
                                         break;
                                     case OpCode.Ping:
                                         {
+                                            // Upon receipt of a Ping frame, an endpoint MUST send a Pong frame in
+                                            // response, unless it already received a Close frame.  It SHOULD
+                                            // respond with Pong frame as soon as is practical.  Pong frames are
+                                            // discussed in Section 5.5.3.
+                                            // 
+                                            // An endpoint MAY send a Ping frame any time after the connection is
+                                            // established and before the connection is closed.
+                                            // 
+                                            // A Ping frame may serve either as a keep-alive or as a means to
+                                            // verify that the remote endpoint is still responsive.
                                             var ping = Encoding.UTF8.GetString(_sessionBuffer, frameHeader.Length, frameHeader.PayloadLength);
 #if DEBUG
                                             _log.DebugFormat("Receive server side ping frame [{0}].", ping);
 #endif
-                                            var pong = new PongFrame(ping).ToArray();
-                                            await SendFrame(pong);
+                                            if (State == WebSocketState.Open)
+                                            {
+                                                // A Pong frame sent in response to a Ping frame must have identical
+                                                // "Application data" as found in the message body of the Ping frame being replied to.
+                                                var pong = new PongFrame(ping).ToArray();
+                                                await SendFrame(pong);
 #if DEBUG
-                                            _log.DebugFormat("Send client side pong frame [{0}].", string.Empty);
+                                                _log.DebugFormat("Send client side pong frame [{0}].", string.Empty);
 #endif
+                                            }
                                         }
                                         break;
                                     case OpCode.Pong:
                                         {
+                                            // If an endpoint receives a Ping frame and has not yet sent Pong
+                                            // frame(s) in response to previous Ping frame(s), the endpoint MAY
+                                            // elect to send a Pong frame for only the most recently processed Ping frame.
+                                            // 
+                                            // A Pong frame MAY be sent unsolicited.  This serves as a
+                                            // unidirectional heartbeat.  A response to an unsolicited Pong frame is not expected.
                                             var pong = Encoding.UTF8.GetString(_sessionBuffer, frameHeader.Length, frameHeader.PayloadLength);
 #if DEBUG
                                             _log.DebugFormat("Receive server side pong frame [{0}].", pong);
@@ -330,6 +352,19 @@ namespace Cowboy.Sockets.WebSockets
                                         break;
                                     default:
                                         {
+                                            // Incoming data MUST always be validated by both clients and servers.
+                                            // If, at any time, an endpoint is faced with data that it does not
+                                            // understand or that violates some criteria by which the endpoint
+                                            // determines safety of input, or when the endpoint sees an opening
+                                            // handshake that does not correspond to the values it is expecting
+                                            // (e.g., incorrect path or origin in the client request), the endpoint
+                                            // MAY drop the TCP connection.  If the invalid data was received after
+                                            // a successful WebSocket handshake, the endpoint SHOULD send a Close
+                                            // frame with an appropriate status code (Section 7.4) before proceeding
+                                            // to _Close the WebSocket Connection_.  Use of a Close frame with an
+                                            // appropriate status code can help in diagnosing the problem.  If the
+                                            // invalid data is sent during the WebSocket handshake, the server
+                                            // SHOULD return an appropriate HTTP [RFC2616] status code.
                                             await Close(WebSocketCloseCode.InvalidMessageType);
                                             throw new NotSupportedException(
                                                 string.Format("Not support received opcode [{0}].", (byte)frameHeader.OpCode));
@@ -505,6 +540,7 @@ namespace Cowboy.Sockets.WebSockets
                             if (_stream.CanWrite)
                             {
                                 await _stream.WriteAsync(closingHandshake, 0, closingHandshake.Length);
+                                StartClosingTimer();
 #if DEBUG
                                 _log.DebugFormat("Send client side close frame [{0}] [{1}].", closeCode, closeReason);
 #endif
@@ -539,6 +575,10 @@ namespace Cowboy.Sockets.WebSockets
                 {
                     _keepAliveTracker.Dispose();
                 }
+                if (_closingTimer != null)
+                {
+                    _closingTimer.Dispose();
+                }
                 if (_stream != null)
                 {
                     _stream.Dispose();
@@ -566,6 +606,20 @@ namespace Cowboy.Sockets.WebSockets
 
         public async Task Abort()
         {
+            await Close();
+        }
+
+        private void StartClosingTimer()
+        {
+            // In abnormal cases (such as not having received a TCP Close 
+            // from the server after a reasonable amount of time) a client MAY initiate the TCP Close.
+            _closingTimer = new Timer(new TimerCallback((s) => OnClose()), null, Timeout.Infinite, Timeout.Infinite);
+            _closingTimer.Change((int)CloseTimeout.TotalMilliseconds, Timeout.Infinite);
+        }
+
+        private async void OnClose()
+        {
+            _log.WarnFormat("Closing timer timeout [{0}] then close automatically.", CloseTimeout);
             await Close();
         }
 

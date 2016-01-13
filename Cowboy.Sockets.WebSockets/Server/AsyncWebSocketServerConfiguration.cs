@@ -30,6 +30,7 @@ namespace Cowboy.Sockets.WebSockets
             SslPolicyErrorsBypassed = false;
 
             ConnectTimeout = TimeSpan.FromSeconds(15);
+            CloseTimeout = TimeSpan.FromSeconds(15);
             KeepAliveInterval = TimeSpan.FromSeconds(30);
         }
 
@@ -53,6 +54,7 @@ namespace Cowboy.Sockets.WebSockets
         public bool SslPolicyErrorsBypassed { get; set; }
 
         public TimeSpan ConnectTimeout { get; set; }
+        public TimeSpan CloseTimeout { get; set; }
         public TimeSpan KeepAliveInterval { get; set; }
     }
 }
