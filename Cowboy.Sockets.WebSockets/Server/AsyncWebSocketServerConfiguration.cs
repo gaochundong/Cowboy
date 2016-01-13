@@ -29,9 +29,10 @@ namespace Cowboy.Sockets.WebSockets
             SslCheckCertificateRevocation = false;
             SslPolicyErrorsBypassed = false;
 
-            ConnectTimeout = TimeSpan.FromSeconds(15);
-            CloseTimeout = TimeSpan.FromSeconds(15);
+            ConnectTimeout = TimeSpan.FromSeconds(10);
+            CloseTimeout = TimeSpan.FromSeconds(5);
             KeepAliveInterval = TimeSpan.FromSeconds(30);
+            KeepAliveTimeout = TimeSpan.FromSeconds(5);
         }
 
         public int InitialBufferAllocationCount { get; set; }
@@ -56,5 +57,6 @@ namespace Cowboy.Sockets.WebSockets
         public TimeSpan ConnectTimeout { get; set; }
         public TimeSpan CloseTimeout { get; set; }
         public TimeSpan KeepAliveInterval { get; set; }
+        public TimeSpan KeepAliveTimeout { get; set; }
     }
 }

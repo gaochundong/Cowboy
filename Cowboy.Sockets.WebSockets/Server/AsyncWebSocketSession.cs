@@ -40,7 +40,8 @@ namespace Cowboy.Sockets.WebSockets
 
         private readonly SemaphoreSlim _keepAliveLocker = new SemaphoreSlim(1, 1);
         private KeepAliveTracker _keepAliveTracker;
-        private Timer _closingTimer;
+        private Timer _keepAliveTimeoutTimer;
+        private Timer _closingTimeoutTimer;
 
         #endregion
 
@@ -79,6 +80,8 @@ namespace Cowboy.Sockets.WebSockets
                     (IPEndPoint)_tcpClient.Client.LocalEndPoint : null;
 
             _keepAliveTracker = KeepAliveTracker.Create(KeepAliveInterval, new TimerCallback((s) => OnKeepAlive()));
+            _keepAliveTimeoutTimer = new Timer(new TimerCallback((s) => OnKeepAliveTimeout()), null, Timeout.Infinite, Timeout.Infinite);
+            _closingTimeoutTimer = new Timer(new TimerCallback((s) => OnClose()), null, Timeout.Infinite, Timeout.Infinite);
         }
 
         #endregion
@@ -108,6 +111,7 @@ namespace Cowboy.Sockets.WebSockets
         public TimeSpan ConnectTimeout { get { return _configuration.ConnectTimeout; } }
         public TimeSpan CloseTimeout { get { return _configuration.CloseTimeout; } }
         public TimeSpan KeepAliveInterval { get { return _configuration.KeepAliveInterval; } }
+        public TimeSpan KeepAliveTimeout { get { return _configuration.KeepAliveTimeout; } }
 
         public WebSocketState State
         {
@@ -306,6 +310,7 @@ namespace Cowboy.Sockets.WebSockets
                                             // A Pong frame MAY be sent unsolicited.  This serves as a
                                             // unidirectional heartbeat.  A response to an unsolicited Pong frame is not expected.
                                             var pong = Encoding.UTF8.GetString(payload, 0, payload.Length);
+                                            StopKeepAliveTimeoutTimer();
 #if DEBUG
                                             _log.DebugFormat("Session [{0}] received client side pong frame [{1}].", this, pong);
 #endif
@@ -557,9 +562,13 @@ namespace Cowboy.Sockets.WebSockets
                 {
                     _keepAliveTracker.Dispose();
                 }
-                if (_closingTimer != null)
+                if (_keepAliveTimeoutTimer != null)
                 {
-                    _closingTimer.Dispose();
+                    _keepAliveTimeoutTimer.Dispose();
+                }
+                if (_closingTimeoutTimer != null)
+                {
+                    _closingTimeoutTimer.Dispose();
                 }
                 if (_stream != null)
                 {
@@ -596,8 +605,7 @@ namespace Cowboy.Sockets.WebSockets
         {
             // In abnormal cases (such as not having received a TCP Close 
             // from the server after a reasonable amount of time) a client MAY initiate the TCP Close.
-            _closingTimer = new Timer(new TimerCallback((s) => OnClose()), null, Timeout.Infinite, Timeout.Infinite);
-            _closingTimer.Change((int)CloseTimeout.TotalMilliseconds, Timeout.Infinite);
+            _closingTimeoutTimer.Change((int)CloseTimeout.TotalMilliseconds, Timeout.Infinite);
         }
 
         private async void OnClose()
@@ -663,6 +671,22 @@ namespace Cowboy.Sockets.WebSockets
 
         #region Keep Alive
 
+        private void StartKeepAliveTimeoutTimer()
+        {
+            _keepAliveTimeoutTimer.Change((int)KeepAliveTimeout.TotalMilliseconds, Timeout.Infinite);
+        }
+
+        private void StopKeepAliveTimeoutTimer()
+        {
+            _keepAliveTimeoutTimer.Change(Timeout.Infinite, Timeout.Infinite);
+        }
+
+        private async void OnKeepAliveTimeout()
+        {
+            _log.WarnFormat("Session [{0}] keep-alive timer timeout [{1}].", this, KeepAliveTimeout);
+            await Close(WebSocketCloseCode.AbnormalClosure, "Keep-Alive Timeout");
+        }
+
         private async void OnKeepAlive()
         {
             if (await _keepAliveLocker.WaitAsync(0))
@@ -676,6 +700,7 @@ namespace Cowboy.Sockets.WebSockets
                     {
                         var keepAliveFrame = new PingFrame(false).ToArray();
                         await SendFrame(keepAliveFrame);
+                        StartKeepAliveTimeoutTimer();
 #if DEBUG
                         _log.DebugFormat("Session [{0}] sends server side ping frame [{1}].", this, string.Empty);
 #endif
