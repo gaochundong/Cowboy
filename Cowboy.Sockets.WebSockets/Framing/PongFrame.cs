@@ -23,7 +23,7 @@ namespace Cowboy.Sockets.WebSockets
             get { return OpCode.Pong; }
         }
 
-        public byte[] ToArray()
+        protected override byte[] BuildFrameArray()
         {
             var data = Encoding.UTF8.GetBytes(Data);
             return Encode(OpCode, data, 0, data.Length, true, IsMasked);

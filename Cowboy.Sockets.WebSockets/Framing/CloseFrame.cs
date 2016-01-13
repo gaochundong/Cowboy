@@ -25,7 +25,7 @@ namespace Cowboy.Sockets.WebSockets
             get { return OpCode.Close; }
         }
 
-        public byte[] ToArray()
+        protected override byte[] BuildFrameArray()
         {
             // The Close frame MAY contain a body (the "Application data" portion of
             // the frame) that indicates a reason for closing, such as an endpoint

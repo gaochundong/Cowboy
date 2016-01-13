@@ -35,7 +35,7 @@ namespace Cowboy.Sockets.WebSockets
             get { return OpCode.Binary; }
         }
 
-        public byte[] ToArray()
+        protected override byte[] BuildFrameArray()
         {
             return Encode(OpCode, Data, Offset, Count, true, IsMasked);
         }

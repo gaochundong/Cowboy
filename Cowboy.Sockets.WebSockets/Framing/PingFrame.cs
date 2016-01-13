@@ -23,7 +23,7 @@ namespace Cowboy.Sockets.WebSockets
             get { return OpCode.Ping; }
         }
 
-        public byte[] ToArray()
+        protected override byte[] BuildFrameArray()
         {
             if (!string.IsNullOrEmpty(Data))
             {
