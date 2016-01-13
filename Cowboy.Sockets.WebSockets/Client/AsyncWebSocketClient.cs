@@ -115,7 +115,7 @@ namespace Cowboy.Sockets.WebSockets
             _bufferManager = new GrowingByteBufferManager(_configuration.InitialBufferAllocationCount, _configuration.ReceiveBufferSize);
             _keepAliveTracker = KeepAliveTracker.Create(KeepAliveInterval, new TimerCallback((s) => OnKeepAlive()));
             _keepAliveTimeoutTimer = new Timer(new TimerCallback((s) => OnKeepAliveTimeout()), null, Timeout.Infinite, Timeout.Infinite);
-            _closingTimeoutTimer = new Timer(new TimerCallback((s) => OnClose()), null, Timeout.Infinite, Timeout.Infinite);
+            _closingTimeoutTimer = new Timer(new TimerCallback((s) => OnCloseTimeout()), null, Timeout.Infinite, Timeout.Infinite);
         }
 
         #endregion
@@ -628,7 +628,7 @@ namespace Cowboy.Sockets.WebSockets
             _closingTimeoutTimer.Change((int)CloseTimeout.TotalMilliseconds, Timeout.Infinite);
         }
 
-        private async void OnClose()
+        private async void OnCloseTimeout()
         {
             // After both sending and receiving a Close message, an endpoint
             // considers the WebSocket connection closed and MUST close the

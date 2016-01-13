@@ -21,9 +21,9 @@ namespace Cowboy.Sockets.WebSockets.TestAsyncWebSocketServer
                 var config = new AsyncWebSocketServerConfiguration();
                 //config.SslEnabled = true;
                 //config.SslServerCertificate = new System.Security.Cryptography.X509Certificates.X509Certificate2(@"D:\\Cowboy.pfx", "Cowboy");
-                //config.SslPolicyErrorsBypassed = false;
+                //config.SslPolicyErrorsBypassed = true;
 
-                _server = new AsyncWebSocketServer(22222, catalog);
+                _server = new AsyncWebSocketServer(22222, catalog, config);
                 _server.Start();
 
                 Console.WriteLine("WebSocket server has been started on [{0}].", _server.ListenedEndPoint);
