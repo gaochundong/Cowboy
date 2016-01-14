@@ -9,7 +9,7 @@ using Cowboy.Logging;
 
 namespace Cowboy.WebSockets
 {
-    internal class WebSocketServerHandshaker
+    internal sealed class WebSocketServerHandshaker
     {
         private static readonly ILog _log = Logger.Get<WebSocketServerHandshaker>();
 

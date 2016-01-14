@@ -2,7 +2,7 @@
 
 namespace Cowboy.WebSockets
 {
-    internal class Consts
+    internal sealed class Consts
     {
         internal static readonly byte[] HeaderTerminator = Encoding.UTF8.GetBytes("\r\n\r\n");
 

@@ -10,7 +10,7 @@ using Cowboy.Logging;
 
 namespace Cowboy.WebSockets
 {
-    public class AsyncWebSocketServer
+    public sealed class AsyncWebSocketServer
     {
         #region Fields
 

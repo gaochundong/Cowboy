@@ -6,10 +6,8 @@ using System.Text;
 
 namespace Cowboy.TcpLika
 {
-    internal class WebSocketHandshake
+    internal class WebSocketClientHandshaker
     {
-        public const string MagicHandeshakeAcceptedKey = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-
         public class HandshakeContext
         {
             public byte[] RequestBuffer { get; set; }
@@ -146,7 +144,7 @@ namespace Cowboy.TcpLika
             // Connection: Upgrade
             // Sec-WebSocket-Accept: 1tGBmA9p0DQDgmFll6P0/UcVS/E=
             // Sec-WebSocket-Protocol: chat
-            var headers = ParseWebSocketResponseHeaders(response);
+            var headers = ParseOpenningHandshakeResponseHeaders(response);
 
             if (!headers.ContainsKey("HttpStatusCode"))
                 return false;
@@ -163,96 +161,53 @@ namespace Cowboy.TcpLika
                 Convert.ToBase64String(
                     SHA1.Create().ComputeHash(
                         Encoding.ASCII.GetBytes(
-                            context.SecWebSocketKey + MagicHandeshakeAcceptedKey)));
+                            context.SecWebSocketKey + Consts.SecWebSocketKeyGuid)));
 
             return headers["Sec-WebSocket-Accept"].Equals(challenge, StringComparison.OrdinalIgnoreCase);
         }
 
-        private static Dictionary<string, string> ParseWebSocketResponseHeaders(string response)
+        private static Dictionary<string, string> ParseOpenningHandshakeResponseHeaders(string response)
         {
             var headers = new Dictionary<string, string>();
 
             var lines = response.Split(new char[] { '\r', '\n' }).Where(l => l.Length > 0);
             foreach (var line in lines)
             {
+                // HTTP/1.1 101 Switching Protocols
+                // HTTP/1.1 400 Bad Request
                 if (line.StartsWith(@"HTTP/"))
                 {
                     var segements = line.Split(' ');
                     if (segements.Length > 1)
                     {
-                        headers.Add("HttpStatusCode", segements[1]);
+                        headers.Add(Consts.HttpStatusCodeName, segements[1]);
+
+                        if (segements.Length > 2)
+                        {
+                            headers.Add(Consts.HttpStatusCodeDescription, segements[2]);
+                        }
                     }
                 }
-                else if (line.StartsWith(@"Upgrade:"))
+                else
                 {
-                    var index = line.IndexOf(':');
-                    if (index != -1)
+                    foreach (var key in HttpKnownHeaderNames.All)
                     {
-                        var value = line.Substring(index + 1);
-                        headers.Add("Upgrade", value.Trim());
-                    }
-                }
-                else if (line.StartsWith(@"Connection:"))
-                {
-                    var index = line.IndexOf(':');
-                    if (index != -1)
-                    {
-                        var value = line.Substring(index + 1);
-                        headers.Add("Connection", value.Trim());
-                    }
-                }
-                else if (line.StartsWith(@"Sec-WebSocket-Accept:"))
-                {
-                    var index = line.IndexOf(':');
-                    if (index != -1)
-                    {
-                        var value = line.Substring(index + 1);
-                        headers.Add("Sec-WebSocket-Accept", value.Trim());
-                    }
-                }
-                else if (line.StartsWith(@"Sec-WebSocket-Version:"))
-                {
-                    var index = line.IndexOf(':');
-                    if (index != -1)
-                    {
-                        var value = line.Substring(index + 1);
-                        headers.Add("Sec-WebSocket-Version", value.Trim());
-                    }
-                }
-                else if (line.StartsWith(@"Sec-WebSocket-Protocol:"))
-                {
-                    var index = line.IndexOf(':');
-                    if (index != -1)
-                    {
-                        var value = line.Substring(index + 1);
-                        headers.Add("Sec-WebSocket-Protocol", value.Trim());
-                    }
-                }
-                else if (line.StartsWith(@"Sec-WebSocket-Extensions:"))
-                {
-                    var index = line.IndexOf(':');
-                    if (index != -1)
-                    {
-                        var value = line.Substring(index + 1);
-                        headers.Add("Sec-WebSocket-Extensions", value.Trim());
-                    }
-                }
-                else if (line.StartsWith(@"Origin:"))
-                {
-                    var index = line.IndexOf(':');
-                    if (index != -1)
-                    {
-                        var value = line.Substring(index + 1);
-                        headers.Add("Origin", value.Trim());
-                    }
-                }
-                else if (line.StartsWith(@"Cookie:"))
-                {
-                    var index = line.IndexOf(':');
-                    if (index != -1)
-                    {
-                        var value = line.Substring(index + 1);
-                        headers.Add("Cookie", value.Trim());
+                        if (line.StartsWith(key + ":"))
+                        {
+                            var index = line.IndexOf(':');
+                            if (index != -1)
+                            {
+                                var value = line.Substring(index + 1);
+                                if (headers.ContainsKey(key))
+                                {
+                                    headers[key] = string.Join(",", headers[key], value.Trim());
+                                }
+                                else
+                                {
+                                    headers.Add(key, value.Trim());
+                                }
+                            }
+                        }
                     }
                 }
             }

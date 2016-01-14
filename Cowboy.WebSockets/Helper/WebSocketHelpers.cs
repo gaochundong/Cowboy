@@ -3,7 +3,7 @@ using System.Globalization;
 
 namespace Cowboy.WebSockets
 {
-    internal class WebSocketHelpers
+    internal sealed class WebSocketHelpers
     {
         internal static bool FindHeaderTerminator(byte[] buffer, int count, out int index)
         {

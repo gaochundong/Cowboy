@@ -146,7 +146,7 @@ namespace Cowboy.TcpLika
 
         private async Task<bool> HandshakeWebSocket(Stream stream, string host, string path, string protocol = null)
         {
-            var context = WebSocketHandshake.BuildHandeshakeContext(host, path, protocol: protocol);
+            var context = WebSocketClientHandshaker.BuildHandeshakeContext(host, path, protocol: protocol);
             await stream.WriteAsync(context.RequestBuffer, context.RequestBufferOffset, context.RequestBufferCount);
 
             var receiveBuffer = _bufferManager.BorrowBuffer();
@@ -155,7 +155,7 @@ namespace Cowboy.TcpLika
             context.ResponseBuffer = receiveBuffer;
             context.ResponseBufferOffset = 0;
             context.ResponseBufferCount = count;
-            var passedVerification = WebSocketHandshake.VerifyHandshake(context);
+            var passedVerification = WebSocketClientHandshaker.VerifyHandshake(context);
 
             _bufferManager.ReturnBuffer(receiveBuffer);
 
