@@ -232,6 +232,10 @@ namespace Cowboy.Sockets
             {
                 await sessionFound.Send(data, offset, count);
             }
+            else
+            {
+                _log.WarnFormat("Cannot find session [{0}].", sessionKey);
+            }
         }
 
         public async Task SendTo(AsyncTcpSocketSession session, byte[] data)
@@ -245,6 +249,10 @@ namespace Cowboy.Sockets
             if (_sessions.TryGetValue(session.SessionKey, out sessionFound))
             {
                 await sessionFound.Send(data, offset, count);
+            }
+            else
+            {
+                _log.WarnFormat("Cannot find session [{0}].", session);
             }
         }
 

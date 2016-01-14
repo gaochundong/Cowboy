@@ -198,6 +198,10 @@ namespace Cowboy.WebSockets
             {
                 await sessionFound.SendText(text);
             }
+            else
+            {
+                _log.WarnFormat("Cannot find session [{0}].", sessionKey);
+            }
         }
 
         public async Task SendTextTo(AsyncWebSocketSession session, string text)
@@ -206,6 +210,10 @@ namespace Cowboy.WebSockets
             if (_sessions.TryGetValue(session.SessionKey, out sessionFound))
             {
                 await sessionFound.SendText(text);
+            }
+            else
+            {
+                _log.WarnFormat("Cannot find session [{0}].", session);
             }
         }
 
@@ -221,6 +229,10 @@ namespace Cowboy.WebSockets
             {
                 await sessionFound.SendBinary(data, offset, count);
             }
+            else
+            {
+                _log.WarnFormat("Cannot find session [{0}].", sessionKey);
+            }
         }
 
         public async Task SendBinaryTo(AsyncWebSocketSession session, byte[] data)
@@ -234,6 +246,10 @@ namespace Cowboy.WebSockets
             if (_sessions.TryGetValue(session.SessionKey, out sessionFound))
             {
                 await sessionFound.SendBinary(data, offset, count);
+            }
+            else
+            {
+                _log.WarnFormat("Cannot find session [{0}].", session);
             }
         }
 

@@ -230,9 +230,14 @@ namespace Cowboy.Sockets
                 throw new ArgumentNullException("data");
 
             TcpSocketSession session = null;
-            if (!_sessions.TryGetValue(sessionKey, out session)) return;
-
-            session.Send(data, offset, count);
+            if (_sessions.TryGetValue(sessionKey, out session))
+            {
+                session.Send(data, offset, count);
+            }
+            else
+            {
+                _log.WarnFormat("Cannot find session [{0}].", sessionKey);
+            }
         }
 
         public void SendTo(TcpSocketSession session, byte[] data)
@@ -259,9 +264,14 @@ namespace Cowboy.Sockets
                 throw new ArgumentNullException("data");
 
             TcpSocketSession writeSession = null;
-            if (!_sessions.TryGetValue(session.SessionKey, out writeSession)) return;
-
-            session.Send(data, offset, count);
+            if (_sessions.TryGetValue(session.SessionKey, out writeSession))
+            {
+                session.Send(data, offset, count);
+            }
+            else
+            {
+                _log.WarnFormat("Cannot find session [{0}].", session);
+            }
         }
 
         public void Broadcast(byte[] data)
