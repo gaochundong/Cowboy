@@ -255,22 +255,32 @@ namespace Cowboy.WebSockets
                                         break;
                                     case OpCode.Close:
                                         {
-                                            var statusCode = payload[0] * 256 + payload[1];
-                                            var closeCode = (WebSocketCloseCode)statusCode;
-                                            var closeReason = string.Empty;
-
-                                            if (payload.Length > 2)
+                                            if (payload.Length > 0)
                                             {
-                                                closeReason = Encoding.UTF8.GetString(payload, 2, payload.Length - 2);
-                                            }
+                                                var statusCode = payload[0] * 256 + payload[1];
+                                                var closeCode = (WebSocketCloseCode)statusCode;
+                                                var closeReason = string.Empty;
+
+                                                if (payload.Length > 2)
+                                                {
+                                                    closeReason = Encoding.UTF8.GetString(payload, 2, payload.Length - 2);
+                                                }
 #if DEBUG
-                                            _log.DebugFormat("Session [{0}] received client side close frame [{1}] [{2}].", this, closeCode, closeReason);
+                                                _log.DebugFormat("Session [{0}] received client side close frame [{1}] [{2}].", this, closeCode, closeReason);
 #endif
-                                            // If an endpoint receives a Close frame and did not previously send a
-                                            // Close frame, the endpoint MUST send a Close frame in response.  (When
-                                            // sending a Close frame in response, the endpoint typically echos the
-                                            // status code it received.)  It SHOULD do so as soon as practical.
-                                            await Close(closeCode, closeReason);
+                                                // If an endpoint receives a Close frame and did not previously send a
+                                                // Close frame, the endpoint MUST send a Close frame in response.  (When
+                                                // sending a Close frame in response, the endpoint typically echos the
+                                                // status code it received.)  It SHOULD do so as soon as practical.
+                                                await Close(closeCode, closeReason);
+                                            }
+                                            else
+                                            {
+#if DEBUG
+                                                _log.DebugFormat("Session [{0}] received client side close frame but no status code.", this);
+#endif
+                                                await Close(WebSocketCloseCode.InvalidPayloadData);
+                                            }
                                         }
                                         break;
                                     case OpCode.Ping:

@@ -62,6 +62,29 @@ namespace Cowboy.TestHttpServer
                     ";
                 return this.Response.AsHtml(html);
             };
+
+            Get["/websocket"] = x =>
+            {
+                string html = GetEmbeddedResourceData("websocket.html");
+                return this.Response.AsHtml(html);
+            };
+
+            Get["/websocket.html"] = x =>
+            {
+                string html = GetEmbeddedResourceData("websocket.html");
+                return this.Response.AsHtml(html);
+            };
+        }
+
+        private static string GetEmbeddedResourceData(string fileName)
+        {
+            var assem = System.Reflection.Assembly.GetExecutingAssembly();
+            string filePath = assem.FullName.Split(',')[0] + ".Content." + fileName;
+            using (var stream = assem.GetManifestResourceStream(filePath))
+            using (var reader = new StreamReader(stream))
+            {
+                return reader.ReadToEnd();
+            }
         }
     }
 }

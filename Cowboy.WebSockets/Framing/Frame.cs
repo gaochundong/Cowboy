@@ -156,6 +156,12 @@ namespace Cowboy.WebSockets
             public int PayloadLength { get; set; }
             public int MaskingKeyOffset { get; set; }
             public int Length { get; set; }
+
+            public override string ToString()
+            {
+                return string.Format("IsFIN[{0}], IsRSV1[{1}], IsRSV2[{2}], IsRSV3[{3}], OpCode[{4}], IsMasked[{5}], PayloadLength[{6}], MaskingKeyLength[{7}], Length[{8}]",
+                    IsFIN, IsRSV1, IsRSV2, IsRSV3, OpCode, IsMasked, PayloadLength, MaskingKeyLength, Length);
+            }
         }
 
         public static Header DecodeHeader(byte[] buffer, int count)

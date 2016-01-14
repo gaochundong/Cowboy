@@ -105,6 +105,12 @@ namespace Cowboy.Sockets
             public int PayloadLength { get; set; }
             public int MaskingKeyOffset { get; set; }
             public int Length { get; set; }
+
+            public override string ToString()
+            {
+                return string.Format("IsMasked[{0}], PayloadLength[{1}], MaskingKeyLength[{2}], Length[{3}]",
+                    IsMasked, PayloadLength, MaskingKeyLength, Length);
+            }
         }
 
         public static Header DecodeHeader(byte[] buffer, int count)
