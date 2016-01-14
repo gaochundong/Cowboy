@@ -47,10 +47,6 @@
     <Compile Include="TestWebSocketModule.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Cowboy.Hosting.Self\Cowboy.Hosting.Self.csproj">
-      <Project>{4cc477f4-f78f-4c23-8449-ee00f0bbb557}</Project>
-      <Name>Cowboy.Hosting.Self</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\Cowboy.Http.WebSockets\Cowboy.Http.WebSockets.csproj">
       <Project>{47e06681-38e9-46c0-8aae-00535845d42d}</Project>
       <Name>Cowboy.Http.WebSockets</Name>

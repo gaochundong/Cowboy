@@ -43,6 +43,10 @@
     </Compile>
     <Compile Include="Bootstrapper.cs" />
     <Compile Include="Engine.cs" />
+    <Compile Include="Hosting\Self\NetSh.cs" />
+    <Compile Include="Hosting\Self\SelfHost.cs" />
+    <Compile Include="Hosting\Self\UacHelper.cs" />
+    <Compile Include="Hosting\Self\UrlReservations.cs" />
     <Compile Include="IgnoredHeaders.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

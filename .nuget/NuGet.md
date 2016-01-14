@@ -1,6 +1,11 @@
 Commands
 ------------
-nuget pack ../Cowboy.Hosting.Self/Cowboy.Hosting.Self.csproj -IncludeReferencedProjects -Prop Configuration=Release
-nuget pack ../Cowboy.Sockets/Cowboy.Sockets.csproj -IncludeReferencedProjects -Prop Configuration=Release
-nuget setApiKey xxx-xxx
-nuget push Cowboy.Sockets.1.0.0.0.nupkg
+nuget setApiKey xxx-xxx-xxxx-xxxx
+
+nuget push ./packages/Cowboy.a.b.c.d.nupkg
+nuget push ./packages/Cowboy.Sockets.a.b.c.d.nupkg
+nuget push ./packages/Cowboy.WebSockets.a.b.c.d.nupkg
+
+nuget pack ../Cowboy/Cowboy.csproj -IncludeReferencedProjects -Build -Prop Configuration=Release -OutputDirectory "./packages"
+nuget pack ../Cowboy.Sockets/Cowboy.Sockets.csproj -IncludeReferencedProjects -Build -Prop Configuration=Release -OutputDirectory "./packages"
+nuget pack ../Cowboy.WebSockets/Cowboy.WebSockets.csproj -IncludeReferencedProjects -Build -Prop Configuration=Release -OutputDirectory "./packages"
