@@ -185,8 +185,7 @@ namespace Cowboy.Sockets
 
         private async Task Process(AsyncTcpSocketSession session)
         {
-            string sessionKey = session.RemoteEndPoint.ToString();
-            if (_sessions.TryAdd(sessionKey, session))
+            if (_sessions.TryAdd(session.SessionKey, session))
             {
                 try
                 {
@@ -199,7 +198,7 @@ namespace Cowboy.Sockets
                 finally
                 {
                     AsyncTcpSocketSession throwAway;
-                    _sessions.TryRemove(sessionKey, out throwAway);
+                    _sessions.TryRemove(session.SessionKey, out throwAway);
                 }
             }
         }

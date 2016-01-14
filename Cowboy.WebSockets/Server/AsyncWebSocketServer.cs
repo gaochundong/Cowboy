@@ -155,8 +155,7 @@ namespace Cowboy.WebSockets
 
         private async Task Process(AsyncWebSocketSession session)
         {
-            string sessionKey = session.RemoteEndPoint.ToString();
-            if (_sessions.TryAdd(sessionKey, session))
+            if (_sessions.TryAdd(session.SessionKey, session))
             {
                 try
                 {
@@ -170,7 +169,7 @@ namespace Cowboy.WebSockets
                 finally
                 {
                     AsyncWebSocketSession throwAway;
-                    _sessions.TryRemove(sessionKey, out throwAway);
+                    _sessions.TryRemove(session.SessionKey, out throwAway);
                 }
             }
         }
