@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Threading.Tasks;
 using Cowboy.Logging;
 using Cowboy.Logging.NLogIntegration;
@@ -37,8 +38,10 @@ namespace Cowboy.WebSockets.TestAsyncWebSocketServer
                             break;
                         Task.Run(async () =>
                         {
-                            await _server.BroadcastText(text);
-                            Console.WriteLine("WebSocket server [{0}] broadcasts data -> [{1}].", _server.ListenedEndPoint, text);
+                            //await _server.BroadcastText(text);
+                            //Console.WriteLine("WebSocket server [{0}] broadcasts data -> [{1}].", _server.ListenedEndPoint, text);
+                            await _server.BroadcastBinary(Encoding.UTF8.GetBytes(text));
+                            Console.WriteLine("WebSocket server [{0}] broadcasts binary -> [{1}].", _server.ListenedEndPoint, text);
                         });
                     }
                     catch (Exception ex)

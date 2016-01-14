@@ -45,8 +45,10 @@ namespace Cowboy.WebSockets.TestAsyncWebSocketClient
                                 break;
                             Task.Run(async () =>
                             {
-                                await _client.SendText(text);
-                                Console.WriteLine("Client [{0}] send text -> [{1}].", _client.LocalEndPoint, text);
+                                //await _client.SendText(text);
+                                //Console.WriteLine("Client [{0}] send text -> [{1}].", _client.LocalEndPoint, text);
+                                await _client.SendBinary(Encoding.UTF8.GetBytes(text));
+                                Console.WriteLine("Client [{0}] send binary -> [{1}].", _client.LocalEndPoint, text);
                             }).Forget();
                         }
                         catch (Exception ex)
