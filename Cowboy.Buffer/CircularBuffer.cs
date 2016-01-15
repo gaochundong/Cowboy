@@ -1,10 +1,17 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace Cowboy.Buffer
 {
-    public class CircularBuffer<T>
+    // +-------------------+------------------+------------------+
+    // | discard-able bytes|  readable bytes  |  writable bytes  |
+    // |                   |     (CONTENT)    |                  |
+    // +-------------------+------------------+------------------+
+    // |                   |                  |                  |
+    // 0      <=          head      <=       tail      <=    capacity
+    public class CircularBuffer<T> : IEnumerable<T>, IEnumerable
     {
-        private readonly object _sync = new object();
         private T[] _buffer;
         private int _currentCapacity;
         private int _maxCapacity;
@@ -44,52 +51,29 @@ namespace Cowboy.Buffer
             _maxCapacity = maxCapacity;
         }
 
-        public int Count
-        {
-            get
-            {
-                lock (_sync)
-                {
-                    return _count;
-                }
-            }
-        }
-
-        public int MaxCapacity
-        {
-            get
-            {
-                lock (_sync)
-                {
-                    return _maxCapacity;
-                }
-            }
-        }
+        public int Head { get { return _head; } }
+        public int Tail { get { return _tail; } }
+        public int Count { get { return _count; } }
+        public int MaxCapacity { get { return _maxCapacity; } }
 
         public int Capacity
         {
             get
             {
-                lock (_sync)
-                {
-                    return _currentCapacity;
-                }
+                return _currentCapacity;
             }
             set
             {
-                lock (_sync)
+                if (value > _currentCapacity && _currentCapacity < MaxCapacity)
                 {
-                    if (value > _currentCapacity && _currentCapacity < MaxCapacity)
-                    {
-                        var newCapacity = CalculateNewCapacity(value);
-                        ExpandBuffer(newCapacity);
-                        _currentCapacity = newCapacity;
-                    }
-                    else if (value < _currentCapacity)
-                    {
-                        ShrinkBuffer(value);
-                        _currentCapacity = value;
-                    }
+                    var newCapacity = CalculateNewCapacity(value);
+                    ExpandBuffer(newCapacity);
+                    _currentCapacity = newCapacity;
+                }
+                else if (value < _currentCapacity)
+                {
+                    ShrinkBuffer(value);
+                    _currentCapacity = value;
                 }
             }
         }
@@ -141,29 +125,26 @@ namespace Cowboy.Buffer
         {
             BufferValidator.ValidateBuffer(sourceArray, sourceIndex, length, "sourceArray", "sourceIndex", "length");
 
-            lock (_sync)
+            if (Count + length >= Capacity)
+                Capacity += length;
+
+            if (Count + length > Capacity)
+                throw new IndexOutOfRangeException(string.Format(
+                    "No enough capacity to copy buffer, Capacity[{0}], MaxCapacity[{1}].", Capacity, MaxCapacity));
+
+            var tail = _tail;
+            if (tail + length < Capacity)
             {
-                if (Count + length >= Capacity)
-                    Capacity += length;
-
-                if (Count + length > Capacity)
-                    throw new IndexOutOfRangeException(string.Format(
-                        "No enough capacity to copy buffer, Capacity[{0}], MaxCapacity[{1}].", Capacity, MaxCapacity));
-
-                var tail = _tail;
-                if (tail + length < Capacity)
-                {
-                    Array.Copy(sourceArray, sourceIndex, _buffer, tail, length);
-                    _tail = tail + length;
-                }
-                else
-                {
-                    var firstCommitLength = Capacity - tail;
-                    var secondCommitLength = length - firstCommitLength;
-                    Array.Copy(sourceArray, sourceIndex, _buffer, tail, firstCommitLength);
-                    Array.Copy(sourceArray, sourceIndex + firstCommitLength, _buffer, 0, secondCommitLength);
-                    _tail = secondCommitLength;
-                }
+                Array.Copy(sourceArray, sourceIndex, _buffer, tail, length);
+                _tail = tail + length;
+            }
+            else
+            {
+                var firstCommitLength = Capacity - tail;
+                var secondCommitLength = length - firstCommitLength;
+                Array.Copy(sourceArray, sourceIndex, _buffer, tail, firstCommitLength);
+                Array.Copy(sourceArray, sourceIndex + firstCommitLength, _buffer, 0, secondCommitLength);
+                _tail = secondCommitLength;
             }
         }
 
@@ -171,33 +152,100 @@ namespace Cowboy.Buffer
         {
             BufferValidator.ValidateBuffer(destinationArray, destinationIndex, length, "destinationArray", "destinationIndex", "length");
 
-            lock (_sync)
-            {
-                if (length > Count)
-                    length = Count;
+            if (length > Count)
+                length = Count;
 
-                var head = _head;
-                if (head + length < Capacity)
-                {
-                    Array.Copy(_buffer, head, destinationArray, destinationIndex, length);
-                }
-                else
-                {
-                    var firstCommitLength = Capacity - head;
-                    var secondCommitLength = length - firstCommitLength;
-                    Array.Copy(_buffer, head, destinationArray, destinationIndex, firstCommitLength);
-                    Array.Copy(_buffer, 0, destinationArray, destinationIndex + firstCommitLength, secondCommitLength);
-                }
+            var head = _head;
+            if (head + length < Capacity)
+            {
+                Array.Copy(_buffer, head, destinationArray, destinationIndex, length);
             }
+            else
+            {
+                var firstCommitLength = Capacity - head;
+                var secondCommitLength = length - firstCommitLength;
+                Array.Copy(_buffer, head, destinationArray, destinationIndex, firstCommitLength);
+                Array.Copy(_buffer, 0, destinationArray, destinationIndex + firstCommitLength, secondCommitLength);
+            }
+        }
+
+        public void Discard()
+        {
+            _head = 0;
+            _tail = 0;
+            _count = 0;
         }
 
         public T[] ToArray()
         {
-            lock (_sync)
+            var array = new T[Count];
+            CopyTo(array, 0, Count);
+            return array;
+        }
+
+        public T this[int index]
+        {
+            get
             {
-                var array = new T[Count];
-                CopyTo(array, 0, Count);
-                return array;
+                return _buffer[(_head + index) % Capacity];
+            }
+            set
+            {
+                _buffer[(_head + index) % Capacity] = value;
+            }
+        }
+
+        public IEnumerator<T> GetEnumerator()
+        {
+            return new CircularBufferIterator(this);
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
+        private class CircularBufferIterator : IEnumerator<T>
+        {
+            private CircularBuffer<T> _container;
+            private int _index = 0;
+
+            public CircularBufferIterator(CircularBuffer<T> container)
+            {
+                _container = container;
+            }
+
+            public T Current
+            {
+                get
+                {
+                    return _container[(_container.Head + _index) % _container.Capacity];
+                }
+            }
+
+            object IEnumerator.Current
+            {
+                get { return Current; }
+            }
+
+            public bool MoveNext()
+            {
+                _index++;
+
+                if (_index >= _container.Count)
+                    return false;
+                else
+                    return true;
+            }
+
+            public void Reset()
+            {
+                _index = 0;
+            }
+
+            public void Dispose()
+            {
+                _index = 0;
             }
         }
     }
