@@ -195,6 +195,8 @@ namespace Cowboy.Buffer
             }
         }
 
+        #region IEnumerable
+
         public IEnumerator<T> GetEnumerator()
         {
             return new CircularBufferIterator(this);
@@ -248,5 +250,7 @@ namespace Cowboy.Buffer
                 _index = 0;
             }
         }
+
+        #endregion
     }
 }
