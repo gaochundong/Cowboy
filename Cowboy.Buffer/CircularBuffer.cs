@@ -208,7 +208,7 @@ namespace Cowboy.Buffer
         private class CircularBufferIterator : IEnumerator<T>
         {
             private CircularBuffer<T> _container;
-            private int _index = 0;
+            private int _index = -1;
 
             public CircularBufferIterator(CircularBuffer<T> container)
             {
