@@ -4,12 +4,6 @@ using System.Collections.Generic;
 
 namespace Cowboy.Buffer
 {
-    // +-------------------+------------------+------------------+
-    // | discard-able bytes|  readable bytes  |  writable bytes  |
-    // |                   |     (CONTENT)    |                  |
-    // +-------------------+------------------+------------------+
-    // |                   |                  |                  |
-    // 0      <=          head      <=       tail      <=    capacity
     public class CircularBuffer<T> : IEnumerable<T>, IEnumerable
     {
         private T[] _buffer;
@@ -32,6 +26,11 @@ namespace Cowboy.Buffer
 
         public CircularBuffer(T[] buffer)
             : this(buffer, buffer.Length, int.MaxValue)
+        {
+        }
+
+        public CircularBuffer(T[] buffer, int initialCapacity)
+            : this(buffer, initialCapacity, int.MaxValue)
         {
         }
 
@@ -174,13 +173,6 @@ namespace Cowboy.Buffer
             _head = 0;
             _tail = 0;
             _count = 0;
-        }
-
-        public T[] ToArray()
-        {
-            var array = new T[Count];
-            CopyTo(array, 0, Count);
-            return array;
         }
 
         public T this[int index]
