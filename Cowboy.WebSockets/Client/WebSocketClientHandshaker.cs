@@ -92,7 +92,7 @@ namespace Cowboy.WebSockets
             // Origin: http://example.com
             var request = sb.ToString();
 #if DEBUG
-            _log.DebugFormat("{0}{1}", Environment.NewLine, request);
+            _log.DebugFormat("[{0}]{1}{2}", client.RemoteEndPoint, Environment.NewLine, request);
 #endif
             return Encoding.UTF8.GetBytes(request);
         }
@@ -105,7 +105,7 @@ namespace Cowboy.WebSockets
 
             var response = Encoding.UTF8.GetString(buffer, offset, count);
 #if DEBUG
-            _log.DebugFormat("{0}{1}", Environment.NewLine, response);
+            _log.DebugFormat("[{0}]{1}{2}", client.RemoteEndPoint, Environment.NewLine, response);
 #endif
             // HTTP/1.1 101 Switching Protocols
             // Upgrade: websocket

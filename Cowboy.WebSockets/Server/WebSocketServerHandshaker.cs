@@ -22,7 +22,7 @@ namespace Cowboy.WebSockets
 
             var request = Encoding.UTF8.GetString(buffer, offset, count);
 #if DEBUG
-            _log.DebugFormat("{0}{1}", Environment.NewLine, request);
+            _log.DebugFormat("[{0}]{1}{2}", session.RemoteEndPoint, Environment.NewLine, request);
 #endif
             // GET /chat HTTP/1.1
             // Host: server.example.com
@@ -257,7 +257,7 @@ namespace Cowboy.WebSockets
             // Sec-WebSocket-Protocol: chat
             var response = sb.ToString();
 #if DEBUG
-            _log.DebugFormat("{0}{1}", Environment.NewLine, response);
+            _log.DebugFormat("[{0}]{1}{2}", session.RemoteEndPoint, Environment.NewLine, response);
 #endif
             return Encoding.UTF8.GetBytes(response);
         }
@@ -285,7 +285,7 @@ namespace Cowboy.WebSockets
 
             var response = sb.ToString();
 #if DEBUG
-            _log.DebugFormat("{0}{1}", Environment.NewLine, response);
+            _log.DebugFormat("[{0}]{1}{2}", session.RemoteEndPoint, Environment.NewLine, response);
 #endif
             return Encoding.UTF8.GetBytes(response);
         }
