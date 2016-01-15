@@ -306,7 +306,7 @@ namespace Cowboy.WebSockets
                                                 var pong = new PongFrame(ping, false).ToArray();
                                                 await SendFrame(pong);
 #if DEBUG
-                                                _log.DebugFormat("Session [{0}] sends server side pong frame [{1}].", this, string.Empty);
+                                                _log.DebugFormat("Session [{0}] sends server side pong frame [{1}].", this, ping);
 #endif
                                             }
                                         }
