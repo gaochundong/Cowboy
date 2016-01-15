@@ -120,10 +120,12 @@ namespace Cowboy.Sockets
 
         private bool CloseIfShould(Exception ex)
         {
-            if (ex is ObjectDisposedException
+            if (ex is SocketException
+                || ex is IOException
                 || ex is InvalidOperationException
-                || ex is SocketException
-                || ex is IOException)
+                || ex is ObjectDisposedException
+                || ex is NullReferenceException
+                )
             {
                 _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
 
@@ -319,7 +321,7 @@ namespace Cowboy.Sockets
 
         public override string ToString()
         {
-            return string.Format("SessionKey[{0}], RemoteEndPoint[{1}], LocalEndPoint[{2}]", 
+            return string.Format("SessionKey[{0}], RemoteEndPoint[{1}], LocalEndPoint[{2}]",
                 this.SessionKey, this.RemoteEndPoint, this.LocalEndPoint);
         }
 
