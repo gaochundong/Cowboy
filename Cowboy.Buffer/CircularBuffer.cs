@@ -188,7 +188,7 @@ namespace Cowboy.Buffer
                 throw new IndexOutOfRangeException(string.Format(
                     "No enough capacity to copy buffer, Capacity[{0}], MaxCapacity[{1}].", Capacity, MaxCapacity));
 
-            if (_tail -1 + count < Capacity)
+            if (_tail + count <= Capacity)
             {
                 if (sourceBuffer.Head + sourceOffset < sourceBuffer.Capacity)
                 {
