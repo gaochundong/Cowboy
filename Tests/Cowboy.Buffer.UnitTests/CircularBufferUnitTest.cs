@@ -1,10 +1,13 @@
 ﻿using System;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Cowboy.Buffer.TestCircularBuffer
+namespace Cowboy.Buffer.UnitTests
 {
-    class Program
+    [TestClass]
+    public class CircularBufferUnitTest
     {
-        static void Main(string[] args)
+        [TestMethod]
+        public void TestMethod1()
         {
             var buffer1 = new CircularBuffer<byte>(50, 100);
             var buffer2 = new CircularBuffer<byte>(50, 100);
@@ -26,11 +29,8 @@ namespace Cowboy.Buffer.TestCircularBuffer
             buffer2.CopyFrom(data2, 0, data2.Length);
             Console.WriteLine(buffer2.Count == data2.Length);
 
-            buffer1.CopyFrom(buffer2, 80, 10);
+            buffer1.AppendFrom(buffer2, 80, 10);
             Console.WriteLine(buffer1.Count == 50 + 10);
-            Console.WriteLine(buffer1.Tail == 50 + 10);
-
-            Console.ReadKey();
         }
     }
 }

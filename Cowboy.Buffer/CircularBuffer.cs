@@ -160,19 +160,19 @@ namespace Cowboy.Buffer
             }
         }
 
-        public void CopyFrom(CircularBuffer<T> sourceBuffer)
+        public void AppendFrom(CircularBuffer<T> sourceBuffer)
         {
             if (sourceBuffer == null)
                 throw new ArgumentNullException("sourceBuffer");
-            CopyFrom(sourceBuffer, 0, sourceBuffer.Count);
+            AppendFrom(sourceBuffer, 0, sourceBuffer.Count);
         }
 
-        public void CopyFrom(CircularBuffer<T> sourceBuffer, int count)
+        public void AppendFrom(CircularBuffer<T> sourceBuffer, int count)
         {
-            CopyFrom(sourceBuffer, 0, count);
+            AppendFrom(sourceBuffer, 0, count);
         }
 
-        public void CopyFrom(CircularBuffer<T> sourceBuffer, int sourceOffset, int count)
+        public void AppendFrom(CircularBuffer<T> sourceBuffer, int sourceOffset, int count)
         {
             if (sourceBuffer == null)
                 throw new ArgumentNullException("sourceBuffer");
@@ -296,23 +296,23 @@ namespace Cowboy.Buffer
             }
         }
 
-        public void CopyTo(CircularBuffer<T> destinationBuffer)
+        public void AppendTo(CircularBuffer<T> destinationBuffer)
         {
             if (destinationBuffer == null)
                 throw new ArgumentNullException("destinationBuffer");
-            CopyTo(destinationBuffer, 0, Count);
+            AppendTo(destinationBuffer, 0, Count);
         }
 
-        public void CopyTo(CircularBuffer<T> destinationBuffer, int count)
+        public void AppendTo(CircularBuffer<T> destinationBuffer, int count)
         {
-            CopyTo(destinationBuffer, 0, count);
+            AppendTo(destinationBuffer, 0, count);
         }
 
-        public void CopyTo(CircularBuffer<T> destinationBuffer, int sourceOffset, int count)
+        public void AppendTo(CircularBuffer<T> destinationBuffer, int sourceOffset, int count)
         {
             if (destinationBuffer == null)
                 throw new ArgumentNullException("destinationBuffer");
-            destinationBuffer.CopyFrom(this, sourceOffset, count);
+            destinationBuffer.AppendFrom(this, sourceOffset, count);
         }
 
         public void Discard()

@@ -1,14 +1,15 @@
 ﻿using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Cowboy.Buffer.TestCircularBuffer")]
+[assembly: AssemblyTitle("Cowboy.Buffer.UnitTests")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Cowboy.Buffer.TestCircularBuffer")]
+[assembly: AssemblyProduct("Cowboy.Buffer.UnitTests")]
 [assembly: AssemblyCopyright("")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -19,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("17dc459d-83ad-40a3-b83e-bc2b5c8bf096")]
+[assembly: Guid("7455e3bd-6343-4a51-a61a-ceeedfe146d3")]
 
 // Version information for an assembly consists of the following four values:
 //

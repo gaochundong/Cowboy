@@ -70,7 +70,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.WebSockets.TestAsync
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.WebSockets.TestAsyncWebSocketServer", "Tests\Cowboy.WebSockets.TestAsyncWebSocketServer\Cowboy.WebSockets.TestAsyncWebSocketServer.csproj", "{31C790E5-1BB5-4004-82B8-43D1FCAF97C3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Buffer.TestCircularBuffer", "Tests\Cowboy.Buffer.TestCircularBuffer\Cowboy.Buffer.TestCircularBuffer.csproj", "{17DC459D-83AD-40A3-B83E-BC2B5C8BF096}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Buffer.UnitTests", "Tests\Cowboy.Buffer.UnitTests\Cowboy.Buffer.UnitTests.csproj", "{7455E3BD-6343-4A51-A61A-CEEEDFE146D3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -170,10 +170,10 @@ Global
 		{31C790E5-1BB5-4004-82B8-43D1FCAF97C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{31C790E5-1BB5-4004-82B8-43D1FCAF97C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{31C790E5-1BB5-4004-82B8-43D1FCAF97C3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{17DC459D-83AD-40A3-B83E-BC2B5C8BF096}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{17DC459D-83AD-40A3-B83E-BC2B5C8BF096}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{17DC459D-83AD-40A3-B83E-BC2B5C8BF096}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{17DC459D-83AD-40A3-B83E-BC2B5C8BF096}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7455E3BD-6343-4A51-A61A-CEEEDFE146D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7455E3BD-6343-4A51-A61A-CEEEDFE146D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7455E3BD-6343-4A51-A61A-CEEEDFE146D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7455E3BD-6343-4A51-A61A-CEEEDFE146D3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -187,6 +187,6 @@ Global
 		{1DFCD593-8814-4DCE-82D8-7F7DC9BE5BD4} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
 		{95639F67-5297-4D55-B126-2CB9226226CB} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
 		{31C790E5-1BB5-4004-82B8-43D1FCAF97C3} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
-		{17DC459D-83AD-40A3-B83E-BC2B5C8BF096} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
+		{7455E3BD-6343-4A51-A61A-CEEEDFE146D3} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
 	EndGlobalSection
 EndGlobal
