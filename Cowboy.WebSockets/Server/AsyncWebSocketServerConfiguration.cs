@@ -31,8 +31,8 @@ namespace Cowboy.WebSockets
 
             ConnectTimeout = TimeSpan.FromSeconds(10);
             CloseTimeout = TimeSpan.FromSeconds(5);
-            KeepAliveInterval = TimeSpan.FromSeconds(30);
-            KeepAliveTimeout = TimeSpan.FromSeconds(5);
+            KeepAliveInterval = TimeSpan.FromSeconds(60);
+            KeepAliveTimeout = TimeSpan.FromSeconds(15);
         }
 
         public int InitialBufferAllocationCount { get; set; }
