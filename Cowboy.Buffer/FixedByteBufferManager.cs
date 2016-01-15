@@ -5,7 +5,7 @@ namespace Cowboy.Buffer
 {
     public class FixedByteBufferManager
     {
-        private byte[] _mainBuffer;
+        private byte[] _bigBuffer;
         private Stack<ArraySegment<byte>> _segments;
         private readonly object _sync = new object();
 
@@ -20,12 +20,12 @@ namespace Cowboy.Buffer
         private void Initialize()
         {
             int bytesToAllocate = BufferCount * BufferSize;
-            _mainBuffer = new byte[bytesToAllocate];
+            _bigBuffer = new byte[bytesToAllocate];
 
             _segments = new Stack<ArraySegment<byte>>(BufferCount);
             for (int i = BufferCount - 1; i >= 0; i--)
             {
-                var segment = new ArraySegment<byte>(_mainBuffer, i * BufferSize, BufferSize);
+                var segment = new ArraySegment<byte>(_bigBuffer, i * BufferSize, BufferSize);
                 _segments.Push(segment);
             }
         }

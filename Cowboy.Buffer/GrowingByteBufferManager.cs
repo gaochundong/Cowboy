@@ -9,14 +9,14 @@ namespace Cowboy.Buffer
         public int _bufferSize;
         private Stack<byte[]> _bufferStack;
         private readonly object _sync = new object();
+        private double _autoExpandedScale = 1.5;
 
-        public GrowingByteBufferManager(int initBufferCount, int initBufferSize)
+        public GrowingByteBufferManager(int initialPooledBufferCount, int bufferSize)
         {
-            _bufferCount = initBufferCount;
-            _bufferSize = initBufferSize;
+            _bufferCount = initialPooledBufferCount;
+            _bufferSize = bufferSize;
 
-            AutoExpand = true;
-            AutoExpandScale = 1.5;
+            AutoExpanded = true;
 
             Initialize();
         }
@@ -32,9 +32,20 @@ namespace Cowboy.Buffer
             }
         }
 
-        public bool AutoExpand { get; set; }
+        public int BufferCount { get { return _bufferCount; } }
+        public int BufferSize { get { return _bufferSize; } }
+        public bool AutoExpanded { get; set; }
 
-        public double AutoExpandScale { get; set; }
+        public double AutoExpandedScale
+        {
+            get { return _autoExpandedScale; }
+            set
+            {
+                if (value <= 1)
+                    throw new ArgumentException("Auto expanded scale must be greater than 1.");
+                _autoExpandedScale = value;
+            }
+        }
 
         public int BufferRemaning
         {
@@ -49,15 +60,12 @@ namespace Cowboy.Buffer
 
         private void ExpandBufferStack()
         {
-            if (AutoExpandScale < 1)
-                throw new ArgumentException("Invalid auto expanded scale, the value should not be less than 1.");
-
             int currentBufferCount = _bufferCount;
-            _bufferCount = (int)(_bufferCount * AutoExpandScale);
+            _bufferCount = (int)(_bufferCount * AutoExpandedScale);
 
             for (int i = 0; i < _bufferCount - currentBufferCount; i++)
             {
-                byte[] buffer = new byte[_bufferSize];
+                var buffer = new byte[_bufferSize];
                 _bufferStack.Push(buffer);
             }
         }
@@ -69,8 +77,11 @@ namespace Cowboy.Buffer
                 if (_bufferStack.Count > 0)
                     return _bufferStack.Pop();
 
-                if (AutoExpand)
+                if (AutoExpanded)
                     ExpandBufferStack();
+
+                if (_bufferStack.Count == 0)
+                    throw new IndexOutOfRangeException("No enough available buffers.");
 
                 return _bufferStack.Pop();
             }
