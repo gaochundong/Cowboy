@@ -4,6 +4,7 @@ namespace Cowboy.Buffer
 {
     public class CircularBuffer<T>
     {
+        private readonly object _sync = new object();
         private T[] _buffer;
         private int _currentCapacity;
         private int _maxCapacity;
@@ -43,25 +44,52 @@ namespace Cowboy.Buffer
             _maxCapacity = maxCapacity;
         }
 
-        public int Count { get { return _count; } }
+        public int Count
+        {
+            get
+            {
+                lock (_sync)
+                {
+                    return _count;
+                }
+            }
+        }
 
-        public int MaxCapacity { get { return _maxCapacity; } }
+        public int MaxCapacity
+        {
+            get
+            {
+                lock (_sync)
+                {
+                    return _maxCapacity;
+                }
+            }
+        }
 
         public int Capacity
         {
-            get { return _currentCapacity; }
+            get
+            {
+                lock (_sync)
+                {
+                    return _currentCapacity;
+                }
+            }
             set
             {
-                if (value > _currentCapacity && _currentCapacity < MaxCapacity)
+                lock (_sync)
                 {
-                    var newCapacity = CalculateNewCapacity(value);
-                    ExpandBuffer(newCapacity);
-                    _currentCapacity = newCapacity;
-                }
-                else if (value < _currentCapacity)
-                {
-                    ShrinkBuffer(value);
-                    _currentCapacity = value;
+                    if (value > _currentCapacity && _currentCapacity < MaxCapacity)
+                    {
+                        var newCapacity = CalculateNewCapacity(value);
+                        ExpandBuffer(newCapacity);
+                        _currentCapacity = newCapacity;
+                    }
+                    else if (value < _currentCapacity)
+                    {
+                        ShrinkBuffer(value);
+                        _currentCapacity = value;
+                    }
                 }
             }
         }
@@ -113,55 +141,64 @@ namespace Cowboy.Buffer
         {
             BufferValidator.ValidateBuffer(sourceArray, sourceIndex, length, "sourceArray", "sourceIndex", "length");
 
-            if (Count + length >= Capacity)
-                Capacity += length;
-
-            if (Count + length > Capacity)
-                throw new IndexOutOfRangeException(string.Format(
-                    "No enough capacity to copy buffer, Capacity[{0}], MaxCapacity[{1}].", Capacity, MaxCapacity));
-
-            var tail = _tail;
-            if (tail + length < Capacity)
+            lock (_sync)
             {
-                Array.Copy(sourceArray, sourceIndex, _buffer, tail, length);
-                _tail = tail + length;
-            }
-            else
-            {
-                var firstCommitLength = Capacity - tail;
-                var secondCommitLength = length - firstCommitLength;
-                Array.Copy(sourceArray, sourceIndex, _buffer, tail, firstCommitLength);
-                Array.Copy(sourceArray, sourceIndex + firstCommitLength, _buffer, 0, secondCommitLength);
-                _tail = secondCommitLength;
+                if (Count + length >= Capacity)
+                    Capacity += length;
+
+                if (Count + length > Capacity)
+                    throw new IndexOutOfRangeException(string.Format(
+                        "No enough capacity to copy buffer, Capacity[{0}], MaxCapacity[{1}].", Capacity, MaxCapacity));
+
+                var tail = _tail;
+                if (tail + length < Capacity)
+                {
+                    Array.Copy(sourceArray, sourceIndex, _buffer, tail, length);
+                    _tail = tail + length;
+                }
+                else
+                {
+                    var firstCommitLength = Capacity - tail;
+                    var secondCommitLength = length - firstCommitLength;
+                    Array.Copy(sourceArray, sourceIndex, _buffer, tail, firstCommitLength);
+                    Array.Copy(sourceArray, sourceIndex + firstCommitLength, _buffer, 0, secondCommitLength);
+                    _tail = secondCommitLength;
+                }
             }
         }
 
         public void CopyTo(T[] destinationArray, int destinationIndex, int length)
         {
-            if (length > Count)
-                length = Count;
-
             BufferValidator.ValidateBuffer(destinationArray, destinationIndex, length, "destinationArray", "destinationIndex", "length");
 
-            var head = _head;
-            if (head + length < Capacity)
+            lock (_sync)
             {
-                Array.Copy(_buffer, head, destinationArray, destinationIndex, length);
-            }
-            else
-            {
-                var firstCommitLength = Capacity - head;
-                var secondCommitLength = length - firstCommitLength;
-                Array.Copy(_buffer, head, destinationArray, destinationIndex, firstCommitLength);
-                Array.Copy(_buffer, 0, destinationArray, destinationIndex + firstCommitLength, secondCommitLength);
+                if (length > Count)
+                    length = Count;
+
+                var head = _head;
+                if (head + length < Capacity)
+                {
+                    Array.Copy(_buffer, head, destinationArray, destinationIndex, length);
+                }
+                else
+                {
+                    var firstCommitLength = Capacity - head;
+                    var secondCommitLength = length - firstCommitLength;
+                    Array.Copy(_buffer, head, destinationArray, destinationIndex, firstCommitLength);
+                    Array.Copy(_buffer, 0, destinationArray, destinationIndex + firstCommitLength, secondCommitLength);
+                }
             }
         }
 
         public T[] ToArray()
         {
-            var array = new T[Count];
-            CopyTo(array, 0, Count);
-            return array;
+            lock (_sync)
+            {
+                var array = new T[Count];
+                CopyTo(array, 0, Count);
+                return array;
+            }
         }
     }
 }
