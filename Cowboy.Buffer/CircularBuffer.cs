@@ -50,10 +50,10 @@ namespace Cowboy.Buffer
             _maxCapacity = maxCapacity;
         }
 
+        public int MaxCapacity { get { return _maxCapacity; } }
         public int Head { get { return _head; } }
         public int Tail { get { return _tail; } }
         public int Count { get { return _count; } }
-        public int MaxCapacity { get { return _maxCapacity; } }
 
         public int Capacity
         {
@@ -116,8 +116,20 @@ namespace Cowboy.Buffer
 
             _buffer = newBuffer;
             _head = 0;
-            _tail = _count;
-            _count = newSize;
+            _tail = _count >= newSize ? newSize : _count;
+            _count = _count >= newSize ? newSize : _count;
+        }
+
+        public void CopyFrom(T[] sourceArray)
+        {
+            if (sourceArray == null)
+                throw new ArgumentNullException("sourceArray");
+            CopyFrom(sourceArray, 0, sourceArray.Length);
+        }
+
+        public void CopyFrom(T[] sourceArray, int length)
+        {
+            CopyFrom(sourceArray, 0, length);
         }
 
         public void CopyFrom(T[] sourceArray, int sourceIndex, int length)
@@ -131,20 +143,137 @@ namespace Cowboy.Buffer
                 throw new IndexOutOfRangeException(string.Format(
                     "No enough capacity to copy buffer, Capacity[{0}], MaxCapacity[{1}].", Capacity, MaxCapacity));
 
-            var tail = _tail;
-            if (tail + length < Capacity)
+            if (_tail - 1 + length < Capacity)
             {
-                Array.Copy(sourceArray, sourceIndex, _buffer, tail, length);
-                _tail = tail + length;
+                Array.Copy(sourceArray, sourceIndex, _buffer, _tail, length);
+                _tail += length;
+                _count += length;
             }
             else
             {
-                var firstCommitLength = Capacity - tail;
+                var firstCommitLength = Capacity - _tail;
                 var secondCommitLength = length - firstCommitLength;
-                Array.Copy(sourceArray, sourceIndex, _buffer, tail, firstCommitLength);
+                Array.Copy(sourceArray, sourceIndex, _buffer, _tail, firstCommitLength);
                 Array.Copy(sourceArray, sourceIndex + firstCommitLength, _buffer, 0, secondCommitLength);
                 _tail = secondCommitLength;
+                _count += length;
             }
+        }
+
+        public void CopyFrom(CircularBuffer<T> sourceBuffer)
+        {
+            if (sourceBuffer == null)
+                throw new ArgumentNullException("sourceBuffer");
+            CopyFrom(sourceBuffer, 0, sourceBuffer.Count);
+        }
+
+        public void CopyFrom(CircularBuffer<T> sourceBuffer, int count)
+        {
+            CopyFrom(sourceBuffer, 0, count);
+        }
+
+        public void CopyFrom(CircularBuffer<T> sourceBuffer, int sourceOffset, int count)
+        {
+            if (sourceBuffer == null)
+                throw new ArgumentNullException("sourceBuffer");
+            if (sourceOffset < 0 || sourceOffset > sourceBuffer.Count)
+                throw new ArgumentOutOfRangeException("sourceOffset");
+            if (count < 0 || count > (sourceBuffer.Count - sourceOffset))
+                throw new ArgumentOutOfRangeException("count");
+
+            if (Count + count >= Capacity)
+                Capacity += count;
+
+            if (Count + count > Capacity)
+                throw new IndexOutOfRangeException(string.Format(
+                    "No enough capacity to copy buffer, Capacity[{0}], MaxCapacity[{1}].", Capacity, MaxCapacity));
+
+            if (_tail -1 + count < Capacity)
+            {
+                if (sourceBuffer.Head + sourceOffset < sourceBuffer.Capacity)
+                {
+                    if (sourceBuffer.Head + sourceOffset + count < sourceBuffer.Capacity)
+                    {
+                        Array.Copy(sourceBuffer._buffer, sourceBuffer.Head + sourceOffset, _buffer, _tail, count);
+                    }
+                    else
+                    {
+                        var first = sourceBuffer.Capacity - (sourceBuffer.Head + sourceOffset);
+                        var second = count - first;
+                        Array.Copy(sourceBuffer._buffer, sourceBuffer.Head + sourceOffset, _buffer, _tail, first);
+                        Array.Copy(sourceBuffer._buffer, 0, _buffer, _tail + first, second);
+                    }
+                }
+                else
+                {
+                    var index = (sourceBuffer.Head + sourceOffset) % sourceBuffer.Capacity;
+                    Array.Copy(sourceBuffer._buffer, index, _buffer, _tail, count);
+                }
+
+                _tail += count;
+                _count += count;
+            }
+            else
+            {
+                var right = Capacity - _tail;
+
+                if (sourceBuffer.Head + sourceOffset < sourceBuffer.Capacity)
+                {
+                    if (sourceBuffer.Head + sourceOffset + count < sourceBuffer.Capacity)
+                    {
+                        var first = right;
+                        var second = count - first;
+                        Array.Copy(sourceBuffer._buffer, sourceBuffer.Head + sourceOffset, _buffer, _tail, first);
+                        Array.Copy(sourceBuffer._buffer, sourceBuffer.Head + sourceOffset + first, _buffer, 0, second);
+                    }
+                    else
+                    {
+                        var part1 = sourceBuffer.Capacity - (sourceBuffer.Head + sourceOffset);
+                        var part2 = count - part1;
+                        if (part1 < right)
+                        {
+                            var first = part1;
+                            var second = right - part1;
+                            var third = count - second;
+                            Array.Copy(sourceBuffer._buffer, sourceBuffer.Head + sourceOffset, _buffer, _tail, first);
+                            Array.Copy(sourceBuffer._buffer, 0, _buffer, _tail + first, second);
+                            Array.Copy(sourceBuffer._buffer, second, _buffer, 0, third);
+                        }
+                        else
+                        {
+                            var first = part1 - right;
+                            var second = part1 - first;
+                            var third = part2;
+                            Array.Copy(sourceBuffer._buffer, sourceBuffer.Head + sourceOffset, _buffer, _tail, first);
+                            Array.Copy(sourceBuffer._buffer, sourceBuffer.Head + sourceOffset + first, _buffer, 0, second);
+                            Array.Copy(sourceBuffer._buffer, 0, _buffer, second, third);
+                        }
+                    }
+                }
+                else
+                {
+                    var index = (sourceBuffer.Head + sourceOffset) % sourceBuffer.Capacity;
+                    var first = right;
+                    var second = count - first;
+                    Array.Copy(sourceBuffer._buffer, index, _buffer, _tail, first);
+                    Array.Copy(sourceBuffer._buffer, index + first, _buffer, 0, second);
+                }
+
+                _tail = count - right;
+                _count += count;
+            }
+        }
+
+        public void CopyTo(T[] destinationArray)
+        {
+            if (destinationArray == null)
+                throw new ArgumentNullException("destinationArray");
+            CopyTo(destinationArray, 0, destinationArray.Length);
+        }
+
+        public void CopyTo(T[] destinationArray, int length)
+        {
+            CopyTo(destinationArray, 0, length);
         }
 
         public void CopyTo(T[] destinationArray, int destinationIndex, int length)
@@ -154,18 +283,36 @@ namespace Cowboy.Buffer
             if (length > Count)
                 length = Count;
 
-            var head = _head;
-            if (head + length < Capacity)
+            if (_head + length < Capacity)
             {
-                Array.Copy(_buffer, head, destinationArray, destinationIndex, length);
+                Array.Copy(_buffer, _head, destinationArray, destinationIndex, length);
             }
             else
             {
-                var firstCommitLength = Capacity - head;
+                var firstCommitLength = Capacity - _head;
                 var secondCommitLength = length - firstCommitLength;
-                Array.Copy(_buffer, head, destinationArray, destinationIndex, firstCommitLength);
+                Array.Copy(_buffer, _head, destinationArray, destinationIndex, firstCommitLength);
                 Array.Copy(_buffer, 0, destinationArray, destinationIndex + firstCommitLength, secondCommitLength);
             }
+        }
+
+        public void CopyTo(CircularBuffer<T> destinationBuffer)
+        {
+            if (destinationBuffer == null)
+                throw new ArgumentNullException("destinationBuffer");
+            CopyTo(destinationBuffer, 0, Count);
+        }
+
+        public void CopyTo(CircularBuffer<T> destinationBuffer, int count)
+        {
+            CopyTo(destinationBuffer, 0, count);
+        }
+
+        public void CopyTo(CircularBuffer<T> destinationBuffer, int sourceOffset, int count)
+        {
+            if (destinationBuffer == null)
+                throw new ArgumentNullException("destinationBuffer");
+            destinationBuffer.CopyFrom(this, sourceOffset, count);
         }
 
         public void Discard()
