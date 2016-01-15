@@ -187,6 +187,7 @@ namespace Cowboy.Sockets
         {
             if (_sessions.TryAdd(session.SessionKey, session))
             {
+                _log.DebugFormat("New session [{0}].", session);
                 try
                 {
                     await session.Start();
@@ -198,7 +199,10 @@ namespace Cowboy.Sockets
                 finally
                 {
                     AsyncTcpSocketSession throwAway;
-                    _sessions.TryRemove(session.SessionKey, out throwAway);
+                    if (_sessions.TryRemove(session.SessionKey, out throwAway))
+                    {
+                        _log.DebugFormat("Close session [{0}].", throwAway);
+                    }
                 }
             }
         }
