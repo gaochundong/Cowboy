@@ -212,10 +212,12 @@ namespace Cowboy.Sockets
 
         private bool ShouldThrow(Exception ex)
         {
-            if (ex is ObjectDisposedException
+            if (ex is SocketException
+                || ex is IOException
                 || ex is InvalidOperationException
-                || ex is SocketException
-                || ex is IOException)
+                || ex is ObjectDisposedException
+                || ex is NullReferenceException
+                )
             {
                 return false;
             }
