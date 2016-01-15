@@ -14,7 +14,7 @@ namespace Cowboy.Buffer
         private int _count = 0;
 
         public CircularBuffer(int initialCapacity)
-            : this(initialCapacity, initialCapacity)
+            : this(initialCapacity, int.MaxValue)
         {
         }
 
@@ -24,7 +24,7 @@ namespace Cowboy.Buffer
         }
 
         public CircularBuffer(T[] buffer)
-            : this(buffer, buffer.Length, buffer.Length)
+            : this(buffer, buffer.Length, int.MaxValue)
         {
         }
 

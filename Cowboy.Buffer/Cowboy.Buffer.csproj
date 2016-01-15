@@ -41,12 +41,12 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>SolutionVersion.cs</Link>
     </Compile>
-    <Compile Include="BufferDeflector.cs" />
-    <Compile Include="BufferValidator.cs" />
+    <Compile Include="Deflection\BufferDeflector.cs" />
+    <Compile Include="Validation\BufferValidator.cs" />
     <Compile Include="CircularBuffer.cs" />
-    <Compile Include="FixedByteBufferManager.cs" />
-    <Compile Include="GrowingByteBufferManager.cs" />
-    <Compile Include="IBufferManager.cs" />
+    <Compile Include="BufferManager\FixedByteBufferManager.cs" />
+    <Compile Include="BufferManager\GrowingByteBufferManager.cs" />
+    <Compile Include="BufferManager\IBufferManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
