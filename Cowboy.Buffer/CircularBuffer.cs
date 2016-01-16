@@ -240,19 +240,19 @@ namespace Cowboy.Buffer
             return false;
         }
 
-        public void CopyFrom(T[] sourceArray)
+        public void AppendFrom(T[] sourceArray)
         {
             if (sourceArray == null)
                 throw new ArgumentNullException("sourceArray");
-            CopyFrom(sourceArray, 0, sourceArray.Length);
+            AppendFrom(sourceArray, 0, sourceArray.Length);
         }
 
-        public void CopyFrom(T[] sourceArray, int length)
+        public void AppendFrom(T[] sourceArray, int length)
         {
-            CopyFrom(sourceArray, 0, length);
+            AppendFrom(sourceArray, 0, length);
         }
 
-        public void CopyFrom(T[] sourceArray, int sourceIndex, int length)
+        public void AppendFrom(T[] sourceArray, int sourceIndex, int length)
         {
             BufferValidator.ValidateBuffer(sourceArray, sourceIndex, length, "sourceArray", "sourceIndex", "length");
 

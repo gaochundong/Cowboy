@@ -17,7 +17,7 @@ namespace Cowboy.Buffer.UnitTests
                 data1[i] = 1;
             }
 
-            buffer1.CopyFrom(data1, 0, data1.Length);
+            buffer1.AppendFrom(data1, 0, data1.Length);
             Assert.AreEqual(buffer1.Count, data1.Length);
         }
 
@@ -32,7 +32,7 @@ namespace Cowboy.Buffer.UnitTests
                 data1[i] = 1;
             }
 
-            buffer1.CopyFrom(data1, 0, data1.Length);
+            buffer1.AppendFrom(data1, 0, data1.Length);
             Assert.AreEqual(buffer1.Count, data1.Length);
             Assert.AreEqual(buffer1.MaxCapacity, 100);
         }
@@ -51,7 +51,7 @@ namespace Cowboy.Buffer.UnitTests
             bool thrown = false;
             try
             {
-                buffer1.CopyFrom(data1, 0, data1.Length);
+                buffer1.AppendFrom(data1, 0, data1.Length);
             }
             catch
             {
