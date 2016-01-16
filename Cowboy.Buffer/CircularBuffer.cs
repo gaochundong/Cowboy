@@ -240,19 +240,19 @@ namespace Cowboy.Buffer
             return false;
         }
 
-        public void AppendFrom(T[] sourceArray)
+        public void CopyFrom(T[] sourceArray)
         {
             if (sourceArray == null)
                 throw new ArgumentNullException("sourceArray");
-            AppendFrom(sourceArray, 0, sourceArray.Length);
+            CopyFrom(sourceArray, 0, sourceArray.Length);
         }
 
-        public void AppendFrom(T[] sourceArray, int length)
+        public void CopyFrom(T[] sourceArray, int length)
         {
-            AppendFrom(sourceArray, 0, length);
+            CopyFrom(sourceArray, 0, length);
         }
 
-        public void AppendFrom(T[] sourceArray, int sourceIndex, int length)
+        public void CopyFrom(T[] sourceArray, int sourceIndex, int length)
         {
             BufferValidator.ValidateBuffer(sourceArray, sourceIndex, length, "sourceArray", "sourceIndex", "length");
 
@@ -280,19 +280,19 @@ namespace Cowboy.Buffer
             }
         }
 
-        public void AppendFrom(CircularBuffer<T> sourceBuffer)
+        public void CopyFrom(CircularBuffer<T> sourceBuffer)
         {
             if (sourceBuffer == null)
                 throw new ArgumentNullException("sourceBuffer");
-            AppendFrom(sourceBuffer, 0, sourceBuffer.Count);
+            CopyFrom(sourceBuffer, 0, sourceBuffer.Count);
         }
 
-        public void AppendFrom(CircularBuffer<T> sourceBuffer, int sourceOffset)
+        public void CopyFrom(CircularBuffer<T> sourceBuffer, int sourceOffset)
         {
-            AppendFrom(sourceBuffer, sourceOffset, sourceBuffer.Count - sourceOffset);
+            CopyFrom(sourceBuffer, sourceOffset, sourceBuffer.Count - sourceOffset);
         }
 
-        public void AppendFrom(CircularBuffer<T> sourceBuffer, int sourceOffset, int count)
+        public void CopyFrom(CircularBuffer<T> sourceBuffer, int sourceOffset, int count)
         {
             if (sourceBuffer == null)
                 throw new ArgumentNullException("sourceBuffer");
@@ -430,23 +430,23 @@ namespace Cowboy.Buffer
             CopyTo(array, destinationIndex, length);
         }
 
-        public void AppendTo(CircularBuffer<T> destinationBuffer)
+        public void CopyTo(CircularBuffer<T> destinationBuffer)
         {
             if (destinationBuffer == null)
                 throw new ArgumentNullException("destinationBuffer");
-            AppendTo(destinationBuffer, 0, Count);
+            CopyTo(destinationBuffer, 0, Count);
         }
 
-        public void AppendTo(CircularBuffer<T> destinationBuffer, int count)
+        public void CopyTo(CircularBuffer<T> destinationBuffer, int count)
         {
-            AppendTo(destinationBuffer, 0, count);
+            CopyTo(destinationBuffer, 0, count);
         }
 
-        public void AppendTo(CircularBuffer<T> destinationBuffer, int sourceOffset, int count)
+        public void CopyTo(CircularBuffer<T> destinationBuffer, int sourceOffset, int count)
         {
             if (destinationBuffer == null)
                 throw new ArgumentNullException("destinationBuffer");
-            destinationBuffer.AppendFrom(this, sourceOffset, count);
+            destinationBuffer.CopyFrom(this, sourceOffset, count);
         }
 
         public void Clear()

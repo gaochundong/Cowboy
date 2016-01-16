@@ -9,7 +9,7 @@ namespace Cowboy.Buffer.UnitTests
         [TestMethod]
         public void circular_buffer__copy_from_byte_array_to_reach_capacity()
         {
-            var buffer1 = new CircularBuffer<byte>(50, 100);
+            var b1 = new CircularBuffer<byte>(50, 100);
 
             var data1 = new byte[50];
             for (int i = 0; i < data1.Length; i++)
@@ -17,14 +17,14 @@ namespace Cowboy.Buffer.UnitTests
                 data1[i] = 1;
             }
 
-            buffer1.AppendFrom(data1, 0, data1.Length);
-            Assert.AreEqual(buffer1.Count, data1.Length);
+            b1.CopyFrom(data1, 0, data1.Length);
+            Assert.AreEqual(b1.Count, data1.Length);
         }
 
         [TestMethod]
         public void circular_buffer__copy_from_byte_array_to_expand_capacity()
         {
-            var buffer1 = new CircularBuffer<byte>(50, 100);
+            var b1 = new CircularBuffer<byte>(50, 100);
 
             var data1 = new byte[60];
             for (int i = 0; i < data1.Length; i++)
@@ -32,15 +32,15 @@ namespace Cowboy.Buffer.UnitTests
                 data1[i] = 1;
             }
 
-            buffer1.AppendFrom(data1, 0, data1.Length);
-            Assert.AreEqual(buffer1.Count, data1.Length);
-            Assert.AreEqual(buffer1.MaxCapacity, 100);
+            b1.CopyFrom(data1, 0, data1.Length);
+            Assert.AreEqual(b1.Count, data1.Length);
+            Assert.AreEqual(b1.MaxCapacity, 100);
         }
 
         [TestMethod]
         public void circular_buffer__copy_from_byte_array_to_overflow_max_capacity()
         {
-            var buffer1 = new CircularBuffer<byte>(50, 100);
+            var b1 = new CircularBuffer<byte>(50, 100);
 
             var data1 = new byte[200];
             for (int i = 0; i < data1.Length; i++)
@@ -51,7 +51,7 @@ namespace Cowboy.Buffer.UnitTests
             bool thrown = false;
             try
             {
-                buffer1.AppendFrom(data1, 0, data1.Length);
+                b1.CopyFrom(data1, 0, data1.Length);
             }
             catch
             {
@@ -62,7 +62,7 @@ namespace Cowboy.Buffer.UnitTests
         }
 
         [TestMethod]
-        public void circular_buffer__append_from__tail_count__head_offset__head_offset_count()
+        public void circular_buffer__copy_from__tail_count__head_offset__head_offset_count()
         {
             var b1 = new CircularBuffer<byte>(50, 100);
             var b2 = new CircularBuffer<byte>(100, 100);
@@ -79,7 +79,7 @@ namespace Cowboy.Buffer.UnitTests
 
             b2.Skip(10);
 
-            b1.AppendFrom(b2, 10, 10);
+            b1.CopyFrom(b2, 10, 10);
 
             Assert.AreEqual(b1.Count, 60);
             Assert.AreEqual(b1[49], 1);
@@ -87,7 +87,7 @@ namespace Cowboy.Buffer.UnitTests
         }
 
         [TestMethod]
-        public void circular_buffer__append_from__tail_count__head_offset__count_head_offset()
+        public void circular_buffer__copy_from__tail_count__head_offset__count_head_offset()
         {
             var b1 = new CircularBuffer<byte>(50, 100);
             var b2 = new CircularBuffer<byte>(100, 100);
@@ -109,7 +109,7 @@ namespace Cowboy.Buffer.UnitTests
                 b2.Add(3);
             }
 
-            b1.AppendFrom(b2, 15, 10);
+            b1.CopyFrom(b2, 15, 10);
 
             Assert.AreEqual(b1.Count, 60);
             Assert.AreEqual(b1[49], 1);
@@ -118,7 +118,7 @@ namespace Cowboy.Buffer.UnitTests
         }
 
         [TestMethod]
-        public void circular_buffer__append_from__tail_count__offset_head()
+        public void circular_buffer__copy_from__tail_count__offset_head()
         {
             var b1 = new CircularBuffer<byte>(50, 100);
             var b2 = new CircularBuffer<byte>(100, 100);
@@ -140,7 +140,7 @@ namespace Cowboy.Buffer.UnitTests
                 b2.Add(3);
             }
 
-            b1.AppendFrom(b2, 30, 10);
+            b1.CopyFrom(b2, 30, 10);
 
             Assert.AreEqual(b1.Count, 60);
             Assert.AreEqual(b1[49], 1);
@@ -149,7 +149,7 @@ namespace Cowboy.Buffer.UnitTests
         }
 
         [TestMethod]
-        public void circular_buffer__append_from__count_tail__head_offset__head_offset_count()
+        public void circular_buffer__copy_from__count_tail__head_offset__head_offset_count()
         {
             var b1 = new CircularBuffer<byte>(50, 100);
             var b2 = new CircularBuffer<byte>(100, 100);
@@ -167,7 +167,7 @@ namespace Cowboy.Buffer.UnitTests
             b1.Skip(40);
             b2.Skip(10);
 
-            b1.AppendFrom(b2, 70, 15);
+            b1.CopyFrom(b2, 70, 15);
 
             Assert.AreEqual(b1.Count, 25);
             Assert.AreEqual(b1[9], 1);
@@ -175,7 +175,7 @@ namespace Cowboy.Buffer.UnitTests
         }
 
         [TestMethod]
-        public void circular_buffer__append_from__count_tail__head_offset__count_head_offset()
+        public void circular_buffer__copy_from__count_tail__head_offset__count_head_offset()
         {
             var b1 = new CircularBuffer<byte>(50, 100);
             var b2 = new CircularBuffer<byte>(100, 100);
@@ -198,7 +198,7 @@ namespace Cowboy.Buffer.UnitTests
                 b2.Add(3);
             }
 
-            b1.AppendFrom(b2, 10, 30);
+            b1.CopyFrom(b2, 10, 30);
 
             Assert.AreEqual(b1.Count, 40);
             Assert.AreEqual(b1[9], 1);
@@ -207,7 +207,7 @@ namespace Cowboy.Buffer.UnitTests
         }
 
         [TestMethod]
-        public void circular_buffer__append_from__count_tail__head_offset__count_head_offset_part()
+        public void circular_buffer__copy_from__count_tail__head_offset__count_head_offset_part()
         {
             var b1 = new CircularBuffer<byte>(50, 100);
             var b2 = new CircularBuffer<byte>(100, 100);
@@ -230,7 +230,7 @@ namespace Cowboy.Buffer.UnitTests
                 b2.Add(3);
             }
 
-            b1.AppendFrom(b2, 5, 30);
+            b1.CopyFrom(b2, 5, 30);
 
             Assert.AreEqual(b1.Count, 40);
             Assert.AreEqual(b1[9], 1);
@@ -239,7 +239,7 @@ namespace Cowboy.Buffer.UnitTests
         }
 
         [TestMethod]
-        public void circular_buffer__append_from__count_tail__offset_head()
+        public void circular_buffer__copy_from__count_tail__offset_head()
         {
             var b1 = new CircularBuffer<byte>(50, 100);
             var b2 = new CircularBuffer<byte>(100, 100);
@@ -262,7 +262,7 @@ namespace Cowboy.Buffer.UnitTests
                 b2.Add(3);
             }
 
-            b1.AppendFrom(b2, 60, 30);
+            b1.CopyFrom(b2, 60, 30);
 
             Assert.AreEqual(b1.Count, 40);
             Assert.AreEqual(b1[9], 1);
