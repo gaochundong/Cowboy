@@ -287,9 +287,9 @@ namespace Cowboy.Buffer
             AppendFrom(sourceBuffer, 0, sourceBuffer.Count);
         }
 
-        public void AppendFrom(CircularBuffer<T> sourceBuffer, int count)
+        public void AppendFrom(CircularBuffer<T> sourceBuffer, int sourceOffset)
         {
-            AppendFrom(sourceBuffer, 0, count);
+            AppendFrom(sourceBuffer, sourceOffset, sourceBuffer.Count - sourceOffset);
         }
 
         public void AppendFrom(CircularBuffer<T> sourceBuffer, int sourceOffset, int count)
