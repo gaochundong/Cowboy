@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Cowboy.Buffer
 {
-    public class CircularBuffer<T> : IEnumerable<T>, IEnumerable
+    public class CircularBuffer<T> : IProducerConsumerCollection<T>, IEnumerable<T>, IEnumerable, ICollection
     {
+        private readonly object _sync = new object();
         private T[] _buffer;
         private int _currentCapacity;
         private int _maxCapacity;
@@ -54,6 +57,8 @@ namespace Cowboy.Buffer
         public int Head { get { return _head; } }
         public int Tail { get { return _tail; } }
         public int Count { get { return _count; } }
+        public object SyncRoot { get { return _sync; } }
+        public bool IsSynchronized { get { return false; } }
 
         public int Capacity
         {
@@ -118,6 +123,121 @@ namespace Cowboy.Buffer
             _head = 0;
             _tail = _count >= newSize ? newSize : _count;
             _count = _count >= newSize ? newSize : _count;
+        }
+
+        public void Add(T item)
+        {
+            if (_count + 1 > Capacity)
+                Capacity += 1;
+
+            _buffer[_tail % Capacity] = item;
+            _tail++;
+
+            if (_count < Capacity)
+                _count++;
+        }
+
+        public void AddRange(IEnumerable<T> items)
+        {
+            if (_count + items.Count() >= Capacity)
+                Capacity += items.Count();
+
+            foreach (var item in items)
+            {
+                _buffer[_tail % Capacity] = item;
+                _tail++;
+
+                if (_count < Capacity)
+                    _count++;
+            }
+        }
+
+        public bool TryAdd(T item)
+        {
+            if (Count == MaxCapacity)
+                return false;
+
+            Add(item);
+            return true;
+        }
+
+        public T Take()
+        {
+            if (Count == 0)
+                throw new InvalidOperationException("No item could be taken.");
+
+            var item = _buffer[_head % Capacity];
+            _head++;
+            _count--;
+
+            return item;
+        }
+
+        public IEnumerable<T> Take(int count)
+        {
+            if (count < 0)
+                throw new ArgumentException("The count must be greater than 0.", "count");
+            if (Count == 0)
+                throw new InvalidOperationException("No enough items could be taken.");
+
+            var items = new List<T>(Math.Min(count, Count));
+            for (var i = 0; i < items.Capacity; i++, _head++, _count--)
+            {
+                items.Add(_buffer[_head % Capacity]);
+            }
+
+            return items;
+        }
+
+        public IEnumerable<T> TakeAll()
+        {
+            return Take(Count);
+        }
+
+        public bool TryTake(out T item)
+        {
+            item = default(T);
+
+            if (Count > 0)
+            {
+                item = _buffer[_head % Capacity];
+                _head++;
+                _count--;
+
+                return true;
+            }
+
+            return false;
+        }
+
+        public void Skip(int count)
+        {
+            if (_count >= count)
+            {
+                _head += count;
+                _count -= count;
+            }
+        }
+
+        public T Peek()
+        {
+            if (Count == 0)
+                throw new InvalidOperationException("No item could be peeked.");
+
+            return _buffer[_head % Capacity];
+        }
+
+        public bool TryPeek(out T item)
+        {
+            item = default(T);
+
+            if (Count > 0)
+            {
+                item = _buffer[_head % Capacity];
+                return true;
+            }
+
+            return false;
         }
 
         public void CopyFrom(T[] sourceArray)
@@ -264,19 +384,17 @@ namespace Cowboy.Buffer
             }
         }
 
-        public void CopyTo(T[] destinationArray)
+        public void CopyTo(Array destinationArray)
         {
-            if (destinationArray == null)
-                throw new ArgumentNullException("destinationArray");
-            CopyTo(destinationArray, 0, destinationArray.Length);
+            CopyTo(destinationArray, 0, Count);
         }
 
-        public void CopyTo(T[] destinationArray, int length)
+        public void CopyTo(Array destinationArray, int destinationIndex)
         {
-            CopyTo(destinationArray, 0, length);
+            CopyTo(destinationArray, destinationIndex, Count);
         }
 
-        public void CopyTo(T[] destinationArray, int destinationIndex, int length)
+        public void CopyTo(Array destinationArray, int destinationIndex, int length)
         {
             BufferValidator.ValidateBuffer(destinationArray, destinationIndex, length, "destinationArray", "destinationIndex", "length");
 
@@ -294,6 +412,22 @@ namespace Cowboy.Buffer
                 Array.Copy(_buffer, _head, destinationArray, destinationIndex, firstCommitLength);
                 Array.Copy(_buffer, 0, destinationArray, destinationIndex + firstCommitLength, secondCommitLength);
             }
+        }
+
+        public void CopyTo(T[] destinationArray)
+        {
+            CopyTo(destinationArray, 0, Count);
+        }
+
+        public void CopyTo(T[] destinationArray, int destinationIndex)
+        {
+            CopyTo(destinationArray, destinationIndex, Count);
+        }
+
+        public void CopyTo(T[] destinationArray, int destinationIndex, int length)
+        {
+            Array array = destinationArray;
+            CopyTo(array, destinationIndex, length);
         }
 
         public void AppendTo(CircularBuffer<T> destinationBuffer)
@@ -315,11 +449,18 @@ namespace Cowboy.Buffer
             destinationBuffer.AppendFrom(this, sourceOffset, count);
         }
 
-        public void Discard()
+        public void Clear()
         {
             _head = 0;
             _tail = 0;
             _count = 0;
+        }
+
+        public T[] ToArray()
+        {
+            var newArray = new T[Count];
+            CopyTo(newArray, 0, newArray.Length);
+            return newArray;
         }
 
         public T this[int index]
@@ -349,7 +490,7 @@ namespace Cowboy.Buffer
         private class CircularBufferIterator : IEnumerator<T>
         {
             private CircularBuffer<T> _container;
-            private int _index = -1;
+            private int _internalIndex = -1;
 
             public CircularBufferIterator(CircularBuffer<T> container)
             {
@@ -360,7 +501,7 @@ namespace Cowboy.Buffer
             {
                 get
                 {
-                    return _container[(_container.Head + _index) % _container.Capacity];
+                    return _container[(_container.Head + _internalIndex) % _container.Capacity];
                 }
             }
 
@@ -371,9 +512,9 @@ namespace Cowboy.Buffer
 
             public bool MoveNext()
             {
-                _index++;
+                _internalIndex++;
 
-                if (_index >= _container.Count)
+                if (_internalIndex >= _container.Count)
                     return false;
                 else
                     return true;
@@ -381,12 +522,12 @@ namespace Cowboy.Buffer
 
             public void Reset()
             {
-                _index = 0;
+                _internalIndex = 0;
             }
 
             public void Dispose()
             {
-                _index = 0;
+                _internalIndex = 0;
             }
         }
 
