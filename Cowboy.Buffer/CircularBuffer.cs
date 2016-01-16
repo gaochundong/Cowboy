@@ -361,7 +361,7 @@ namespace Cowboy.Buffer
                         }
                         else
                         {
-                            var first = part1 - right;
+                            var first = right;
                             var second = part1 - first;
                             var third = part2;
                             Array.Copy(sourceBuffer._buffer, sourceBuffer.Head + sourceOffset, _buffer, _tail, first);

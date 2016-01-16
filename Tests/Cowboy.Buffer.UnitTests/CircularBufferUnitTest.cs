@@ -62,30 +62,180 @@ namespace Cowboy.Buffer.UnitTests
         }
 
         [TestMethod]
-        public void append_from_another_buffer()
+        public void append_from__tail_count__head_offset__head_offset_count()
         {
-            var buffer1 = new CircularBuffer<byte>(50, 100);
-            var buffer2 = new CircularBuffer<byte>(100, 100);
+            var b1 = new CircularBuffer<byte>(50, 100);
+            var b2 = new CircularBuffer<byte>(100, 100);
 
-            var data1 = new byte[50];
-            var data2 = new byte[100];
-            for (int i = 0; i < data1.Length; i++)
+            for (int i = 0; i < 50; i++)
             {
-                data1[i] = 1;
-            }
-            for (int i = 0; i < data2.Length; i++)
-            {
-                data2[i] = 2;
+                b1.Add(1);
             }
 
-            buffer1.CopyFrom(data1, 0, data1.Length);
-            Assert.AreEqual(buffer1.Count, data1.Length);
+            for (int i = 0; i < 100; i++)
+            {
+                b2.Add(2);
+            }
 
-            buffer2.CopyFrom(data2, 0, data2.Length);
-            Assert.AreEqual(buffer2.Count, data2.Length);
+            b2.Skip(10);
 
-            buffer1.AppendFrom(buffer2, 80, 10);
-            Console.WriteLine(buffer1.Count == 50 + 10);
+            b1.AppendFrom(b2, 10, 10);
+
+            Assert.AreEqual(b1.Count, 60);
+            Assert.AreEqual(b1[49], 1);
+            Assert.AreEqual(b1[50], 2);
+        }
+
+        [TestMethod]
+        public void append_from__tail_count__head_offset__count_head_offset()
+        {
+            var b1 = new CircularBuffer<byte>(50, 100);
+            var b2 = new CircularBuffer<byte>(100, 100);
+
+            for (int i = 0; i < 50; i++)
+            {
+                b1.Add(1);
+            }
+
+            for (int i = 0; i < 100; i++)
+            {
+                b2.Add(2);
+            }
+
+            b2.Skip(80);
+
+            for (int i = 0; i < 10; i++)
+            {
+                b2.Add(3);
+            }
+
+            b1.AppendFrom(b2, 15, 10);
+
+            Assert.AreEqual(b1.Count, 60);
+            Assert.AreEqual(b1[49], 1);
+            Assert.AreEqual(b1[54], 2);
+            Assert.AreEqual(b1[55], 3);
+        }
+
+        [TestMethod]
+        public void append_from__tail_count__offset_head()
+        {
+            var b1 = new CircularBuffer<byte>(50, 100);
+            var b2 = new CircularBuffer<byte>(100, 100);
+
+            for (int i = 0; i < 50; i++)
+            {
+                b1.Add(1);
+            }
+
+            for (int i = 0; i < 100; i++)
+            {
+                b2.Add(2);
+            }
+
+            b2.Skip(80);
+
+            for (int i = 0; i < 50; i++)
+            {
+                b2.Add(3);
+            }
+
+            b1.AppendFrom(b2, 30, 10);
+
+            Assert.AreEqual(b1.Count, 60);
+            Assert.AreEqual(b1[49], 1);
+            Assert.AreEqual(b1[50], 3);
+            Assert.AreEqual(b1[55], 3);
+        }
+
+        [TestMethod]
+        public void append_from__count_tail__head_offset__head_offset_count()
+        {
+            var b1 = new CircularBuffer<byte>(50, 100);
+            var b2 = new CircularBuffer<byte>(100, 100);
+
+            for (int i = 0; i < 50; i++)
+            {
+                b1.Add(1);
+            }
+
+            for (int i = 0; i < 100; i++)
+            {
+                b2.Add(2);
+            }
+
+            b1.Skip(40);
+            b2.Skip(10);
+
+            b1.AppendFrom(b2, 70, 15);
+
+            Assert.AreEqual(b1.Count, 25);
+            Assert.AreEqual(b1[9], 1);
+            Assert.AreEqual(b1[10], 2);
+        }
+
+        [TestMethod]
+        public void append_from__count_tail__head_offset__count_head_offset()
+        {
+            var b1 = new CircularBuffer<byte>(50, 100);
+            var b2 = new CircularBuffer<byte>(100, 100);
+
+            for (int i = 0; i < 50; i++)
+            {
+                b1.Add(1);
+            }
+
+            for (int i = 0; i < 100; i++)
+            {
+                b2.Add(2);
+            }
+
+            b1.Skip(40);
+            b2.Skip(80);
+
+            for (int i = 0; i < 50; i++)
+            {
+                b2.Add(3);
+            }
+
+            b1.AppendFrom(b2, 10, 30);
+
+            Assert.AreEqual(b1.Count, 40);
+            Assert.AreEqual(b1[9], 1);
+            Assert.AreEqual(b1[10], 2);
+            Assert.AreEqual(b1[20], 3);
+        }
+
+        [TestMethod]
+        public void append_from__count_tail__offset_head()
+        {
+            var b1 = new CircularBuffer<byte>(50, 100);
+            var b2 = new CircularBuffer<byte>(100, 100);
+
+            for (int i = 0; i < 50; i++)
+            {
+                b1.Add(1);
+            }
+
+            for (int i = 0; i < 100; i++)
+            {
+                b2.Add(2);
+            }
+
+            b1.Skip(40);
+            b2.Skip(50);
+
+            for (int i = 0; i < 40; i++)
+            {
+                b2.Add(3);
+            }
+
+            b1.AppendFrom(b2, 60, 30);
+
+            Assert.AreEqual(b1.Count, 40);
+            Assert.AreEqual(b1[9], 1);
+            Assert.AreEqual(b1[29], 3);
+            Assert.AreEqual(b1[30], 3);
         }
     }
 }
