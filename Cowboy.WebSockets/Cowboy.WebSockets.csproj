@@ -59,6 +59,9 @@
     <Compile Include="Helpers\Consts.cs" />
     <Compile Include="Helpers\HttpKnownHeaderNames.cs" />
     <Compile Include="Helpers\KeepAliveTracker.cs" />
+    <Compile Include="Plugins\ExtensionCollection.cs" />
+    <Compile Include="Plugins\IExtension.cs" />
+    <Compile Include="Plugins\SynchronizedCollection.cs" />
     <Compile Include="Server\WebSocketServerHandshaker.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server\AsyncWebSocketServerConfiguration.cs" />
