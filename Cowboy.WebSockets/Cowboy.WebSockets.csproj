@@ -56,9 +56,9 @@
     <Compile Include="Framing\OpCode.cs" />
     <Compile Include="Client\IAsyncWebSocketClientMessageDispatcher.cs" />
     <Compile Include="Client\InternalAsyncWebSocketClientMessageDispatcherImplementation.cs" />
-    <Compile Include="Helper\Consts.cs" />
-    <Compile Include="Helper\HttpKnownHeaderNames.cs" />
-    <Compile Include="Helper\KeepAliveTracker.cs" />
+    <Compile Include="Helpers\Consts.cs" />
+    <Compile Include="Helpers\HttpKnownHeaderNames.cs" />
+    <Compile Include="Helpers\KeepAliveTracker.cs" />
     <Compile Include="Server\WebSocketServerHandshaker.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server\AsyncWebSocketServerConfiguration.cs" />
@@ -69,10 +69,10 @@
     <Compile Include="Server\Module\AsyncWebSocketServerModuleCatalog.cs" />
     <Compile Include="Server\Module\AsyncWebSocketRouteResolver.cs" />
     <Compile Include="WebSocketCloseCode.cs" />
-    <Compile Include="Exception\WebSocketHandshakeException.cs" />
-    <Compile Include="Exception\WebSocketException.cs" />
+    <Compile Include="Exceptions\WebSocketHandshakeException.cs" />
+    <Compile Include="Exceptions\WebSocketException.cs" />
     <Compile Include="Client\WebSocketClientHandshaker.cs" />
-    <Compile Include="Helper\WebSocketHelpers.cs" />
+    <Compile Include="Helpers\WebSocketHelpers.cs" />
     <Compile Include="WebSocketState.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -89,7 +89,10 @@
       <Name>Cowboy.Logging</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Plugins\Extensions\" />
+    <Folder Include="Plugins\SubProtocols\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
