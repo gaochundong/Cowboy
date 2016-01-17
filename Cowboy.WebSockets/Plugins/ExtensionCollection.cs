@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
-namespace Cowboy.WebSockets.Plugins
+namespace Cowboy.WebSockets
 {
     public sealed class ExtensionCollection<T> : SynchronizedCollection<IExtension<T>>, IExtensionCollection<T>
         where T : IExtensibleObject<T>
     {
-        T _owner;
+        private T _owner;
 
         public ExtensionCollection(T owner)
         {

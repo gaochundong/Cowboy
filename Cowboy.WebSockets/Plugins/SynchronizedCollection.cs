@@ -2,12 +2,12 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Cowboy.WebSockets.Plugins
+namespace Cowboy.WebSockets
 {
     public class SynchronizedCollection<T> : IList<T>, IList
     {
-        List<T> _items;
-        object _sync;
+        private List<T> _items;
+        private object _sync;
 
         public SynchronizedCollection()
         {

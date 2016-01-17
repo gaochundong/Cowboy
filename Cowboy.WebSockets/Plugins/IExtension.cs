@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Cowboy.WebSockets.Plugins
+namespace Cowboy.WebSockets
 {
     public interface IExtensibleObject<T>
         where T : IExtensibleObject<T>
@@ -26,61 +26,86 @@ namespace Cowboy.WebSockets.Plugins
     {
         void Attach(T owner);
         void Detach(T owner);
+
+        void EncodeHeader();
+        void EncodePayload();
+
+        void DecodeHeader();
+        void DecodePayload();
+    }
+
+    public class Server : IExtensibleObject<Server>
+    {
+        public Server()
+        {
+            _extensions = new ExtensionCollection<Server>(this);
+        }
+
+        private ExtensionCollection<Server> _extensions;
+        public IExtensionCollection<Server> Extensions
+        {
+            get
+            {
+                return _extensions;
+            }
+        }
+    }
+
+    public class Extension : IExtension<Server>
+    {
+        public Extension()
+        {
+
+        }
+
+        public void Attach(Server owner)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void DecodeHeader()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void DecodePayload()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Detach(Server owner)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void EncodeHeader()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void EncodePayload()
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class TTT
+    {
+        public void T()
+        {
+            var server = new Server();
+            var extension = new Extension();
+            server.Extensions.Add(extension);
+
+            foreach (var e in server.Extensions)
+            {
+                //e.DecodePayload
+            }
+        }
     }
 
 
-
-
-
-    //public class BaseObject : IExtensibleObject<BaseObject>
-    //{
-    //    private DateTime _startDate;
-    //    private ExtensionCollection<BaseObject> _extensions;
-
-    //    public DateTime StartDate
-    //    {
-    //        get { return _startDate; }
-    //        set { _startDate = value; }
-    //    }
-
-    //    public BaseObject()
-    //    {
-    //        StartDate = DateTime.Now;
-    //        _extensions = new ExtensionCollection<BaseObject>(this);
-    //    }
-
-    //    #region IExtensibleObject<BaseObject> Members
-
-    //    public IExtensionCollection<BaseObject> Extensions
-    //    {
-    //        get
-    //        {
-    //            return _extensions;
-    //        }
-    //    }
-
-    //    #endregion
-    //}
-
-    //public class DateTimeConverterExtension : IExtension<BaseObject>
-    //{
-    //    private BaseObject _owner;
-
-    //    #region IExtension<BaseObject> Members
-
-    //    public void Attach(BaseObject owner)
-    //    {
-    //        _owner = owner;
-    //        _owner.StartDate = owner.StartDate.ToUniversalTime();
-    //    }
-
-    //    public void Detach(BaseObject owner)
-    //    {
-    //        _owner.StartDate = _owner.StartDate.ToLocalTime();
-    //    }
-
-    //    #endregion
-    //}
+    
 
 
 
