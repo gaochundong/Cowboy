@@ -27,7 +27,7 @@ namespace Cowboy.Sockets
         private static readonly Random _rng = new Random(DateTime.UtcNow.Millisecond);
         private static readonly int MaskingKeyLength = 4;
 
-        public static byte[] Encode(byte[] playload, int offset, int count, bool isMasked = false)
+        public static byte[] Encode(byte[] payload, int offset, int count, bool isMasked = false)
         {
             byte[] fragment;
 
@@ -83,7 +83,7 @@ namespace Cowboy.Sockets
                     int payloadIndex = fragment.Length - count;
                     for (var i = 0; i < count; i++)
                     {
-                        fragment[payloadIndex + i] = (byte)(playload[offset + i] ^ fragment[maskingKeyIndex + i % MaskingKeyLength]);
+                        fragment[payloadIndex + i] = (byte)(payload[offset + i] ^ fragment[maskingKeyIndex + i % MaskingKeyLength]);
                     }
                 }
             }
@@ -92,7 +92,7 @@ namespace Cowboy.Sockets
                 if (count > 0)
                 {
                     int payloadIndex = fragment.Length - count;
-                    Array.Copy(playload, offset, fragment, payloadIndex, count);
+                    Array.Copy(payload, offset, fragment, payloadIndex, count);
                 }
             }
 

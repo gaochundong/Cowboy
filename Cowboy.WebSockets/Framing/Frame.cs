@@ -37,7 +37,7 @@ namespace Cowboy.WebSockets
 
         public abstract OpCode OpCode { get; }
 
-        public static byte[] Encode(OpCode opCode, byte[] playload, int offset, int count, bool isFinal = true, bool isMasked = true)
+        public static byte[] Encode(OpCode opCode, byte[] payload, int offset, int count, bool isFinal = true, bool isMasked = true)
         {
             byte[] fragment;
 
@@ -128,7 +128,7 @@ namespace Cowboy.WebSockets
                     int payloadIndex = fragment.Length - count;
                     for (var i = 0; i < count; i++)
                     {
-                        fragment[payloadIndex + i] = (byte)(playload[offset + i] ^ fragment[maskingKeyIndex + i % MaskingKeyLength]);
+                        fragment[payloadIndex + i] = (byte)(payload[offset + i] ^ fragment[maskingKeyIndex + i % MaskingKeyLength]);
                     }
                 }
             }
@@ -137,7 +137,7 @@ namespace Cowboy.WebSockets
                 if (count > 0)
                 {
                     int payloadIndex = fragment.Length - count;
-                    Array.Copy(playload, offset, fragment, payloadIndex, count);
+                    Array.Copy(payload, offset, fragment, payloadIndex, count);
                 }
             }
 
