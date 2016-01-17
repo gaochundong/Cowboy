@@ -164,41 +164,31 @@ namespace Cowboy.Sockets
         {
             try
             {
+                int frameLength;
+                byte[] payload;
+                int payloadOffset;
+                int payloadCount;
+
                 while (State == TcpSocketState.Connected)
                 {
                     int receiveCount = await _stream.ReadAsync(_receiveBuffer, 0, _receiveBuffer.Length);
                     if (receiveCount == 0)
                         break;
 
-                    if (!_configuration.Framing)
-                    {
-                        await _dispatcher.OnSessionDataReceived(this, _receiveBuffer, 0, receiveCount);
-                    }
-                    else
-                    {
-                        BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
+                    BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
 
-                        while (true)
+                    while (true)
+                    {
+                        if (_configuration.FrameHandler.TryDecodeFrame(_sessionBuffer, _sessionBufferCount,
+                            out frameLength, out payload, out payloadOffset, out payloadCount))
                         {
-                            var frameHeader = Frame.DecodeHeader(_sessionBuffer, _sessionBufferCount);
-                            if (frameHeader != null && frameHeader.Length + frameHeader.PayloadLength <= _sessionBufferCount)
-                            {
-                                if (frameHeader.IsMasked)
-                                {
-                                    var unmaskedPayload = Frame.DecodeMaskedPayload(_sessionBuffer, frameHeader.MaskingKeyOffset, frameHeader.Length, frameHeader.PayloadLength);
-                                    await _dispatcher.OnSessionDataReceived(this, unmaskedPayload, 0, unmaskedPayload.Length);
-                                }
-                                else
-                                {
-                                    await _dispatcher.OnSessionDataReceived(this, _sessionBuffer, frameHeader.Length, frameHeader.PayloadLength);
-                                }
+                            await _dispatcher.OnSessionDataReceived(this, payload, payloadOffset, payloadCount);
 
-                                BufferDeflector.ShiftBuffer(_bufferManager, frameHeader.Length + frameHeader.PayloadLength, ref _sessionBuffer, ref _sessionBufferCount);
-                            }
-                            else
-                            {
-                                break;
-                            }
+                            BufferDeflector.ShiftBuffer(_bufferManager, frameLength, ref _sessionBuffer, ref _sessionBufferCount);
+                        }
+                        else
+                        {
+                            break;
                         }
                     }
                 }
@@ -360,15 +350,8 @@ namespace Cowboy.Sockets
             {
                 if (_stream.CanWrite)
                 {
-                    if (!_configuration.Framing)
-                    {
-                        await _stream.WriteAsync(data, offset, count);
-                    }
-                    else
-                    {
-                        var frame = Frame.Encode(data, offset, count, _configuration.Masking);
-                        await _stream.WriteAsync(frame, 0, frame.Length);
-                    }
+                    var frame = _configuration.FrameHandler.EncodeFrame(data, offset, count);
+                    await _stream.WriteAsync(frame, 0, frame.Length);
                 }
             }
             catch (Exception ex) when (!ShouldThrow(ex)) { }

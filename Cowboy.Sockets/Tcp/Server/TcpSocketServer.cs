@@ -40,6 +40,9 @@ namespace Cowboy.Sockets
 
             this.ListenedEndPoint = listenedEndPoint;
             _configuration = configuration ?? new TcpSocketServerConfiguration();
+            
+            if (_configuration.FrameHandler == null)
+                throw new InvalidProgramException("The frame handler in configuration cannot be null.");
 
             Initialize();
         }

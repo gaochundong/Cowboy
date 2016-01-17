@@ -44,7 +44,7 @@
     <Compile Include="Tcp\Client\AsyncTcpSocketClientConfiguration.cs" />
     <Compile Include="Tcp\Client\TcpSocketClientConfiguration.cs" />
     <Compile Include="Tcp\Framing\IFrameHandler.cs" />
-    <Compile Include="Tcp\Framing\DefaultFrameHandler.cs" />
+    <Compile Include="Tcp\Framing\LengthHeaderFrameHandler.cs" />
     <Compile Include="Tcp\Server\AsyncTcpSocketServerConfiguration.cs" />
     <Compile Include="Tcp\Server\TcpSocketServerConfiguration.cs" />
     <Compile Include="Tcp\Client\EventArgs\TcpClientConnectedEventArgs.cs" />

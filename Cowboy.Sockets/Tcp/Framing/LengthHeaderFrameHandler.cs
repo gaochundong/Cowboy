@@ -1,8 +1,8 @@
 ﻿namespace Cowboy.Sockets
 {
-    public class DefaultFrameHandler : IFrameHandler
+    public class LengthHeaderFrameHandler : IFrameHandler
     {
-        public DefaultFrameHandler(bool isMasked = false)
+        public LengthHeaderFrameHandler(bool isMasked = false)
         {
             IsMasked = isMasked;
         }

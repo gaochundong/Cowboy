@@ -27,7 +27,7 @@ namespace Cowboy.Sockets
             SslPolicyErrorsBypassed = false;
 
             ConnectTimeout = TimeSpan.FromSeconds(15);
-            FrameHandler = new DefaultFrameHandler(false);
+            FrameHandler = new LengthHeaderFrameHandler(false);
         }
 
         public int InitialBufferAllocationCount { get; set; }

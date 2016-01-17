@@ -43,7 +43,6 @@ namespace Cowboy.Sockets.TestTcpSocketServer
             //config.UseSsl = true;
             //config.SslServerCertificate = new System.Security.Cryptography.X509Certificates.X509Certificate2(@"D:\\Cowboy.pfx", "Cowboy");
             //config.SslPolicyErrorsBypassed = false;
-            config.Masking = false;
 
             _server = new TcpSocketServer(22222, config);
             _server.ClientConnected += server_ClientConnected;

@@ -271,50 +271,40 @@ namespace Cowboy.Sockets
 
         private void ReceiveBuffer(int receiveCount)
         {
-            if (!_configuration.Framing)
-            {
-                _server.RaiseClientDataReceived(this, _receiveBuffer, 0, receiveCount);
-            }
-            else
-            {
-                // TCP guarantees delivery of all packets in the correct order. 
-                // But there is no guarantee that one write operation on the sender-side will result in 
-                // one read event on the receiving side. One call of write(message) by the sender 
-                // can result in multiple messageReceived(session, message) events on the receiver; 
-                // and multiple calls of write(message) can lead to a single messageReceived event.
-                // In a stream-based transport such as TCP/IP, received data is stored into a socket receive buffer. 
-                // Unfortunately, the buffer of a stream-based transport is not a queue of packets but a queue of bytes. 
-                // It means, even if you sent two messages as two independent packets, 
-                // an operating system will not treat them as two messages but as just a bunch of bytes. 
-                // Therefore, there is no guarantee that what you read is exactly what your remote peer wrote.
-                // There are three common techniques for splitting the stream of bytes into messages:
-                //   1. use fixed length messages
-                //   2. use a fixed length header that indicates the length of the body
-                //   3. using a delimiter; for example many text-based protocols append
-                //      a newline (or CR LF pair) after every message.
-                BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
+            // TCP guarantees delivery of all packets in the correct order. 
+            // But there is no guarantee that one write operation on the sender-side will result in 
+            // one read event on the receiving side. One call of write(message) by the sender 
+            // can result in multiple messageReceived(session, message) events on the receiver; 
+            // and multiple calls of write(message) can lead to a single messageReceived event.
+            // In a stream-based transport such as TCP/IP, received data is stored into a socket receive buffer. 
+            // Unfortunately, the buffer of a stream-based transport is not a queue of packets but a queue of bytes. 
+            // It means, even if you sent two messages as two independent packets, 
+            // an operating system will not treat them as two messages but as just a bunch of bytes. 
+            // Therefore, there is no guarantee that what you read is exactly what your remote peer wrote.
+            // There are three common techniques for splitting the stream of bytes into messages:
+            //   1. use fixed length messages
+            //   2. use a fixed length header that indicates the length of the body
+            //   3. using a delimiter; for example many text-based protocols append
+            //      a newline (or CR LF pair) after every message.
+            int frameLength;
+            byte[] payload;
+            int payloadOffset;
+            int payloadCount;
 
-                while (true)
+            BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
+
+            while (true)
+            {
+                if (_configuration.FrameHandler.TryDecodeFrame(_sessionBuffer, _sessionBufferCount,
+                    out frameLength, out payload, out payloadOffset, out payloadCount))
                 {
-                    var frameHeader = Frame.DecodeHeader(_sessionBuffer, _sessionBufferCount);
-                    if (frameHeader != null && frameHeader.Length + frameHeader.PayloadLength <= _sessionBufferCount)
-                    {
-                        if (frameHeader.IsMasked)
-                        {
-                            var unmaskedPayload = Frame.DecodeMaskedPayload(_sessionBuffer, frameHeader.MaskingKeyOffset, frameHeader.Length, frameHeader.PayloadLength);
-                            _server.RaiseClientDataReceived(this, unmaskedPayload, 0, unmaskedPayload.Length);
-                        }
-                        else
-                        {
-                            _server.RaiseClientDataReceived(this, _sessionBuffer, frameHeader.Length, frameHeader.PayloadLength);
-                        }
+                    _server.RaiseClientDataReceived(this, payload, payloadOffset, payloadCount);
 
-                        BufferDeflector.ShiftBuffer(_bufferManager, frameHeader.Length + frameHeader.PayloadLength, ref _sessionBuffer, ref _sessionBufferCount);
-                    }
-                    else
-                    {
-                        break;
-                    }
+                    BufferDeflector.ShiftBuffer(_bufferManager, frameLength, ref _sessionBuffer, ref _sessionBufferCount);
+                }
+                else
+                {
+                    break;
                 }
             }
         }
@@ -348,15 +338,8 @@ namespace Cowboy.Sockets
             {
                 if (_stream.CanWrite)
                 {
-                    if (!_configuration.Framing)
-                    {
-                        _stream.BeginWrite(data, offset, count, HandleDataWritten, _stream);
-                    }
-                    else
-                    {
-                        var frame = Frame.Encode(data, offset, count, _configuration.Masking);
-                        _stream.BeginWrite(frame, 0, frame.Length, HandleDataWritten, _stream);
-                    }
+                    var frame = _configuration.FrameHandler.EncodeFrame(data, offset, count);
+                    _stream.BeginWrite(frame, 0, frame.Length, HandleDataWritten, _tcpClient);
                 }
             }
             catch (Exception ex)

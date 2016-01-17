@@ -10,9 +10,6 @@ namespace Cowboy.Sockets
     {
         public AsyncTcpSocketServerConfiguration()
         {
-            Framing = true;
-            Masking = false;
-
             InitialBufferAllocationCount = 100;
             ReceiveBufferSize = 8192;
             SendBufferSize = 8192;
@@ -33,10 +30,8 @@ namespace Cowboy.Sockets
             SslPolicyErrorsBypassed = false;
 
             ConnectTimeout = TimeSpan.FromSeconds(15);
+            FrameHandler = new LengthHeaderFrameHandler(false);
         }
-
-        public bool Framing { get; set; }
-        public bool Masking { get; set; }
 
         public int InitialBufferAllocationCount { get; set; }
         public int ReceiveBufferSize { get; set; }
@@ -58,5 +53,6 @@ namespace Cowboy.Sockets
         public bool SslPolicyErrorsBypassed { get; set; }
 
         public TimeSpan ConnectTimeout { get; set; }
+        public IFrameHandler FrameHandler { get; set; }
     }
 }
