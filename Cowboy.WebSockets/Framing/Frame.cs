@@ -78,6 +78,8 @@ namespace Cowboy.WebSockets
             // FIN:  1 bit
             // Indicates that this is the final fragment in a message.  The first
             // fragment MAY also be the final fragment.
+            if (isFinal)
+                fragment[0] = 0x80;
 
             // Opcode:  4 bits
             // Defines the interpretation of the "Payload data".  If an unknown
@@ -91,10 +93,7 @@ namespace Cowboy.WebSockets
             // *  %x9 denotes a ping
             // *  %xA denotes a pong
             // *  %xB-F are reserved for further control frames
-            if (isFinal)
-                fragment[0] = (byte)((byte)opCode | 0x80);
-            else
-                fragment[0] = (byte)opCode;
+            fragment[0] = (byte)((byte)opCode | fragment[0]);
 
             // Mask:  1 bit
             // Defines whether the "Payload data" is masked.  If set to 1, a
