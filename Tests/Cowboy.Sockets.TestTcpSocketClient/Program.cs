@@ -45,7 +45,6 @@ namespace Cowboy.Sockets.TestTcpSocketClient
             //config.SslTargetHost = "Cowboy";
             //config.SslClientCertificates.Add(new System.Security.Cryptography.X509Certificates.X509Certificate2(@"D:\\Cowboy.cer"));
             //config.SslPolicyErrorsBypassed = false;
-            config.Masking = false;
 
             IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 22222);
 
