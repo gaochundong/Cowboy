@@ -1,8 +1,8 @@
 ﻿namespace Cowboy.WebSockets
 {
-    public class LengthHeaderFrameHandler : IFrameHandler
+    public class WebSocketFrameBuilder : IFrameBuilder
     {
-        public LengthHeaderFrameHandler()
+        public WebSocketFrameBuilder()
         {
         }
 
