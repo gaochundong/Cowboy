@@ -3,6 +3,34 @@ using System.Text;
 
 namespace Cowboy.WebSockets
 {
+    // http://tools.ietf.org/html/rfc6455
+    // This wire format for the data transfer part is described by the ABNF
+    // [RFC5234] given in detail in this section.  (Note that, unlike in
+    // other sections of this document, the ABNF in this section is
+    // operating on groups of bits.  The length of each group of bits is
+    // indicated in a comment.  When encoded on the wire, the most
+    // significant bit is the leftmost in the ABNF).  A high-level overview
+    // of the framing is given in the following figure.  In a case of
+    // conflict between the figure below and the ABNF specified later in
+    // this section, the figure is authoritative.
+    //  0                   1                   2                   3
+    //  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+    // +-+-+-+-+-------+-+-------------+-------------------------------+
+    // |F|R|R|R| opcode|M| Payload len |    Extended payload length    |
+    // |I|S|S|S|  (4)  |A|     (7)     |             (16/64)           |
+    // |N|V|V|V|       |S|             |   (if payload len==126/127)   |
+    // | |1|2|3|       |K|             |                               |
+    // +-+-+-+-+-------+-+-------------+ - - - - - - - - - - - - - - - +
+    // |     Extended payload length continued, if payload len == 127  |
+    // + - - - - - - - - - - - - - - - +-------------------------------+
+    // |                               |Masking-key, if MASK set to 1  |
+    // +-------------------------------+-------------------------------+
+    // | Masking-key (continued)       |          Payload Data         |
+    // +-------------------------------- - - - - - - - - - - - - - - - +
+    // :                     Payload Data continued ...                :
+    // + - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - +
+    // |                     Payload Data continued ...                |
+    // +---------------------------------------------------------------+
     public class WebSocketFrameBuilder : IFrameBuilder
     {
         private static readonly Random _rng = new Random(DateTime.UtcNow.Millisecond);
@@ -19,11 +47,11 @@ namespace Cowboy.WebSockets
                 var data = Encoding.UTF8.GetBytes(frame.Data);
                 if (data.Length > 125)
                     throw new WebSocketException("All control frames must have a payload length of 125 bytes or less.");
-                return Encode(frame.OpCode, data, 0, data.Length, frame.IsMasked);
+                return Encode(frame.OpCode, data, 0, data.Length, isMasked: frame.IsMasked);
             }
             else
             {
-                return Encode(frame.OpCode, new byte[0], 0, 0, frame.IsMasked);
+                return Encode(frame.OpCode, new byte[0], 0, 0, isMasked: frame.IsMasked);
             }
         }
 
@@ -34,11 +62,11 @@ namespace Cowboy.WebSockets
                 var data = Encoding.UTF8.GetBytes(frame.Data);
                 if (data.Length > 125)
                     throw new WebSocketException("All control frames must have a payload length of 125 bytes or less.");
-                return Encode(frame.OpCode, data, 0, data.Length, frame.IsMasked);
+                return Encode(frame.OpCode, data, 0, data.Length, isMasked: frame.IsMasked);
             }
             else
             {
-                return Encode(frame.OpCode, new byte[0], 0, 0, frame.IsMasked);
+                return Encode(frame.OpCode, new byte[0], 0, 0, isMasked: frame.IsMasked);
             }
         }
 
@@ -72,11 +100,11 @@ namespace Cowboy.WebSockets
             if (!string.IsNullOrEmpty(frame.CloseReason))
             {
                 int count = Encoding.UTF8.GetBytes(frame.CloseReason, 0, frame.CloseReason.Length, payload, 2);
-                return Encode(frame.OpCode, payload, 0, 2 + count, frame.IsMasked);
+                return Encode(frame.OpCode, payload, 0, 2 + count, isMasked: frame.IsMasked);
             }
             else
             {
-                return Encode(frame.OpCode, payload, 0, payload.Length, frame.IsMasked);
+                return Encode(frame.OpCode, payload, 0, payload.Length, isMasked: frame.IsMasked);
             }
         }
 
@@ -85,20 +113,25 @@ namespace Cowboy.WebSockets
             if (!string.IsNullOrEmpty(frame.Text))
             {
                 var data = Encoding.UTF8.GetBytes(frame.Text);
-                return Encode(frame.OpCode, data, 0, data.Length, frame.IsMasked);
+                return Encode(frame.OpCode, data, 0, data.Length, isMasked: frame.IsMasked);
             }
             else
             {
-                return Encode(frame.OpCode, new byte[0], 0, 0, frame.IsMasked);
+                return Encode(frame.OpCode, new byte[0], 0, 0, isMasked: frame.IsMasked);
             }
         }
 
         public byte[] EncodeFrame(BinaryFrame frame)
         {
-            return Encode(frame.OpCode, frame.Data, frame.Offset, frame.Count, frame.IsMasked);
+            return Encode(frame.OpCode, frame.Data, frame.Offset, frame.Count, isMasked: frame.IsMasked);
         }
 
-        private byte[] Encode(OpCode opCode, byte[] payload, int offset, int count, bool isMasked = true, bool isFinal = true)
+        private byte[] Encode(OpCode opCode, byte[] payload, int offset, int count,
+            bool isMasked = true,
+            bool isFin = true,
+            bool isRsv1 = false,
+            bool isRsv2 = false,
+            bool isRsv3 = false)
         {
             byte[] fragment;
 
@@ -139,22 +172,27 @@ namespace Cowboy.WebSockets
             // FIN:  1 bit
             // Indicates that this is the final fragment in a message.  The first
             // fragment MAY also be the final fragment.
-            if (isFinal)
+            if (isFin)
                 fragment[0] = 0x80;
+
+            // RSV1, RSV2, RSV3:  1 bit each
+            // MUST be 0 unless an extension is negotiated that defines meanings
+            // for non-zero values.  If a nonzero value is received and none of
+            // the negotiated extensions defines the meaning of such a nonzero
+            // value, the receiving endpoint MUST _Fail the WebSocket
+            // Connection_.
+            if (isRsv1)
+                fragment[0] = (byte)(fragment[0] | 0x40);
+            if (isRsv2)
+                fragment[0] = (byte)(fragment[0] | 0x20);
+            if (isRsv3)
+                fragment[0] = (byte)(fragment[0] | 0x10);
 
             // Opcode:  4 bits
             // Defines the interpretation of the "Payload data".  If an unknown
             // opcode is received, the receiving endpoint MUST _Fail the
             // WebSocket Connection_.  The following values are defined.
-            // *  %x0 denotes a continuation frame
-            // *  %x1 denotes a text frame
-            // *  %x2 denotes a binary frame
-            // *  %x3-7 are reserved for further non-control frames
-            // *  %x8 denotes a connection close
-            // *  %x9 denotes a ping
-            // *  %xA denotes a pong
-            // *  %xB-F are reserved for further control frames
-            fragment[0] = (byte)((byte)opCode | fragment[0]);
+            fragment[0] = (byte)(fragment[0] | (byte)opCode);
 
             // Mask:  1 bit
             // Defines whether the "Payload data" is masked.  If set to 1, a
