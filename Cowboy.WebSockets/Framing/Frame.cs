@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Cowboy.WebSockets
+﻿namespace Cowboy.WebSockets
 {
     // http://tools.ietf.org/html/rfc6455
     // This wire format for the data transfer part is described by the ABNF

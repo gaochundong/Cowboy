@@ -53,7 +53,6 @@
     <Compile Include="Tcp\Client\EventArgs\TcpClientDataReceivedEventArgs.cs" />
     <Compile Include="Tcp\Server\EventArgs\TcpServerConnectedEventArgs.cs" />
     <Compile Include="Tcp\Server\EventArgs\TcpServerDisconnectedEventArgs.cs" />
-    <Compile Include="Tcp\Framing\Frame.cs" />
     <Compile Include="Tcp\Client\IAsyncTcpSocketClientMessageDispatcher.cs" />
     <Compile Include="Tcp\Server\IAsyncTcpSocketServerMessageDispatcher.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
