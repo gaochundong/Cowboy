@@ -35,9 +35,11 @@ namespace Cowboy.WebSockets
             get { return OpCode.Binary; }
         }
 
-        protected override byte[] BuildFrameArray()
+        public byte[] ToArray(IFrameBuilder builder)
         {
-            return Encode(OpCode, Data, Offset, Count, true, IsMasked);
+            if (builder == null)
+                throw new ArgumentNullException("builder");
+            return builder.EncodeFrame(this);
         }
     }
 }

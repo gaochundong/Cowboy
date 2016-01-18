@@ -22,10 +22,11 @@ namespace Cowboy.WebSockets
             get { return OpCode.Text; }
         }
 
-        protected override byte[] BuildFrameArray()
+        public byte[] ToArray(IFrameBuilder builder)
         {
-            var data = Encoding.UTF8.GetBytes(Text);
-            return Encode(OpCode, data, 0, data.Length, true, IsMasked);
+            if (builder == null)
+                throw new ArgumentNullException("builder");
+            return builder.EncodeFrame(this);
         }
     }
 }

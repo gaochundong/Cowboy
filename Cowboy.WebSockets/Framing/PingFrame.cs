@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 
 namespace Cowboy.WebSockets
 {
@@ -23,17 +24,11 @@ namespace Cowboy.WebSockets
             get { return OpCode.Ping; }
         }
 
-        protected override byte[] BuildFrameArray()
+        public byte[] ToArray(IFrameBuilder builder)
         {
-            if (!string.IsNullOrEmpty(Data))
-            {
-                var data = Encoding.UTF8.GetBytes(Data);
-                return Encode(OpCode, data, 0, data.Length, true, IsMasked);
-            }
-            else
-            {
-                return Encode(OpCode, new byte[0], 0, 0, true, IsMasked);
-            }
+            if (builder == null)
+                throw new ArgumentNullException("builder");
+            return builder.EncodeFrame(this);
         }
     }
 }

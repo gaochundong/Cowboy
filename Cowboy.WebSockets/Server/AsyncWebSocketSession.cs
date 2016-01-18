@@ -23,6 +23,7 @@ namespace Cowboy.WebSockets
         private readonly AsyncWebSocketRouteResolver _routeResolver;
         private AsyncWebSocketServerModule _module;
         private readonly AsyncWebSocketServer _server;
+        private readonly IFrameBuilder _frameBuilder = new WebSocketFrameBuilder();
         private readonly string _sessionKey;
         private Stream _stream;
         private byte[] _receiveBuffer;
@@ -303,7 +304,7 @@ namespace Cowboy.WebSockets
                                             {
                                                 // A Pong frame sent in response to a Ping frame must have identical
                                                 // "Application data" as found in the message body of the Ping frame being replied to.
-                                                var pong = new PongFrame(ping, false).ToArray();
+                                                var pong = new PongFrame(ping, false).ToArray(_frameBuilder);
                                                 await SendFrame(pong);
 #if DEBUG
                                                 _log.DebugFormat("Session [{0}] sends server side pong frame [{1}].", this, ping);
@@ -533,7 +534,7 @@ namespace Cowboy.WebSockets
             {
                 case _connected:
                     {
-                        var closingHandshake = new CloseFrame(closeCode, closeReason, false).ToArray();
+                        var closingHandshake = new CloseFrame(closeCode, closeReason, false).ToArray(_frameBuilder);
                         try
                         {
                             if (_stream.CanWrite)
@@ -639,7 +640,7 @@ namespace Cowboy.WebSockets
 
         public async Task SendText(string text)
         {
-            await SendFrame(new TextFrame(text, false).ToArray());
+            await SendFrame(new TextFrame(text, false).ToArray(_frameBuilder));
         }
 
         public async Task SendBinary(byte[] data)
@@ -649,12 +650,12 @@ namespace Cowboy.WebSockets
 
         public async Task SendBinary(byte[] data, int offset, int count)
         {
-            await SendFrame(new BinaryFrame(data, offset, count, false).ToArray());
+            await SendFrame(new BinaryFrame(data, offset, count, false).ToArray(_frameBuilder));
         }
 
         public async Task SendBinary(ArraySegment<byte> segment)
         {
-            await SendFrame(new BinaryFrame(segment, false).ToArray());
+            await SendFrame(new BinaryFrame(segment, false).ToArray(_frameBuilder));
         }
 
         private async Task SendFrame(byte[] frame)
@@ -710,7 +711,7 @@ namespace Cowboy.WebSockets
 
                     if (_keepAliveTracker.ShouldSendKeepAlive())
                     {
-                        var keepAliveFrame = new PingFrame(false).ToArray();
+                        var keepAliveFrame = new PingFrame(false).ToArray(_frameBuilder);
                         await SendFrame(keepAliveFrame);
                         StartKeepAliveTimeoutTimer();
 #if DEBUG
