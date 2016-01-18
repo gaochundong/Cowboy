@@ -295,7 +295,7 @@ namespace Cowboy.Sockets
 
             while (true)
             {
-                if (_configuration.FrameHandler.TryDecodeFrame(_sessionBuffer, _sessionBufferCount,
+                if (_configuration.FrameBuilder.TryDecodeFrame(_sessionBuffer, _sessionBufferCount,
                     out frameLength, out payload, out payloadOffset, out payloadCount))
                 {
                     _server.RaiseClientDataReceived(this, payload, payloadOffset, payloadCount);
@@ -338,7 +338,7 @@ namespace Cowboy.Sockets
             {
                 if (_stream.CanWrite)
                 {
-                    var frame = _configuration.FrameHandler.EncodeFrame(data, offset, count);
+                    var frame = _configuration.FrameBuilder.EncodeFrame(data, offset, count);
                     _stream.BeginWrite(frame, 0, frame.Length, HandleDataWritten, _tcpClient);
                 }
             }

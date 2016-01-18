@@ -27,7 +27,7 @@ namespace Cowboy.Sockets
             SslPolicyErrorsBypassed = false;
 
             ConnectTimeout = TimeSpan.FromSeconds(15);
-            FrameHandler = new LengthHeaderFrameHandler(false);
+            FrameBuilder = new LengthHeaderFrameBuilder();
         }
 
         public int InitialBufferAllocationCount { get; set; }
@@ -47,6 +47,6 @@ namespace Cowboy.Sockets
         public bool SslPolicyErrorsBypassed { get; set; }
 
         public TimeSpan ConnectTimeout { get; set; }
-        public IFrameHandler FrameHandler { get; set; }
+        public IFrameBuilder FrameBuilder { get; set; }
     }
 }

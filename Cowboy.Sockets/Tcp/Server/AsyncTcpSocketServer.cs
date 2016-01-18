@@ -51,7 +51,7 @@ namespace Cowboy.Sockets
             _dispatcher = dispatcher;
             _configuration = configuration ?? new AsyncTcpSocketServerConfiguration();
 
-            if (_configuration.FrameHandler == null)
+            if (_configuration.FrameBuilder == null)
                 throw new InvalidProgramException("The frame handler in configuration cannot be null.");
 
             Initialize();
