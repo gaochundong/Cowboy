@@ -8,8 +8,7 @@
         byte[] EncodeFrame(TextFrame frame);
         byte[] EncodeFrame(BinaryFrame frame);
 
-
-        byte[] EncodeFrame(byte[] payload, int offset, int count, OpCode opCode, bool isFinal, bool isMasked);
-        bool TryDecodeFrame(byte[] buffer, int count, bool isMasked, out int frameLength, out byte[] payload, out int payloadOffset, out int payloadCount);
+        bool TryDecodeFrameHeader(byte[] buffer, int count, out Header frameHeader);
+        void DecodePayload(byte[] buffer, Header frameHeader, out byte[] payload, out int payloadOffset, out int payloadCount);
     }
 }

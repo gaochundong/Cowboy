@@ -46,6 +46,7 @@
     <Compile Include="Framing\FrameType.cs" />
     <Compile Include="Framing\Builder\IFrameBuilder.cs" />
     <Compile Include="Framing\Builder\WebSocketFrameBuilder.cs" />
+    <Compile Include="Framing\Header\Header.cs" />
     <Compile Include="Framing\PingFrame.cs" />
     <Compile Include="Framing\PongFrame.cs" />
     <Compile Include="Framing\CloseFrame.cs" />

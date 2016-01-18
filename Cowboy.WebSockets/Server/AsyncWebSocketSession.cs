@@ -225,8 +225,9 @@ namespace Cowboy.WebSockets
 
                     while (true)
                     {
-                        var frameHeader = Frame.DecodeHeader(_sessionBuffer, _sessionBufferCount);
-                        if (frameHeader != null && frameHeader.Length + frameHeader.PayloadLength <= _sessionBufferCount)
+                        Header frameHeader = null;
+                        if (_frameBuilder.TryDecodeFrameHeader(_sessionBuffer, _sessionBufferCount, out frameHeader)
+                            && frameHeader.Length + frameHeader.PayloadLength <= _sessionBufferCount)
                         {
                             try
                             {
@@ -237,7 +238,10 @@ namespace Cowboy.WebSockets
                                         "Server received unmasked frame [{0}] from remote [{1}].", frameHeader.OpCode, RemoteEndPoint));
                                 }
 
-                                var payload = Frame.DecodeMaskedPayload(_sessionBuffer, frameHeader.MaskingKeyOffset, frameHeader.Length, frameHeader.PayloadLength);
+                                byte[] payload;
+                                int payloadOffset;
+                                int payloadCount;
+                                _frameBuilder.DecodePayload(_sessionBuffer, frameHeader, out payload, out payloadOffset, out payloadCount);
 
                                 switch (frameHeader.OpCode)
                                 {
@@ -245,26 +249,26 @@ namespace Cowboy.WebSockets
                                         break;
                                     case OpCode.Text:
                                         {
-                                            var text = Encoding.UTF8.GetString(payload, 0, payload.Length);
+                                            var text = Encoding.UTF8.GetString(payload, payloadOffset, payloadCount);
                                             await _module.OnSessionTextReceived(this, text);
                                         }
                                         break;
                                     case OpCode.Binary:
                                         {
-                                            await _module.OnSessionBinaryReceived(this, payload, 0, payload.Length);
+                                            await _module.OnSessionBinaryReceived(this, payload, payloadOffset, payloadCount);
                                         }
                                         break;
                                     case OpCode.Close:
                                         {
-                                            if (payload.Length > 0)
+                                            if (payloadCount > 1)
                                             {
                                                 var statusCode = payload[0] * 256 + payload[1];
                                                 var closeCode = (WebSocketCloseCode)statusCode;
                                                 var closeReason = string.Empty;
 
-                                                if (payload.Length > 2)
+                                                if (payloadCount > 2)
                                                 {
-                                                    closeReason = Encoding.UTF8.GetString(payload, 2, payload.Length - 2);
+                                                    closeReason = Encoding.UTF8.GetString(payload, 2, payloadCount - 2);
                                                 }
 #if DEBUG
                                                 _log.DebugFormat("Session [{0}] received client side close frame [{1}] [{2}].", this, closeCode, closeReason);
@@ -296,7 +300,7 @@ namespace Cowboy.WebSockets
                                             // 
                                             // A Ping frame may serve either as a keep-alive or as a means to
                                             // verify that the remote endpoint is still responsive.
-                                            var ping = Encoding.UTF8.GetString(payload, 0, payload.Length);
+                                            var ping = Encoding.UTF8.GetString(payload, payloadOffset, payloadCount);
 #if DEBUG
                                             _log.DebugFormat("Session [{0}] received client side ping frame [{1}].", this, ping);
 #endif
@@ -320,7 +324,7 @@ namespace Cowboy.WebSockets
                                             // 
                                             // A Pong frame MAY be sent unsolicited.  This serves as a
                                             // unidirectional heartbeat.  A response to an unsolicited Pong frame is not expected.
-                                            var pong = Encoding.UTF8.GetString(payload, 0, payload.Length);
+                                            var pong = Encoding.UTF8.GetString(payload, payloadOffset, payloadCount);
                                             StopKeepAliveTimeoutTimer();
 #if DEBUG
                                             _log.DebugFormat("Session [{0}] received client side pong frame [{1}].", this, pong);
