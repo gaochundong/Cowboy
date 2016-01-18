@@ -36,6 +36,7 @@ namespace Cowboy.WebSockets
         private static readonly int MaskingKeyLength = 4;
 
         public abstract OpCode OpCode { get; }
+        public abstract FrameType FrameType { get; }
 
         public static byte[] Encode(OpCode opCode, byte[] payload, int offset, int count, bool isFinal = true, bool isMasked = true)
         {

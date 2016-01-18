@@ -43,6 +43,7 @@
     </Compile>
     <Compile Include="Client\AsyncWebSocketClientConfiguration.cs" />
     <Compile Include="Client\AsyncWebSocketClient.cs" />
+    <Compile Include="Framing\FrameType.cs" />
     <Compile Include="Framing\Handler\IFrameHandler.cs" />
     <Compile Include="Framing\Handler\LengthHeaderFrameHandler.cs" />
     <Compile Include="Framing\PingFrame.cs" />
