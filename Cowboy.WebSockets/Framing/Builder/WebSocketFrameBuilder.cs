@@ -18,7 +18,7 @@ namespace Cowboy.WebSockets
             {
                 var data = Encoding.UTF8.GetBytes(frame.Data);
                 if (data.Length > 125)
-                    throw new InvalidProgramException("All control frames must have a payload length of 125 bytes or less.");
+                    throw new WebSocketException("All control frames must have a payload length of 125 bytes or less.");
                 return Encode(frame.OpCode, data, 0, data.Length, frame.IsMasked);
             }
             else
@@ -33,7 +33,7 @@ namespace Cowboy.WebSockets
             {
                 var data = Encoding.UTF8.GetBytes(frame.Data);
                 if (data.Length > 125)
-                    throw new InvalidProgramException("All control frames must have a payload length of 125 bytes or less.");
+                    throw new WebSocketException("All control frames must have a payload length of 125 bytes or less.");
                 return Encode(frame.OpCode, data, 0, data.Length, frame.IsMasked);
             }
             else
@@ -59,7 +59,7 @@ namespace Cowboy.WebSockets
             // be human readable, clients MUST NOT show it to end users.
             int payloadLength = (string.IsNullOrEmpty(frame.CloseReason) ? 0 : Encoding.UTF8.GetMaxByteCount(frame.CloseReason.Length)) + 2;
             if (payloadLength > 125)
-                throw new InvalidProgramException("All control frames must have a payload length of 125 bytes or less.");
+                throw new WebSocketException("All control frames must have a payload length of 125 bytes or less.");
 
             byte[] payload = new byte[payloadLength];
 
