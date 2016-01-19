@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Authentication;
@@ -29,6 +30,8 @@ namespace Cowboy.WebSockets
             CloseTimeout = TimeSpan.FromSeconds(5);
             KeepAliveInterval = TimeSpan.FromSeconds(30);
             KeepAliveTimeout = TimeSpan.FromSeconds(5);
+
+            RequestedExtensions = new List<IWebSocketExtension>();
         }
 
         public int InitialBufferAllocationCount { get; set; }
@@ -50,5 +53,7 @@ namespace Cowboy.WebSockets
         public TimeSpan CloseTimeout { get; set; }
         public TimeSpan KeepAliveInterval { get; set; }
         public TimeSpan KeepAliveTimeout { get; set; }
+
+        public List<IWebSocketExtension> RequestedExtensions { get; set; }
     }
 }

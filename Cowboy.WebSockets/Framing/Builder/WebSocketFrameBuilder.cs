@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace Cowboy.WebSockets
@@ -39,6 +40,8 @@ namespace Cowboy.WebSockets
         public WebSocketFrameBuilder()
         {
         }
+
+        public SortedList<int, IWebSocketExtension> NegotiatedExtensions { get; set; }
 
         public byte[] EncodeFrame(PingFrame frame)
         {

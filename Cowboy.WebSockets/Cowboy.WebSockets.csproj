@@ -43,6 +43,7 @@
     </Compile>
     <Compile Include="Client\AsyncWebSocketClientConfiguration.cs" />
     <Compile Include="Client\AsyncWebSocketClient.cs" />
+    <Compile Include="Extensions\IWebSocketExtensionParameter.cs" />
     <Compile Include="Framing\FrameType.cs" />
     <Compile Include="Framing\Builder\IFrameBuilder.cs" />
     <Compile Include="Framing\Builder\WebSocketFrameBuilder.cs" />
@@ -63,9 +64,10 @@
     <Compile Include="Helpers\Consts.cs" />
     <Compile Include="Helpers\HttpKnownHeaderNames.cs" />
     <Compile Include="Helpers\KeepAliveTracker.cs" />
-    <Compile Include="Plugins\ExtensionCollection.cs" />
-    <Compile Include="Plugins\IExtension.cs" />
-    <Compile Include="Plugins\SynchronizedCollection.cs" />
+    <Compile Include="Common\ExtensionCollection.cs" />
+    <Compile Include="Extensions\IWebSocketExtension.cs" />
+    <Compile Include="Common\IExtension.cs" />
+    <Compile Include="Common\SynchronizedCollection.cs" />
     <Compile Include="Server\WebSocketServerHandshaker.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server\AsyncWebSocketServerConfiguration.cs" />
@@ -97,8 +99,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Plugins\Extensions\" />
-    <Folder Include="Plugins\SubProtocols\" />
+    <Folder Include="SubProtocols\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
