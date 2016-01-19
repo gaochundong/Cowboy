@@ -4,6 +4,7 @@ using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
+using Cowboy.WebSockets.Extensions;
 
 namespace Cowboy.WebSockets
 {
@@ -31,7 +32,7 @@ namespace Cowboy.WebSockets
             KeepAliveInterval = TimeSpan.FromSeconds(30);
             KeepAliveTimeout = TimeSpan.FromSeconds(5);
 
-            RequestedExtensions = new List<IWebSocketExtension>();
+            RequestedExtensions = new List<WebSocketExtensionDescription>();
         }
 
         public int InitialBufferAllocationCount { get; set; }
@@ -54,6 +55,6 @@ namespace Cowboy.WebSockets
         public TimeSpan KeepAliveInterval { get; set; }
         public TimeSpan KeepAliveTimeout { get; set; }
 
-        public List<IWebSocketExtension> RequestedExtensions { get; set; }
+        public List<WebSocketExtensionDescription> RequestedExtensions { get; set; }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Cowboy.WebSockets.Extensions;
 
 namespace Cowboy.WebSockets
 {

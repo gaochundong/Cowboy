@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Cowboy.WebSockets
+namespace Cowboy.WebSockets.Extensions
 {
     public interface IWebSocketExtensionParameter
     {
