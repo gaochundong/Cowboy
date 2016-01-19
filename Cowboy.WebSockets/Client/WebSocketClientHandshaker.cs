@@ -50,6 +50,18 @@ namespace Cowboy.WebSockets
             // |Sec-WebSocket-Version|.  The value of this header field MUST be 13.
             sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.SecWebSocketVersion, Consts.WebSocketVersion);
 
+            // The request MAY include a header field with the name
+            // |Sec-WebSocket-Extensions|.  If present, this value indicates
+            // the protocol-level extension(s) the client wishes to speak.  The
+            // interpretation and format of this header field is described in Section 9.1.
+            if (client.OfferedExtensions != null && client.OfferedExtensions.Any())
+            {
+                foreach (var extension in client.OfferedExtensions)
+                {
+                    sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.SecWebSocketExtensions, extension.ExtensionNegotiationOffer);
+                }
+            }
+
             // The request MUST include a header field with the name |Origin|
             // [RFC6454] if the request is coming from a browser client.  If
             // the connection is from a non-browser client, the request MAY
@@ -69,11 +81,6 @@ namespace Cowboy.WebSockets
             // [RFC2616] and MUST all be unique strings.  The ABNF for the
             // value of this header field is 1#token, where the definitions of
             // constructs and rules are as given in [RFC2616].
-
-            // The request MAY include a header field with the name
-            // |Sec-WebSocket-Extensions|.  If present, this value indicates
-            // the protocol-level extension(s) the client wishes to speak.  The
-            // interpretation and format of this header field is described in Section 9.1.
 
             // The request MAY include any other header fields, for example,
             // cookies [RFC6265] and/or authentication-related header fields

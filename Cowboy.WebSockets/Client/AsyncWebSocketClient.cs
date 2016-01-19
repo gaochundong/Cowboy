@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -10,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Cowboy.Buffer;
 using Cowboy.Logging;
+using Cowboy.WebSockets.Extensions;
 
 namespace Cowboy.WebSockets
 {
@@ -22,7 +24,7 @@ namespace Cowboy.WebSockets
         private TcpClient _tcpClient;
         private readonly IAsyncWebSocketClientMessageDispatcher _dispatcher;
         private readonly AsyncWebSocketClientConfiguration _configuration;
-        private readonly IFrameBuilder _frameBuilder = new WebSocketFrameBuilder();
+        private readonly WebSocketFrameBuilder _frameBuilder = new WebSocketFrameBuilder();
         private IPEndPoint _remoteEndPoint;
         private Stream _stream;
         private byte[] _receiveBuffer;
@@ -146,6 +148,8 @@ namespace Cowboy.WebSockets
         public TimeSpan CloseTimeout { get { return _configuration.CloseTimeout; } }
         public TimeSpan KeepAliveInterval { get { return _configuration.KeepAliveInterval; } }
         public TimeSpan KeepAliveTimeout { get { return _configuration.KeepAliveTimeout; } }
+
+        public IEnumerable<WebSocketExtensionOfferDescription> OfferedExtensions { get { return _configuration.OfferedExtensions; } }
 
         public WebSocketState State
         {

@@ -43,8 +43,9 @@
     </Compile>
     <Compile Include="Client\AsyncWebSocketClientConfiguration.cs" />
     <Compile Include="Client\AsyncWebSocketClient.cs" />
-    <Compile Include="Extensions\IWebSocketExtensionParameter.cs" />
-    <Compile Include="Extensions\WebSocketExtensionDescription.cs" />
+    <Compile Include="Extensions\PMCE\PerMessageCompressionExtensionParameters.cs" />
+    <Compile Include="Extensions\PMCE\PerMessageCompressionExtension.cs" />
+    <Compile Include="Extensions\WebSocketExtensionOfferDescription.cs" />
     <Compile Include="Framing\Builder\IFrameBuilder.cs" />
     <Compile Include="Framing\FrameType.cs" />
     <Compile Include="Framing\Builder\WebSocketFrameBuilder.cs" />

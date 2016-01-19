@@ -32,7 +32,7 @@ namespace Cowboy.WebSockets
             KeepAliveInterval = TimeSpan.FromSeconds(30);
             KeepAliveTimeout = TimeSpan.FromSeconds(5);
 
-            RequestedExtensions = new List<WebSocketExtensionDescription>();
+            OfferedExtensions = new List<WebSocketExtensionOfferDescription>();
         }
 
         public int InitialBufferAllocationCount { get; set; }
@@ -55,6 +55,6 @@ namespace Cowboy.WebSockets
         public TimeSpan KeepAliveInterval { get; set; }
         public TimeSpan KeepAliveTimeout { get; set; }
 
-        public List<WebSocketExtensionDescription> RequestedExtensions { get; set; }
+        public List<WebSocketExtensionOfferDescription> OfferedExtensions { get; set; }
     }
 }

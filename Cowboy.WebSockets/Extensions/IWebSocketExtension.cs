@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace Cowboy.WebSockets.Extensions
 {
     public interface IWebSocketExtension
     {
-        IEnumerable<IWebSocketExtensionParameter> Parameters { get; set; }
+        IEnumerable<string> Parameters { get; }
     }
 }
