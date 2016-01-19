@@ -45,6 +45,7 @@
     <Compile Include="Client\AsyncWebSocketClient.cs" />
     <Compile Include="Extensions\IWebSocketExtensionParameter.cs" />
     <Compile Include="Extensions\WebSocketExtensionDescription.cs" />
+    <Compile Include="Framing\Builder\IFrameBuilder.cs" />
     <Compile Include="Framing\FrameType.cs" />
     <Compile Include="Framing\Builder\WebSocketFrameBuilder.cs" />
     <Compile Include="Framing\Header\Header.cs" />
