@@ -18,5 +18,10 @@ namespace Cowboy.WebSockets.Extensions
 
         public string Name { get; private set; }
         public abstract ExtensionParameterType ParameterType { get; }
+
+        public override string ToString()
+        {
+            return string.Format("{0}", this.Name);
+        }
     }
 }

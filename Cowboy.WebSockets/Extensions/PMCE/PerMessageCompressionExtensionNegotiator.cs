@@ -10,7 +10,17 @@ namespace Cowboy.WebSockets.Extensions
     {
         private static readonly char[] TrimableChars = new char[] { ' ', ';', '\r', '\n' };
 
-        public bool Negotiate(string offer, out string invalidParameter, out PerMessageCompressionExtension negotiatedExtension)
+        public bool NegotiateAsServer(string offer, out string invalidParameter, out PerMessageCompressionExtension negotiatedExtension)
+        {
+            return Negotiate(offer, AgreeWithServer, out invalidParameter, out negotiatedExtension);
+        }
+
+        public bool NegotiateAsClient(string offer, out string invalidParameter, out PerMessageCompressionExtension negotiatedExtension)
+        {
+            return Negotiate(offer, AgreeWithClient, out invalidParameter, out negotiatedExtension);
+        }
+
+        private bool Negotiate(string offer, Func<AgreedExtensionParameter, bool> agree, out string invalidParameter, out PerMessageCompressionExtension negotiatedExtension)
         {
             invalidParameter = null;
             negotiatedExtension = null;
@@ -52,7 +62,64 @@ namespace Cowboy.WebSockets.Extensions
                 }
             }
 
-            return false;
+            var agreedSet = new SortedList<int, AgreedExtensionParameter>();
+
+            for (int i = 1; i < segements.Length; i++)
+            {
+                var offeredParameter = segements[i];
+                var agreeingParameter = PerMessageCompressionExtensionParameters.ResolveParameter(offeredParameter);
+                if (agree(agreeingParameter))
+                {
+                    agreedSet.Add(i, agreeingParameter);
+                }
+            }
+
+            negotiatedExtension = new PerMessageCompressionExtension(agreedSet);
+            return true;
+        }
+
+        private bool AgreeWithServer(AgreedExtensionParameter parameter)
+        {
+            if (parameter == null)
+                return false;
+
+            switch (parameter.Name)
+            {
+                case PerMessageCompressionExtensionParameters.ServerNoContextTakeOverParameterName:
+                case PerMessageCompressionExtensionParameters.ClientNoContextTakeOverParameterName:
+                    {
+                        return false;
+                    }
+                case PerMessageCompressionExtensionParameters.ServerMaxWindowBitsParameterName:
+                case PerMessageCompressionExtensionParameters.ClientMaxWindowBitsParameterName:
+                    {
+                        return false;
+                    }
+                default:
+                    throw new NotSupportedException("Invalid parameter name.");
+            }
+        }
+
+        private bool AgreeWithClient(AgreedExtensionParameter parameter)
+        {
+            if (parameter == null)
+                return false;
+
+            switch (parameter.Name)
+            {
+                case PerMessageCompressionExtensionParameters.ServerNoContextTakeOverParameterName:
+                case PerMessageCompressionExtensionParameters.ClientNoContextTakeOverParameterName:
+                    {
+                        return false;
+                    }
+                case PerMessageCompressionExtensionParameters.ServerMaxWindowBitsParameterName:
+                case PerMessageCompressionExtensionParameters.ClientMaxWindowBitsParameterName:
+                    {
+                        return false;
+                    }
+                default:
+                    throw new NotSupportedException("Invalid parameter name.");
+            }
         }
     }
 }

@@ -23,5 +23,10 @@ namespace Cowboy.WebSockets.Extensions
         }
 
         public T Value { get; private set; }
+
+        public override string ToString()
+        {
+            return string.Format("{0}={1}", this.Name, this.Value);
+        }
     }
 }

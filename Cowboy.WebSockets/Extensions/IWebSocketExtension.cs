@@ -4,6 +4,8 @@ namespace Cowboy.WebSockets.Extensions
 {
     public interface IWebSocketExtension
     {
-        IEnumerable<string> Parameters { get; }
+        string Name { get; }
+
+        string GetAgreedOffer();
     }
 }

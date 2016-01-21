@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Cowboy.WebSockets.Extensions
 {
-    public class AbsentableValueParameter : ExtensionParameter
+    public class AbsentableValueParameter<T> : ExtensionParameter
     {
-        public AbsentableValueParameter(string name, Func<object, bool> valueValidator, object defaultValue)
+        public AbsentableValueParameter(string name, Func<string, bool> valueValidator, T defaultValue)
             : base(name)
         {
             if (valueValidator == null)
@@ -26,8 +26,8 @@ namespace Cowboy.WebSockets.Extensions
             }
         }
 
-        public Func<object, bool> ValueValidator { get; private set; }
+        public Func<string, bool> ValueValidator { get; private set; }
 
-        public object DefaultValue { get; private set; }
+        public T DefaultValue { get; private set; }
     }
 }

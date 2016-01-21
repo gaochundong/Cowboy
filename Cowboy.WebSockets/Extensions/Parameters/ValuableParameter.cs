@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Cowboy.WebSockets.Extensions
 {
-    public class ValuableParameter : ExtensionParameter
+    public class ValuableParameter<T> : ExtensionParameter
     {
-        public ValuableParameter(string name, Func<object, bool> valueValidator)
+        public ValuableParameter(string name, Func<string, bool> valueValidator)
             : base(name)
         {
             if (valueValidator == null)
@@ -25,6 +25,6 @@ namespace Cowboy.WebSockets.Extensions
             }
         }
 
-        public Func<object, bool> ValueValidator { get; private set; }
+        public Func<string, bool> ValueValidator { get; private set; }
     }
 }
