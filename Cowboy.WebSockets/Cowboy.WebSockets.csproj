@@ -43,8 +43,17 @@
     </Compile>
     <Compile Include="Client\AsyncWebSocketClientConfiguration.cs" />
     <Compile Include="Client\AsyncWebSocketClient.cs" />
+    <Compile Include="Extensions\Parameters\AgreedExtensionParameter.cs" />
+    <Compile Include="Extensions\Parameters\ExtensionParameterType.cs" />
+    <Compile Include="Extensions\Parameters\ExtensionParameter.cs" />
+    <Compile Include="Extensions\Parameters\AbsentableValueParameter.cs" />
+    <Compile Include="Extensions\Parameters\AgreedSingleParameter.cs" />
+    <Compile Include="Extensions\Parameters\AgreedValuableParameter.cs" />
+    <Compile Include="Extensions\PMCE\PerMessageCompressionExtensionNegotiator.cs" />
     <Compile Include="Extensions\PMCE\PerMessageCompressionExtensionParameters.cs" />
     <Compile Include="Extensions\PMCE\PerMessageCompressionExtension.cs" />
+    <Compile Include="Extensions\Parameters\ValuableParameter.cs" />
+    <Compile Include="Extensions\Parameters\SingleParameter.cs" />
     <Compile Include="Extensions\WebSocketExtensionOfferDescription.cs" />
     <Compile Include="Framing\Builder\IFrameBuilder.cs" />
     <Compile Include="Framing\FrameType.cs" />
