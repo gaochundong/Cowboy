@@ -436,18 +436,30 @@ namespace Cowboy.WebSockets
             if (extensions == null)
                 throw new ArgumentNullException("extensions");
 
+            var agreedExtensions = new SortedList<int, IWebSocketExtension>();
+
+            int order = 0;
             foreach (var extension in extensions)
             {
+                order++;
+
                 foreach (var negotiator in _extensionNegotiatorCollection)
                 {
                     string invalidParameter;
                     IWebSocketExtension negotiatedExtension;
-                    if (negotiator.NegotiateAsClient(extension, out invalidParameter, out negotiatedExtension))
+                    if (!negotiator.NegotiateAsClient(extension, out invalidParameter, out negotiatedExtension)
+                        || negotiatedExtension == null)
                     {
-
+                        throw new WebSocketHandshakeException(string.Format(
+                            "Negotiate extension with remote [{0}] failed due to invalid parameter [{1}].",
+                            this.RemoteEndPoint, invalidParameter));
                     }
+
+                    agreedExtensions.Add(order, negotiatedExtension);
                 }
             }
+
+            _frameBuilder.NegotiatedExtensions = agreedExtensions;
         }
 
         private bool ShouldThrow(Exception ex)
