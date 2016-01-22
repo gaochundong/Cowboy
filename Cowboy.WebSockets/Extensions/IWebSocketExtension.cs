@@ -7,5 +7,9 @@ namespace Cowboy.WebSockets.Extensions
         string Name { get; }
 
         string GetAgreedOffer();
+
+        byte[] ProcessIncomingPayload(byte[] payload, int offset, int count);
+
+        byte[] ProcessOutgoingPayload(byte[] payload, int offset, int count);
     }
 }

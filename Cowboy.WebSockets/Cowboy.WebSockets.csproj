@@ -49,6 +49,7 @@
     <Compile Include="Extensions\Parameters\AbsentableValueParameter.cs" />
     <Compile Include="Extensions\Parameters\AgreedSingleParameter.cs" />
     <Compile Include="Extensions\Parameters\AgreedValuableParameter.cs" />
+    <Compile Include="Extensions\PMCE\DeflateCompression.cs" />
     <Compile Include="Extensions\PMCE\PerMessageCompressionExtensionNegotiator.cs" />
     <Compile Include="Extensions\PMCE\PerMessageCompressionExtensionParameters.cs" />
     <Compile Include="Extensions\PMCE\PerMessageCompressionExtension.cs" />
