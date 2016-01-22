@@ -12,12 +12,12 @@ namespace Cowboy.WebSockets.Extensions
 
         public bool NegotiateAsServer(string offer, out string invalidParameter, out PerMessageCompressionExtension negotiatedExtension)
         {
-            return Negotiate(offer, AgreeWithServer, out invalidParameter, out negotiatedExtension);
+            return Negotiate(offer, AgreeAsServer, out invalidParameter, out negotiatedExtension);
         }
 
         public bool NegotiateAsClient(string offer, out string invalidParameter, out PerMessageCompressionExtension negotiatedExtension)
         {
-            return Negotiate(offer, AgreeWithClient, out invalidParameter, out negotiatedExtension);
+            return Negotiate(offer, AgreeAsClient, out invalidParameter, out negotiatedExtension);
         }
 
         private bool Negotiate(string offer, Func<AgreedExtensionParameter, bool> agree, out string invalidParameter, out PerMessageCompressionExtension negotiatedExtension)
@@ -78,7 +78,7 @@ namespace Cowboy.WebSockets.Extensions
             return true;
         }
 
-        private bool AgreeWithServer(AgreedExtensionParameter parameter)
+        private bool AgreeAsServer(AgreedExtensionParameter parameter)
         {
             if (parameter == null)
                 return false;
@@ -100,7 +100,7 @@ namespace Cowboy.WebSockets.Extensions
             }
         }
 
-        private bool AgreeWithClient(AgreedExtensionParameter parameter)
+        private bool AgreeAsClient(AgreedExtensionParameter parameter)
         {
             if (parameter == null)
                 return false;
