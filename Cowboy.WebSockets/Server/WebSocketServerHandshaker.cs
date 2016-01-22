@@ -12,6 +12,7 @@ namespace Cowboy.WebSockets
     internal sealed class WebSocketServerHandshaker
     {
         private static readonly ILog _log = Logger.Get<WebSocketServerHandshaker>();
+        private static readonly char[] _headerLineSplitter = new char[] { '\r', '\n' };
 
         internal static bool HandleOpenningHandshakeRequest(AsyncWebSocketSession session, byte[] buffer, int offset, int count,
             out string secWebSocketKey,
@@ -32,7 +33,13 @@ namespace Cowboy.WebSockets
             // Origin: http://example.com
             // Sec-WebSocket-Protocol: chat, superchat
             // Sec-WebSocket-Version: 13
-            var headers = ParseOpenningHandshakeRequestHeaders(request);
+            Dictionary<string, string> headers;
+            List<string> extensions;
+            List<string> protocols;
+            ParseOpenningHandshakeRequestHeaders(request, out headers, out extensions, out protocols);
+            if (headers == null)
+                throw new WebSocketHandshakeException(string.Format(
+                    "Handshake with remote [{0}] failed due to invalid headers.", session.RemoteEndPoint));
 
             // An HTTP/1.1 or higher GET request, including a "Request-URI"
             // [RFC2616] that should be interpreted as a /resource name/
@@ -290,11 +297,16 @@ namespace Cowboy.WebSockets
             return Encoding.UTF8.GetBytes(response);
         }
 
-        private static Dictionary<string, string> ParseOpenningHandshakeRequestHeaders(string request)
+        private static void ParseOpenningHandshakeRequestHeaders(string request,
+            out Dictionary<string, string> headers,
+            out List<string> extensions,
+            out List<string> protocols)
         {
-            var headers = new Dictionary<string, string>();
+            headers = new Dictionary<string, string>();
+            extensions = null;
+            protocols = null;
 
-            var lines = request.Split(new char[] { '\r', '\n' }).Where(l => l.Length > 0);
+            var lines = request.Split(_headerLineSplitter).Where(l => l.Length > 0);
             foreach (var line in lines)
             {
                 // GET /chat HTTP/1.1
@@ -325,21 +337,35 @@ namespace Cowboy.WebSockets
                             if (index != -1)
                             {
                                 var value = line.Substring(index + 1);
-                                if (headers.ContainsKey(key))
+
+                                if (key == HttpKnownHeaderNames.SecWebSocketExtensions)
                                 {
-                                    headers[key] = string.Join(",", headers[key], value.Trim());
+                                    if (extensions == null)
+                                        extensions = new List<string>();
+                                    extensions.Add(value.Trim());
+                                }
+                                else if (key == HttpKnownHeaderNames.SecWebSocketProtocol)
+                                {
+                                    if (protocols == null)
+                                        protocols = new List<string>();
+                                    protocols.Add(value.Trim());
                                 }
                                 else
                                 {
-                                    headers.Add(key, value.Trim());
+                                    if (headers.ContainsKey(key))
+                                    {
+                                        headers[key] = string.Join(",", headers[key], value.Trim());
+                                    }
+                                    else
+                                    {
+                                        headers.Add(key, value.Trim());
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-
-            return headers;
         }
 
         private static string GetSecWebSocketAcceptString(string secWebSocketKey)

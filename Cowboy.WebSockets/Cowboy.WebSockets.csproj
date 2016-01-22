@@ -43,6 +43,7 @@
     </Compile>
     <Compile Include="Client\AsyncWebSocketClientConfiguration.cs" />
     <Compile Include="Client\AsyncWebSocketClient.cs" />
+    <Compile Include="Extensions\IWebSocketExtensionNegotiator.cs" />
     <Compile Include="Extensions\Parameters\AgreedExtensionParameter.cs" />
     <Compile Include="Extensions\Parameters\ExtensionParameterType.cs" />
     <Compile Include="Extensions\Parameters\ExtensionParameter.cs" />

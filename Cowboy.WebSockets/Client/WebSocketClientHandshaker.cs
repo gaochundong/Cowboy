@@ -12,6 +12,7 @@ namespace Cowboy.WebSockets
     internal sealed class WebSocketClientHandshaker
     {
         private static readonly ILog _log = Logger.Get<WebSocketClientHandshaker>();
+        private static readonly char[] _headerLineSplitter = new char[] { '\r', '\n' };
 
         internal static byte[] CreateOpenningHandshakeRequest(AsyncWebSocketClient client, out string secWebSocketKey)
         {
@@ -119,7 +120,13 @@ namespace Cowboy.WebSockets
             // Connection: Upgrade
             // Sec-WebSocket-Accept: 1tGBmA9p0DQDgmFll6P0/UcVS/E=
             // Sec-WebSocket-Protocol: chat
-            var headers = ParseOpenningHandshakeResponseHeaders(response);
+            Dictionary<string, string> headers;
+            List<string> extensions;
+            List<string> protocols;
+            ParseOpenningHandshakeResponseHeaders(response, out headers, out extensions, out protocols);
+            if (headers == null)
+                throw new WebSocketHandshakeException(string.Format(
+                    "Handshake with remote [{0}] failed due to invalid headers.", client.RemoteEndPoint));
 
             // If the status code received from the server is not 101, the
             // client handles the response per HTTP [RFC2616] procedures.  In
@@ -180,26 +187,35 @@ namespace Cowboy.WebSockets
                     "Handshake with remote [{0}] failed due to invalid Sec-WebSocket-Accept header item value [{1}].",
                     client.RemoteEndPoint, headers[HttpKnownHeaderNames.SecWebSocketAccept]));
 
+            // If the response includes a |Sec-WebSocket-Extensions| header
+            // field and this header field indicates the use of an extension
+            // that was not present in the client's handshake (the server has
+            // indicated an extension not requested by the client), the client
+            // MUST _Fail the WebSocket Connection_.
+            if (extensions != null)
+            {
+                client.AgreeExtensions(extensions);
+            }
+
             // If the response includes a |Sec-WebSocket-Protocol| header field
             // and this header field indicates the use of a subprotocol that was
             // not present in the client's handshake (the server has indicated a
             // subprotocol not requested by the client), the client MUST _Fail
             // the WebSocket Connection_.
 
-            // If the response includes a |Sec-WebSocket-Extensions| header
-            // field and this header field indicates the use of an extension
-            // that was not present in the client's handshake (the server has
-            // indicated an extension not requested by the client), the client
-            // MUST _Fail the WebSocket Connection_.
-
             return true;
         }
 
-        private static Dictionary<string, string> ParseOpenningHandshakeResponseHeaders(string response)
+        private static void ParseOpenningHandshakeResponseHeaders(string response,
+            out Dictionary<string, string> headers,
+            out List<string> extensions,
+            out List<string> protocols)
         {
-            var headers = new Dictionary<string, string>();
+            headers = new Dictionary<string, string>();
+            extensions = null;
+            protocols = null;
 
-            var lines = response.Split(new char[] { '\r', '\n' }).Where(l => l.Length > 0);
+            var lines = response.Split(_headerLineSplitter).Where(l => l.Length > 0);
             foreach (var line in lines)
             {
                 // HTTP/1.1 101 Switching Protocols
@@ -227,21 +243,35 @@ namespace Cowboy.WebSockets
                             if (index != -1)
                             {
                                 var value = line.Substring(index + 1);
-                                if (headers.ContainsKey(key))
+
+                                if (key == HttpKnownHeaderNames.SecWebSocketExtensions)
                                 {
-                                    headers[key] = string.Join(",", headers[key], value.Trim());
+                                    if (extensions == null)
+                                        extensions = new List<string>();
+                                    extensions.Add(value.Trim());
+                                }
+                                else if (key == HttpKnownHeaderNames.SecWebSocketProtocol)
+                                {
+                                    if (protocols == null)
+                                        protocols = new List<string>();
+                                    protocols.Add(value.Trim());
                                 }
                                 else
                                 {
-                                    headers.Add(key, value.Trim());
+                                    if (headers.ContainsKey(key))
+                                    {
+                                        headers[key] = string.Join(",", headers[key], value.Trim());
+                                    }
+                                    else
+                                    {
+                                        headers.Add(key, value.Trim());
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-
-            return headers;
         }
 
         private static string GetSecWebSocketAcceptString(string secWebSocketKey)

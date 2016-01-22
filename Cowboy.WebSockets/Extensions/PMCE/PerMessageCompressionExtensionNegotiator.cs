@@ -3,21 +3,21 @@ using System.Collections.Generic;
 
 namespace Cowboy.WebSockets.Extensions
 {
-    public sealed class PerMessageCompressionExtensionNegotiator
+    public sealed class PerMessageCompressionExtensionNegotiator : IWebSocketExtensionNegotiator
     {
         private static readonly char[] TrimableChars = new char[] { ' ', ';', '\r', '\n' };
 
-        public bool NegotiateAsServer(string offer, out string invalidParameter, out PerMessageCompressionExtension negotiatedExtension)
+        public bool NegotiateAsServer(string offer, out string invalidParameter, out IWebSocketExtension negotiatedExtension)
         {
             return Negotiate(offer, AgreeAsServer, out invalidParameter, out negotiatedExtension);
         }
 
-        public bool NegotiateAsClient(string offer, out string invalidParameter, out PerMessageCompressionExtension negotiatedExtension)
+        public bool NegotiateAsClient(string offer, out string invalidParameter, out IWebSocketExtension negotiatedExtension)
         {
             return Negotiate(offer, AgreeAsClient, out invalidParameter, out negotiatedExtension);
         }
 
-        private bool Negotiate(string offer, Func<AgreedExtensionParameter, bool> agree, out string invalidParameter, out PerMessageCompressionExtension negotiatedExtension)
+        private bool Negotiate(string offer, Func<AgreedExtensionParameter, bool> agree, out string invalidParameter, out IWebSocketExtension negotiatedExtension)
         {
             invalidParameter = null;
             negotiatedExtension = null;

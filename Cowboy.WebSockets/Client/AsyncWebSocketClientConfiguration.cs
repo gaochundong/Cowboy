@@ -32,6 +32,7 @@ namespace Cowboy.WebSockets
             KeepAliveInterval = TimeSpan.FromSeconds(30);
             KeepAliveTimeout = TimeSpan.FromSeconds(5);
 
+            PerMessageCompressionExtensionEnabled = true;
             OfferedExtensions = new List<WebSocketExtensionOfferDescription>();
         }
 
@@ -55,6 +56,7 @@ namespace Cowboy.WebSockets
         public TimeSpan KeepAliveInterval { get; set; }
         public TimeSpan KeepAliveTimeout { get; set; }
 
+        public bool PerMessageCompressionExtensionEnabled { get; set; }
         public List<WebSocketExtensionOfferDescription> OfferedExtensions { get; set; }
     }
 }

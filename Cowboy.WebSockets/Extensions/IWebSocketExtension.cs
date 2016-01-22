@@ -4,10 +4,18 @@
     {
         string Name { get; }
 
+        bool Rsv1BitOccupied { get; }
+        bool Rsv2BitOccupied { get; }
+        bool Rsv3BitOccupied { get; }
+
         string GetAgreedOffer();
 
-        byte[] ProcessIncomingPayload(byte[] payload, int offset, int count);
+        void ProcessIncomingMessageHeader(byte[] header, int offset, int count);
 
-        byte[] ProcessOutgoingPayload(byte[] payload, int offset, int count);
+        void ProcessOutgoingMessageHeader(byte[] header, int offset, int count);
+
+        byte[] ProcessIncomingMessagePayload(byte[] payload, int offset, int count);
+
+        byte[] ProcessOutgoingMessagePayload(byte[] payload, int offset, int count);
     }
 }

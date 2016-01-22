@@ -24,7 +24,8 @@ namespace Cowboy.WebSockets
         private TcpClient _tcpClient;
         private readonly IAsyncWebSocketClientMessageDispatcher _dispatcher;
         private readonly AsyncWebSocketClientConfiguration _configuration;
-        private readonly WebSocketFrameBuilder _frameBuilder = new WebSocketFrameBuilder();
+        private readonly WebSocketFrameBuilder _frameBuilder;
+        private readonly List<IWebSocketExtensionNegotiator> _extensionNegotiatorCollection;
         private IPEndPoint _remoteEndPoint;
         private Stream _stream;
         private byte[] _receiveBuffer;
@@ -97,6 +98,9 @@ namespace Cowboy.WebSockets
             _configuration = configuration ?? new AsyncWebSocketClientConfiguration();
             _sslEnabled = uri.Scheme.ToLowerInvariant() == "wss";
 
+            _frameBuilder = new WebSocketFrameBuilder();
+            _extensionNegotiatorCollection = new List<IWebSocketExtensionNegotiator>();
+
             Initialize();
         }
 
@@ -119,6 +123,11 @@ namespace Cowboy.WebSockets
             _keepAliveTracker = KeepAliveTracker.Create(KeepAliveInterval, new TimerCallback((s) => OnKeepAlive()));
             _keepAliveTimeoutTimer = new Timer(new TimerCallback((s) => OnKeepAliveTimeout()), null, Timeout.Infinite, Timeout.Infinite);
             _closingTimeoutTimer = new Timer(new TimerCallback((s) => OnCloseTimeout()), null, Timeout.Infinite, Timeout.Infinite);
+
+            if (_configuration.PerMessageCompressionExtensionEnabled)
+            {
+                _extensionNegotiatorCollection.Add(new PerMessageCompressionExtensionNegotiator());
+            }
         }
 
         #endregion
@@ -419,6 +428,25 @@ namespace Cowboy.WebSockets
             finally
             {
                 await Abort();
+            }
+        }
+
+        internal void AgreeExtensions(IEnumerable<string> extensions)
+        {
+            if (extensions == null)
+                throw new ArgumentNullException("extensions");
+
+            foreach (var extension in extensions)
+            {
+                foreach (var negotiator in _extensionNegotiatorCollection)
+                {
+                    string invalidParameter;
+                    IWebSocketExtension negotiatedExtension;
+                    if (negotiator.NegotiateAsClient(extension, out invalidParameter, out negotiatedExtension))
+                    {
+
+                    }
+                }
             }
         }
 
