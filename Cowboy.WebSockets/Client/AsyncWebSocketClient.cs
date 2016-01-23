@@ -459,6 +459,22 @@ namespace Cowboy.WebSockets
                 }
             }
 
+            bool isRsv1BitOccupied = false;
+            bool isRsv2BitOccupied = false;
+            bool isRsv3BitOccupied = false;
+            foreach (var extension in agreedExtensions.Values)
+            {
+                if ((isRsv1BitOccupied && extension.Rsv1BitOccupied)
+                    || (isRsv2BitOccupied && extension.Rsv2BitOccupied)
+                    || (isRsv3BitOccupied && extension.Rsv3BitOccupied))
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Negotiate extension with remote [{0}] failed due to conflict bit occupied.", this.RemoteEndPoint));
+
+                isRsv1BitOccupied = isRsv1BitOccupied | extension.Rsv1BitOccupied;
+                isRsv2BitOccupied = isRsv2BitOccupied | extension.Rsv2BitOccupied;
+                isRsv3BitOccupied = isRsv3BitOccupied | extension.Rsv3BitOccupied;
+            }
+
             _frameBuilder.NegotiatedExtensions = agreedExtensions;
         }
 

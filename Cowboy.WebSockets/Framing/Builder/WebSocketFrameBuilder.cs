@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Cowboy.WebSockets.Extensions;
 
@@ -130,13 +131,28 @@ namespace Cowboy.WebSockets
             return Encode(frame.OpCode, frame.Data, frame.Offset, frame.Count, isMasked: frame.IsMasked);
         }
 
-        private byte[] Encode(OpCode opCode, byte[] payload, int offset, int count,
-            bool isMasked = true,
-            bool isFin = true,
-            bool isRsv1 = false,
-            bool isRsv2 = false,
-            bool isRsv3 = false)
+        private byte[] Encode(OpCode opCode, byte[] payload, int offset, int count, bool isMasked = true, bool isFin = true)
         {
+            if (this.NegotiatedExtensions != null)
+            {
+                byte[] bakedBuffer = null;
+                foreach (var extension in this.NegotiatedExtensions.Values)
+                {
+                    if (bakedBuffer == null)
+                    {
+                        bakedBuffer = extension.ProcessOutgoingMessagePayload(payload, offset, count);
+                    }
+                    else
+                    {
+                        bakedBuffer = extension.ProcessOutgoingMessagePayload(bakedBuffer, 0, bakedBuffer.Length);
+                    }
+                }
+
+                payload = bakedBuffer;
+                offset = 0;
+                count = payload.Length;
+            }
+
             byte[] fragment;
 
             // Payload length:  7 bits, 7+16 bits, or 7+64 bits.
@@ -185,12 +201,18 @@ namespace Cowboy.WebSockets
             // the negotiated extensions defines the meaning of such a nonzero
             // value, the receiving endpoint MUST _Fail the WebSocket
             // Connection_.
-            if (isRsv1)
-                fragment[0] = (byte)(fragment[0] | 0x40);
-            if (isRsv2)
-                fragment[0] = (byte)(fragment[0] | 0x20);
-            if (isRsv3)
-                fragment[0] = (byte)(fragment[0] | 0x10);
+            if (this.NegotiatedExtensions != null)
+            {
+                foreach (var extension in this.NegotiatedExtensions.Values)
+                {
+                    if (extension.Rsv1BitOccupied)
+                        fragment[0] = (byte)(fragment[0] | 0x40);
+                    if (extension.Rsv2BitOccupied)
+                        fragment[0] = (byte)(fragment[0] | 0x20);
+                    if (extension.Rsv3BitOccupied)
+                        fragment[0] = (byte)(fragment[0] | 0x10);
+                }
+            }
 
             // Opcode:  4 bits
             // Defines the interpretation of the "Payload data".  If an unknown
@@ -226,6 +248,7 @@ namespace Cowboy.WebSockets
                 {
                     fragment[i] = (byte)_rng.Next(0, 255);
                 }
+
                 if (count > 0)
                 {
                     int payloadIndex = fragment.Length - count;
@@ -329,6 +352,26 @@ namespace Cowboy.WebSockets
                     payload[i] = (byte)(buffer[payloadOffset + i] ^ buffer[frameHeader.MaskingKeyOffset + i % MaskingKeyLength]);
                 }
 
+                payloadOffset = 0;
+                payloadCount = payload.Length;
+            }
+
+            if (this.NegotiatedExtensions != null)
+            {
+                byte[] bakedBuffer = null;
+                foreach (var extension in this.NegotiatedExtensions.Reverse().Select(e => e.Value))
+                {
+                    if (bakedBuffer == null)
+                    {
+                        bakedBuffer = extension.ProcessIncomingMessagePayload(payload, payloadOffset, payloadCount);
+                    }
+                    else
+                    {
+                        bakedBuffer = extension.ProcessIncomingMessagePayload(bakedBuffer, 0, bakedBuffer.Length);
+                    }
+                }
+
+                payload = bakedBuffer;
                 payloadOffset = 0;
                 payloadCount = payload.Length;
             }
