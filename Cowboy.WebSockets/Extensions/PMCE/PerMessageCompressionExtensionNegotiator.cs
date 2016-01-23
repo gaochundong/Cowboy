@@ -37,7 +37,7 @@ namespace Cowboy.WebSockets.Extensions
                 return false;
             }
 
-            if (string.Compare(offeredExtensionName, PerMessageCompressionExtension.ExtensionName, StringComparison.OrdinalIgnoreCase) != 0)
+            if (string.Compare(offeredExtensionName, PerMessageCompressionExtension.RegisteredToken, StringComparison.OrdinalIgnoreCase) != 0)
             {
                 invalidParameter = offeredExtensionName;
                 return false;

@@ -212,7 +212,18 @@ namespace Cowboy.WebSockets
             out List<string> protocols)
         {
             headers = new Dictionary<string, string>();
+
+            // The |Sec-WebSocket-Extensions| header field MAY appear multiple times
+            // in an HTTP request (which is logically the same as a single
+            // |Sec-WebSocket-Extensions| header field that contains all values.
+            // However, the |Sec-WebSocket-Extensions| header field MUST NOT appear
+            // more than once in an HTTP response.
             extensions = null;
+            // The |Sec-WebSocket-Protocol| header field MAY appear multiple times
+            // in an HTTP request (which is logically the same as a single
+            // |Sec-WebSocket-Protocol| header field that contains all values).
+            // However, the |Sec-WebSocket-Protocol| header field MUST NOT appear
+            // more than once in an HTTP response.
             protocols = null;
 
             var lines = response.Split(_headerLineSplitter).Where(l => l.Length > 0);

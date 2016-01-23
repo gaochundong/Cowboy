@@ -1,7 +1,12 @@
-﻿namespace Cowboy.WebSockets
+﻿using System.Collections.Generic;
+using Cowboy.WebSockets.Extensions;
+
+namespace Cowboy.WebSockets
 {
     public interface IFrameBuilder
     {
+        SortedList<int, IWebSocketExtension> NegotiatedExtensions { get; set; }
+
         byte[] EncodeFrame(PingFrame frame);
         byte[] EncodeFrame(PongFrame frame);
         byte[] EncodeFrame(CloseFrame frame);

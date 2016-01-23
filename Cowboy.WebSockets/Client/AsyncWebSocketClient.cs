@@ -24,7 +24,7 @@ namespace Cowboy.WebSockets
         private TcpClient _tcpClient;
         private readonly IAsyncWebSocketClientMessageDispatcher _dispatcher;
         private readonly AsyncWebSocketClientConfiguration _configuration;
-        private readonly WebSocketFrameBuilder _frameBuilder;
+        private readonly IFrameBuilder _frameBuilder;
         private readonly List<IWebSocketExtensionNegotiator> _extensionNegotiatorCollection;
         private IPEndPoint _remoteEndPoint;
         private Stream _stream;
@@ -436,6 +436,27 @@ namespace Cowboy.WebSockets
             if (extensions == null)
                 throw new ArgumentNullException("extensions");
 
+            // no extension configured, but server offered, so close connection
+            if (_extensionNegotiatorCollection == null || !_extensionNegotiatorCollection.Any())
+                throw new WebSocketHandshakeException(string.Format(
+                    "Negotiate extension with remote [{0}] failed due to no extension enabled.", this.RemoteEndPoint));
+
+            // Note that the order of extensions is significant.  Any interactions
+            // between multiple extensions MAY be defined in the documents defining
+            // the extensions.  In the absence of such definitions, the
+            // interpretation is that the header fields listed by the client in its
+            // request represent a preference of the header fields it wishes to use,
+            // with the first options listed being most preferable.  The extensions
+            // listed by the server in response represent the extensions actually in
+            // use for the connection.  Should the extensions modify the data and/or
+            // framing, the order of operations on the data should be assumed to be
+            // the same as the order in which the extensions are listed in the
+            // server's response in the opening handshake.
+            // For example, if there are two extensions "foo" and "bar" and if the
+            // header field |Sec-WebSocket-Extensions| sent by the server has the
+            // value "foo, bar", then operations on the data will be made as
+            // bar(foo(data)), be those changes to the data itself (such as
+            // compression) or changes to the framing that may "stack".
             var agreedExtensions = new SortedList<int, IWebSocketExtension>();
 
             int order = 0;

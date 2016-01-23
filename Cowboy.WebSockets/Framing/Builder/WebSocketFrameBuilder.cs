@@ -356,6 +356,7 @@ namespace Cowboy.WebSockets
                 payloadCount = payload.Length;
             }
 
+            // 
             if (this.NegotiatedExtensions != null)
             {
                 byte[] bakedBuffer = null;

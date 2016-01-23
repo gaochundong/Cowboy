@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
@@ -9,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Cowboy.Buffer;
 using Cowboy.Logging;
+using Cowboy.WebSockets.Extensions;
 
 namespace Cowboy.WebSockets
 {
@@ -23,7 +26,8 @@ namespace Cowboy.WebSockets
         private readonly AsyncWebSocketRouteResolver _routeResolver;
         private AsyncWebSocketServerModule _module;
         private readonly AsyncWebSocketServer _server;
-        private readonly IFrameBuilder _frameBuilder = new WebSocketFrameBuilder();
+        private readonly IFrameBuilder _frameBuilder;
+        private readonly List<IWebSocketExtensionNegotiator> _extensionNegotiatorCollection;
         private readonly string _sessionKey;
         private Stream _stream;
         private byte[] _receiveBuffer;
@@ -83,6 +87,13 @@ namespace Cowboy.WebSockets
             _keepAliveTracker = KeepAliveTracker.Create(KeepAliveInterval, new TimerCallback((s) => OnKeepAlive()));
             _keepAliveTimeoutTimer = new Timer(new TimerCallback((s) => OnKeepAliveTimeout()), null, Timeout.Infinite, Timeout.Infinite);
             _closingTimeoutTimer = new Timer(new TimerCallback((s) => OnCloseTimeout()), null, Timeout.Infinite, Timeout.Infinite);
+
+            _frameBuilder = new WebSocketFrameBuilder();
+            _extensionNegotiatorCollection = new List<IWebSocketExtensionNegotiator>();
+            if (_configuration.PerMessageCompressionExtensionEnabled)
+            {
+                _extensionNegotiatorCollection.Add(new PerMessageCompressionExtensionNegotiator());
+            }
         }
 
         #endregion
@@ -113,6 +124,8 @@ namespace Cowboy.WebSockets
         public TimeSpan CloseTimeout { get { return _configuration.CloseTimeout; } }
         public TimeSpan KeepAliveInterval { get { return _configuration.KeepAliveInterval; } }
         public TimeSpan KeepAliveTimeout { get { return _configuration.KeepAliveTimeout; } }
+
+        public SortedList<int, IWebSocketExtension> NegotiatedExtensions { get { return _frameBuilder.NegotiatedExtensions; } }
 
         public WebSocketState State
         {
@@ -372,6 +385,73 @@ namespace Cowboy.WebSockets
             {
                 await Abort();
             }
+        }
+
+        internal void AgreeExtensions(IEnumerable<string> extensions)
+        {
+            if (extensions == null)
+                throw new ArgumentNullException("extensions");
+
+            // no extension configured, but client offered, so just ignore them.
+            if (_extensionNegotiatorCollection == null || !_extensionNegotiatorCollection.Any())
+                return;
+
+            // Note that the order of extensions is significant.  Any interactions
+            // between multiple extensions MAY be defined in the documents defining
+            // the extensions.  In the absence of such definitions, the
+            // interpretation is that the header fields listed by the client in its
+            // request represent a preference of the header fields it wishes to use,
+            // with the first options listed being most preferable.  The extensions
+            // listed by the server in response represent the extensions actually in
+            // use for the connection.  Should the extensions modify the data and/or
+            // framing, the order of operations on the data should be assumed to be
+            // the same as the order in which the extensions are listed in the
+            // server's response in the opening handshake.
+            // For example, if there are two extensions "foo" and "bar" and if the
+            // header field |Sec-WebSocket-Extensions| sent by the server has the
+            // value "foo, bar", then operations on the data will be made as
+            // bar(foo(data)), be those changes to the data itself (such as
+            // compression) or changes to the framing that may "stack".
+            var agreedExtensions = new SortedList<int, IWebSocketExtension>();
+
+            int order = 0;
+            foreach (var extension in extensions)
+            {
+                order++;
+
+                foreach (var negotiator in _extensionNegotiatorCollection)
+                {
+                    string invalidParameter;
+                    IWebSocketExtension negotiatedExtension;
+                    if (!negotiator.NegotiateAsClient(extension, out invalidParameter, out negotiatedExtension)
+                        || negotiatedExtension == null)
+                    {
+                        throw new WebSocketHandshakeException(string.Format(
+                            "Negotiate extension with remote [{0}] failed due to invalid parameter [{1}].",
+                            this.RemoteEndPoint, invalidParameter));
+                    }
+
+                    agreedExtensions.Add(order, negotiatedExtension);
+                }
+            }
+
+            bool isRsv1BitOccupied = false;
+            bool isRsv2BitOccupied = false;
+            bool isRsv3BitOccupied = false;
+            foreach (var extension in agreedExtensions.Values)
+            {
+                if ((isRsv1BitOccupied && extension.Rsv1BitOccupied)
+                    || (isRsv2BitOccupied && extension.Rsv2BitOccupied)
+                    || (isRsv3BitOccupied && extension.Rsv3BitOccupied))
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Negotiate extension with remote [{0}] failed due to conflict bit occupied.", this.RemoteEndPoint));
+
+                isRsv1BitOccupied = isRsv1BitOccupied | extension.Rsv1BitOccupied;
+                isRsv2BitOccupied = isRsv2BitOccupied | extension.Rsv2BitOccupied;
+                isRsv3BitOccupied = isRsv3BitOccupied | extension.Rsv3BitOccupied;
+            }
+
+            _frameBuilder.NegotiatedExtensions = agreedExtensions;
         }
 
         private bool ShouldThrow(Exception ex)

@@ -33,6 +33,8 @@ namespace Cowboy.WebSockets
             CloseTimeout = TimeSpan.FromSeconds(5);
             KeepAliveInterval = TimeSpan.FromSeconds(60);
             KeepAliveTimeout = TimeSpan.FromSeconds(15);
+
+            PerMessageCompressionExtensionEnabled = true;
         }
 
         public int InitialBufferAllocationCount { get; set; }
@@ -58,5 +60,7 @@ namespace Cowboy.WebSockets
         public TimeSpan CloseTimeout { get; set; }
         public TimeSpan KeepAliveInterval { get; set; }
         public TimeSpan KeepAliveTimeout { get; set; }
+
+        public bool PerMessageCompressionExtensionEnabled { get; set; }
     }
 }

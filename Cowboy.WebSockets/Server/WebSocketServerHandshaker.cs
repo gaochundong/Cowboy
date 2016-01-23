@@ -101,13 +101,17 @@ namespace Cowboy.WebSockets
                     "Handshake with remote [{0}] failed due to invalid Sec-WebSocket-Version header item value [{1}].",
                     session.RemoteEndPoint, headers[HttpKnownHeaderNames.SecWebSocketVersion]));
 
-            // Optionally, a |Sec-WebSocket-Protocol| header field, with a list
-            // of values indicating which protocols the client would like to
-            // speak, ordered by preference.
-
             // Optionally, a |Sec-WebSocket-Extensions| header field, with a
             // list of values indicating which extensions the client would like
             // to speak.  The interpretation of this header field is discussed in Section 9.1.
+            if (extensions != null)
+            {
+                session.AgreeExtensions(extensions);
+            }
+
+            // Optionally, a |Sec-WebSocket-Protocol| header field, with a list
+            // of values indicating which protocols the client would like to
+            // speak, ordered by preference.
 
             // Optionally, an |Origin| header field.  This header field is sent
             // by all browser clients.  A connection attempt lacking this
@@ -162,98 +166,55 @@ namespace Cowboy.WebSockets
             var secWebSocketAccept = GetSecWebSocketAcceptString(secWebSocketKey);
             sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.SecWebSocketAccept, secWebSocketAccept);
 
+            // Optionally, a |Sec-WebSocket-Extensions| header field, with a
+            // value /extensions/ as defined in step 4 in Section 4.2.2.  If
+            // multiple extensions are to be used, they can all be listed in
+            // a single |Sec-WebSocket-Extensions| header field or split
+            // between multiple instances of the |Sec-WebSocket-Extensions| header field.
+            // A server accepts one or more extensions by including a
+            // |Sec-WebSocket-Extensions| header field containing one or more
+            // extensions that were requested by the client.  The interpretation of
+            // any extension parameters, and what constitutes a valid response by a
+            // server to a requested set of parameters by a client, will be defined
+            // by each such extension.
+            if (session.NegotiatedExtensions != null && session.NegotiatedExtensions.Any())
+            {
+                foreach (var extension in session.NegotiatedExtensions.Values)
+                {
+                    var offer = extension.GetAgreedOffer();
+                    sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.SecWebSocketExtensions, offer);
+                }
+            }
+
             /**
-                Optionally, a |Sec-WebSocket-Protocol| header field, with a
-                value /subprotocol/ as defined in step 4 in Section 4.2.2.
-
-                The |Sec-WebSocket-Protocol| header field MAY appear multiple times
-                in an HTTP request (which is logically the same as a single
-                |Sec-WebSocket-Protocol| header field that contains all values).
-                However, the |Sec-WebSocket-Protocol| header field MUST NOT appear
-                more than once in an HTTP response.
-
-                The client can request that the server use a specific subprotocol by
-                including the |Sec-WebSocket-Protocol| field in its handshake.  If it
-                is specified, the server needs to include the same field and one of
-                the selected subprotocol values in its response for the connection to
-                be established.
-
-                These subprotocol names should be registered as per Section 11.5.  To
-                avoid potential collisions, it is recommended to use names that
-                contain the ASCII version of the domain name of the subprotocol's
-                originator.  For example, if Example Corporation were to create a
-                Chat subprotocol to be implemented by many servers around the Web,
-                they could name it "chat.example.com".  If the Example Organization
-                called their competing subprotocol "chat.example.org", then the two
-                subprotocols could be implemented by servers simultaneously, with the
-                server dynamically selecting which subprotocol to use based on the
-                value sent by the client.
-
-                Subprotocols can be versioned in backward-incompatible ways by
-                changing the subprotocol name, e.g., going from
-                "bookings.example.net" to "v2.bookings.example.net".  These
-                subprotocols would be considered completely separate by WebSocket
-                clients.  Backward-compatible versioning can be implemented by
-                reusing the same subprotocol string but carefully designing the
-                actual subprotocol to support this kind of extensibility.
+                // Optionally, a |Sec-WebSocket-Protocol| header field, with a
+                // value /subprotocol/ as defined in step 4 in Section 4.2.2.
+                // 
+                // The client can request that the server use a specific subprotocol by
+                // including the |Sec-WebSocket-Protocol| field in its handshake.  If it
+                // is specified, the server needs to include the same field and one of
+                // the selected subprotocol values in its response for the connection to
+                // be established.
+                // 
+                // These subprotocol names should be registered as per Section 11.5.  To
+                // avoid potential collisions, it is recommended to use names that
+                // contain the ASCII version of the domain name of the subprotocol's
+                // originator.  For example, if Example Corporation were to create a
+                // Chat subprotocol to be implemented by many servers around the Web,
+                // they could name it "chat.example.com".  If the Example Organization
+                // called their competing subprotocol "chat.example.org", then the two
+                // subprotocols could be implemented by servers simultaneously, with the
+                // server dynamically selecting which subprotocol to use based on the
+                // value sent by the client.
+                // 
+                // Subprotocols can be versioned in backward-incompatible ways by
+                // changing the subprotocol name, e.g., going from
+                // "bookings.example.net" to "v2.bookings.example.net".  These
+                // subprotocols would be considered completely separate by WebSocket
+                // clients.  Backward-compatible versioning can be implemented by
+                // reusing the same subprotocol string but carefully designing the
+                // actual subprotocol to support this kind of extensibility.
                 */
-
-            /**
-                Optionally, a |Sec-WebSocket-Extensions| header field, with a
-                value /extensions/ as defined in step 4 in Section 4.2.2.  If
-                multiple extensions are to be used, they can all be listed in
-                a single |Sec-WebSocket-Extensions| header field or split
-                between multiple instances of the |Sec-WebSocket-Extensions| header field.
-
-                The |Sec-WebSocket-Extensions| header field MAY appear multiple times
-                in an HTTP request (which is logically the same as a single
-                |Sec-WebSocket-Extensions| header field that contains all values.
-                However, the |Sec-WebSocket-Extensions| header field MUST NOT appear
-                more than once in an HTTP response.
-
-                WebSocket clients MAY request extensions to this specification, and
-                WebSocket servers MAY accept some or all extensions requested by the
-                client.  A server MUST NOT respond with any extension not requested
-                by the client.  If extension parameters are included in negotiations
-                between the client and the server, those parameters MUST be chosen in
-                accordance with the specification of the extension to which the
-                parameters apply.
-
-                A client requests extensions by including a |Sec-WebSocket-
-                Extensions| header field, which follows the normal rules for HTTP
-                header fields (see [RFC2616], Section 4.2) and the value of the
-                header field is defined by the following ABNF [RFC2616].  Note that
-                this section is using ABNF syntax/rules from [RFC2616], including the
-                "implied *LWS rule".  If a value is received by either the client or
-                the server during negotiation that does not conform to the ABNF
-                below, the recipient of such malformed data MUST immediately _Fail
-                the WebSocket Connection_.
-
-                Any extension-token used MUST be a registered token (see
-                Section 11.4).  The parameters supplied with any given extension MUST
-                be defined for that extension.  Note that the client is only offering
-                to use any advertised extensions and MUST NOT use them unless the
-                server indicates that it wishes to use the extension.
-
-                Note that the order of extensions is significant.  Any interactions
-                between multiple extensions MAY be defined in the documents defining
-                the extensions.  In the absence of such definitions, the
-                interpretation is that the header fields listed by the client in its
-                request represent a preference of the header fields it wishes to use,
-                with the first options listed being most preferable.  The extensions
-                listed by the server in response represent the extensions actually in
-                use for the connection.  Should the extensions modify the data and/or
-                framing, the order of operations on the data should be assumed to be
-                the same as the order in which the extensions are listed in the
-                server's response in the opening handshake.
-
-                A server accepts one or more extensions by including a
-                |Sec-WebSocket-Extensions| header field containing one or more
-                extensions that were requested by the client.  The interpretation of
-                any extension parameters, and what constitutes a valid response by a
-                server to a requested set of parameters by a client, will be defined
-                by each such extension.
-            */
 
             sb.AppendWithCrCf();
 
@@ -303,7 +264,18 @@ namespace Cowboy.WebSockets
             out List<string> protocols)
         {
             headers = new Dictionary<string, string>();
+
+            // The |Sec-WebSocket-Extensions| header field MAY appear multiple times
+            // in an HTTP request (which is logically the same as a single
+            // |Sec-WebSocket-Extensions| header field that contains all values.
+            // However, the |Sec-WebSocket-Extensions| header field MUST NOT appear
+            // more than once in an HTTP response.
             extensions = null;
+            // The |Sec-WebSocket-Protocol| header field MAY appear multiple times
+            // in an HTTP request (which is logically the same as a single
+            // |Sec-WebSocket-Protocol| header field that contains all values).
+            // However, the |Sec-WebSocket-Protocol| header field MUST NOT appear
+            // more than once in an HTTP response.
             protocols = null;
 
             var lines = request.Split(_headerLineSplitter).Where(l => l.Length > 0);
