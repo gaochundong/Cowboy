@@ -34,6 +34,7 @@ namespace Cowboy.WebSockets
 
             PerMessageCompressionExtensionEnabled = true;
             OfferedExtensions = new List<WebSocketExtensionOfferDescription>();
+            OfferedExtensions.Add(new WebSocketExtensionOfferDescription("permessage-deflate"));
         }
 
         public int InitialBufferAllocationCount { get; set; }
