@@ -436,8 +436,12 @@ namespace Cowboy.WebSockets
             if (extensions == null)
                 throw new ArgumentNullException("extensions");
 
-            // no extension configured, but server offered, so close connection
-            if (_extensionNegotiatorCollection == null || !_extensionNegotiatorCollection.Any())
+            // If a server gives an invalid response, such as accepting a PMCE that
+            // the client did not offer, the client MUST _Fail the WebSocket Connection_.
+            if (this.OfferedExtensions == null
+                || !this.OfferedExtensions.Any()
+                || _extensionNegotiatorCollection == null
+                || !_extensionNegotiatorCollection.Any())
                 throw new WebSocketHandshakeException(string.Format(
                     "Negotiate extension with remote [{0}] failed due to no extension enabled.", this.RemoteEndPoint));
 
@@ -469,6 +473,7 @@ namespace Cowboy.WebSockets
                     string invalidParameter;
                     IWebSocketExtension negotiatedExtension;
                     if (!negotiator.NegotiateAsClient(extension, out invalidParameter, out negotiatedExtension)
+                        || !string.IsNullOrEmpty(invalidParameter)
                         || negotiatedExtension == null)
                     {
                         throw new WebSocketHandshakeException(string.Format(
@@ -480,6 +485,21 @@ namespace Cowboy.WebSockets
                 }
             }
 
+            // If a server gives an invalid response, such as accepting a PMCE that
+            // the client did not offer, the client MUST _Fail the WebSocket Connection_.
+            foreach (var extension in agreedExtensions.Values)
+            {
+                if (!this.OfferedExtensions.Any(x => x.ExtensionNegotiationOffer.StartsWith(extension.Name)))
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Negotiate extension with remote [{0}] failed due to extension [{1}] not be offered.",
+                        this.RemoteEndPoint, extension.Name));
+            }
+
+            // A server MUST NOT accept a PMCE extension negotiation offer together
+            // with another extension if the PMCE will conflict with the extension
+            // on their use of the RSV1 bit.  A client that received a response
+            // accepting a PMCE extension negotiation offer together with such an
+            // extension MUST _Fail the WebSocket Connection_.
             bool isRsv1BitOccupied = false;
             bool isRsv2BitOccupied = false;
             bool isRsv3BitOccupied = false;

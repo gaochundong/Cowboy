@@ -424,6 +424,7 @@ namespace Cowboy.WebSockets
                     string invalidParameter;
                     IWebSocketExtension negotiatedExtension;
                     if (!negotiator.NegotiateAsClient(extension, out invalidParameter, out negotiatedExtension)
+                        || !string.IsNullOrEmpty(invalidParameter)
                         || negotiatedExtension == null)
                     {
                         throw new WebSocketHandshakeException(string.Format(
@@ -435,6 +436,11 @@ namespace Cowboy.WebSockets
                 }
             }
 
+            // A server MUST NOT accept a PMCE extension negotiation offer together
+            // with another extension if the PMCE will conflict with the extension
+            // on their use of the RSV1 bit.  A client that received a response
+            // accepting a PMCE extension negotiation offer together with such an
+            // extension MUST _Fail the WebSocket Connection_.
             bool isRsv1BitOccupied = false;
             bool isRsv2BitOccupied = false;
             bool isRsv3BitOccupied = false;
