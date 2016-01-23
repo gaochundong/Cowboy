@@ -36,10 +36,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Buffer", "Cowboy.Buf
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Sockets", "Cowboy.Sockets\Cowboy.Sockets.csproj", "{39D916FE-2C09-47AB-A5A2-1A23787F20BA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.TcpLika", "Cowboy.TcpLika\Cowboy.TcpLika.csproj", "{0ED6CD14-9182-486B-8AF3-1D9770449046}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.CommandLines", "Cowboy.CommandLines\Cowboy.CommandLines.csproj", "{E7A41D23-4F6B-4BE2-A311-0D3D25BFE6E7}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{D27BF014-D1A0-41BC-8DEB-35B14D774DF3}"
 	ProjectSection(SolutionItems) = preProject
 		.nuget\NuGet.Config = .nuget\NuGet.Config
@@ -69,6 +65,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.WebSockets.TestAsyncWebSocketServer", "Tests\Cowboy.WebSockets.TestAsyncWebSocketServer\Cowboy.WebSockets.TestAsyncWebSocketServer.csproj", "{31C790E5-1BB5-4004-82B8-43D1FCAF97C3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Buffer.UnitTests", "Tests\Cowboy.Buffer.UnitTests\Cowboy.Buffer.UnitTests.csproj", "{7455E3BD-6343-4A51-A61A-CEEEDFE146D3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{FBDC6AFC-D9E3-43AE-B68F-54A3586A20DD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.CommandLines", "Cowboy.CommandLines\Cowboy.CommandLines.csproj", "{E7A41D23-4F6B-4BE2-A311-0D3D25BFE6E7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.TcpLika", "Cowboy.TcpLika\Cowboy.TcpLika.csproj", "{0ED6CD14-9182-486B-8AF3-1D9770449046}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -116,14 +118,6 @@ Global
 		{39D916FE-2C09-47AB-A5A2-1A23787F20BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{39D916FE-2C09-47AB-A5A2-1A23787F20BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{39D916FE-2C09-47AB-A5A2-1A23787F20BA}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0ED6CD14-9182-486B-8AF3-1D9770449046}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0ED6CD14-9182-486B-8AF3-1D9770449046}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0ED6CD14-9182-486B-8AF3-1D9770449046}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0ED6CD14-9182-486B-8AF3-1D9770449046}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E7A41D23-4F6B-4BE2-A311-0D3D25BFE6E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E7A41D23-4F6B-4BE2-A311-0D3D25BFE6E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E7A41D23-4F6B-4BE2-A311-0D3D25BFE6E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E7A41D23-4F6B-4BE2-A311-0D3D25BFE6E7}.Release|Any CPU.Build.0 = Release|Any CPU
 		{47E06681-38E9-46C0-8AAE-00535845D42D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{47E06681-38E9-46C0-8AAE-00535845D42D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{47E06681-38E9-46C0-8AAE-00535845D42D}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -168,6 +162,14 @@ Global
 		{7455E3BD-6343-4A51-A61A-CEEEDFE146D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7455E3BD-6343-4A51-A61A-CEEEDFE146D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7455E3BD-6343-4A51-A61A-CEEEDFE146D3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E7A41D23-4F6B-4BE2-A311-0D3D25BFE6E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E7A41D23-4F6B-4BE2-A311-0D3D25BFE6E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E7A41D23-4F6B-4BE2-A311-0D3D25BFE6E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E7A41D23-4F6B-4BE2-A311-0D3D25BFE6E7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0ED6CD14-9182-486B-8AF3-1D9770449046}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0ED6CD14-9182-486B-8AF3-1D9770449046}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0ED6CD14-9182-486B-8AF3-1D9770449046}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0ED6CD14-9182-486B-8AF3-1D9770449046}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -182,5 +184,7 @@ Global
 		{95639F67-5297-4D55-B126-2CB9226226CB} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
 		{31C790E5-1BB5-4004-82B8-43D1FCAF97C3} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
 		{7455E3BD-6343-4A51-A61A-CEEEDFE146D3} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
+		{E7A41D23-4F6B-4BE2-A311-0D3D25BFE6E7} = {FBDC6AFC-D9E3-43AE-B68F-54A3586A20DD}
+		{0ED6CD14-9182-486B-8AF3-1D9770449046} = {FBDC6AFC-D9E3-43AE-B68F-54A3586A20DD}
 	EndGlobalSection
 EndGlobal
