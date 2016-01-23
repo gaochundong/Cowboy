@@ -49,6 +49,10 @@
     <Compile Include="Hosting\Self\UrlReservations.cs" />
     <Compile Include="IgnoredHeaders.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="StaticContent\RootPathProvider.cs" />
+    <Compile Include="StaticContent\StaticContentConventionBuilder.cs" />
+    <Compile Include="StaticContent\StaticContentProvider.cs" />
+    <Compile Include="StaticContent\StaticContentsConventions.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Cowboy.Buffer\Cowboy.Buffer.csproj">
@@ -70,10 +74,6 @@
     <ProjectReference Include="..\Cowboy.Serialization\Cowboy.Serialization.csproj">
       <Project>{505d35f3-9835-45b6-9e30-4e4d6a7ffdb7}</Project>
       <Name>Cowboy.Serialization</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Cowboy.StaticContent\Cowboy.StaticContent.csproj">
-      <Project>{b37ca69a-0796-4e46-b1ff-83da39374ff8}</Project>
-      <Name>Cowboy.StaticContent</Name>
     </ProjectReference>
     <ProjectReference Include="..\Cowboy.Utilities\Cowboy.Utilities.csproj">
       <Project>{d80d7951-9cb6-4f7d-b9ac-1566c173c950}</Project>

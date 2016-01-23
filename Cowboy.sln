@@ -17,8 +17,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Http", "Cowboy.Http\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Serialization", "Cowboy.Serialization\Cowboy.Serialization.csproj", "{505D35F3-9835-45B6-9E30-4E4D6A7FFDB7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.StaticContent", "Cowboy.StaticContent\Cowboy.StaticContent.csproj", "{B37CA69A-0796-4E46-B1FF-83DA39374FF8}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Logging", "Cowboy.Logging\Cowboy.Logging.csproj", "{7ADA144A-A176-437B-812E-889B6AA2536E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Logging.NLogIntegration", "Cowboy.Logging.NLogIntegration\Cowboy.Logging.NLogIntegration.csproj", "{BE0E384E-A89C-4CC1-AE7C-E390AC8349F3}"
@@ -102,10 +100,6 @@ Global
 		{505D35F3-9835-45B6-9E30-4E4D6A7FFDB7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{505D35F3-9835-45B6-9E30-4E4D6A7FFDB7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{505D35F3-9835-45B6-9E30-4E4D6A7FFDB7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B37CA69A-0796-4E46-B1FF-83DA39374FF8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B37CA69A-0796-4E46-B1FF-83DA39374FF8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B37CA69A-0796-4E46-B1FF-83DA39374FF8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B37CA69A-0796-4E46-B1FF-83DA39374FF8}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7ADA144A-A176-437B-812E-889B6AA2536E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7ADA144A-A176-437B-812E-889B6AA2536E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7ADA144A-A176-437B-812E-889B6AA2536E}.Release|Any CPU.ActiveCfg = Release|Any CPU
