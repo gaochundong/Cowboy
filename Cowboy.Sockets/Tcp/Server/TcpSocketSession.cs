@@ -321,6 +321,9 @@ namespace Cowboy.Sockets
                     _server.RaiseClientDataReceived(this, payload, payloadOffset, payloadCount);
 
                     BufferDeflector.ShiftBuffer(_bufferManager, frameLength, ref _sessionBuffer, ref _sessionBufferCount);
+#if DEBUG
+                    _log.DebugFormat("Session [{0}] buffer length [{1}].", this, _sessionBufferCount);
+#endif
                 }
                 else
                 {
