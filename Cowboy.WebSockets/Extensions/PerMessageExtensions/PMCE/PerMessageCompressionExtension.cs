@@ -52,6 +52,31 @@ namespace Cowboy.WebSockets.Extensions
             return sb.ToString();
         }
 
+        public byte[] BuildExtensionData(byte[] payload, int offset, int count)
+        {
+            // Payload data:  (x+y) bytes
+            // 
+            //    The "Payload data" is defined as "Extension data" concatenated
+            //    with "Application data".
+            // 
+            // Extension data:  x bytes
+            // 
+            //    The "Extension data" is 0 bytes unless an extension has been
+            //    negotiated.  Any extension MUST specify the length of the
+            //    "Extension data", or how that length may be calculated, and how
+            //    the extension use MUST be negotiated during the opening handshake.
+            //    If present, the "Extension data" is included in the total payload
+            //    length.
+            // 
+            // Application data:  y bytes
+            // 
+            //    Arbitrary "Application data", taking up the remainder of the frame
+            //    after any "Extension data".  The length of the "Application data"
+            //    is equal to the payload length minus the length of the "Extension
+            //    data".
+            return null; // PMCE doesn't have an extension data definition.
+        }
+
         public byte[] ProcessIncomingMessagePayload(byte[] payload, int offset, int count)
         {
             return DeflateCompression.Decompress(payload, offset, count);

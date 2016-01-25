@@ -133,6 +133,14 @@ namespace Cowboy.WebSockets
 
         private byte[] Encode(OpCode opCode, byte[] payload, int offset, int count, bool isMasked = true, bool isFin = true)
         {
+            // Payload data:  (x+y) bytes
+            // Extension data:  x bytes
+            // Application data:  y bytes
+            // The "Extension data" is 0 bytes unless an extension has been
+            // negotiated.  Any extension MUST specify the length of the
+            // "Extension data", or how that length may be calculated, and how
+            // the extension use MUST be negotiated during the opening handshake.
+            // If present, the "Extension data" is included in the total payload length.
             if (this.NegotiatedExtensions != null)
             {
                 byte[] bakedBuffer = null;
@@ -356,7 +364,14 @@ namespace Cowboy.WebSockets
                 payloadCount = payload.Length;
             }
 
-            // 
+            // Payload data:  (x+y) bytes
+            // Extension data:  x bytes
+            // Application data:  y bytes
+            // The "Extension data" is 0 bytes unless an extension has been
+            // negotiated.  Any extension MUST specify the length of the
+            // "Extension data", or how that length may be calculated, and how
+            // the extension use MUST be negotiated during the opening handshake.
+            // If present, the "Extension data" is included in the total payload length.
             if (this.NegotiatedExtensions != null)
             {
                 byte[] bakedBuffer = null;

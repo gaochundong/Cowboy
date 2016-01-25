@@ -10,6 +10,8 @@
 
         string GetAgreedOffer();
 
+        byte[] BuildExtensionData(byte[] payload, int offset, int count);
+
         byte[] ProcessIncomingMessagePayload(byte[] payload, int offset, int count);
         byte[] ProcessOutgoingMessagePayload(byte[] payload, int offset, int count);
     }
