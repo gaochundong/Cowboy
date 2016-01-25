@@ -819,7 +819,8 @@ namespace Cowboy.WebSockets
             // bar(foo(data)), be those changes to the data itself (such as
             // compression) or changes to the framing that may "stack".
             var agreedExtensions = new SortedList<int, IWebSocketExtension>();
-            var offeredExtensions = string.Join(",", extensions).Split(',').Select(p => p.TrimStart().TrimEnd()).Where(p => !string.IsNullOrWhiteSpace(p));
+            var offeredExtensions = string.Join(",", extensions).Split(',')
+                .Select(p => p.TrimStart().TrimEnd()).Where(p => !string.IsNullOrWhiteSpace(p));
 
             int order = 0;
             foreach (var extension in offeredExtensions)
@@ -839,8 +840,8 @@ namespace Cowboy.WebSockets
                     || negotiatedExtension == null)
                 {
                     throw new WebSocketHandshakeException(string.Format(
-                        "Negotiate extension with remote [{0}] failed due to invalid parameter [{1}].",
-                        this.RemoteEndPoint, invalidParameter));
+                        "Negotiate extension with remote [{0}] failed due to extension [{1}] has invalid parameter [{2}].",
+                        this.RemoteEndPoint, extension, invalidParameter));
                 }
 
                 agreedExtensions.Add(order, negotiatedExtension);

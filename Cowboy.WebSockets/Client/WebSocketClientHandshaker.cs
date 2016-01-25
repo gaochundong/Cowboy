@@ -237,7 +237,8 @@ namespace Cowboy.WebSockets
                                 "Handshake with remote [{0}] failed due to empty sub-protocol.", client.RemoteEndPoint));
                     }
 
-                    var suggestedProtocols = protocols.First().Split(',').Select(p => p.TrimStart().TrimEnd()).Where(p => !string.IsNullOrWhiteSpace(p));
+                    var suggestedProtocols = protocols.First().Split(',')
+                        .Select(p => p.TrimStart().TrimEnd()).Where(p => !string.IsNullOrWhiteSpace(p));
 
                     if (!suggestedProtocols.Any())
                         throw new WebSocketHandshakeException(string.Format(

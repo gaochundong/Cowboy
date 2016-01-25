@@ -850,7 +850,8 @@ namespace Cowboy.WebSockets
             // bar(foo(data)), be those changes to the data itself (such as
             // compression) or changes to the framing that may "stack".
             var agreedExtensions = new SortedList<int, IWebSocketExtension>();
-            var suggestedExtensions = string.Join(",", extensions).Split(',').Select(p => p.TrimStart().TrimEnd()).Where(p => !string.IsNullOrWhiteSpace(p));
+            var suggestedExtensions = string.Join(",", extensions).Split(',')
+                .Select(p => p.TrimStart().TrimEnd()).Where(p => !string.IsNullOrWhiteSpace(p));
 
             int order = 0;
             foreach (var extension in suggestedExtensions)
@@ -874,8 +875,8 @@ namespace Cowboy.WebSockets
                     || negotiatedExtension == null)
                 {
                     throw new WebSocketHandshakeException(string.Format(
-                        "Negotiate extension with remote [{0}] failed due to invalid parameter [{1}].",
-                        this.RemoteEndPoint, invalidParameter));
+                        "Negotiate extension with remote [{0}] failed due to extension [{1}] has invalid parameter [{2}].",
+                        this.RemoteEndPoint, extension, invalidParameter));
                 }
 
                 agreedExtensions.Add(order, negotiatedExtension);
@@ -923,6 +924,48 @@ namespace Cowboy.WebSockets
         {
             if (string.IsNullOrWhiteSpace(protocol))
                 throw new ArgumentNullException("protocol");
+
+            if (this.RequestedSubProtocols == null
+                || !this.RequestedSubProtocols.Any()
+                || this.EnabledSubProtocols == null
+                || !this.EnabledSubProtocols.Any())
+                throw new WebSocketHandshakeException(string.Format(
+                    "Negotiate sub-protocol with remote [{0}] failed due to sub-protocol [{1}] is not enabled.",
+                    this.RemoteEndPoint, protocol));
+
+            var requestedSubProtocols = string.Join(",", this.RequestedSubProtocols.Select(s => s.RequestedSubProtocol))
+                .Split(',').Select(p => p.TrimStart().TrimEnd()).Where(p => !string.IsNullOrWhiteSpace(p));
+
+            if (!requestedSubProtocols.Contains(protocol))
+                throw new WebSocketHandshakeException(string.Format(
+                    "Negotiate sub-protocol with remote [{0}] failed due to sub-protocol [{1}] has not been requested.",
+                    this.RemoteEndPoint, protocol));
+
+            // format : name.version.parameter
+            var segements = protocol.Split('.')
+                .Select(p => p.TrimStart().TrimEnd()).Where(p => !string.IsNullOrWhiteSpace(p))
+                .ToArray();
+            string protocolName = segements[0];
+            string protocolVersion = segements.Length > 1 ? segements[1] : null;
+            string protocolParameter = segements.Length > 2 ? segements[2] : null;
+
+            if (!this.EnabledSubProtocols.ContainsKey(protocolName))
+                throw new WebSocketHandshakeException(string.Format(
+                    "Negotiate sub-protocol with remote [{0}] failed due to sub-protocol [{1}] is not enabled.",
+                    this.RemoteEndPoint, protocolName));
+
+            var subProtocolNegotiator = this.EnabledSubProtocols[protocolName];
+
+            string invalidParameter;
+            IWebSocketSubProtocol negotiatedSubProtocol;
+            if (!subProtocolNegotiator.NegotiateAsClient(protocolName, protocolVersion, protocolParameter, out invalidParameter, out negotiatedSubProtocol)
+                || !string.IsNullOrEmpty(invalidParameter)
+                || negotiatedSubProtocol == null)
+            {
+                throw new WebSocketHandshakeException(string.Format(
+                    "Negotiate sub-protocol with remote [{0}] failed due to sub-protocol [{1}] has invalid parameter [{2}].",
+                    this.RemoteEndPoint, protocol, invalidParameter));
+            }
         }
 
         #endregion
