@@ -850,9 +850,10 @@ namespace Cowboy.WebSockets
             // bar(foo(data)), be those changes to the data itself (such as
             // compression) or changes to the framing that may "stack".
             var agreedExtensions = new SortedList<int, IWebSocketExtension>();
+            var suggestedExtensions = string.Join(",", extensions).Split(',').Select(p => p.TrimStart().TrimEnd()).Where(p => !string.IsNullOrWhiteSpace(p));
 
             int order = 0;
-            foreach (var extension in extensions)
+            foreach (var extension in suggestedExtensions)
             {
                 order++;
 
