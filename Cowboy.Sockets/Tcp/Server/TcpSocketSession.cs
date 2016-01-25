@@ -87,26 +87,43 @@ namespace Cowboy.Sockets
         {
             lock (_opsLock)
             {
-                if (Connected)
+                try
                 {
-                    _closed = false;
-
-                    _stream = NegotiateStream(_tcpClient.GetStream());
-
-                    _receiveBuffer = _bufferManager.BorrowBuffer();
-                    _sessionBuffer = _bufferManager.BorrowBuffer();
-                    _sessionBufferCount = 0;
-
-                    try
+                    if (Connected)
                     {
-                        _server.RaiseClientConnected(this);
+                        _closed = false;
 
-                        ContinueReadBuffer();
+                        _stream = NegotiateStream(_tcpClient.GetStream());
+
+                        _receiveBuffer = _bufferManager.BorrowBuffer();
+                        _sessionBuffer = _bufferManager.BorrowBuffer();
+                        _sessionBufferCount = 0;
+
+                        bool isErrorOccurredInUserSide = false;
+                        try
+                        {
+                            _server.RaiseClientConnected(this);
+                        }
+                        catch (Exception ex)
+                        {
+                            isErrorOccurredInUserSide = true;
+                            HandleUserSideError(ex);
+                        }
+
+                        if (!isErrorOccurredInUserSide)
+                        {
+                            ContinueReadBuffer();
+                        }
+                        else
+                        {
+                            Close();
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        HandleUserSideError(ex);
-                    }
+                }
+                catch (Exception ex)
+                {
+                    _log.Error(ex.Message, ex);
+                    Close();
                 }
             }
         }

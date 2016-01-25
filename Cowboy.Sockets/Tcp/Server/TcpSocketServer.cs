@@ -156,10 +156,26 @@ namespace Cowboy.Sockets
                 if (!tcpClient.Connected) return;
 
                 var session = new TcpSocketSession(tcpClient, _configuration, _bufferManager, this);
-                _sessions.AddOrUpdate(session.SessionKey, session, (n, o) => { return o; });
-                session.Start();
+                bool isSessionStarted = false;
+                try
+                {
+                    _sessions.AddOrUpdate(session.SessionKey, session, (n, o) => { return o; });
+                    session.Start();
+                    isSessionStarted = true;
+                }
+                catch (Exception ex)
+                {
+                    _log.Error(ex.Message, ex);
+                }
 
-                ContinueAcceptSession(listener);
+                if (isSessionStarted)
+                {
+                    ContinueAcceptSession(listener);
+                }
+                else
+                {
+                    CloseSession(session);
+                }
             }
             catch (Exception ex)
             {

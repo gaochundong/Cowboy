@@ -192,20 +192,30 @@ namespace Cowboy.Sockets
 
                 _stream = NegotiateStream(_tcpClient.GetStream());
 
-                ContinueReadBuffer();
-
+                bool isErrorOccurredInUserSide = false;
                 try
                 {
                     RaiseServerConnected();
                 }
                 catch (Exception ex)
                 {
+                    isErrorOccurredInUserSide = true;
                     HandleUserSideError(ex);
+                }
+
+                if (!isErrorOccurredInUserSide)
+                {
+                    ContinueReadBuffer();
+                }
+                else
+                {
+                    Close();
                 }
             }
             catch (Exception ex)
             {
                 _log.Error(ex.Message, ex);
+                Close();
             }
         }
 
