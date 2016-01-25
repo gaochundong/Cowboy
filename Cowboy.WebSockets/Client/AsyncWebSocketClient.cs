@@ -253,15 +253,31 @@ namespace Cowboy.WebSockets
                     this.RemoteEndPoint,
                     _dispatcher.GetType().Name,
                     DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
-                await _dispatcher.OnServerConnected(this);
 
-                _keepAliveTracker.StartTimer();
-
-                Task.Run(async () =>
+                bool isErrorOccurredInUserSide = false;
+                try
                 {
-                    await Process();
-                })
-                .Forget();
+                    await _dispatcher.OnServerConnected(this);
+                }
+                catch (Exception ex)
+                {
+                    isErrorOccurredInUserSide = true;
+                    HandleUserSideError(ex);
+                }
+
+                if (!isErrorOccurredInUserSide)
+                {
+                    Task.Run(async () =>
+                    {
+                        _keepAliveTracker.StartTimer();
+                        await Process();
+                    })
+                    .Forget();
+                }
+                else
+                {
+                    await Abort();
+                }
             }
             catch (ObjectDisposedException) { }
             catch (Exception ex)
@@ -313,12 +329,26 @@ namespace Cowboy.WebSockets
                                     case OpCode.Text:
                                         {
                                             var text = Encoding.UTF8.GetString(payload, payloadOffset, payloadCount);
-                                            await _dispatcher.OnServerTextReceived(this, text);
+                                            try
+                                            {
+                                                await _dispatcher.OnServerTextReceived(this, text);
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                HandleUserSideError(ex);
+                                            }
                                         }
                                         break;
                                     case OpCode.Binary:
                                         {
-                                            await _dispatcher.OnServerBinaryReceived(this, payload, payloadOffset, payloadCount);
+                                            try
+                                            {
+                                                await _dispatcher.OnServerBinaryReceived(this, payload, payloadOffset, payloadCount);
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                HandleUserSideError(ex);
+                                            }
                                         }
                                         break;
                                     case OpCode.Close:
@@ -650,6 +680,11 @@ namespace Cowboy.WebSockets
             return handshakeResult;
         }
 
+        private static void HandleUserSideError(Exception ex)
+        {
+            _log.Error(string.Format("Error occurred in user side [{0}].", ex.Message), ex);
+        }
+
         #endregion
 
         #region Close
@@ -740,7 +775,14 @@ namespace Cowboy.WebSockets
                 this.RemoteEndPoint,
                 _dispatcher.GetType().Name,
                 DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
-            await _dispatcher.OnServerDisconnected(this);
+            try
+            {
+                await _dispatcher.OnServerDisconnected(this);
+            }
+            catch (Exception ex)
+            {
+                HandleUserSideError(ex);
+            }
         }
 
         public async Task Abort()

@@ -134,7 +134,14 @@ namespace Cowboy.Sockets
                             _tcpClient = null;
                         }
 
-                        RaiseServerDisconnected();
+                        try
+                        {
+                            RaiseServerDisconnected();
+                        }
+                        catch (Exception ex)
+                        {
+                            HandleUserSideError(ex);
+                        }
                     }
                     finally
                     {
@@ -187,7 +194,14 @@ namespace Cowboy.Sockets
 
                 ContinueReadBuffer();
 
-                RaiseServerConnected();
+                try
+                {
+                    RaiseServerConnected();
+                }
+                catch (Exception ex)
+                {
+                    HandleUserSideError(ex);
+                }
             }
             catch (Exception ex)
             {
@@ -342,12 +356,21 @@ namespace Cowboy.Sockets
                 if (_configuration.FrameBuilder.TryDecodeFrame(_sessionBuffer, _sessionBufferCount,
                     out frameLength, out payload, out payloadOffset, out payloadCount))
                 {
-                    RaiseServerDataReceived(payload, payloadOffset, payloadCount);
-
-                    BufferDeflector.ShiftBuffer(_bufferManager, frameLength, ref _sessionBuffer, ref _sessionBufferCount);
+                    try
+                    {
+                        RaiseServerDataReceived(payload, payloadOffset, payloadCount);
+                    }
+                    catch (Exception ex)
+                    {
+                        HandleUserSideError(ex);
+                    }
+                    finally
+                    {
+                        BufferDeflector.ShiftBuffer(_bufferManager, frameLength, ref _sessionBuffer, ref _sessionBufferCount);
 #if DEBUG
-                    _log.DebugFormat("Session [{0}] buffer length [{1}].", this, _sessionBufferCount);
+                        _log.DebugFormat("Session [{0}] buffer length [{1}].", this, _sessionBufferCount);
 #endif
+                    }
                 }
                 else
                 {
@@ -415,46 +438,25 @@ namespace Cowboy.Sockets
 
         private void RaiseServerConnected()
         {
-            try
+            if (ServerConnected != null)
             {
-                if (ServerConnected != null)
-                {
-                    ServerConnected(this, new TcpServerConnectedEventArgs(this.RemoteEndPoint, this.LocalEndPoint));
-                }
-            }
-            catch (Exception ex)
-            {
-                HandleUserSideError(ex);
+                ServerConnected(this, new TcpServerConnectedEventArgs(this.RemoteEndPoint, this.LocalEndPoint));
             }
         }
 
         private void RaiseServerDisconnected()
         {
-            try
+            if (ServerDisconnected != null)
             {
-                if (ServerDisconnected != null)
-                {
-                    ServerDisconnected(this, new TcpServerDisconnectedEventArgs(_remoteEndPoint, _localEndPoint));
-                }
-            }
-            catch (Exception ex)
-            {
-                HandleUserSideError(ex);
+                ServerDisconnected(this, new TcpServerDisconnectedEventArgs(_remoteEndPoint, _localEndPoint));
             }
         }
 
         private void RaiseServerDataReceived(byte[] data, int dataOffset, int dataLength)
         {
-            try
+            if (ServerDataReceived != null)
             {
-                if (ServerDataReceived != null)
-                {
-                    ServerDataReceived(this, new TcpServerDataReceivedEventArgs(this, data, dataOffset, dataLength));
-                }
-            }
-            catch (Exception ex)
-            {
-                HandleUserSideError(ex);
+                ServerDataReceived(this, new TcpServerDataReceivedEventArgs(this, data, dataOffset, dataLength));
             }
         }
 

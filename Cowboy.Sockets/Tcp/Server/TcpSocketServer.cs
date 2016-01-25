@@ -40,7 +40,7 @@ namespace Cowboy.Sockets
 
             this.ListenedEndPoint = listenedEndPoint;
             _configuration = configuration ?? new TcpSocketServerConfiguration();
-            
+
             if (_configuration.FrameBuilder == null)
                 throw new InvalidProgramException("The frame handler in configuration cannot be null.");
 
@@ -155,15 +155,10 @@ namespace Cowboy.Sockets
                 TcpClient tcpClient = listener.EndAcceptTcpClient(ar);
                 if (!tcpClient.Connected) return;
 
-                // create session
                 var session = new TcpSocketSession(tcpClient, _configuration, _bufferManager, this);
+                _sessions.AddOrUpdate(session.SessionKey, session, (n, o) => { return o; });
                 session.Start();
 
-                // add client connection to cache
-                _sessions.AddOrUpdate(session.SessionKey, session, (n, o) => { return o; });
-                RaiseClientConnected(session);
-
-                // keep listening to accept next connection
                 ContinueAcceptSession(listener);
             }
             catch (Exception ex)

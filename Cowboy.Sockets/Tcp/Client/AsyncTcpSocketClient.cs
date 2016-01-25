@@ -229,13 +229,29 @@ namespace Cowboy.Sockets
                     this.RemoteEndPoint,
                     _dispatcher.GetType().Name,
                     DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
-                await _dispatcher.OnServerConnected(this);
-
-                Task.Run(async () =>
+                bool isErrorOccurredInUserSide = false;
+                try
                 {
-                    await Process();
-                })
-                .Forget();
+                    await _dispatcher.OnServerConnected(this);
+                }
+                catch (Exception ex)
+                {
+                    isErrorOccurredInUserSide = true;
+                    HandleUserSideError(ex);
+                }
+
+                if (!isErrorOccurredInUserSide)
+                {
+                    Task.Run(async () =>
+                    {
+                        await Process();
+                    })
+                    .Forget();
+                }
+                else
+                {
+                    await Close();
+                }
             }
             catch (ObjectDisposedException) { }
             catch (Exception ex)
@@ -268,12 +284,21 @@ namespace Cowboy.Sockets
                         if (_configuration.FrameBuilder.TryDecodeFrame(_sessionBuffer, _sessionBufferCount,
                             out frameLength, out payload, out payloadOffset, out payloadCount))
                         {
-                            await _dispatcher.OnServerDataReceived(this, payload, payloadOffset, payloadCount);
-
-                            BufferDeflector.ShiftBuffer(_bufferManager, frameLength, ref _sessionBuffer, ref _sessionBufferCount);
+                            try
+                            {
+                                await _dispatcher.OnServerDataReceived(this, payload, payloadOffset, payloadCount);
+                            }
+                            catch (Exception ex)
+                            {
+                                HandleUserSideError(ex);
+                            }
+                            finally
+                            {
+                                BufferDeflector.ShiftBuffer(_bufferManager, frameLength, ref _sessionBuffer, ref _sessionBufferCount);
 #if DEBUG
-                            _log.DebugFormat("Session [{0}] buffer length [{1}].", this, _sessionBufferCount);
+                                _log.DebugFormat("Session [{0}] buffer length [{1}].", this, _sessionBufferCount);
 #endif
+                            }
                         }
                         else
                         {
@@ -370,6 +395,11 @@ namespace Cowboy.Sockets
             return sslStream;
         }
 
+        private static void HandleUserSideError(Exception ex)
+        {
+            _log.Error(string.Format("Error occurred in user side [{0}].", ex.Message), ex);
+        }
+
         #endregion
 
         #region Close
@@ -405,7 +435,14 @@ namespace Cowboy.Sockets
                 this.RemoteEndPoint,
                 _dispatcher.GetType().Name,
                 DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
-            await _dispatcher.OnServerDisconnected(this);
+            try
+            {
+                await _dispatcher.OnServerDisconnected(this);
+            }
+            catch (Exception ex)
+            {
+                HandleUserSideError(ex);
+            }
         }
 
         #endregion
