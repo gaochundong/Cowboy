@@ -16,7 +16,7 @@ namespace Cowboy.Sockets
             ReceiveTimeout = TimeSpan.Zero;
             SendTimeout = TimeSpan.Zero;
             NoDelay = true;
-            LingerState = new LingerOption(false, 0);
+            LingerState = new LingerOption(false, 0); // The socket will linger for x seconds after Socket.Close is called.
 
             SslEnabled = false;
             SslTargetHost = null;
