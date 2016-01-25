@@ -27,6 +27,9 @@ namespace Cowboy.WebSockets.Extensions
 
         public string Name { get { return RegisteredToken; } }
 
+        // PMCEs use the RSV1 bit of the WebSocket frame header to indicate whether a
+        // message is compressed or not so that an endpoint can choose not to
+        // compress messages with incompressible contents.
         public bool Rsv1BitOccupied { get { return true; } }
         public bool Rsv2BitOccupied { get { return false; } }
         public bool Rsv3BitOccupied { get { return false; } }

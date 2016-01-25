@@ -49,6 +49,9 @@ namespace Cowboy.WebSockets.Extensions
                 return true;
             }
 
+            // This set of elements MAY include multiple PMCEs with the same extension
+            // name to offer the possibility to use the same algorithm with
+            // different configuration parameters.
             for (int i = 1; i < segements.Length; i++)
             {
                 var offeredParameter = segements[i];
@@ -59,6 +62,9 @@ namespace Cowboy.WebSockets.Extensions
                 }
             }
 
+            // The order of elements is important as it specifies the client's preference.  
+            // An element preceding another element has higher preference.  It is recommended
+            // that a server accepts PMCEs with higher preference if the server supports them.
             var agreedSet = new SortedList<int, AgreedExtensionParameter>();
 
             for (int i = 1; i < segements.Length; i++)
