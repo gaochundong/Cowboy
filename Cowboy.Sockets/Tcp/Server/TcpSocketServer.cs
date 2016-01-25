@@ -288,6 +288,74 @@ namespace Cowboy.Sockets
             }
         }
 
+        public void SendToAsync(string sessionKey, byte[] data)
+        {
+            GuardRunning();
+
+            if (string.IsNullOrEmpty(sessionKey))
+                throw new ArgumentNullException("sessionKey");
+
+            if (data == null)
+                throw new ArgumentNullException("data");
+
+            SendToAsync(sessionKey, data, 0, data.Length);
+        }
+
+        public void SendToAsync(string sessionKey, byte[] data, int offset, int count)
+        {
+            GuardRunning();
+
+            if (string.IsNullOrEmpty(sessionKey))
+                throw new ArgumentNullException("sessionKey");
+
+            if (data == null)
+                throw new ArgumentNullException("data");
+
+            TcpSocketSession session = null;
+            if (_sessions.TryGetValue(sessionKey, out session))
+            {
+                session.SendAsync(data, offset, count);
+            }
+            else
+            {
+                _log.WarnFormat("Cannot find session [{0}].", sessionKey);
+            }
+        }
+
+        public void SendToAsync(TcpSocketSession session, byte[] data)
+        {
+            GuardRunning();
+
+            if (session == null)
+                throw new ArgumentNullException("session");
+
+            if (data == null)
+                throw new ArgumentNullException("data");
+
+            SendToAsync(session, data, 0, data.Length);
+        }
+
+        public void SendToAsync(TcpSocketSession session, byte[] data, int offset, int count)
+        {
+            GuardRunning();
+
+            if (session == null)
+                throw new ArgumentNullException("session");
+
+            if (data == null)
+                throw new ArgumentNullException("data");
+
+            TcpSocketSession writeSession = null;
+            if (_sessions.TryGetValue(session.SessionKey, out writeSession))
+            {
+                session.SendAsync(data, offset, count);
+            }
+            else
+            {
+                _log.WarnFormat("Cannot find session [{0}].", session);
+            }
+        }
+
         public void Broadcast(byte[] data)
         {
             GuardRunning();
@@ -308,6 +376,29 @@ namespace Cowboy.Sockets
             foreach (var session in _sessions.Values)
             {
                 session.Send(data, offset, count);
+            }
+        }
+
+        public void BroadcastAsync(byte[] data)
+        {
+            GuardRunning();
+
+            if (data == null)
+                throw new ArgumentNullException("data");
+
+            BroadcastAsync(data, 0, data.Length);
+        }
+
+        public void BroadcastAsync(byte[] data, int offset, int count)
+        {
+            GuardRunning();
+
+            if (data == null)
+                throw new ArgumentNullException("data");
+
+            foreach (var session in _sessions.Values)
+            {
+                session.SendAsync(data, offset, count);
             }
         }
 

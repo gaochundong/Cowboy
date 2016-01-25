@@ -415,6 +415,38 @@ namespace Cowboy.Sockets
                 if (_stream.CanWrite)
                 {
                     var frame = _configuration.FrameBuilder.EncodeFrame(data, offset, count);
+                    _stream.Write(frame, 0, frame.Length);
+                }
+            }
+            catch (Exception ex)
+            {
+                if (!CloseIfShould(ex))
+                    throw;
+            }
+        }
+
+        public void SendAsync(byte[] data)
+        {
+            if (data == null)
+                throw new ArgumentNullException("data");
+
+            SendAsync(data, 0, data.Length);
+        }
+
+        public void SendAsync(byte[] data, int offset, int count)
+        {
+            BufferValidator.ValidateBuffer(data, offset, count, "data");
+
+            if (!Connected)
+            {
+                throw new InvalidProgramException("This client has not connected to server.");
+            }
+
+            try
+            {
+                if (_stream.CanWrite)
+                {
+                    var frame = _configuration.FrameBuilder.EncodeFrame(data, offset, count);
                     _stream.BeginWrite(frame, 0, frame.Length, HandleDataWritten, _tcpClient);
                 }
             }
