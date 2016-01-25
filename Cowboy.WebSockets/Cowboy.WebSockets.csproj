@@ -90,6 +90,7 @@
     <Compile Include="Server\Module\AsyncWebSocketServerModule.cs" />
     <Compile Include="Server\Module\AsyncWebSocketServerModuleCatalog.cs" />
     <Compile Include="Server\Module\AsyncWebSocketRouteResolver.cs" />
+    <Compile Include="SubProtocols\WebSocketSubProtocolRequestDescription.cs" />
     <Compile Include="WebSocketCloseCode.cs" />
     <Compile Include="Exceptions\WebSocketHandshakeException.cs" />
     <Compile Include="Exceptions\WebSocketException.cs" />
@@ -111,9 +112,7 @@
       <Name>Cowboy.Logging</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="SubProtocols\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using Cowboy.Buffer;
 using Cowboy.Logging;
 using Cowboy.WebSockets.Extensions;
+using Cowboy.WebSockets.SubProtocols;
 
 namespace Cowboy.WebSockets
 {
@@ -159,6 +160,7 @@ namespace Cowboy.WebSockets
         public TimeSpan KeepAliveTimeout { get { return _configuration.KeepAliveTimeout; } }
 
         public IEnumerable<WebSocketExtensionOfferDescription> OfferedExtensions { get { return _configuration.OfferedExtensions; } }
+        public IEnumerable<WebSocketSubProtocolRequestDescription> RequestedSubProtocols { get { return _configuration.RequestedSubProtocols; } }
 
         public WebSocketState State
         {
@@ -556,6 +558,12 @@ namespace Cowboy.WebSockets
             }
 
             _frameBuilder.NegotiatedExtensions = agreedExtensions;
+        }
+
+        internal void UseSubProtocol(string protocol)
+        {
+            if (string.IsNullOrWhiteSpace(protocol))
+                throw new ArgumentNullException("protocol");
         }
 
         private bool ShouldThrow(Exception ex)

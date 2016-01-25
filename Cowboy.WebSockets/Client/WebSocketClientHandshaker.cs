@@ -63,16 +63,6 @@ namespace Cowboy.WebSockets
                 }
             }
 
-            // The request MUST include a header field with the name |Origin|
-            // [RFC6454] if the request is coming from a browser client.  If
-            // the connection is from a non-browser client, the request MAY
-            // include this header field if the semantics of that client match
-            // the use-case described here for browser clients.  The value of
-            // this header field is the ASCII serialization of origin of the
-            // context in which the code establishing the connection is
-            // running.  See [RFC6454] for the details of how this header field
-            // value is constructed.
-
             // The request MAY include a header field with the name
             // |Sec-WebSocket-Protocol|.  If present, this value indicates one
             // or more comma-separated subprotocol the client wishes to speak,
@@ -82,6 +72,23 @@ namespace Cowboy.WebSockets
             // [RFC2616] and MUST all be unique strings.  The ABNF for the
             // value of this header field is 1#token, where the definitions of
             // constructs and rules are as given in [RFC2616].
+            if (client.RequestedSubProtocols != null && client.RequestedSubProtocols.Any())
+            {
+                foreach (var description in client.RequestedSubProtocols)
+                {
+                    sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.SecWebSocketProtocol, description.RequestedSubProtocol);
+                }
+            }
+
+            // The request MUST include a header field with the name |Origin|
+            // [RFC6454] if the request is coming from a browser client.  If
+            // the connection is from a non-browser client, the request MAY
+            // include this header field if the semantics of that client match
+            // the use-case described here for browser clients.  The value of
+            // this header field is the ASCII serialization of origin of the
+            // context in which the code establishing the connection is
+            // running.  See [RFC6454] for the details of how this header field
+            // value is constructed.
 
             // The request MAY include any other header fields, for example,
             // cookies [RFC6265] and/or authentication-related header fields
@@ -196,6 +203,15 @@ namespace Cowboy.WebSockets
                 // MUST _Fail the WebSocket Connection_.
                 if (extensions != null)
                 {
+                    foreach (var extension in extensions)
+                    {
+                        // The empty string is not the same as the null value for these 
+                        // purposes and is not a legal value for this field.
+                        if (string.IsNullOrWhiteSpace(extension))
+                            throw new WebSocketHandshakeException(string.Format(
+                                "Handshake with remote [{0}] failed due to empty extension.", client.RemoteEndPoint));
+                    }
+
                     client.AgreeExtensions(extensions);
                 }
 
@@ -204,6 +220,34 @@ namespace Cowboy.WebSockets
                 // not present in the client's handshake (the server has indicated a
                 // subprotocol not requested by the client), the client MUST _Fail
                 // the WebSocket Connection_.
+                if (protocols != null)
+                {
+                    if (!protocols.Any())
+                        throw new WebSocketHandshakeException(string.Format(
+                            "Handshake with remote [{0}] failed due to empty sub-protocol.", client.RemoteEndPoint));
+                    if (protocols.Count > 1)
+                        throw new WebSocketHandshakeException(string.Format(
+                            "Handshake with remote [{0}] failed due to suggest to use multiple sub-protocols.", client.RemoteEndPoint));
+                    foreach (var protocol in protocols)
+                    {
+                        // The empty string is not the same as the null value for these 
+                        // purposes and is not a legal value for this field.
+                        if (string.IsNullOrWhiteSpace(protocol))
+                            throw new WebSocketHandshakeException(string.Format(
+                                "Handshake with remote [{0}] failed due to empty sub-protocol.", client.RemoteEndPoint));
+                    }
+
+                    var suggestedProtocols = protocols.First().Split(',').Select(p => p.TrimStart().TrimEnd()).Where(p => !string.IsNullOrWhiteSpace(p));
+
+                    if (!suggestedProtocols.Any())
+                        throw new WebSocketHandshakeException(string.Format(
+                            "Handshake with remote [{0}] failed due to invalid sub-protocol.", client.RemoteEndPoint));
+                    if (suggestedProtocols.Count() > 1)
+                        throw new WebSocketHandshakeException(string.Format(
+                            "Handshake with remote [{0}] failed due to suggest to use multiple sub-protocols.", client.RemoteEndPoint));
+
+                    client.UseSubProtocol(suggestedProtocols.First());
+                }
 
             }
             catch (Exception ex)

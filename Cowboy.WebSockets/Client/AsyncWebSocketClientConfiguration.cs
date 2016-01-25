@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using Cowboy.WebSockets.Extensions;
+using Cowboy.WebSockets.SubProtocols;
 
 namespace Cowboy.WebSockets
 {
@@ -35,6 +36,7 @@ namespace Cowboy.WebSockets
             PerMessageCompressionExtensionEnabled = true;
             OfferedExtensions = new List<WebSocketExtensionOfferDescription>();
             OfferedExtensions.Add(new WebSocketExtensionOfferDescription("permessage-deflate"));
+            RequestedSubProtocols = new List<WebSocketSubProtocolRequestDescription>();
         }
 
         public int InitialBufferAllocationCount { get; set; }
@@ -59,5 +61,6 @@ namespace Cowboy.WebSockets
 
         public bool PerMessageCompressionExtensionEnabled { get; set; }
         public List<WebSocketExtensionOfferDescription> OfferedExtensions { get; set; }
+        public List<WebSocketSubProtocolRequestDescription> RequestedSubProtocols { get; set; }
     }
 }
