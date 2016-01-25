@@ -74,6 +74,12 @@ namespace Cowboy.Sockets
         public IPEndPoint RemoteEndPoint { get { return Connected ? (IPEndPoint)_tcpClient.Client.RemoteEndPoint : _remoteEndPoint; } }
         public IPEndPoint LocalEndPoint { get { return Connected ? (IPEndPoint)_tcpClient.Client.LocalEndPoint : _localEndPoint; } }
 
+        public override string ToString()
+        {
+            return string.Format("RemoteEndPoint[{0}], LocalEndPoint[{1}]",
+                this.RemoteEndPoint, this.LocalEndPoint);
+        }
+
         #endregion
 
         #region Connect

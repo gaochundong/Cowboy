@@ -182,6 +182,12 @@ namespace Cowboy.WebSockets
             }
         }
 
+        public override string ToString()
+        {
+            return string.Format("RemoteEndPoint[{0}], LocalEndPoint[{1}]",
+                this.RemoteEndPoint, this.LocalEndPoint);
+        }
+
         #endregion
 
         #region Connect
@@ -416,6 +422,9 @@ namespace Cowboy.WebSockets
                             }
 
                             BufferDeflector.ShiftBuffer(_bufferManager, frameHeader.Length + frameHeader.PayloadLength, ref _sessionBuffer, ref _sessionBufferCount);
+#if DEBUG
+                            _log.DebugFormat("Session [{0}] buffer length [{1}].", this, _sessionBufferCount);
+#endif
                         }
                         else
                         {

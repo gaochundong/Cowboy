@@ -149,6 +149,12 @@ namespace Cowboy.WebSockets
             }
         }
 
+        public override string ToString()
+        {
+            return string.Format("SessionKey[{0}], RemoteEndPoint[{1}], LocalEndPoint[{2}]",
+                this.SessionKey, this.RemoteEndPoint, this.LocalEndPoint);
+        }
+
         #endregion
 
         #region Start
@@ -372,6 +378,9 @@ namespace Cowboy.WebSockets
                             }
 
                             BufferDeflector.ShiftBuffer(_bufferManager, frameHeader.Length + frameHeader.PayloadLength, ref _sessionBuffer, ref _sessionBufferCount);
+#if DEBUG
+                            _log.DebugFormat("Session [{0}] buffer length [{1}].", this, _sessionBufferCount);
+#endif
                         }
                         else
                         {
@@ -597,12 +606,6 @@ namespace Cowboy.WebSockets
             }
 
             return handshakeResult;
-        }
-
-        public override string ToString()
-        {
-            return string.Format("SessionKey[{0}], RemoteEndPoint[{1}], LocalEndPoint[{2}]",
-                this.SessionKey, this.RemoteEndPoint, this.LocalEndPoint);
         }
 
         #endregion

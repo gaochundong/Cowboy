@@ -143,7 +143,7 @@ namespace Cowboy.WebSockets
             catch (Exception ex)
             {
                 _log.ErrorFormat("{0}{1}{2}", session, Environment.NewLine, request);
-                _log.ErrorFormat(ex.Message, ex);
+                _log.Error(ex.Message, ex);
                 throw;
             }
 

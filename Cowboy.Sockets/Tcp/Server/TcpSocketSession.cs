@@ -11,6 +11,8 @@ namespace Cowboy.Sockets
 {
     public sealed class TcpSocketSession
     {
+        #region Fields
+
         private static readonly ILog _log = Logger.Get<TcpSocketSession>();
         private TcpClient _tcpClient;
         private readonly object _opsLock = new object();
@@ -25,6 +27,10 @@ namespace Cowboy.Sockets
         private int _sessionBufferCount = 0;
         private IPEndPoint _remoteEndPoint;
         private IPEndPoint _localEndPoint;
+
+        #endregion
+
+        #region Constructors
 
         public TcpSocketSession(
             TcpClient tcpClient,
@@ -55,6 +61,10 @@ namespace Cowboy.Sockets
             _localEndPoint = Connected ? (IPEndPoint)_tcpClient.Client.LocalEndPoint : null;
         }
 
+        #endregion
+
+        #region Properties
+
         public string SessionKey { get { return _sessionKey; } }
         public DateTime StartTime { get; private set; }
         public bool Connected { get { return _tcpClient != null && _tcpClient.Connected; } }
@@ -62,6 +72,16 @@ namespace Cowboy.Sockets
         public IPEndPoint LocalEndPoint { get { return Connected ? (IPEndPoint)_tcpClient.Client.LocalEndPoint : _localEndPoint; } }
         public TcpSocketServer Server { get { return _server; } }
         public TimeSpan ConnectTimeout { get { return _configuration.ConnectTimeout; } }
+
+        public override string ToString()
+        {
+            return string.Format("SessionKey[{0}], RemoteEndPoint[{1}], LocalEndPoint[{2}]",
+                this.SessionKey, this.RemoteEndPoint, this.LocalEndPoint);
+        }
+
+        #endregion
+
+        #region Connect
 
         internal void Start()
         {
@@ -309,11 +329,7 @@ namespace Cowboy.Sockets
             }
         }
 
-        public override string ToString()
-        {
-            return string.Format("SessionKey[{0}], RemoteEndPoint[{1}], LocalEndPoint[{2}]",
-                this.SessionKey, this.RemoteEndPoint, this.LocalEndPoint);
-        }
+        #endregion
 
         #region Send
 

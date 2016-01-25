@@ -13,6 +13,8 @@ namespace Cowboy.Sockets
 {
     public sealed class AsyncTcpSocketSession
     {
+        #region Fields
+
         private static readonly ILog _log = Logger.Get<AsyncTcpSocketSession>();
         private TcpClient _tcpClient;
         private readonly AsyncTcpSocketServerConfiguration _configuration;
@@ -32,6 +34,10 @@ namespace Cowboy.Sockets
         private const int _connecting = 1;
         private const int _connected = 2;
         private const int _disposed = 5;
+
+        #endregion
+
+        #region Constructors
 
         public AsyncTcpSocketSession(
             TcpClient tcpClient,
@@ -65,6 +71,10 @@ namespace Cowboy.Sockets
             _localEndPoint = (_tcpClient != null && _tcpClient.Client.Connected) ?
                     (IPEndPoint)_tcpClient.Client.LocalEndPoint : null;
         }
+
+        #endregion
+
+        #region Properties
 
         public string SessionKey { get { return _sessionKey; } }
         public DateTime StartTime { get; private set; }
@@ -106,6 +116,14 @@ namespace Cowboy.Sockets
                 }
             }
         }
+
+        public override string ToString()
+        {
+            return string.Format("SessionKey[{0}], RemoteEndPoint[{1}], LocalEndPoint[{2}]",
+                this.SessionKey, this.RemoteEndPoint, this.LocalEndPoint);
+        }
+
+        #endregion
 
         #region Start
 
@@ -281,12 +299,6 @@ namespace Cowboy.Sockets
                 sslStream.CipherStrength);
 
             return sslStream;
-        }
-
-        public override string ToString()
-        {
-            return string.Format("SessionKey[{0}], RemoteEndPoint[{1}], LocalEndPoint[{2}]",
-                this.SessionKey, this.RemoteEndPoint, this.LocalEndPoint);
         }
 
         #endregion

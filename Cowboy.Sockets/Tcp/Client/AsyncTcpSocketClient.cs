@@ -174,6 +174,12 @@ namespace Cowboy.Sockets
             }
         }
 
+        public override string ToString()
+        {
+            return string.Format("RemoteEndPoint[{0}], LocalEndPoint[{1}]",
+                this.RemoteEndPoint, this.LocalEndPoint);
+        }
+
         #endregion
 
         #region Connect

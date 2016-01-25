@@ -209,7 +209,7 @@ namespace Cowboy.WebSockets
             catch (Exception ex)
             {
                 _log.ErrorFormat("{0}{1}{2}", client, Environment.NewLine, response);
-                _log.ErrorFormat(ex.Message, ex);
+                _log.Error(ex.Message, ex);
                 throw;
             }
 
