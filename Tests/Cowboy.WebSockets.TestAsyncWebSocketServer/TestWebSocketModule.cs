@@ -22,7 +22,7 @@ namespace Cowboy.WebSockets.TestAsyncWebSocketServer
             Console.Write(string.Format("WebSocket session [{0}] received Text --> ", session.RemoteEndPoint));
             Console.WriteLine(string.Format("{0}", text));
 
-            await session.SendText("Echo -> " + text);
+            await session.SendTextAsync("Echo -> " + text);
         }
 
         public override async Task OnSessionBinaryReceived(AsyncWebSocketSession session, byte[] data, int offset, int count)
@@ -31,7 +31,7 @@ namespace Cowboy.WebSockets.TestAsyncWebSocketServer
             Console.Write(string.Format("WebSocket session [{0}] received Binary --> ", session.RemoteEndPoint));
             Console.WriteLine(string.Format("{0}", text));
 
-            await session.SendBinary(Encoding.UTF8.GetBytes("Echo -> " + text));
+            await session.SendBinaryAsync(Encoding.UTF8.GetBytes("Echo -> " + text));
         }
 
         public override async Task OnSessionClosed(AsyncWebSocketSession session)

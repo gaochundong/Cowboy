@@ -38,7 +38,7 @@ namespace Cowboy.Sockets.TestAsyncTcpSocketClient
                             break;
                         Task.Run(async () =>
                         {
-                            await _client.Send(Encoding.UTF8.GetBytes(text));
+                            await _client.SendAsync(Encoding.UTF8.GetBytes(text));
                             Console.WriteLine("Client [{0}] send data -> [{1}].", _client.LocalEndPoint, text);
                         });
                     }

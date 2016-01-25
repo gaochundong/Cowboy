@@ -814,22 +814,22 @@ namespace Cowboy.WebSockets
 
         #region Send
 
-        public async Task SendText(string text)
+        public async Task SendTextAsync(string text)
         {
             await SendFrame(new TextFrame(text).ToArray(_frameBuilder));
         }
 
-        public async Task SendBinary(byte[] data)
+        public async Task SendBinaryAsync(byte[] data)
         {
-            await SendBinary(data, 0, data.Length);
+            await SendBinaryAsync(data, 0, data.Length);
         }
 
-        public async Task SendBinary(byte[] data, int offset, int count)
+        public async Task SendBinaryAsync(byte[] data, int offset, int count)
         {
             await SendFrame(new BinaryFrame(data, offset, count).ToArray(_frameBuilder));
         }
 
-        public async Task SendBinary(ArraySegment<byte> segment)
+        public async Task SendBinaryAsync(ArraySegment<byte> segment)
         {
             await SendFrame(new BinaryFrame(segment).ToArray(_frameBuilder));
         }

@@ -75,7 +75,7 @@ namespace Cowboy.WebSockets
         {
             foreach (var session in _sessions.Values)
             {
-                await session.SendText(text);
+                await session.SendTextAsync(text);
             }
         }
 
@@ -88,7 +88,7 @@ namespace Cowboy.WebSockets
         {
             foreach (var session in _sessions.Values)
             {
-                await session.SendBinary(binary, offset, count);
+                await session.SendBinaryAsync(binary, offset, count);
             }
         }
 

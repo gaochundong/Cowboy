@@ -194,12 +194,12 @@ namespace Cowboy.WebSockets
 
         #region Send
 
-        public async Task SendTextTo(string sessionKey, string text)
+        public async Task SendTextToAsync(string sessionKey, string text)
         {
             AsyncWebSocketSession sessionFound;
             if (_sessions.TryGetValue(sessionKey, out sessionFound))
             {
-                await sessionFound.SendText(text);
+                await sessionFound.SendTextAsync(text);
             }
             else
             {
@@ -207,12 +207,12 @@ namespace Cowboy.WebSockets
             }
         }
 
-        public async Task SendTextTo(AsyncWebSocketSession session, string text)
+        public async Task SendTextToAsync(AsyncWebSocketSession session, string text)
         {
             AsyncWebSocketSession sessionFound;
             if (_sessions.TryGetValue(session.SessionKey, out sessionFound))
             {
-                await sessionFound.SendText(text);
+                await sessionFound.SendTextAsync(text);
             }
             else
             {
@@ -220,17 +220,17 @@ namespace Cowboy.WebSockets
             }
         }
 
-        public async Task SendBinaryTo(string sessionKey, byte[] data)
+        public async Task SendBinaryToAsync(string sessionKey, byte[] data)
         {
-            await SendBinaryTo(sessionKey, data, 0, data.Length);
+            await SendBinaryToAsync(sessionKey, data, 0, data.Length);
         }
 
-        public async Task SendBinaryTo(string sessionKey, byte[] data, int offset, int count)
+        public async Task SendBinaryToAsync(string sessionKey, byte[] data, int offset, int count)
         {
             AsyncWebSocketSession sessionFound;
             if (_sessions.TryGetValue(sessionKey, out sessionFound))
             {
-                await sessionFound.SendBinary(data, offset, count);
+                await sessionFound.SendBinaryAsync(data, offset, count);
             }
             else
             {
@@ -238,17 +238,17 @@ namespace Cowboy.WebSockets
             }
         }
 
-        public async Task SendBinaryTo(AsyncWebSocketSession session, byte[] data)
+        public async Task SendBinaryToAsync(AsyncWebSocketSession session, byte[] data)
         {
-            await SendBinaryTo(session, data, 0, data.Length);
+            await SendBinaryToAsync(session, data, 0, data.Length);
         }
 
-        public async Task SendBinaryTo(AsyncWebSocketSession session, byte[] data, int offset, int count)
+        public async Task SendBinaryToAsync(AsyncWebSocketSession session, byte[] data, int offset, int count)
         {
             AsyncWebSocketSession sessionFound;
             if (_sessions.TryGetValue(session.SessionKey, out sessionFound))
             {
-                await sessionFound.SendBinary(data, offset, count);
+                await sessionFound.SendBinaryAsync(data, offset, count);
             }
             else
             {
@@ -256,24 +256,24 @@ namespace Cowboy.WebSockets
             }
         }
 
-        public async Task BroadcastText(string text)
+        public async Task BroadcastTextAsync(string text)
         {
             foreach (var session in _sessions.Values)
             {
-                await session.SendText(text);
+                await session.SendTextAsync(text);
             }
         }
 
-        public async Task BroadcastBinary(byte[] data)
+        public async Task BroadcastBinaryAsync(byte[] data)
         {
-            await BroadcastBinary(data, 0, data.Length);
+            await BroadcastBinaryAsync(data, 0, data.Length);
         }
 
-        public async Task BroadcastBinary(byte[] data, int offset, int count)
+        public async Task BroadcastBinaryAsync(byte[] data, int offset, int count)
         {
             foreach (var session in _sessions.Values)
             {
-                await session.SendBinary(data, offset, count);
+                await session.SendBinaryAsync(data, offset, count);
             }
         }
 

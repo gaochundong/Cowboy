@@ -18,7 +18,7 @@ namespace Cowboy.Sockets.TestAsyncTcpSocketServer
             Console.Write(string.Format("Client : {0} --> ", session.RemoteEndPoint));
             Console.WriteLine(string.Format("{0}", text));
 
-            await session.Send(Encoding.UTF8.GetBytes("Echo -> " + text));
+            await session.SendAsync(Encoding.UTF8.GetBytes("Echo -> " + text));
         }
 
         public async Task OnSessionClosed(AsyncTcpSocketSession session)

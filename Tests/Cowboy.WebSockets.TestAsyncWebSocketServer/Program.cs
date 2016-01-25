@@ -40,7 +40,7 @@ namespace Cowboy.WebSockets.TestAsyncWebSocketServer
                         {
                             //await _server.BroadcastText(text);
                             //Console.WriteLine("WebSocket server [{0}] broadcasts data -> [{1}].", _server.ListenedEndPoint, text);
-                            await _server.BroadcastBinary(Encoding.UTF8.GetBytes(text));
+                            await _server.BroadcastBinaryAsync(Encoding.UTF8.GetBytes(text));
                             Console.WriteLine("WebSocket server [{0}] broadcasts binary -> [{1}].", _server.ListenedEndPoint, text);
                         });
                     }

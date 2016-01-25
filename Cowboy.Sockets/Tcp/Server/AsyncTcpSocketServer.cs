@@ -226,17 +226,17 @@ namespace Cowboy.Sockets
 
         #region Send
 
-        public async Task SendTo(string sessionKey, byte[] data)
+        public async Task SendToAsync(string sessionKey, byte[] data)
         {
-            await SendTo(sessionKey, data, 0, data.Length);
+            await SendToAsync(sessionKey, data, 0, data.Length);
         }
 
-        public async Task SendTo(string sessionKey, byte[] data, int offset, int count)
+        public async Task SendToAsync(string sessionKey, byte[] data, int offset, int count)
         {
             AsyncTcpSocketSession sessionFound;
             if (_sessions.TryGetValue(sessionKey, out sessionFound))
             {
-                await sessionFound.Send(data, offset, count);
+                await sessionFound.SendAsync(data, offset, count);
             }
             else
             {
@@ -244,17 +244,17 @@ namespace Cowboy.Sockets
             }
         }
 
-        public async Task SendTo(AsyncTcpSocketSession session, byte[] data)
+        public async Task SendToAsync(AsyncTcpSocketSession session, byte[] data)
         {
-            await SendTo(session, data, 0, data.Length);
+            await SendToAsync(session, data, 0, data.Length);
         }
 
-        public async Task SendTo(AsyncTcpSocketSession session, byte[] data, int offset, int count)
+        public async Task SendToAsync(AsyncTcpSocketSession session, byte[] data, int offset, int count)
         {
             AsyncTcpSocketSession sessionFound;
             if (_sessions.TryGetValue(session.SessionKey, out sessionFound))
             {
-                await sessionFound.Send(data, offset, count);
+                await sessionFound.SendAsync(data, offset, count);
             }
             else
             {
@@ -262,16 +262,16 @@ namespace Cowboy.Sockets
             }
         }
 
-        public async Task Broadcast(byte[] data)
+        public async Task BroadcastAsync(byte[] data)
         {
-            await Broadcast(data, 0, data.Length);
+            await BroadcastAsync(data, 0, data.Length);
         }
 
-        public async Task Broadcast(byte[] data, int offset, int count)
+        public async Task BroadcastAsync(byte[] data, int offset, int count)
         {
             foreach (var session in _sessions.Values)
             {
-                await session.Send(data, offset, count);
+                await session.SendAsync(data, offset, count);
             }
         }
 

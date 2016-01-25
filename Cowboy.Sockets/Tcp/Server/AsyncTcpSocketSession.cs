@@ -384,12 +384,12 @@ namespace Cowboy.Sockets
 
         #region Send
 
-        public async Task Send(byte[] data)
+        public async Task SendAsync(byte[] data)
         {
-            await Send(data, 0, data.Length);
+            await SendAsync(data, 0, data.Length);
         }
 
-        public async Task Send(byte[] data, int offset, int count)
+        public async Task SendAsync(byte[] data, int offset, int count)
         {
             BufferValidator.ValidateBuffer(data, offset, count, "data");
 
