@@ -115,93 +115,103 @@ namespace Cowboy.WebSockets
 #if DEBUG
             _log.DebugFormat("[{0}]{1}{2}", client.RemoteEndPoint, Environment.NewLine, response);
 #endif
-            // HTTP/1.1 101 Switching Protocols
-            // Upgrade: websocket
-            // Connection: Upgrade
-            // Sec-WebSocket-Accept: 1tGBmA9p0DQDgmFll6P0/UcVS/E=
-            // Sec-WebSocket-Protocol: chat
-            Dictionary<string, string> headers;
-            List<string> extensions;
-            List<string> protocols;
-            ParseOpenningHandshakeResponseHeaders(response, out headers, out extensions, out protocols);
-            if (headers == null)
-                throw new WebSocketHandshakeException(string.Format(
-                    "Handshake with remote [{0}] failed due to invalid headers.", client.RemoteEndPoint));
-
-            // If the status code received from the server is not 101, the
-            // client handles the response per HTTP [RFC2616] procedures.  In
-            // particular, the client might perform authentication if it
-            // receives a 401 status code; the server might redirect the client
-            // using a 3xx status code (but clients are not required to follow them), etc.
-            if (!headers.ContainsKey(Consts.HttpStatusCodeName))
-                throw new WebSocketHandshakeException(string.Format(
-                    "Handshake with remote [{0}] failed due to lack of status code.", client.RemoteEndPoint));
-            if (!headers.ContainsKey(Consts.HttpStatusCodeDescription))
-                throw new WebSocketHandshakeException(string.Format(
-                    "Handshake with remote [{0}] failed due to lack of status description.", client.RemoteEndPoint));
-            if (headers[Consts.HttpStatusCodeName] == ((int)HttpStatusCode.BadRequest).ToString())
-                throw new WebSocketHandshakeException(string.Format(
-                    "Handshake with remote [{0}] failed due to bad request [{1}].",
-                    client.RemoteEndPoint, headers[Consts.HttpStatusCodeName]));
-            if (headers[Consts.HttpStatusCodeName] != ((int)HttpStatusCode.SwitchingProtocols).ToString())
-                throw new WebSocketHandshakeException(string.Format(
-                    "Handshake with remote [{0}] failed due to expected 101 Switching Protocols but received [{1}].",
-                    client.RemoteEndPoint, headers[Consts.HttpStatusCodeName]));
-
-            // If the response lacks an |Upgrade| header field or the |Upgrade|
-            // header field contains a value that is not an ASCII case-
-            // insensitive match for the value "websocket", the client MUST
-            // _Fail the WebSocket Connection_.
-            if (!headers.ContainsKey(HttpKnownHeaderNames.Connection))
-                throw new WebSocketHandshakeException(string.Format(
-                    "Handshake with remote [{0}] failed due to lack of connection header item.", client.RemoteEndPoint));
-            if (headers[HttpKnownHeaderNames.Connection].ToLowerInvariant() != Consts.WebSocketConnectionToken.ToLowerInvariant())
-                throw new WebSocketHandshakeException(string.Format(
-                    "Handshake with remote [{0}] failed due to invalid connection header item value [{1}].",
-                    client.RemoteEndPoint, headers[HttpKnownHeaderNames.Connection]));
-
-            // If the response lacks a |Connection| header field or the
-            // |Connection| header field doesn't contain a token that is an
-            // ASCII case-insensitive match for the value "Upgrade", the client
-            // MUST _Fail the WebSocket Connection_.
-            if (!headers.ContainsKey(HttpKnownHeaderNames.Upgrade))
-                throw new WebSocketHandshakeException(string.Format(
-                    "Handshake with remote [{0}] failed due to lack of upgrade header item.", client.RemoteEndPoint));
-            if (headers[HttpKnownHeaderNames.Upgrade].ToLowerInvariant() != Consts.WebSocketUpgradeToken.ToLowerInvariant())
-                throw new WebSocketHandshakeException(string.Format(
-                    "Handshake with remote [{0}] failed due to invalid upgrade header item value [{1}].",
-                    client.RemoteEndPoint, headers[HttpKnownHeaderNames.Upgrade]));
-
-            // If the response lacks a |Sec-WebSocket-Accept| header field or
-            // the |Sec-WebSocket-Accept| contains a value other than the
-            // base64-encoded SHA-1 of the concatenation of the |Sec-WebSocket-
-            // Key| (as a string, not base64-decoded) with the string "258EAFA5-
-            // E914-47DA-95CA-C5AB0DC85B11" but ignoring any leading and
-            // trailing whitespace, the client MUST _Fail the WebSocket Connection_.
-            if (!headers.ContainsKey(HttpKnownHeaderNames.SecWebSocketAccept))
-                throw new WebSocketHandshakeException(string.Format(
-                    "Handshake with remote [{0}] failed due to lack of Sec-WebSocket-Accept header item.", client.RemoteEndPoint));
-            string challenge = GetSecWebSocketAcceptString(secWebSocketKey);
-            if (!headers[HttpKnownHeaderNames.SecWebSocketAccept].Equals(challenge, StringComparison.OrdinalIgnoreCase))
-                throw new WebSocketHandshakeException(string.Format(
-                    "Handshake with remote [{0}] failed due to invalid Sec-WebSocket-Accept header item value [{1}].",
-                    client.RemoteEndPoint, headers[HttpKnownHeaderNames.SecWebSocketAccept]));
-
-            // If the response includes a |Sec-WebSocket-Extensions| header
-            // field and this header field indicates the use of an extension
-            // that was not present in the client's handshake (the server has
-            // indicated an extension not requested by the client), the client
-            // MUST _Fail the WebSocket Connection_.
-            if (extensions != null)
+            try
             {
-                client.AgreeExtensions(extensions);
-            }
+                // HTTP/1.1 101 Switching Protocols
+                // Upgrade: websocket
+                // Connection: Upgrade
+                // Sec-WebSocket-Accept: 1tGBmA9p0DQDgmFll6P0/UcVS/E=
+                // Sec-WebSocket-Protocol: chat
+                Dictionary<string, string> headers;
+                List<string> extensions;
+                List<string> protocols;
+                ParseOpenningHandshakeResponseHeaders(response, out headers, out extensions, out protocols);
+                if (headers == null)
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Handshake with remote [{0}] failed due to invalid headers.", client.RemoteEndPoint));
 
-            // If the response includes a |Sec-WebSocket-Protocol| header field
-            // and this header field indicates the use of a subprotocol that was
-            // not present in the client's handshake (the server has indicated a
-            // subprotocol not requested by the client), the client MUST _Fail
-            // the WebSocket Connection_.
+                // If the status code received from the server is not 101, the
+                // client handles the response per HTTP [RFC2616] procedures.  In
+                // particular, the client might perform authentication if it
+                // receives a 401 status code; the server might redirect the client
+                // using a 3xx status code (but clients are not required to follow them), etc.
+                if (!headers.ContainsKey(Consts.HttpStatusCodeName))
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Handshake with remote [{0}] failed due to lack of status code.", client.RemoteEndPoint));
+                if (!headers.ContainsKey(Consts.HttpStatusCodeDescription))
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Handshake with remote [{0}] failed due to lack of status description.", client.RemoteEndPoint));
+                if (headers[Consts.HttpStatusCodeName] == ((int)HttpStatusCode.BadRequest).ToString())
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Handshake with remote [{0}] failed due to bad request [{1}].",
+                        client.RemoteEndPoint, headers[Consts.HttpStatusCodeName]));
+                if (headers[Consts.HttpStatusCodeName] != ((int)HttpStatusCode.SwitchingProtocols).ToString())
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Handshake with remote [{0}] failed due to expected 101 Switching Protocols but received [{1}].",
+                        client.RemoteEndPoint, headers[Consts.HttpStatusCodeName]));
+
+                // If the response lacks an |Upgrade| header field or the |Upgrade|
+                // header field contains a value that is not an ASCII case-
+                // insensitive match for the value "websocket", the client MUST
+                // _Fail the WebSocket Connection_.
+                if (!headers.ContainsKey(HttpKnownHeaderNames.Connection))
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Handshake with remote [{0}] failed due to lack of connection header item.", client.RemoteEndPoint));
+                if (headers[HttpKnownHeaderNames.Connection].ToLowerInvariant() != Consts.WebSocketConnectionToken.ToLowerInvariant())
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Handshake with remote [{0}] failed due to invalid connection header item value [{1}].",
+                        client.RemoteEndPoint, headers[HttpKnownHeaderNames.Connection]));
+
+                // If the response lacks a |Connection| header field or the
+                // |Connection| header field doesn't contain a token that is an
+                // ASCII case-insensitive match for the value "Upgrade", the client
+                // MUST _Fail the WebSocket Connection_.
+                if (!headers.ContainsKey(HttpKnownHeaderNames.Upgrade))
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Handshake with remote [{0}] failed due to lack of upgrade header item.", client.RemoteEndPoint));
+                if (headers[HttpKnownHeaderNames.Upgrade].ToLowerInvariant() != Consts.WebSocketUpgradeToken.ToLowerInvariant())
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Handshake with remote [{0}] failed due to invalid upgrade header item value [{1}].",
+                        client.RemoteEndPoint, headers[HttpKnownHeaderNames.Upgrade]));
+
+                // If the response lacks a |Sec-WebSocket-Accept| header field or
+                // the |Sec-WebSocket-Accept| contains a value other than the
+                // base64-encoded SHA-1 of the concatenation of the |Sec-WebSocket-
+                // Key| (as a string, not base64-decoded) with the string "258EAFA5-
+                // E914-47DA-95CA-C5AB0DC85B11" but ignoring any leading and
+                // trailing whitespace, the client MUST _Fail the WebSocket Connection_.
+                if (!headers.ContainsKey(HttpKnownHeaderNames.SecWebSocketAccept))
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Handshake with remote [{0}] failed due to lack of Sec-WebSocket-Accept header item.", client.RemoteEndPoint));
+                string challenge = GetSecWebSocketAcceptString(secWebSocketKey);
+                if (!headers[HttpKnownHeaderNames.SecWebSocketAccept].Equals(challenge, StringComparison.OrdinalIgnoreCase))
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Handshake with remote [{0}] failed due to invalid Sec-WebSocket-Accept header item value [{1}].",
+                        client.RemoteEndPoint, headers[HttpKnownHeaderNames.SecWebSocketAccept]));
+
+                // If the response includes a |Sec-WebSocket-Extensions| header
+                // field and this header field indicates the use of an extension
+                // that was not present in the client's handshake (the server has
+                // indicated an extension not requested by the client), the client
+                // MUST _Fail the WebSocket Connection_.
+                if (extensions != null)
+                {
+                    client.AgreeExtensions(extensions);
+                }
+
+                // If the response includes a |Sec-WebSocket-Protocol| header field
+                // and this header field indicates the use of a subprotocol that was
+                // not present in the client's handshake (the server has indicated a
+                // subprotocol not requested by the client), the client MUST _Fail
+                // the WebSocket Connection_.
+
+            }
+            catch (Exception ex)
+            {
+                _log.ErrorFormat("{0}{1}{2}", client, Environment.NewLine, response);
+                _log.ErrorFormat(ex.Message, ex);
+                throw;
+            }
 
             return true;
         }

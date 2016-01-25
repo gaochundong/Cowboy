@@ -25,117 +25,127 @@ namespace Cowboy.WebSockets
 #if DEBUG
             _log.DebugFormat("[{0}]{1}{2}", session.RemoteEndPoint, Environment.NewLine, request);
 #endif
-            // GET /chat HTTP/1.1
-            // Host: server.example.com
-            // Upgrade: websocket
-            // Connection: Upgrade
-            // Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
-            // Origin: http://example.com
-            // Sec-WebSocket-Protocol: chat, superchat
-            // Sec-WebSocket-Version: 13
-            Dictionary<string, string> headers;
-            List<string> extensions;
-            List<string> protocols;
-            ParseOpenningHandshakeRequestHeaders(request, out headers, out extensions, out protocols);
-            if (headers == null)
-                throw new WebSocketHandshakeException(string.Format(
-                    "Handshake with remote [{0}] failed due to invalid headers.", session.RemoteEndPoint));
-
-            // An HTTP/1.1 or higher GET request, including a "Request-URI"
-            // [RFC2616] that should be interpreted as a /resource name/
-            // defined in Section 3 (or an absolute HTTP/HTTPS URI containing the /resource name/).
-            // A |Host| header field containing the server's authority.
-            if (!headers.ContainsKey(Consts.HttpGetMethodName))
-                throw new WebSocketHandshakeException(string.Format(
-                    "Handshake with remote [{0}] failed due to lack of get method.", session.RemoteEndPoint));
-            if (!headers.ContainsKey(HttpKnownHeaderNames.Host))
-                throw new WebSocketHandshakeException(string.Format(
-                    "Handshake with remote [{0}] failed due to lack of host authority.", session.RemoteEndPoint));
-            string uriString = string.Format("ws://{0}{1}", headers[HttpKnownHeaderNames.Host], headers[Consts.HttpGetMethodName]);
-            Uri requestUri = null;
-            if (!Uri.TryCreate(uriString, UriKind.RelativeOrAbsolute, out requestUri))
+            try
             {
-                throw new WebSocketHandshakeException(string.Format(
-                    "Handshake with remote [{0}] failed due to invalid requested resource name.", session.RemoteEndPoint));
+                // GET /chat HTTP/1.1
+                // Host: server.example.com
+                // Upgrade: websocket
+                // Connection: Upgrade
+                // Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
+                // Origin: http://example.com
+                // Sec-WebSocket-Protocol: chat, superchat
+                // Sec-WebSocket-Version: 13
+                Dictionary<string, string> headers;
+                List<string> extensions;
+                List<string> protocols;
+                ParseOpenningHandshakeRequestHeaders(request, out headers, out extensions, out protocols);
+                if (headers == null)
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Handshake with remote [{0}] failed due to invalid headers.", session.RemoteEndPoint));
+
+                // An HTTP/1.1 or higher GET request, including a "Request-URI"
+                // [RFC2616] that should be interpreted as a /resource name/
+                // defined in Section 3 (or an absolute HTTP/HTTPS URI containing the /resource name/).
+                // A |Host| header field containing the server's authority.
+                if (!headers.ContainsKey(Consts.HttpGetMethodName))
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Handshake with remote [{0}] failed due to lack of get method.", session.RemoteEndPoint));
+                if (!headers.ContainsKey(HttpKnownHeaderNames.Host))
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Handshake with remote [{0}] failed due to lack of host authority.", session.RemoteEndPoint));
+                string uriString = string.Format("ws://{0}{1}", headers[HttpKnownHeaderNames.Host], headers[Consts.HttpGetMethodName]);
+                Uri requestUri = null;
+                if (!Uri.TryCreate(uriString, UriKind.RelativeOrAbsolute, out requestUri))
+                {
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Handshake with remote [{0}] failed due to invalid requested resource name.", session.RemoteEndPoint));
+                }
+                path = requestUri.AbsolutePath;
+                query = requestUri.Query;
+
+                // A |Connection| header field that includes the token "Upgrade",
+                // treated as an ASCII case-insensitive value.
+                if (!headers.ContainsKey(HttpKnownHeaderNames.Connection))
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Handshake with remote [{0}] failed due to lack of connection header item.", session.RemoteEndPoint));
+                if (headers[HttpKnownHeaderNames.Connection].ToLowerInvariant() != Consts.WebSocketConnectionToken.ToLowerInvariant())
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Handshake with remote [{0}] failed due to invalid connection header item value [{1}].",
+                        session.RemoteEndPoint, headers[HttpKnownHeaderNames.Connection]));
+
+                // An |Upgrade| header field containing the value "websocket",
+                // treated as an ASCII case-insensitive value.
+                if (!headers.ContainsKey(HttpKnownHeaderNames.Upgrade))
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Handshake with remote [{0}] failed due to lack of upgrade header item.", session.RemoteEndPoint));
+                if (headers[HttpKnownHeaderNames.Upgrade].ToLowerInvariant() != Consts.WebSocketUpgradeToken.ToLowerInvariant())
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Handshake with remote [{0}] failed due to invalid upgrade header item value [{1}].",
+                        session.RemoteEndPoint, headers[HttpKnownHeaderNames.Upgrade]));
+
+                // A |Sec-WebSocket-Key| header field with a base64-encoded (see
+                // Section 4 of [RFC4648]) value that, when decoded, is 16 bytes in length.
+                if (!headers.ContainsKey(HttpKnownHeaderNames.SecWebSocketKey))
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Handshake with remote [{0}] failed due to lack of Sec-WebSocket-Key header item.", session.RemoteEndPoint));
+                if (string.IsNullOrWhiteSpace(headers[HttpKnownHeaderNames.SecWebSocketKey]))
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Handshake with remote [{0}] failed due to invalid Sec-WebSocket-Key header item value [{1}].",
+                        session.RemoteEndPoint, headers[HttpKnownHeaderNames.SecWebSocketKey]));
+                secWebSocketKey = headers[HttpKnownHeaderNames.SecWebSocketKey];
+
+                // A |Sec-WebSocket-Version| header field, with a value of 13.
+                if (!headers.ContainsKey(HttpKnownHeaderNames.SecWebSocketVersion))
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Handshake with remote [{0}] failed due to lack of Sec-WebSocket-Version header item.", session.RemoteEndPoint));
+                if (headers[HttpKnownHeaderNames.SecWebSocketVersion].ToLowerInvariant() != Consts.WebSocketVersion.ToLowerInvariant())
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Handshake with remote [{0}] failed due to invalid Sec-WebSocket-Version header item value [{1}].",
+                        session.RemoteEndPoint, headers[HttpKnownHeaderNames.SecWebSocketVersion]));
+
+                // Optionally, a |Sec-WebSocket-Extensions| header field, with a
+                // list of values indicating which extensions the client would like
+                // to speak.  The interpretation of this header field is discussed in Section 9.1.
+                if (extensions != null)
+                {
+                    session.AgreeExtensions(extensions);
+                }
+
+                // Optionally, a |Sec-WebSocket-Protocol| header field, with a list
+                // of values indicating which protocols the client would like to
+                // speak, ordered by preference.
+
+                // Optionally, an |Origin| header field.  This header field is sent
+                // by all browser clients.  A connection attempt lacking this
+                // header field SHOULD NOT be interpreted as coming from a browser client.
+                //
+                // Servers that are not intended to process input from any web page but
+                // only for certain sites SHOULD verify the |Origin| field is an origin
+                // they expect.  If the origin indicated is unacceptable to the server,
+                // then it SHOULD respond to the WebSocket handshake with a reply
+                // containing HTTP 403 Forbidden status code.
+                // 
+                // The |Origin| header field protects from the attack cases when the
+                // untrusted party is typically the author of a JavaScript application
+                // that is executing in the context of the trusted client.  The client
+                // itself can contact the server and, via the mechanism of the |Origin|
+                // header field, determine whether to extend those communication
+                // privileges to the JavaScript application.  The intent is not to
+                // prevent non-browsers from establishing connections but rather to
+                // ensure that trusted browsers under the control of potentially
+                // malicious JavaScript cannot fake a WebSocket handshake.
+
+                // Optionally, other header fields, such as those used to send
+                // cookies or request authentication to a server.  Unknown header
+                // fields are ignored, as per [RFC2616].
+
             }
-            path = requestUri.AbsolutePath;
-            query = requestUri.Query;
-
-            // A |Connection| header field that includes the token "Upgrade",
-            // treated as an ASCII case-insensitive value.
-            if (!headers.ContainsKey(HttpKnownHeaderNames.Connection))
-                throw new WebSocketHandshakeException(string.Format(
-                    "Handshake with remote [{0}] failed due to lack of connection header item.", session.RemoteEndPoint));
-            if (headers[HttpKnownHeaderNames.Connection].ToLowerInvariant() != Consts.WebSocketConnectionToken.ToLowerInvariant())
-                throw new WebSocketHandshakeException(string.Format(
-                    "Handshake with remote [{0}] failed due to invalid connection header item value [{1}].",
-                    session.RemoteEndPoint, headers[HttpKnownHeaderNames.Connection]));
-
-            // An |Upgrade| header field containing the value "websocket",
-            // treated as an ASCII case-insensitive value.
-            if (!headers.ContainsKey(HttpKnownHeaderNames.Upgrade))
-                throw new WebSocketHandshakeException(string.Format(
-                    "Handshake with remote [{0}] failed due to lack of upgrade header item.", session.RemoteEndPoint));
-            if (headers[HttpKnownHeaderNames.Upgrade].ToLowerInvariant() != Consts.WebSocketUpgradeToken.ToLowerInvariant())
-                throw new WebSocketHandshakeException(string.Format(
-                    "Handshake with remote [{0}] failed due to invalid upgrade header item value [{1}].",
-                    session.RemoteEndPoint, headers[HttpKnownHeaderNames.Upgrade]));
-
-            // A |Sec-WebSocket-Key| header field with a base64-encoded (see
-            // Section 4 of [RFC4648]) value that, when decoded, is 16 bytes in length.
-            if (!headers.ContainsKey(HttpKnownHeaderNames.SecWebSocketKey))
-                throw new WebSocketHandshakeException(string.Format(
-                    "Handshake with remote [{0}] failed due to lack of Sec-WebSocket-Key header item.", session.RemoteEndPoint));
-            if (string.IsNullOrWhiteSpace(headers[HttpKnownHeaderNames.SecWebSocketKey]))
-                throw new WebSocketHandshakeException(string.Format(
-                    "Handshake with remote [{0}] failed due to invalid Sec-WebSocket-Key header item value [{1}].",
-                    session.RemoteEndPoint, headers[HttpKnownHeaderNames.SecWebSocketKey]));
-            secWebSocketKey = headers[HttpKnownHeaderNames.SecWebSocketKey];
-
-            // A |Sec-WebSocket-Version| header field, with a value of 13.
-            if (!headers.ContainsKey(HttpKnownHeaderNames.SecWebSocketVersion))
-                throw new WebSocketHandshakeException(string.Format(
-                    "Handshake with remote [{0}] failed due to lack of Sec-WebSocket-Version header item.", session.RemoteEndPoint));
-            if (headers[HttpKnownHeaderNames.SecWebSocketVersion].ToLowerInvariant() != Consts.WebSocketVersion.ToLowerInvariant())
-                throw new WebSocketHandshakeException(string.Format(
-                    "Handshake with remote [{0}] failed due to invalid Sec-WebSocket-Version header item value [{1}].",
-                    session.RemoteEndPoint, headers[HttpKnownHeaderNames.SecWebSocketVersion]));
-
-            // Optionally, a |Sec-WebSocket-Extensions| header field, with a
-            // list of values indicating which extensions the client would like
-            // to speak.  The interpretation of this header field is discussed in Section 9.1.
-            if (extensions != null)
+            catch (Exception ex)
             {
-                session.AgreeExtensions(extensions);
+                _log.ErrorFormat("{0}{1}{2}", session, Environment.NewLine, request);
+                _log.ErrorFormat(ex.Message, ex);
+                throw;
             }
-
-            // Optionally, a |Sec-WebSocket-Protocol| header field, with a list
-            // of values indicating which protocols the client would like to
-            // speak, ordered by preference.
-
-            // Optionally, an |Origin| header field.  This header field is sent
-            // by all browser clients.  A connection attempt lacking this
-            // header field SHOULD NOT be interpreted as coming from a browser client.
-            //
-            // Servers that are not intended to process input from any web page but
-            // only for certain sites SHOULD verify the |Origin| field is an origin
-            // they expect.  If the origin indicated is unacceptable to the server,
-            // then it SHOULD respond to the WebSocket handshake with a reply
-            // containing HTTP 403 Forbidden status code.
-            // 
-            // The |Origin| header field protects from the attack cases when the
-            // untrusted party is typically the author of a JavaScript application
-            // that is executing in the context of the trusted client.  The client
-            // itself can contact the server and, via the mechanism of the |Origin|
-            // header field, determine whether to extend those communication
-            // privileges to the JavaScript application.  The intent is not to
-            // prevent non-browsers from establishing connections but rather to
-            // ensure that trusted browsers under the control of potentially
-            // malicious JavaScript cannot fake a WebSocket handshake.
-
-            // Optionally, other header fields, such as those used to send
-            // cookies or request authentication to a server.  Unknown header
-            // fields are ignored, as per [RFC2616].
 
             return true;
         }
