@@ -87,6 +87,8 @@
     <Compile Include="Server\Module\AsyncWebSocketServerModule.cs" />
     <Compile Include="Server\Module\AsyncWebSocketServerModuleCatalog.cs" />
     <Compile Include="Server\Module\AsyncWebSocketRouteResolver.cs" />
+    <Compile Include="SubProtocols\IWebSocketSubProtocol.cs" />
+    <Compile Include="SubProtocols\IWebSocketSubProtocolNegotiator.cs" />
     <Compile Include="SubProtocols\WebSocketSubProtocolRequestDescription.cs" />
     <Compile Include="WebSocketCloseCode.cs" />
     <Compile Include="Exceptions\WebSocketHandshakeException.cs" />

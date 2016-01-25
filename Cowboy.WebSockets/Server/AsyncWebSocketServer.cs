@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -68,6 +69,15 @@ namespace Cowboy.WebSockets
         public IPEndPoint ListenedEndPoint { get; private set; }
         public bool Active { get { return _state == _listening; } }
         public int SessionCount { get { return _sessions.Count; } }
+
+        public IEnumerable<string> EnabledExtensions
+        {
+            get { return _configuration.EnabledExtensions != null ? _configuration.EnabledExtensions.Keys : null; }
+        }
+        public IEnumerable<string> EnabledSubProtocols
+        {
+            get { return _configuration.EnabledSubProtocols != null ? _configuration.EnabledSubProtocols.Keys : null; }
+        }
 
         #endregion
 

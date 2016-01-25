@@ -25,8 +25,7 @@ namespace Cowboy.WebSockets
         private TcpClient _tcpClient;
         private readonly IAsyncWebSocketClientMessageDispatcher _dispatcher;
         private readonly AsyncWebSocketClientConfiguration _configuration;
-        private readonly IFrameBuilder _frameBuilder;
-        private readonly List<IWebSocketExtensionNegotiator> _extensionNegotiatorCollection;
+        private readonly IFrameBuilder _frameBuilder = new WebSocketFrameBuilder();
         private IPEndPoint _remoteEndPoint;
         private Stream _stream;
         private byte[] _receiveBuffer;
@@ -99,9 +98,6 @@ namespace Cowboy.WebSockets
             _configuration = configuration ?? new AsyncWebSocketClientConfiguration();
             _sslEnabled = uri.Scheme.ToLowerInvariant() == "wss";
 
-            _frameBuilder = new WebSocketFrameBuilder();
-            _extensionNegotiatorCollection = new List<IWebSocketExtensionNegotiator>();
-
             Initialize();
         }
 
@@ -124,11 +120,6 @@ namespace Cowboy.WebSockets
             _keepAliveTracker = KeepAliveTracker.Create(KeepAliveInterval, new TimerCallback((s) => OnKeepAlive()));
             _keepAliveTimeoutTimer = new Timer(new TimerCallback((s) => OnKeepAliveTimeout()), null, Timeout.Infinite, Timeout.Infinite);
             _closingTimeoutTimer = new Timer(new TimerCallback((s) => OnCloseTimeout()), null, Timeout.Infinite, Timeout.Infinite);
-
-            if (_configuration.PerMessageCompressionExtensionEnabled)
-            {
-                _extensionNegotiatorCollection.Add(new PerMessageCompressionExtensionNegotiator());
-            }
         }
 
         #endregion
@@ -159,6 +150,8 @@ namespace Cowboy.WebSockets
         public TimeSpan KeepAliveInterval { get { return _configuration.KeepAliveInterval; } }
         public TimeSpan KeepAliveTimeout { get { return _configuration.KeepAliveTimeout; } }
 
+        public IDictionary<string, IWebSocketExtensionNegotiator> EnabledExtensions { get { return _configuration.EnabledExtensions; } }
+        public IDictionary<string, IWebSocketSubProtocolNegotiator> EnabledSubProtocols { get { return _configuration.EnabledSubProtocols; } }
         public IEnumerable<WebSocketExtensionOfferDescription> OfferedExtensions { get { return _configuration.OfferedExtensions; } }
         public IEnumerable<WebSocketSubProtocolRequestDescription> RequestedSubProtocols { get { return _configuration.RequestedSubProtocols; } }
 
@@ -835,8 +828,8 @@ namespace Cowboy.WebSockets
             // the client did not offer, the client MUST _Fail the WebSocket Connection_.
             if (this.OfferedExtensions == null
                 || !this.OfferedExtensions.Any()
-                || _extensionNegotiatorCollection == null
-                || !_extensionNegotiatorCollection.Any())
+                || this.EnabledExtensions == null
+                || !this.EnabledExtensions.Any())
                 throw new WebSocketHandshakeException(string.Format(
                     "Negotiate extension with remote [{0}] failed due to no extension enabled.", this.RemoteEndPoint));
 
@@ -863,21 +856,28 @@ namespace Cowboy.WebSockets
             {
                 order++;
 
-                foreach (var negotiator in _extensionNegotiatorCollection)
-                {
-                    string invalidParameter;
-                    IWebSocketExtension negotiatedExtension;
-                    if (!negotiator.NegotiateAsClient(extension, out invalidParameter, out negotiatedExtension)
-                        || !string.IsNullOrEmpty(invalidParameter)
-                        || negotiatedExtension == null)
-                    {
-                        throw new WebSocketHandshakeException(string.Format(
-                            "Negotiate extension with remote [{0}] failed due to invalid parameter [{1}].",
-                            this.RemoteEndPoint, invalidParameter));
-                    }
+                var offeredExtensionName = extension.Split(';').First();
 
-                    agreedExtensions.Add(order, negotiatedExtension);
+                // Extensions not listed by the client MUST NOT be listed.
+                if (!this.EnabledExtensions.ContainsKey(offeredExtensionName))
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Negotiate extension with remote [{0}] failed due to un-enabled extensions [{1}].",
+                        this.RemoteEndPoint, offeredExtensionName));
+
+                var extensionNegotiator = this.EnabledExtensions[offeredExtensionName];
+
+                string invalidParameter;
+                IWebSocketExtension negotiatedExtension;
+                if (!extensionNegotiator.NegotiateAsClient(extension, out invalidParameter, out negotiatedExtension)
+                    || !string.IsNullOrEmpty(invalidParameter)
+                    || negotiatedExtension == null)
+                {
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Negotiate extension with remote [{0}] failed due to invalid parameter [{1}].",
+                        this.RemoteEndPoint, invalidParameter));
                 }
+
+                agreedExtensions.Add(order, negotiatedExtension);
             }
 
             // If a server gives an invalid response, such as accepting a PMCE that

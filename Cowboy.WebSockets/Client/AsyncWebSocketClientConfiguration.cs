@@ -33,9 +33,16 @@ namespace Cowboy.WebSockets
             KeepAliveInterval = TimeSpan.FromSeconds(30);
             KeepAliveTimeout = TimeSpan.FromSeconds(5);
 
-            PerMessageCompressionExtensionEnabled = true;
-            OfferedExtensions = new List<WebSocketExtensionOfferDescription>();
-            OfferedExtensions.Add(new WebSocketExtensionOfferDescription("permessage-deflate"));
+            EnabledExtensions = new Dictionary<string, IWebSocketExtensionNegotiator>()
+            {
+                { PerMessageCompressionExtension.RegisteredToken, new PerMessageCompressionExtensionNegotiator() },
+            };
+            EnabledSubProtocols = new Dictionary<string, IWebSocketSubProtocolNegotiator>();
+
+            OfferedExtensions = new List<WebSocketExtensionOfferDescription>()
+            {
+                new WebSocketExtensionOfferDescription(PerMessageCompressionExtension.RegisteredToken),
+            };
             RequestedSubProtocols = new List<WebSocketSubProtocolRequestDescription>();
         }
 
@@ -59,7 +66,9 @@ namespace Cowboy.WebSockets
         public TimeSpan KeepAliveInterval { get; set; }
         public TimeSpan KeepAliveTimeout { get; set; }
 
-        public bool PerMessageCompressionExtensionEnabled { get; set; }
+        public Dictionary<string, IWebSocketExtensionNegotiator> EnabledExtensions { get; set; }
+        public Dictionary<string, IWebSocketSubProtocolNegotiator> EnabledSubProtocols { get; set; }
+
         public List<WebSocketExtensionOfferDescription> OfferedExtensions { get; set; }
         public List<WebSocketSubProtocolRequestDescription> RequestedSubProtocols { get; set; }
     }

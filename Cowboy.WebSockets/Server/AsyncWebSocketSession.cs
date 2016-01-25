@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using Cowboy.Buffer;
 using Cowboy.Logging;
 using Cowboy.WebSockets.Extensions;
+using Cowboy.WebSockets.SubProtocols;
 
 namespace Cowboy.WebSockets
 {
@@ -26,8 +27,7 @@ namespace Cowboy.WebSockets
         private readonly AsyncWebSocketRouteResolver _routeResolver;
         private AsyncWebSocketServerModule _module;
         private readonly AsyncWebSocketServer _server;
-        private readonly IFrameBuilder _frameBuilder;
-        private readonly List<IWebSocketExtensionNegotiator> _extensionNegotiatorCollection;
+        private readonly IFrameBuilder _frameBuilder = new WebSocketFrameBuilder();
         private readonly string _sessionKey;
         private Stream _stream;
         private byte[] _receiveBuffer;
@@ -87,13 +87,6 @@ namespace Cowboy.WebSockets
             _keepAliveTracker = KeepAliveTracker.Create(KeepAliveInterval, new TimerCallback((s) => OnKeepAlive()));
             _keepAliveTimeoutTimer = new Timer(new TimerCallback((s) => OnKeepAliveTimeout()), null, Timeout.Infinite, Timeout.Infinite);
             _closingTimeoutTimer = new Timer(new TimerCallback((s) => OnCloseTimeout()), null, Timeout.Infinite, Timeout.Infinite);
-
-            _frameBuilder = new WebSocketFrameBuilder();
-            _extensionNegotiatorCollection = new List<IWebSocketExtensionNegotiator>();
-            if (_configuration.PerMessageCompressionExtensionEnabled)
-            {
-                _extensionNegotiatorCollection.Add(new PerMessageCompressionExtensionNegotiator());
-            }
         }
 
         #endregion
@@ -125,7 +118,10 @@ namespace Cowboy.WebSockets
         public TimeSpan KeepAliveInterval { get { return _configuration.KeepAliveInterval; } }
         public TimeSpan KeepAliveTimeout { get { return _configuration.KeepAliveTimeout; } }
 
+        public IDictionary<string, IWebSocketExtensionNegotiator> EnabledExtensions { get { return _configuration.EnabledExtensions; } }
+        public IDictionary<string, IWebSocketSubProtocolNegotiator> EnabledSubProtocols { get { return _configuration.EnabledSubProtocols; } }
         public SortedList<int, IWebSocketExtension> NegotiatedExtensions { get { return _frameBuilder.NegotiatedExtensions; } }
+        public IWebSocketSubProtocol NegotiatedSubProtocol { get; private set; }
 
         public WebSocketState State
         {
@@ -803,7 +799,7 @@ namespace Cowboy.WebSockets
                 throw new ArgumentNullException("extensions");
 
             // no extension configured, but client offered, so just ignore them.
-            if (_extensionNegotiatorCollection == null || !_extensionNegotiatorCollection.Any())
+            if (this.EnabledExtensions == null || !this.EnabledExtensions.Any())
                 return;
 
             // Note that the order of extensions is significant.  Any interactions
@@ -823,27 +819,31 @@ namespace Cowboy.WebSockets
             // bar(foo(data)), be those changes to the data itself (such as
             // compression) or changes to the framing that may "stack".
             var agreedExtensions = new SortedList<int, IWebSocketExtension>();
+            var offeredExtensions = string.Join(",", extensions).Split(',').Select(p => p.TrimStart().TrimEnd()).Where(p => !string.IsNullOrWhiteSpace(p));
 
             int order = 0;
-            foreach (var extension in extensions)
+            foreach (var extension in offeredExtensions)
             {
                 order++;
 
-                foreach (var negotiator in _extensionNegotiatorCollection)
-                {
-                    string invalidParameter;
-                    IWebSocketExtension negotiatedExtension;
-                    if (!negotiator.NegotiateAsClient(extension, out invalidParameter, out negotiatedExtension)
-                        || !string.IsNullOrEmpty(invalidParameter)
-                        || negotiatedExtension == null)
-                    {
-                        throw new WebSocketHandshakeException(string.Format(
-                            "Negotiate extension with remote [{0}] failed due to invalid parameter [{1}].",
-                            this.RemoteEndPoint, invalidParameter));
-                    }
+                var offeredExtensionName = extension.Split(';').First();
+                if (!this.EnabledExtensions.ContainsKey(offeredExtensionName))
+                    continue;
 
-                    agreedExtensions.Add(order, negotiatedExtension);
+                var extensionNegotiator = this.EnabledExtensions[offeredExtensionName];
+
+                string invalidParameter;
+                IWebSocketExtension negotiatedExtension;
+                if (!extensionNegotiator.NegotiateAsServer(extension, out invalidParameter, out negotiatedExtension)
+                    || !string.IsNullOrEmpty(invalidParameter)
+                    || negotiatedExtension == null)
+                {
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Negotiate extension with remote [{0}] failed due to invalid parameter [{1}].",
+                        this.RemoteEndPoint, invalidParameter));
                 }
+
+                agreedExtensions.Add(order, negotiatedExtension);
             }
 
             // A server MUST NOT accept a PMCE extension negotiation offer together

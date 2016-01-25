@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
+using Cowboy.WebSockets.Extensions;
+using Cowboy.WebSockets.SubProtocols;
 
 namespace Cowboy.WebSockets
 {
@@ -34,7 +37,11 @@ namespace Cowboy.WebSockets
             KeepAliveInterval = TimeSpan.FromSeconds(60);
             KeepAliveTimeout = TimeSpan.FromSeconds(15);
 
-            PerMessageCompressionExtensionEnabled = true;
+            EnabledExtensions = new Dictionary<string, IWebSocketExtensionNegotiator>()
+            {
+                { PerMessageCompressionExtension.RegisteredToken, new PerMessageCompressionExtensionNegotiator() },
+            };
+            EnabledSubProtocols = new Dictionary<string, IWebSocketSubProtocolNegotiator>();
         }
 
         public int InitialBufferAllocationCount { get; set; }
@@ -61,6 +68,7 @@ namespace Cowboy.WebSockets
         public TimeSpan KeepAliveInterval { get; set; }
         public TimeSpan KeepAliveTimeout { get; set; }
 
-        public bool PerMessageCompressionExtensionEnabled { get; set; }
+        public Dictionary<string, IWebSocketExtensionNegotiator> EnabledExtensions { get; set; }
+        public Dictionary<string, IWebSocketSubProtocolNegotiator> EnabledSubProtocols { get; set; }
     }
 }
