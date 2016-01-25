@@ -108,12 +108,40 @@ namespace Cowboy.WebSockets
                 // to speak.  The interpretation of this header field is discussed in Section 9.1.
                 if (extensions != null)
                 {
+                    if (!extensions.Any())
+                        throw new WebSocketHandshakeException(string.Format(
+                            "Handshake with remote [{0}] failed due to empty extension.", session.RemoteEndPoint));
+                    foreach (var extension in extensions)
+                    {
+                        // The empty string is not the same as the null value for these 
+                        // purposes and is not a legal value for this field.
+                        if (string.IsNullOrWhiteSpace(extension))
+                            throw new WebSocketHandshakeException(string.Format(
+                                "Handshake with remote [{0}] failed due to empty extension.", session.RemoteEndPoint));
+                    }
+
                     session.AgreeExtensions(extensions);
                 }
 
                 // Optionally, a |Sec-WebSocket-Protocol| header field, with a list
                 // of values indicating which protocols the client would like to
                 // speak, ordered by preference.
+                if (protocols != null)
+                {
+                    if (!protocols.Any())
+                        throw new WebSocketHandshakeException(string.Format(
+                            "Handshake with remote [{0}] failed due to empty sub-protocol.", session.RemoteEndPoint));
+                    foreach (var protocol in protocols)
+                    {
+                        // The empty string is not the same as the null value for these 
+                        // purposes and is not a legal value for this field.
+                        if (string.IsNullOrWhiteSpace(protocol))
+                            throw new WebSocketHandshakeException(string.Format(
+                                "Handshake with remote [{0}] failed due to empty sub-protocol.", session.RemoteEndPoint));
+                    }
+
+                    session.AgreeSubProtocols(string.Join(",", protocols));
+                }
 
                 // Optionally, an |Origin| header field.  This header field is sent
                 // by all browser clients.  A connection attempt lacking this
@@ -138,7 +166,6 @@ namespace Cowboy.WebSockets
                 // Optionally, other header fields, such as those used to send
                 // cookies or request authentication to a server.  Unknown header
                 // fields are ignored, as per [RFC2616].
-
             }
             catch (Exception ex)
             {

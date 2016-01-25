@@ -246,9 +246,12 @@ namespace Cowboy.WebSockets
                         throw new WebSocketHandshakeException(string.Format(
                             "Handshake with remote [{0}] failed due to suggest to use multiple sub-protocols.", client.RemoteEndPoint));
 
+                    // The value chosen MUST be derived
+                    // from the client's handshake, specifically by selecting one of
+                    // the values from the |Sec-WebSocket-Protocol| field that the
+                    // server is willing to use for this connection (if any).
                     client.UseSubProtocol(suggestedProtocols.First());
                 }
-
             }
             catch (Exception ex)
             {

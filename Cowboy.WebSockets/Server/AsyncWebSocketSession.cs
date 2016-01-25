@@ -425,79 +425,6 @@ namespace Cowboy.WebSockets
             }
         }
 
-        internal void AgreeExtensions(IEnumerable<string> extensions)
-        {
-            if (extensions == null)
-                throw new ArgumentNullException("extensions");
-
-            // no extension configured, but client offered, so just ignore them.
-            if (_extensionNegotiatorCollection == null || !_extensionNegotiatorCollection.Any())
-                return;
-
-            // Note that the order of extensions is significant.  Any interactions
-            // between multiple extensions MAY be defined in the documents defining
-            // the extensions.  In the absence of such definitions, the
-            // interpretation is that the header fields listed by the client in its
-            // request represent a preference of the header fields it wishes to use,
-            // with the first options listed being most preferable.  The extensions
-            // listed by the server in response represent the extensions actually in
-            // use for the connection.  Should the extensions modify the data and/or
-            // framing, the order of operations on the data should be assumed to be
-            // the same as the order in which the extensions are listed in the
-            // server's response in the opening handshake.
-            // For example, if there are two extensions "foo" and "bar" and if the
-            // header field |Sec-WebSocket-Extensions| sent by the server has the
-            // value "foo, bar", then operations on the data will be made as
-            // bar(foo(data)), be those changes to the data itself (such as
-            // compression) or changes to the framing that may "stack".
-            var agreedExtensions = new SortedList<int, IWebSocketExtension>();
-
-            int order = 0;
-            foreach (var extension in extensions)
-            {
-                order++;
-
-                foreach (var negotiator in _extensionNegotiatorCollection)
-                {
-                    string invalidParameter;
-                    IWebSocketExtension negotiatedExtension;
-                    if (!negotiator.NegotiateAsClient(extension, out invalidParameter, out negotiatedExtension)
-                        || !string.IsNullOrEmpty(invalidParameter)
-                        || negotiatedExtension == null)
-                    {
-                        throw new WebSocketHandshakeException(string.Format(
-                            "Negotiate extension with remote [{0}] failed due to invalid parameter [{1}].",
-                            this.RemoteEndPoint, invalidParameter));
-                    }
-
-                    agreedExtensions.Add(order, negotiatedExtension);
-                }
-            }
-
-            // A server MUST NOT accept a PMCE extension negotiation offer together
-            // with another extension if the PMCE will conflict with the extension
-            // on their use of the RSV1 bit.  A client that received a response
-            // accepting a PMCE extension negotiation offer together with such an
-            // extension MUST _Fail the WebSocket Connection_.
-            bool isRsv1BitOccupied = false;
-            bool isRsv2BitOccupied = false;
-            bool isRsv3BitOccupied = false;
-            foreach (var extension in agreedExtensions.Values)
-            {
-                if ((isRsv1BitOccupied && extension.Rsv1BitOccupied)
-                    || (isRsv2BitOccupied && extension.Rsv2BitOccupied)
-                    || (isRsv3BitOccupied && extension.Rsv3BitOccupied))
-                    throw new WebSocketHandshakeException(string.Format(
-                        "Negotiate extension with remote [{0}] failed due to conflict bit occupied.", this.RemoteEndPoint));
-
-                isRsv1BitOccupied = isRsv1BitOccupied | extension.Rsv1BitOccupied;
-                isRsv2BitOccupied = isRsv2BitOccupied | extension.Rsv2BitOccupied;
-                isRsv3BitOccupied = isRsv3BitOccupied | extension.Rsv3BitOccupied;
-            }
-
-            _frameBuilder.NegotiatedExtensions = agreedExtensions;
-        }
-
         private bool ShouldThrow(Exception ex)
         {
             if (ex is SocketException
@@ -864,6 +791,93 @@ namespace Cowboy.WebSockets
                     _keepAliveLocker.Release();
                 }
             }
+        }
+
+        #endregion
+
+        #region Extensions
+
+        internal void AgreeExtensions(IEnumerable<string> extensions)
+        {
+            if (extensions == null)
+                throw new ArgumentNullException("extensions");
+
+            // no extension configured, but client offered, so just ignore them.
+            if (_extensionNegotiatorCollection == null || !_extensionNegotiatorCollection.Any())
+                return;
+
+            // Note that the order of extensions is significant.  Any interactions
+            // between multiple extensions MAY be defined in the documents defining
+            // the extensions.  In the absence of such definitions, the
+            // interpretation is that the header fields listed by the client in its
+            // request represent a preference of the header fields it wishes to use,
+            // with the first options listed being most preferable.  The extensions
+            // listed by the server in response represent the extensions actually in
+            // use for the connection.  Should the extensions modify the data and/or
+            // framing, the order of operations on the data should be assumed to be
+            // the same as the order in which the extensions are listed in the
+            // server's response in the opening handshake.
+            // For example, if there are two extensions "foo" and "bar" and if the
+            // header field |Sec-WebSocket-Extensions| sent by the server has the
+            // value "foo, bar", then operations on the data will be made as
+            // bar(foo(data)), be those changes to the data itself (such as
+            // compression) or changes to the framing that may "stack".
+            var agreedExtensions = new SortedList<int, IWebSocketExtension>();
+
+            int order = 0;
+            foreach (var extension in extensions)
+            {
+                order++;
+
+                foreach (var negotiator in _extensionNegotiatorCollection)
+                {
+                    string invalidParameter;
+                    IWebSocketExtension negotiatedExtension;
+                    if (!negotiator.NegotiateAsClient(extension, out invalidParameter, out negotiatedExtension)
+                        || !string.IsNullOrEmpty(invalidParameter)
+                        || negotiatedExtension == null)
+                    {
+                        throw new WebSocketHandshakeException(string.Format(
+                            "Negotiate extension with remote [{0}] failed due to invalid parameter [{1}].",
+                            this.RemoteEndPoint, invalidParameter));
+                    }
+
+                    agreedExtensions.Add(order, negotiatedExtension);
+                }
+            }
+
+            // A server MUST NOT accept a PMCE extension negotiation offer together
+            // with another extension if the PMCE will conflict with the extension
+            // on their use of the RSV1 bit.  A client that received a response
+            // accepting a PMCE extension negotiation offer together with such an
+            // extension MUST _Fail the WebSocket Connection_.
+            bool isRsv1BitOccupied = false;
+            bool isRsv2BitOccupied = false;
+            bool isRsv3BitOccupied = false;
+            foreach (var extension in agreedExtensions.Values)
+            {
+                if ((isRsv1BitOccupied && extension.Rsv1BitOccupied)
+                    || (isRsv2BitOccupied && extension.Rsv2BitOccupied)
+                    || (isRsv3BitOccupied && extension.Rsv3BitOccupied))
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Negotiate extension with remote [{0}] failed due to conflict bit occupied.", this.RemoteEndPoint));
+
+                isRsv1BitOccupied = isRsv1BitOccupied | extension.Rsv1BitOccupied;
+                isRsv2BitOccupied = isRsv2BitOccupied | extension.Rsv2BitOccupied;
+                isRsv3BitOccupied = isRsv3BitOccupied | extension.Rsv3BitOccupied;
+            }
+
+            _frameBuilder.NegotiatedExtensions = agreedExtensions;
+        }
+
+        #endregion
+
+        #region Sub-Protocols
+
+        internal void AgreeSubProtocols(string protocols)
+        {
+            if (string.IsNullOrWhiteSpace(protocols))
+                throw new ArgumentNullException("protocols");
         }
 
         #endregion
