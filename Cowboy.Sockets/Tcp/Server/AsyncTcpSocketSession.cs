@@ -248,6 +248,15 @@ namespace Cowboy.Sockets
 
         private bool ShouldThrow(Exception ex)
         {
+            if (ex is IOException
+                && ex.InnerException != null
+                && ex.InnerException is SocketException
+                && (ex.InnerException as SocketException).SocketErrorCode == SocketError.TimedOut)
+            {
+                _log.Error(ex.Message, ex);
+                return false;
+            }
+
             if (ex is SocketException
                 || ex is IOException
                 || ex is InvalidOperationException

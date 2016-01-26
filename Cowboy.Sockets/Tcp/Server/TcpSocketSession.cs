@@ -410,8 +410,18 @@ namespace Cowboy.Sockets
             }
             catch (Exception ex)
             {
-                if (!CloseIfShould(ex))
-                    throw;
+                if (ex is IOException
+                    && ex.InnerException != null
+                    && ex.InnerException is SocketException
+                    && (ex.InnerException as SocketException).SocketErrorCode == SocketError.TimedOut)
+                {
+                    _log.Error(ex.Message, ex);
+                }
+                else
+                {
+                    if (!CloseIfShould(ex))
+                        throw;
+                }
             }
         }
 
@@ -442,8 +452,18 @@ namespace Cowboy.Sockets
             }
             catch (Exception ex)
             {
-                if (!CloseIfShould(ex))
-                    throw;
+                if (ex is IOException
+                    && ex.InnerException != null
+                    && ex.InnerException is SocketException
+                    && (ex.InnerException as SocketException).SocketErrorCode == SocketError.TimedOut)
+                {
+                    _log.Error(ex.Message, ex);
+                }
+                else
+                {
+                    if (!CloseIfShould(ex))
+                        throw;
+                }
             }
         }
 
