@@ -24,7 +24,19 @@ namespace Cowboy.Sockets.TestTcpSocketClient
                     string text = Console.ReadLine();
                     if (text == "quit")
                         break;
-                    _client.Send(Encoding.UTF8.GetBytes(text));
+                    else if (text == "many")
+                    {
+                        text = new string('x', 8192);
+                        for (int i = 0; i < 1000000; i++)
+                        {
+                            _client.Send(Encoding.UTF8.GetBytes(text));
+                        }
+                    }
+                    else if (text == "big")
+                    {
+                        text = new string('x', 1024 * 1024 * 100);
+                        _client.Send(Encoding.UTF8.GetBytes(text));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -45,6 +57,7 @@ namespace Cowboy.Sockets.TestTcpSocketClient
             //config.SslTargetHost = "Cowboy";
             //config.SslClientCertificates.Add(new System.Security.Cryptography.X509Certificates.X509Certificate2(@"D:\\Cowboy.cer"));
             //config.SslPolicyErrorsBypassed = false;
+            //config.SendTimeout = TimeSpan.FromSeconds(2);
 
             IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 22222);
 

@@ -23,7 +23,19 @@ namespace Cowboy.Sockets.TestTcpSocketServer
                     string text = Console.ReadLine();
                     if (text == "quit")
                         break;
-                    _server.Broadcast(Encoding.UTF8.GetBytes(text));
+                    else if (text == "many")
+                    {
+                        text = new string('x', 8192);
+                        for (int i = 0; i < 1000000; i++)
+                        {
+                            _server.Broadcast(Encoding.UTF8.GetBytes(text));
+                        }
+                    }
+                    else if (text == "big")
+                    {
+                        text = new string('x', 1024 * 1024 * 100);
+                        _server.Broadcast(Encoding.UTF8.GetBytes(text));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -67,6 +79,7 @@ namespace Cowboy.Sockets.TestTcpSocketServer
             Console.Write(string.Format("Client : {0} {1} --> ", e.Session.RemoteEndPoint, e.Session));
             Console.WriteLine(string.Format("{0}", text));
             _server.Broadcast(Encoding.UTF8.GetBytes(text));
+            //System.Threading.Thread.Sleep(TimeSpan.FromSeconds(5));
         }
     }
 }
