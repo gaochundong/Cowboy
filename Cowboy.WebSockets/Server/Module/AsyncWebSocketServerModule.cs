@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Cowboy.WebSockets
 {
-    public abstract class AsyncWebSocketServerModule : IAsyncWebSocketServerMessageDispatcher, IHideObjectMembers
+    public abstract class AsyncWebSocketServerModule : IAsyncWebSocketServerMessageDispatcher
     {
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private static readonly Regex ModuleNameExpression = new Regex(@"(?<name>[\w]+)Module$", RegexOptions.Compiled);

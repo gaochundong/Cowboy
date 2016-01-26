@@ -65,7 +65,7 @@
     <Compile Include="Tcp\Server\AsyncTcpSocketServer.cs" />
     <Compile Include="Tcp\Server\TcpSocketServer.cs" />
     <Compile Include="Tcp\TcpSocketState.cs" />
-    <Compile Include="TplExtensions.cs" />
+    <Compile Include="Helpers\TplExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Cowboy.Buffer\Cowboy.Buffer.csproj">
