@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Cowboy.Http;
 using Cowboy.Http.Responses;
-using Cowboy.Utilities;
+using Cowboy.Http.Utilities;
 
 namespace Cowboy.StaticContent
 {

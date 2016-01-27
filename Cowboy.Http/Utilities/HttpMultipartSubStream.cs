@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace Cowboy.Utilities
+namespace Cowboy.Http.Utilities
 {
     /// <summary>
     /// A decorator stream that sits on top of an existing stream and appears as a unique stream.

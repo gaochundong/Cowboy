@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace Cowboy.Utilities
+namespace Cowboy.Http.Utilities
 {
     /// <summary>
     /// Represents a file that was captured in a HTTP multipart/form-data request

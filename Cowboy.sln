@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Utilities", "Cowboy.Utilities\Cowboy.Utilities.csproj", "{D80D7951-9CB6-4F7D-B9AC-1566C173C950}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy", "Cowboy\Cowboy.csproj", "{8FB75B54-A8D7-42B0-8E14-80CB48B91497}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{0E04BEDA-90F9-4E44-91B9-FAE42EF01498}"
@@ -78,10 +76,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D80D7951-9CB6-4F7D-B9AC-1566C173C950}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D80D7951-9CB6-4F7D-B9AC-1566C173C950}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D80D7951-9CB6-4F7D-B9AC-1566C173C950}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D80D7951-9CB6-4F7D-B9AC-1566C173C950}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8FB75B54-A8D7-42B0-8E14-80CB48B91497}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8FB75B54-A8D7-42B0-8E14-80CB48B91497}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8FB75B54-A8D7-42B0-8E14-80CB48B91497}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -167,7 +161,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{D80D7951-9CB6-4F7D-B9AC-1566C173C950} = {DB380EC2-6535-4DE2-A0AC-C5800AD04779}
 		{8FB75B54-A8D7-42B0-8E14-80CB48B91497} = {DB380EC2-6535-4DE2-A0AC-C5800AD04779}
 		{7EB615AE-71B7-4D75-8E43-1CEF143E0B33} = {DB380EC2-6535-4DE2-A0AC-C5800AD04779}
 		{505D35F3-9835-45B6-9E30-4E4D6A7FFDB7} = {DB380EC2-6535-4DE2-A0AC-C5800AD04779}

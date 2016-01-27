@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Globalization;
 using System.Linq;
 using System.Net;
@@ -7,10 +8,9 @@ using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Cowboy.Http;
-using Cowboy.StaticContent;
-using Cowboy.Utilities;
+using Cowboy.Http.Utilities;
 using Cowboy.Http.WebSockets;
-using System.Collections.Specialized;
+using Cowboy.StaticContent;
 
 namespace Cowboy
 {

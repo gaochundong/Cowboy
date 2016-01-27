@@ -42,11 +42,11 @@
       <Link>SolutionVersion.cs</Link>
     </Compile>
     <Compile Include="Context.cs" />
-    <Compile Include="Helpers\DynamicDictionary.cs" />
-    <Compile Include="Helpers\DynamicDictionaryValue.cs" />
-    <Compile Include="Helpers\StringExtensions.cs" />
-    <Compile Include="Helpers\TplExtensions.cs" />
-    <Compile Include="Helpers\UriExtensions.cs" />
+    <Compile Include="Extensions\DynamicDictionary.cs" />
+    <Compile Include="Extensions\DynamicDictionaryValue.cs" />
+    <Compile Include="Extensions\StringExtensions.cs" />
+    <Compile Include="Extensions\TplExtensions.cs" />
+    <Compile Include="Extensions\UriExtensions.cs" />
     <Compile Include="Module\Module.cs" />
     <Compile Include="Module\ModuleBuilder.cs" />
     <Compile Include="Module\ModuleCatalog.cs" />
@@ -95,15 +95,20 @@
     <Compile Include="Routing\Trie\RouteResolverTrie.cs" />
     <Compile Include="Routing\Trie\SegmentMatch.cs" />
     <Compile Include="Routing\Trie\TrieNodeFactory.cs" />
+    <Compile Include="Utilities\HttpEncoder.cs" />
+    <Compile Include="Utilities\HttpFile.cs" />
+    <Compile Include="Utilities\HttpMultipart.cs" />
+    <Compile Include="Utilities\HttpMultipartBoundary.cs" />
+    <Compile Include="Utilities\HttpMultipartBuffer.cs" />
+    <Compile Include="Utilities\HttpMultipartSubStream.cs" />
+    <Compile Include="Utilities\HttpUtility.cs" />
+    <Compile Include="Utilities\MimeTypes.cs" />
+    <Compile Include="Utilities\Url.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Cowboy.Serialization\Cowboy.Serialization.csproj">
       <Project>{505d35f3-9835-45b6-9e30-4e4d6a7ffdb7}</Project>
       <Name>Cowboy.Serialization</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Cowboy.Utilities\Cowboy.Utilities.csproj">
-      <Project>{d80d7951-9cb6-4f7d-b9ac-1566c173c950}</Project>
-      <Name>Cowboy.Utilities</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

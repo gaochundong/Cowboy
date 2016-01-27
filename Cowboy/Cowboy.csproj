@@ -71,10 +71,6 @@
       <Project>{505d35f3-9835-45b6-9e30-4e4d6a7ffdb7}</Project>
       <Name>Cowboy.Serialization</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Cowboy.Utilities\Cowboy.Utilities.csproj">
-      <Project>{d80d7951-9cb6-4f7d-b9ac-1566c173c950}</Project>
-      <Name>Cowboy.Utilities</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

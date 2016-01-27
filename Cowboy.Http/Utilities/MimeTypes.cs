@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Cowboy.Utilities
+namespace Cowboy.Http.Utilities
 {
     public sealed class MimeTypes
     {

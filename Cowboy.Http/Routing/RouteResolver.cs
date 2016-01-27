@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Cowboy.Http.Routing.Trie;
-using Cowboy.Utilities;
+using Cowboy.Http.Utilities;
 
 namespace Cowboy.Http.Routing
 {

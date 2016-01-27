@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
-using Cowboy.Utilities;
+using Cowboy.Http.Utilities;
 
 namespace Cowboy.Http.Responses
 {

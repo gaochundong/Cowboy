@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Linq;
-using Cowboy.Utilities;
+using Cowboy.Http.Utilities;
 
 namespace Cowboy.Http
 {

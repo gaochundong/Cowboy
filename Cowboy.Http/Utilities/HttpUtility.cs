@@ -5,7 +5,7 @@ using System.Collections.Specialized;
 using System.IO;
 using System.Text;
 
-namespace Cowboy.Utilities
+namespace Cowboy.Http.Utilities
 {
     public sealed class HttpUtility
     {

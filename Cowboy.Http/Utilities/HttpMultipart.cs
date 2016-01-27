@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace Cowboy.Utilities
+namespace Cowboy.Http.Utilities
 {
     /// <summary>
     /// Retrieves <see cref="HttpMultipartBoundary"/> instances from a request stream.

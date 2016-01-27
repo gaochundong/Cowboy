@@ -3,7 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 
-namespace Cowboy.Utilities
+namespace Cowboy.Http.Utilities
 {
     public sealed class Url : ICloneable
     {
