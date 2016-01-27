@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using Cowboy.Http.Responses;
-using Cowboy.Serialization;
+using Cowboy.Http.Serialization;
 
 namespace Cowboy.Http
 {

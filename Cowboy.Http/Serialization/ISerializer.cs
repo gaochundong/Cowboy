@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 
-namespace Cowboy.Serialization
+namespace Cowboy.Http.Serialization
 {
     public interface ISerializer
     {

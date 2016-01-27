@@ -95,6 +95,7 @@
     <Compile Include="Routing\Trie\RouteResolverTrie.cs" />
     <Compile Include="Routing\Trie\SegmentMatch.cs" />
     <Compile Include="Routing\Trie\TrieNodeFactory.cs" />
+    <Compile Include="Serialization\ISerializer.cs" />
     <Compile Include="Utilities\HttpEncoder.cs" />
     <Compile Include="Utilities\HttpFile.cs" />
     <Compile Include="Utilities\HttpMultipart.cs" />
@@ -104,12 +105,6 @@
     <Compile Include="Utilities\HttpUtility.cs" />
     <Compile Include="Utilities\MimeTypes.cs" />
     <Compile Include="Utilities\Url.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Cowboy.Serialization\Cowboy.Serialization.csproj">
-      <Project>{505d35f3-9835-45b6-9e30-4e4d6a7ffdb7}</Project>
-      <Name>Cowboy.Serialization</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

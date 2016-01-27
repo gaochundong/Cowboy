@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Net;
-using Cowboy.Serialization;
+using Cowboy.Http.Serialization;
 
 namespace Cowboy.Http.Responses
 {

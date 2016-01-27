@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Cowboy.Serialization;
+using Cowboy.Http.Serialization;
 
 namespace Cowboy.Http
 {
