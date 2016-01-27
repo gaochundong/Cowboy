@@ -5,7 +5,7 @@ using System.Globalization;
 using System.Linq.Expressions;
 using Microsoft.CSharp.RuntimeBinder;
 
-namespace Cowboy
+namespace Cowboy.Http
 {
     public class DynamicDictionaryValue : DynamicObject, IEquatable<DynamicDictionaryValue>, IConvertible
     {

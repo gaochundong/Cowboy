@@ -5,6 +5,7 @@ using System.Net;
 using System.Security.Principal;
 using System.Threading;
 using System.Threading.Tasks;
+using Cowboy.Http;
 
 namespace Cowboy.Hosting.Self
 {

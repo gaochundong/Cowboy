@@ -2,7 +2,7 @@
 using System.Linq;
 using Cowboy.Utilities;
 
-namespace Cowboy
+namespace Cowboy.Http
 {
     public static class StringExtensions
     {

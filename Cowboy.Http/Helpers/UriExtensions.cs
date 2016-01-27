@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Cowboy
+namespace Cowboy.Http
 {
     public static class UriExtensions
     {

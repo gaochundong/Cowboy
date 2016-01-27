@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace Cowboy
+namespace Cowboy.Http
 {
     public static class TplExtensions
     {

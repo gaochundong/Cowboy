@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Dynamic;
 
-namespace Cowboy
+namespace Cowboy.Http
 {
     public class DynamicDictionary : DynamicObject, IEquatable<DynamicDictionary>, IEnumerable<string>, IDictionary<string, object>
     {
