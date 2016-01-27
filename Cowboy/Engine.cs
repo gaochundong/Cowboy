@@ -10,6 +10,7 @@ using Cowboy.Http;
 using Cowboy.StaticContent;
 using Cowboy.Utilities;
 using Cowboy.Http.WebSockets;
+using System.Collections.Specialized;
 
 namespace Cowboy
 {
@@ -70,7 +71,7 @@ namespace Cowboy
 
         private Request ConvertRequest(Uri baseUri, HttpListenerRequest httpRequest)
         {
-            var expectedRequestLength = GetExpectedRequestLength(httpRequest.Headers.ToDictionary());
+            var expectedRequestLength = GetExpectedRequestLength(ConvertToDictionary(httpRequest.Headers));
 
             var relativeUrl = baseUri.MakeAppLocalPath(httpRequest.Url);
 
@@ -101,7 +102,7 @@ namespace Cowboy
                 httpRequest.HttpMethod,
                 url,
                 RequestStream.FromStream(httpRequest.InputStream, expectedRequestLength, false),
-                httpRequest.Headers.ToDictionary(),
+                ConvertToDictionary(httpRequest.Headers),
                 (httpRequest.RemoteEndPoint != null) ? httpRequest.RemoteEndPoint.Address.ToString() : null,
                 protocolVersion,
                 certificate);
@@ -163,6 +164,11 @@ namespace Cowboy
 
             return !long.TryParse(headerValue, NumberStyles.Any, CultureInfo.InvariantCulture, out contentLength) ?
                 0 : contentLength;
+        }
+
+        private static IDictionary<string, IEnumerable<string>> ConvertToDictionary(NameValueCollection source)
+        {
+            return source.AllKeys.ToDictionary<string, string, IEnumerable<string>>(key => key, source.GetValues);
         }
     }
 }
