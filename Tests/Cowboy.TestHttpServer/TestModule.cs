@@ -32,13 +32,13 @@ namespace Cowboy.TestHttpServer
 
             Get["/json"] = x =>
             {
-                var model = new TestModel { Description = "Hello Json" };
+                var model = new TestModel();
                 return this.Response.AsJson(model);
             };
 
             Get["/xml"] = x =>
             {
-                var model = new TestModel { Description = "Hello Xml" };
+                var model = new TestModel();
                 return this.Response.AsXml(model);
             };
 

@@ -7,7 +7,12 @@ namespace Cowboy.Serialization
 {
     public class JsonSerializer : ISerializer
     {
-        private Newtonsoft.Json.JsonSerializer _serializer = Newtonsoft.Json.JsonSerializer.CreateDefault();
+        private Newtonsoft.Json.JsonSerializer _serializer;
+
+        public JsonSerializer()
+        {
+            _serializer = Newtonsoft.Json.JsonSerializer.CreateDefault();
+        }
 
         public bool CanSerialize(string contentType)
         {

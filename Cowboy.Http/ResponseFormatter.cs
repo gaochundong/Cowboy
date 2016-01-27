@@ -10,28 +10,28 @@ namespace Cowboy.Http
 {
     public class ResponseFormatter
     {
-        private readonly Context context;
-        private readonly IEnumerable<ISerializer> serializers;
-        private static ISerializer jsonSerializer;
-        private static ISerializer xmlSerializer;
+        private readonly Context _context;
+        private readonly IEnumerable<ISerializer> _serializers;
+        private static ISerializer _jsonSerializer;
+        private static ISerializer _xmlSerializer;
 
         public ResponseFormatter(Context context, IEnumerable<ISerializer> serializers)
         {
-            this.context = context;
-            this.serializers = serializers.ToArray();
+            _context = context;
+            _serializers = serializers.ToArray();
         }
 
         public IEnumerable<ISerializer> Serializers
         {
             get
             {
-                return this.serializers;
+                return _serializers;
             }
         }
 
         public Context Context
         {
-            get { return this.context; }
+            get { return _context; }
         }
 
         public Response FromStream(Stream stream, string contentType)
@@ -71,7 +71,7 @@ namespace Cowboy.Http
 
         public Response AsJson<TModel>(TModel model, HttpStatusCode statusCode = HttpStatusCode.OK)
         {
-            var serializer = jsonSerializer ?? (jsonSerializer = this.Serializers.FirstOrDefault(s => s.CanSerialize("application/json")));
+            var serializer = _jsonSerializer ?? (_jsonSerializer = this.Serializers.FirstOrDefault(s => s.CanSerialize("application/json")));
 
             var r = new JsonResponse<TModel>(model, serializer);
             r.StatusCode = statusCode;
@@ -81,7 +81,7 @@ namespace Cowboy.Http
 
         public Response AsXml<TModel>(TModel model)
         {
-            var serializer = xmlSerializer ?? (xmlSerializer = this.Serializers.FirstOrDefault(s => s.CanSerialize("application/xml")));
+            var serializer = _xmlSerializer ?? (_xmlSerializer = this.Serializers.FirstOrDefault(s => s.CanSerialize("application/xml")));
 
             return new XmlResponse<TModel>(model, serializer);
         }

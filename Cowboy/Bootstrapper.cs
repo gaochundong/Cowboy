@@ -5,9 +5,9 @@ using Cowboy.Http;
 using Cowboy.Http.Responses;
 using Cowboy.Http.Routing;
 using Cowboy.Http.Routing.Trie;
+using Cowboy.Http.WebSockets;
 using Cowboy.Serialization;
 using Cowboy.StaticContent;
-using Cowboy.Http.WebSockets;
 
 namespace Cowboy
 {
