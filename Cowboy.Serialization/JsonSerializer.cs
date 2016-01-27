@@ -19,7 +19,6 @@ namespace Cowboy.Serialization
             get { yield return "json"; }
         }
 
-
         public void Serialize<TModel>(string contentType, TModel model, Stream outputStream)
         {
             using (var writer = new StreamWriter(new UnclosableStreamWrapper(outputStream), Encoding.UTF8))
