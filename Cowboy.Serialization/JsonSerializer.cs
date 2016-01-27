@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Newtonsoft.Json;
 
 namespace Cowboy.Serialization
 {
@@ -11,7 +12,25 @@ namespace Cowboy.Serialization
 
         public JsonSerializer()
         {
-            _serializer = Newtonsoft.Json.JsonSerializer.CreateDefault();
+            var settings = new JsonSerializerSettings()
+            {
+                ConstructorHandling = ConstructorHandling.Default,
+                DateFormatHandling = DateFormatHandling.IsoDateFormat,
+                DateParseHandling = DateParseHandling.DateTime,
+                DefaultValueHandling = DefaultValueHandling.Include,
+                FloatFormatHandling = FloatFormatHandling.DefaultValue,
+                FloatParseHandling = FloatParseHandling.Decimal,
+                Formatting = Formatting.None,
+                MetadataPropertyHandling = MetadataPropertyHandling.Default,
+                MissingMemberHandling = MissingMemberHandling.Ignore,
+                NullValueHandling = NullValueHandling.Ignore,
+                ObjectCreationHandling = ObjectCreationHandling.Auto,
+                PreserveReferencesHandling = PreserveReferencesHandling.None,
+                ReferenceLoopHandling = ReferenceLoopHandling.Error,
+                StringEscapeHandling = StringEscapeHandling.Default,
+                TypeNameHandling = TypeNameHandling.None,
+            };
+            _serializer = Newtonsoft.Json.JsonSerializer.CreateDefault(settings);
         }
 
         public bool CanSerialize(string contentType)
