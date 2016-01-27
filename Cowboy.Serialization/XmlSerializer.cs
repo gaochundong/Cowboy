@@ -19,9 +19,11 @@ namespace Cowboy.Serialization
 
         public void Serialize<TModel>(string contentType, TModel model, Stream outputStream)
         {
-            var serializer = new System.Xml.Serialization.XmlSerializer(typeof(TModel));
-
-            serializer.Serialize(new StreamWriter(outputStream, Encoding.UTF8), model);
+            using (var writer = new StreamWriter(new UnclosableStreamWrapper(outputStream), Encoding.UTF8))
+            {
+                var serializer = new System.Xml.Serialization.XmlSerializer(typeof(TModel));
+                serializer.Serialize(writer, model);
+            }
         }
 
         private static bool IsXmlType(string contentType)
