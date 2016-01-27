@@ -98,4 +98,11 @@ namespace Cowboy.WebSockets.TestAsyncWebSocketClient
             await Task.CompletedTask;
         }
     }
+
+    public static class TplExtensions
+    {
+        public static void Forget(this Task task)
+        {
+        }
+    }
 }

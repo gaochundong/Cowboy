@@ -48,10 +48,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Cowboy.Extensions\Cowboy.Extensions.csproj">
-      <Project>{aaf9f07e-921a-433f-b475-6988ecba754f}</Project>
-      <Name>Cowboy.Extensions</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\Cowboy.Logging.NLogIntegration\Cowboy.Logging.NLogIntegration.csproj">
       <Project>{be0e384e-a89c-4cc1-ae7c-e390ac8349f3}</Project>
       <Name>Cowboy.Logging.NLogIntegration</Name>

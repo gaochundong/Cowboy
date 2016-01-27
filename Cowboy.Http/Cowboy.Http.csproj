@@ -42,6 +42,11 @@
       <Link>SolutionVersion.cs</Link>
     </Compile>
     <Compile Include="Context.cs" />
+    <Compile Include="Helpers\DynamicDictionary.cs" />
+    <Compile Include="Helpers\DynamicDictionaryValue.cs" />
+    <Compile Include="Helpers\StringExtensions.cs" />
+    <Compile Include="Helpers\TplExtensions.cs" />
+    <Compile Include="Helpers\UriExtensions.cs" />
     <Compile Include="Module\Module.cs" />
     <Compile Include="Module\ModuleBuilder.cs" />
     <Compile Include="Module\ModuleCatalog.cs" />
@@ -92,10 +97,6 @@
     <Compile Include="Routing\Trie\TrieNodeFactory.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Cowboy.Extensions\Cowboy.Extensions.csproj">
-      <Project>{aaf9f07e-921a-433f-b475-6988ecba754f}</Project>
-      <Name>Cowboy.Extensions</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Cowboy.Serialization\Cowboy.Serialization.csproj">
       <Project>{505d35f3-9835-45b6-9e30-4e4d6a7ffdb7}</Project>
       <Name>Cowboy.Serialization</Name>

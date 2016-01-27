@@ -9,7 +9,7 @@ using Cowboy.Http.Routing;
 
 namespace Cowboy.Http
 {
-    public abstract class Module : IHideObjectMembers
+    public abstract class Module
     {
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private static readonly Regex ModuleNameExpression = new Regex(@"(?<name>[\w]+)Module$", RegexOptions.Compiled);
@@ -92,7 +92,7 @@ namespace Cowboy.Http
             get { return new RouteBuilder("PUT", this); }
         }
 
-        public class RouteBuilder : IHideObjectMembers
+        public class RouteBuilder
         {
             private readonly string method;
             private readonly Module parentModule;
