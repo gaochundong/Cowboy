@@ -750,6 +750,63 @@ namespace Cowboy.WebSockets
             await SendFrame(new BinaryFrame(segment).ToArray(_frameBuilder));
         }
 
+        public async Task SendStreamAsync(Stream stream)
+        {
+            if (stream == null)
+                throw new ArgumentNullException("stream");
+
+            int fragmentLength = _configuration.ReasonableFragmentSize;
+            var totalLength = stream.Length;
+            var fragmentCount = totalLength / fragmentLength;
+            var remainingLength = (int)(totalLength % fragmentLength);
+
+            if (fragmentCount == 0)
+            {
+                var data = new byte[remainingLength];
+                var readCount = await stream.ReadAsync(data, 0, remainingLength);
+                await SendBinaryAsync(data, 0, readCount);
+                return;
+            }
+
+            if (fragmentCount == 1 && remainingLength == 0)
+            {
+                var data = new byte[fragmentLength];
+                var readCount = await stream.ReadAsync(data, 0, fragmentLength);
+                await SendBinaryAsync(data, 0, readCount);
+                return;
+            }
+
+            var buffer = new byte[fragmentLength];
+
+            if (await stream.ReadAsync(buffer, 0, fragmentLength) != fragmentLength)
+                throw new InvalidDataException("Invalid stream length.");
+            await SendFrame(new BinaryFragmentationFrame(OpCode.Binary, buffer, 0, fragmentLength).ToArray(_frameBuilder));
+
+            for (long i = 1; i < fragmentCount - 1; i++)
+            {
+                if (await stream.ReadAsync(buffer, 0, fragmentLength) != fragmentLength)
+                    throw new InvalidDataException("Invalid stream length.");
+                await SendFrame(new BinaryFragmentationFrame(OpCode.Continuation, buffer, 0, fragmentLength).ToArray(_frameBuilder));
+            }
+
+            if (remainingLength == 0)
+            {
+                if (await stream.ReadAsync(buffer, 0, fragmentLength) != fragmentLength)
+                    throw new InvalidDataException("Invalid stream length.");
+                await SendFrame(new BinaryFragmentationFrame(OpCode.Continuation, buffer, 0, fragmentLength, isFin: true).ToArray(_frameBuilder));
+            }
+            else
+            {
+                if (await stream.ReadAsync(buffer, 0, fragmentLength) != fragmentLength)
+                    throw new InvalidDataException("Invalid stream length.");
+                await SendFrame(new BinaryFragmentationFrame(OpCode.Continuation, buffer, 0, fragmentLength, isFin: false).ToArray(_frameBuilder));
+
+                if (await stream.ReadAsync(buffer, 0, remainingLength) != remainingLength)
+                    throw new InvalidDataException("Invalid stream length.");
+                await SendFrame(new BinaryFragmentationFrame(OpCode.Continuation, buffer, 0, remainingLength, isFin: true).ToArray(_frameBuilder));
+            }
+        }
+
         private async Task SendFrame(byte[] frame)
         {
             if (frame == null)

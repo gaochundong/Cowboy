@@ -57,8 +57,8 @@
     <Compile Include="Extensions\Parameters\ValuableParameter.cs" />
     <Compile Include="Extensions\Parameters\SingleParameter.cs" />
     <Compile Include="Extensions\WebSocketExtensionOfferDescription.cs" />
+    <Compile Include="Framing\BinaryFragmentationFrame.cs" />
     <Compile Include="Framing\Builder\IFrameBuilder.cs" />
-    <Compile Include="Framing\FrameType.cs" />
     <Compile Include="Framing\Builder\WebSocketFrameBuilder.cs" />
     <Compile Include="Framing\Header\Header.cs" />
     <Compile Include="Framing\PingFrame.cs" />
@@ -66,8 +66,6 @@
     <Compile Include="Framing\CloseFrame.cs" />
     <Compile Include="Framing\ControlFrame.cs" />
     <Compile Include="Framing\DataFrame.cs" />
-    <Compile Include="Framing\Fragmentation\TextFragmentation.cs" />
-    <Compile Include="Framing\Fragmentation\BinaryFragmentation.cs" />
     <Compile Include="Framing\TextFrame.cs" />
     <Compile Include="Framing\BinaryFrame.cs" />
     <Compile Include="Framing\Frame.cs" />

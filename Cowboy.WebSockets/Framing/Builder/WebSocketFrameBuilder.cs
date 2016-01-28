@@ -131,6 +131,11 @@ namespace Cowboy.WebSockets
             return Encode(frame.OpCode, frame.Data, frame.Offset, frame.Count, isMasked: frame.IsMasked);
         }
 
+        public byte[] EncodeFrame(BinaryFragmentationFrame frame)
+        {
+            return Encode(frame.OpCode, frame.Data, frame.Offset, frame.Count, isMasked: frame.IsMasked, isFin: frame.IsFin);
+        }
+
         private byte[] Encode(OpCode opCode, byte[] payload, int offset, int count, bool isMasked = true, bool isFin = true)
         {
             // Payload data:  (x+y) bytes

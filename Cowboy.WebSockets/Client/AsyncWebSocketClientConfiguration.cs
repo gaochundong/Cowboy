@@ -32,6 +32,7 @@ namespace Cowboy.WebSockets
             CloseTimeout = TimeSpan.FromSeconds(5);
             KeepAliveInterval = TimeSpan.FromSeconds(30);
             KeepAliveTimeout = TimeSpan.FromSeconds(5);
+            ReasonableFragmentSize = 1016;
 
             EnabledExtensions = new Dictionary<string, IWebSocketExtensionNegotiator>()
             {
@@ -65,6 +66,7 @@ namespace Cowboy.WebSockets
         public TimeSpan CloseTimeout { get; set; }
         public TimeSpan KeepAliveInterval { get; set; }
         public TimeSpan KeepAliveTimeout { get; set; }
+        public int ReasonableFragmentSize { get; set; }
 
         public Dictionary<string, IWebSocketExtensionNegotiator> EnabledExtensions { get; set; }
         public Dictionary<string, IWebSocketSubProtocolNegotiator> EnabledSubProtocols { get; set; }

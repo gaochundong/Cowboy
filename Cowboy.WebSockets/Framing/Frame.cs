@@ -2,7 +2,6 @@
 {
     public abstract class Frame
     {
-        public abstract FrameType FrameType { get; }
         public abstract OpCode OpCode { get; }
 
         public override string ToString()
