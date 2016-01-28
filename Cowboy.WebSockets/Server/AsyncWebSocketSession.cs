@@ -280,10 +280,10 @@ namespace Cowboy.WebSockets
                                     case OpCode.Text:
                                         {
                                             if (frameHeader.IsFIN)
-                                            {
-                                                var text = Encoding.UTF8.GetString(payload, payloadOffset, payloadCount);
+                                            {                                                
                                                 try
                                                 {
+                                                    var text = Encoding.UTF8.GetString(payload, payloadOffset, payloadCount);
                                                     await _module.OnSessionTextReceived(this, text);
                                                 }
                                                 catch (Exception ex)

@@ -325,9 +325,9 @@ namespace Cowboy.WebSockets
                                         {
                                             if (frameHeader.IsFIN)
                                             {
-                                                var text = Encoding.UTF8.GetString(payload, payloadOffset, payloadCount);
                                                 try
                                                 {
+                                                    var text = Encoding.UTF8.GetString(payload, payloadOffset, payloadCount);
                                                     await _dispatcher.OnServerTextReceived(this, text);
                                                 }
                                                 catch (Exception ex)
