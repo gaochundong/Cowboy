@@ -4,7 +4,7 @@ namespace Cowboy.WebSockets
 {
     internal static class StringBuilderExtensions
     {
-        private readonly static char[] _crcf = new char[] { '\r', '\n' };
+        private static readonly char[] _crcf = new char[] { '\r', '\n' };
 
         public static void AppendFormatWithCrCf(this StringBuilder builder, string format, object arg)
         {

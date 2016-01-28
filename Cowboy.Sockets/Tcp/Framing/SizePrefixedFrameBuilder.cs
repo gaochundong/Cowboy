@@ -2,7 +2,6 @@
 
 namespace Cowboy.Sockets
 {
-    // This wire format for the data transfer part is described by the ABNF.
     // A high-level overview of the framing is given in the following figure. 
     //  0                   1                   2                   3
     //  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -22,12 +21,12 @@ namespace Cowboy.Sockets
     // + - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - +
     // |                     Payload Data continued ...                |
     // +---------------------------------------------------------------+
-    public sealed class LengthHeaderFrameBuilder : IFrameBuilder
+    public sealed class SizePrefixedFrameBuilder : IFrameBuilder
     {
         private static readonly Random _rng = new Random(DateTime.UtcNow.Millisecond);
         private static readonly int MaskingKeyLength = 4;
 
-        public LengthHeaderFrameBuilder(bool isMasked = false)
+        public SizePrefixedFrameBuilder(bool isMasked = false)
         {
             IsMasked = isMasked;
         }
