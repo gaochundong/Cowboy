@@ -69,6 +69,25 @@ namespace Cowboy.WebSockets
 
         #endregion
 
+        #region Fragmentation
+
+        public virtual async Task OnSessionFragmentationStreamOpened(AsyncWebSocketSession session, byte[] data, int offset, int count)
+        {
+            await Task.CompletedTask;
+        }
+
+        public virtual async Task OnSessionFragmentationStreamContinued(AsyncWebSocketSession session, byte[] data, int offset, int count)
+        {
+            await Task.CompletedTask;
+        }
+
+        public virtual async Task OnSessionFragmentationStreamClosed(AsyncWebSocketSession session, byte[] data, int offset, int count)
+        {
+            await Task.CompletedTask;
+        }
+
+        #endregion
+
         #region Send
 
         public async Task Broadcast(string text)

@@ -320,6 +320,8 @@ namespace Cowboy.WebSockets
                                 switch (frameHeader.OpCode)
                                 {
                                     case OpCode.Continuation:
+                                        {
+                                        }
                                         break;
                                     case OpCode.Text:
                                         {

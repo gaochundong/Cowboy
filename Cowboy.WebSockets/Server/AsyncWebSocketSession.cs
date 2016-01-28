@@ -276,15 +276,50 @@ namespace Cowboy.WebSockets
                                 switch (frameHeader.OpCode)
                                 {
                                     case OpCode.Continuation:
+                                        {
+                                            if (!frameHeader.IsFIN)
+                                            {
+                                                try
+                                                {
+                                                    await _module.OnSessionFragmentationStreamContinued(this, payload, payloadOffset, payloadCount);
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    HandleUserSideError(ex);
+                                                }
+                                            }
+                                            else
+                                            {
+                                                try
+                                                {
+                                                    await _module.OnSessionFragmentationStreamClosed(this, payload, payloadOffset, payloadCount);
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    HandleUserSideError(ex);
+                                                }
+                                            }
+                                        }
                                         break;
                                     case OpCode.Text:
                                         {
                                             if (frameHeader.IsFIN)
-                                            {                                                
+                                            {
                                                 try
                                                 {
                                                     var text = Encoding.UTF8.GetString(payload, payloadOffset, payloadCount);
                                                     await _module.OnSessionTextReceived(this, text);
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    HandleUserSideError(ex);
+                                                }
+                                            }
+                                            else
+                                            {
+                                                try
+                                                {
+                                                    await _module.OnSessionFragmentationStreamOpened(this, payload, payloadOffset, payloadCount);
                                                 }
                                                 catch (Exception ex)
                                                 {
@@ -300,6 +335,17 @@ namespace Cowboy.WebSockets
                                                 try
                                                 {
                                                     await _module.OnSessionBinaryReceived(this, payload, payloadOffset, payloadCount);
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    HandleUserSideError(ex);
+                                                }
+                                            }
+                                            else
+                                            {
+                                                try
+                                                {
+                                                    await _module.OnSessionFragmentationStreamOpened(this, payload, payloadOffset, payloadCount);
                                                 }
                                                 catch (Exception ex)
                                                 {
