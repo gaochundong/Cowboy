@@ -18,7 +18,6 @@ namespace Cowboy.TcpLika
     {
         private TcpLikaCommandLineOptions _options;
         private Action<string> _logger = (s) => { };
-        private IBufferManager _bufferManager;
 
         public TcpLikaEngine(TcpLikaCommandLineOptions options, Action<string> logger = null)
         {
@@ -28,11 +27,6 @@ namespace Cowboy.TcpLika
 
             if (logger != null)
                 _logger = logger;
-
-            if (_options.IsSetConnections)
-                _bufferManager = new GrowingByteBufferManager(_options.Connections, 256);
-            else
-                _bufferManager = new GrowingByteBufferManager(10, 256);
         }
 
         public void Start()
