@@ -8,6 +8,8 @@ namespace Cowboy.TcpLika
 {
     internal class WebSocketClientHandshaker
     {
+        private static readonly char[] _headerLineSplitter = new char[] { '\r', '\n' };
+
         public class HandshakeContext
         {
             public byte[] RequestBuffer { get; set; }
@@ -144,7 +146,10 @@ namespace Cowboy.TcpLika
             // Connection: Upgrade
             // Sec-WebSocket-Accept: 1tGBmA9p0DQDgmFll6P0/UcVS/E=
             // Sec-WebSocket-Protocol: chat
-            var headers = ParseOpenningHandshakeResponseHeaders(response);
+            Dictionary<string, string> headers;
+            List<string> extensions;
+            List<string> protocols;
+            ParseOpenningHandshakeResponseHeaders(response, out headers, out extensions, out protocols);
 
             if (!headers.ContainsKey("HttpStatusCode"))
                 return false;
@@ -166,11 +171,27 @@ namespace Cowboy.TcpLika
             return headers["Sec-WebSocket-Accept"].Equals(challenge, StringComparison.OrdinalIgnoreCase);
         }
 
-        private static Dictionary<string, string> ParseOpenningHandshakeResponseHeaders(string response)
+        private static void ParseOpenningHandshakeResponseHeaders(string response,
+            out Dictionary<string, string> headers,
+            out List<string> extensions,
+            out List<string> protocols)
         {
-            var headers = new Dictionary<string, string>();
+            headers = new Dictionary<string, string>();
 
-            var lines = response.Split(new char[] { '\r', '\n' }).Where(l => l.Length > 0);
+            // The |Sec-WebSocket-Extensions| header field MAY appear multiple times
+            // in an HTTP request (which is logically the same as a single
+            // |Sec-WebSocket-Extensions| header field that contains all values.
+            // However, the |Sec-WebSocket-Extensions| header field MUST NOT appear
+            // more than once in an HTTP response.
+            extensions = null;
+            // The |Sec-WebSocket-Protocol| header field MAY appear multiple times
+            // in an HTTP request (which is logically the same as a single
+            // |Sec-WebSocket-Protocol| header field that contains all values).
+            // However, the |Sec-WebSocket-Protocol| header field MUST NOT appear
+            // more than once in an HTTP response.
+            protocols = null;
+
+            var lines = response.Split(_headerLineSplitter).Where(l => l.Length > 0);
             foreach (var line in lines)
             {
                 // HTTP/1.1 101 Switching Protocols
@@ -198,21 +219,35 @@ namespace Cowboy.TcpLika
                             if (index != -1)
                             {
                                 var value = line.Substring(index + 1);
-                                if (headers.ContainsKey(key))
+
+                                if (key == HttpKnownHeaderNames.SecWebSocketExtensions)
                                 {
-                                    headers[key] = string.Join(",", headers[key], value.Trim());
+                                    if (extensions == null)
+                                        extensions = new List<string>();
+                                    extensions.Add(value.Trim());
+                                }
+                                else if (key == HttpKnownHeaderNames.SecWebSocketProtocol)
+                                {
+                                    if (protocols == null)
+                                        protocols = new List<string>();
+                                    protocols.Add(value.Trim());
                                 }
                                 else
                                 {
-                                    headers.Add(key, value.Trim());
+                                    if (headers.ContainsKey(key))
+                                    {
+                                        headers[key] = string.Join(",", headers[key], value.Trim());
+                                    }
+                                    else
+                                    {
+                                        headers.Add(key, value.Trim());
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-
-            return headers;
         }
     }
 }
