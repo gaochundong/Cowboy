@@ -9,6 +9,8 @@ using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Cowboy.Buffer;
+using Cowboy.Sockets;
+using Cowboy.WebSockets;
 
 namespace Cowboy.TcpLika
 {
@@ -59,7 +61,14 @@ namespace Cowboy.TcpLika
                 {
                     foreach (var remoteEP in _options.RemoteEndPoints)
                     {
-                        await PerformLoad(connectionsPerThread, remoteEP);
+                        if (_options.IsSetWebSocket)
+                        {
+                            await PerformWebSocketLoad(connectionsPerThread, remoteEP);
+                        }
+                        else
+                        {
+                            await PerformTcpSocketLoad(connectionsPerThread, remoteEP);
+                        }
                     }
                 });
                 tasks.Add(task);
@@ -70,7 +79,14 @@ namespace Cowboy.TcpLika
                 {
                     foreach (var remoteEP in _options.RemoteEndPoints)
                     {
-                        await PerformLoad(connectionsRemainder, remoteEP);
+                        if (_options.IsSetWebSocket)
+                        {
+                            await PerformWebSocketLoad(connectionsRemainder, remoteEP);
+                        }
+                        else
+                        {
+                            await PerformTcpSocketLoad(connectionsRemainder, remoteEP);
+                        }
                     }
                 });
                 tasks.Add(task);
@@ -79,48 +95,42 @@ namespace Cowboy.TcpLika
             Task.WaitAll(tasks.ToArray());
         }
 
-        private async Task PerformLoad(int connections, IPEndPoint remoteEP)
+        private async Task PerformWebSocketLoad(int connections, IPEndPoint remoteEP)
         {
-            var channels = new List<TcpClient>();
+            var channels = new List<AsyncWebSocketClient>();
+            var configuration = new AsyncWebSocketClientConfiguration();
+            configuration.SslPolicyErrorsBypassed = _options.IsSetSslPolicyErrorsBypassed;
+            configuration.SslTargetHost = _options.SslTargetHost;
+            configuration.SslClientCertificates = _options.SslClientCertificates;
+
+            string uriString = string.Format("{0}://{1}/{2}",
+                _options.IsSetSsl ? "wss" : "ws",
+                remoteEP,
+                _options.IsSetWebSocketPath ? "/" + _options.WebSocketPath.TrimStart('/') : "/");
+            var uri = new Uri(uriString);
 
             for (int c = 0; c < connections; c++)
             {
-                var client = new TcpClient();
-                Stream stream = null;
+                var client = new AsyncWebSocketClient(uri,
+                    onServerTextReceived: async (s, b) => { await Task.CompletedTask; },
+                    onServerBinaryReceived: async (s, b, o, l) => { await Task.CompletedTask; },
+                    onServerConnected: async (s) => { await Task.CompletedTask; },
+                    onServerDisconnected: async (s) => { await Task.CompletedTask; },
+                    configuration: configuration);
+
                 try
                 {
                     _logger(string.Format("Connecting to [{0}].", remoteEP));
-                    await client.ConnectAsync(remoteEP.Address, remoteEP.Port);
-
-                    stream = await NegotiateStream(client.GetStream(), remoteEP);
-
-                    if (_options.IsSetWebSocket)
-                    {
-                        if (!await HandshakeWebSocket(
-                            stream,
-                            remoteEP.Address.ToString(),
-                            _options.IsSetWebSocketPath ? _options.WebSocketPath : "/",
-                            _options.IsSetWebSocketProtocol ? _options.WebSocketProtocol : null))
-                        {
-                            _logger(string.Format("Handshake failed with [{0}] from [{1}].", remoteEP, client.Client.LocalEndPoint));
-                        }
-                    }
-
+                    await client.Connect();
                     channels.Add(client);
-                    _logger(string.Format("Connected to [{0}] from [{1}].", remoteEP, client.Client.LocalEndPoint));
+                    _logger(string.Format("Connected to [{0}] from [{1}].", remoteEP, client.LocalEndPoint));
                 }
                 catch (Exception ex) when (!ShouldThrow(ex))
                 {
                     _logger(string.Format("Connect to [{0}] error occurred [{1}].", remoteEP, ex.Message));
-
-                    if (stream != null)
+                    if (client != null)
                     {
-                        stream.Close();
-                        stream = null;
-                    }
-                    if (client != null && client.Connected)
-                    {
-                        client.Dispose();
+                        await client.Close(WebSocketCloseCode.AbnormalClosure);
                     }
                 }
             }
@@ -134,8 +144,8 @@ namespace Cowboy.TcpLika
             {
                 try
                 {
-                    _logger(string.Format("Closed to [{0}] from [{1}].", remoteEP, client.Client.LocalEndPoint));
-                    client.Close();
+                    _logger(string.Format("Closed to [{0}] from [{1}].", remoteEP, client.LocalEndPoint));
+                    await client.Close(WebSocketCloseCode.NormalClosure);
                 }
                 catch (Exception ex) when (!ShouldThrow(ex))
                 {
@@ -144,96 +154,57 @@ namespace Cowboy.TcpLika
             }
         }
 
-        private async Task<bool> HandshakeWebSocket(Stream stream, string host, string path, string protocol = null)
+        private async Task PerformTcpSocketLoad(int connections, IPEndPoint remoteEP)
         {
-            var context = WebSocketClientHandshaker.BuildHandeshakeContext(host, path, protocol: protocol);
-            await stream.WriteAsync(context.RequestBuffer, context.RequestBufferOffset, context.RequestBufferCount);
+            var channels = new List<AsyncTcpSocketClient>();
+            var configuration = new AsyncTcpSocketClientConfiguration();
+            configuration.SslEnabled = _options.IsSetSsl;
+            configuration.SslPolicyErrorsBypassed = _options.IsSetSslPolicyErrorsBypassed;
+            configuration.SslTargetHost = _options.SslTargetHost;
+            configuration.SslClientCertificates = _options.SslClientCertificates;
 
-            var receiveBuffer = _bufferManager.BorrowBuffer();
-            var count = await stream.ReadAsync(receiveBuffer, 0, receiveBuffer.Length);
+            for (int c = 0; c < connections; c++)
+            {
+                var client = new AsyncTcpSocketClient(remoteEP,
+                    onServerDataReceived: async (s, b, o, l) => { await Task.CompletedTask; },
+                    onServerConnected: async (s) => { await Task.CompletedTask; },
+                    onServerDisconnected: async (s) => { await Task.CompletedTask; },
+                    configuration: configuration);
 
-            context.ResponseBuffer = receiveBuffer;
-            context.ResponseBufferOffset = 0;
-            context.ResponseBufferCount = count;
-            var passedVerification = WebSocketClientHandshaker.VerifyHandshake(context);
-
-            _bufferManager.ReturnBuffer(receiveBuffer);
-
-            return passedVerification;
-        }
-
-        private void ConfigureClient(TcpClient client)
-        {
-            client.ReceiveBufferSize = 32;
-            client.SendBufferSize = 32;
-            client.ExclusiveAddressUse = true;
-            client.NoDelay = true;
-
-            if (_options.IsSetNagle)
-                client.NoDelay = _options.Nagle;
-
-            if (_options.IsSetReceiveBufferSize)
-                client.ReceiveBufferSize = _options.ReceiveBufferSize;
-
-            if (_options.IsSetSendBufferSize)
-                client.SendBufferSize = _options.SendBufferSize;
-        }
-
-        private async Task<Stream> NegotiateStream(Stream stream, IPEndPoint remoteEP)
-        {
-            if (!_options.IsSetSsl)
-                return stream;
-
-            var validateRemoteCertificate = new RemoteCertificateValidationCallback(
-                (object sender,
-                X509Certificate certificate,
-                X509Chain chain,
-                SslPolicyErrors sslPolicyErrors)
-                =>
+                try
                 {
-                    if (sslPolicyErrors == SslPolicyErrors.None)
-                        return true;
+                    _logger(string.Format("Connecting to [{0}].", remoteEP));
+                    await client.Connect();
+                    channels.Add(client);
+                    _logger(string.Format("Connected to [{0}] from [{1}].", remoteEP, client.LocalEndPoint));
+                }
+                catch (Exception ex) when (!ShouldThrow(ex))
+                {
+                    _logger(string.Format("Connect to [{0}] error occurred [{1}].", remoteEP, ex.Message));
+                    if (client != null)
+                    {
+                        await client.Close();
+                    }
+                }
+            }
 
-                    if (_options.IsSetSslPolicyErrorsBypassed)
-                        return true;
-                    else
-                        _logger(string.Format("Error occurred when validating remote certificate: [{0}], [{1}].",
-                            remoteEP, sslPolicyErrors));
+            if (_options.IsSetChannelLifetime && channels.Any())
+            {
+                await Task.Delay(_options.ChannelLifetime);
+            }
 
-                    return false;
-                });
-            var sslStream = new SslStream(
-                stream,
-                false,
-                validateRemoteCertificate,
-                null,
-                EncryptionPolicy.RequireEncryption);
-
-            await sslStream.AuthenticateAsClientAsync(
-                _options.SslTargetHost,
-                _options.SslClientCertificates,
-                SslProtocols.Ssl3 | SslProtocols.Tls,
-                false);
-
-#if VERBOSE
-            _logger(string.Format(
-                "Ssl Stream: SslProtocol[{0}], IsServer[{1}], IsAuthenticated[{2}], IsEncrypted[{3}], IsSigned[{4}], IsMutuallyAuthenticated[{5}], "
-                + "HashAlgorithm[{6}], HashStrength[{7}], KeyExchangeAlgorithm[{8}], KeyExchangeStrength[{9}], CipherAlgorithm[{10}], CipherStrength[{11}].",
-                sslStream.SslProtocol,
-                sslStream.IsServer,
-                sslStream.IsAuthenticated,
-                sslStream.IsEncrypted,
-                sslStream.IsSigned,
-                sslStream.IsMutuallyAuthenticated,
-                sslStream.HashAlgorithm,
-                sslStream.HashStrength,
-                sslStream.KeyExchangeAlgorithm,
-                sslStream.KeyExchangeStrength,
-                sslStream.CipherAlgorithm,
-                sslStream.CipherStrength));
-#endif
-
-            return sslStream;
+            foreach (var client in channels)
+            {
+                try
+                {
+                    _logger(string.Format("Closed to [{0}] from [{1}].", remoteEP, client.LocalEndPoint));
+                    await client.Close();
+                }
+                catch (Exception ex) when (!ShouldThrow(ex))
+                {
+                    _logger(string.Format("Closed to [{0}] error occurred [{1}].", remoteEP, ex.Message));
+                }
+            }
         }
 
         private bool ShouldThrow(Exception ex)
