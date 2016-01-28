@@ -8,5 +8,9 @@ namespace Cowboy.WebSockets
         Task OnSessionTextReceived(AsyncWebSocketSession session, string text);
         Task OnSessionBinaryReceived(AsyncWebSocketSession session, byte[] data, int offset, int count);
         Task OnSessionClosed(AsyncWebSocketSession session);
+
+        Task OnSessionFragmentationStreamOpened(AsyncWebSocketSession session, byte[] data, int offset, int count);
+        Task OnSessionFragmentationStreamContinued(AsyncWebSocketSession session, byte[] data, int offset, int count);
+        Task OnSessionFragmentationStreamClosed(AsyncWebSocketSession session, byte[] data, int offset, int count);
     }
 }

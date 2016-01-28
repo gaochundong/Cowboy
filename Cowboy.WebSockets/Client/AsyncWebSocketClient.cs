@@ -114,6 +114,23 @@ namespace Cowboy.WebSockets
         {
         }
 
+        public AsyncWebSocketClient(Uri uri,
+            Func<AsyncWebSocketClient, string, Task> onServerTextReceived = null,
+            Func<AsyncWebSocketClient, byte[], int, int, Task> onServerBinaryReceived = null,
+            Func<AsyncWebSocketClient, Task> onServerConnected = null,
+            Func<AsyncWebSocketClient, Task> onServerDisconnected = null,
+            Func<AsyncWebSocketClient, byte[], int, int, Task> onServerFragmentationStreamOpened = null,
+            Func<AsyncWebSocketClient, byte[], int, int, Task> onServerFragmentationStreamContinued = null,
+            Func<AsyncWebSocketClient, byte[], int, int, Task> onServerFragmentationStreamClosed = null,
+            AsyncWebSocketClientConfiguration configuration = null)
+            : this(uri,
+                 new InternalAsyncWebSocketClientMessageDispatcherImplementation(
+                     onServerTextReceived, onServerBinaryReceived, onServerConnected, onServerDisconnected,
+                     onServerFragmentationStreamOpened, onServerFragmentationStreamContinued, onServerFragmentationStreamClosed),
+                 configuration)
+        {
+        }
+
         private void Initialize()
         {
             _bufferManager = new GrowingByteBufferManager(_configuration.InitialBufferAllocationCount, _configuration.ReceiveBufferSize);
@@ -321,6 +338,28 @@ namespace Cowboy.WebSockets
                                 {
                                     case OpCode.Continuation:
                                         {
+                                            if (!frameHeader.IsFIN)
+                                            {
+                                                try
+                                                {
+                                                    await _dispatcher.OnServerFragmentationStreamContinued(this, payload, payloadOffset, payloadCount);
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    HandleUserSideError(ex);
+                                                }
+                                            }
+                                            else
+                                            {
+                                                try
+                                                {
+                                                    await _dispatcher.OnServerFragmentationStreamClosed(this, payload, payloadOffset, payloadCount);
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    HandleUserSideError(ex);
+                                                }
+                                            }
                                         }
                                         break;
                                     case OpCode.Text:
@@ -337,6 +376,17 @@ namespace Cowboy.WebSockets
                                                     HandleUserSideError(ex);
                                                 }
                                             }
+                                            else
+                                            {
+                                                try
+                                                {
+                                                    await _dispatcher.OnServerFragmentationStreamOpened(this, payload, payloadOffset, payloadCount);
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    HandleUserSideError(ex);
+                                                }
+                                            }
                                         }
                                         break;
                                     case OpCode.Binary:
@@ -346,6 +396,17 @@ namespace Cowboy.WebSockets
                                                 try
                                                 {
                                                     await _dispatcher.OnServerBinaryReceived(this, payload, payloadOffset, payloadCount);
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    HandleUserSideError(ex);
+                                                }
+                                            }
+                                            else
+                                            {
+                                                try
+                                                {
+                                                    await _dispatcher.OnServerFragmentationStreamOpened(this, payload, payloadOffset, payloadCount);
                                                 }
                                                 catch (Exception ex)
                                                 {
