@@ -724,6 +724,35 @@ namespace Cowboy.WebSockets
             await SendFrame(new BinaryFrame(segment, false).ToArray(_frameBuilder));
         }
 
+        public async Task SendStreamAsync(Stream stream)
+        {
+            if (stream == null)
+                throw new ArgumentNullException("stream");
+
+            int fragmentLength = _configuration.ReasonableFragmentSize;
+            var buffer = new byte[fragmentLength];
+            int readCount = 0;
+
+            readCount = await stream.ReadAsync(buffer, 0, fragmentLength);
+            if (readCount == 0)
+                return;
+            await SendFrame(new BinaryFragmentationFrame(OpCode.Binary, buffer, 0, readCount, isFin: false, isMasked: false).ToArray(_frameBuilder));
+
+            while (true)
+            {
+                readCount = await stream.ReadAsync(buffer, 0, fragmentLength);
+                if (readCount != 0)
+                {
+                    await SendFrame(new BinaryFragmentationFrame(OpCode.Continuation, buffer, 0, readCount, isFin: false, isMasked: false).ToArray(_frameBuilder));
+                }
+                else
+                {
+                    await SendFrame(new BinaryFragmentationFrame(OpCode.Continuation, buffer, 0, 0, isFin: true, isMasked: false).ToArray(_frameBuilder));
+                    break;
+                }
+            }
+        }
+
         private async Task SendFrame(byte[] frame)
         {
             if (frame == null)
