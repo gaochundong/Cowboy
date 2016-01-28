@@ -68,6 +68,16 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Http", "Http", "{DB380EC2-6
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Logging", "Logging", "{3E483F7D-8F0A-42B7-A883-58A37C1AF1B6}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Certificates", "Certificates", "{3CA5D56E-C9FD-4E8A-BB04-A89179DEAE7E}"
+	ProjectSection(SolutionItems) = preProject
+		Tests\Certificates\Cowboy.cer = Tests\Certificates\Cowboy.cer
+		Tests\Certificates\Cowboy.pfx = Tests\Certificates\Cowboy.pfx
+		Tests\Certificates\Cowboy.pvk = Tests\Certificates\Cowboy.pvk
+		Tests\Certificates\Cowboy.spc = Tests\Certificates\Cowboy.spc
+		Tests\Certificates\RootCowboy.cer = Tests\Certificates\RootCowboy.cer
+		Tests\Certificates\RootCowboy.pvk = Tests\Certificates\RootCowboy.pvk
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -171,5 +181,6 @@ Global
 		{7455E3BD-6343-4A51-A61A-CEEEDFE146D3} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
 		{E7A41D23-4F6B-4BE2-A311-0D3D25BFE6E7} = {FBDC6AFC-D9E3-43AE-B68F-54A3586A20DD}
 		{0ED6CD14-9182-486B-8AF3-1D9770449046} = {FBDC6AFC-D9E3-43AE-B68F-54A3586A20DD}
+		{3CA5D56E-C9FD-4E8A-BB04-A89179DEAE7E} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
 	EndGlobalSection
 EndGlobal
