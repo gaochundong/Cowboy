@@ -106,7 +106,7 @@ namespace Cowboy.TcpLika
             string uriString = string.Format("{0}://{1}/{2}",
                 _options.IsSetSsl ? "wss" : "ws",
                 remoteEP,
-                _options.IsSetWebSocketPath ? "/" + _options.WebSocketPath.TrimStart('/') : "/");
+                _options.IsSetWebSocketPath ? _options.WebSocketPath.TrimStart('/') : "");
             var uri = new Uri(uriString);
 
             for (int c = 0; c < connections; c++)

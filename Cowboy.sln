@@ -18,10 +18,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.gitattributes = .gitattributes
 		.gitignore = .gitignore
 		LICENSE = LICENSE
-		MAKECERT.md = MAKECERT.md
 		README.md = README.md
 		SolutionVersion.cs = SolutionVersion.cs
-		TCPLIKA.md = TCPLIKA.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Buffer", "Cowboy.Buffer\Cowboy.Buffer.csproj", "{555192B1-C597-4279-BF19-00CA30C6DF8D}"
@@ -76,6 +74,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Certificates", "Certificate
 		Tests\Certificates\Cowboy.spc = Tests\Certificates\Cowboy.spc
 		Tests\Certificates\RootCowboy.cer = Tests\Certificates\RootCowboy.cer
 		Tests\Certificates\RootCowboy.pvk = Tests\Certificates\RootCowboy.pvk
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{E6476984-7A43-40E1-ABF9-F67A9D81F46C}"
+	ProjectSection(SolutionItems) = preProject
+		Docs\MAKECERT.md = Docs\MAKECERT.md
+		Docs\TCPLIKA.md = Docs\TCPLIKA.md
 	EndProjectSection
 EndProject
 Global
