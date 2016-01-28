@@ -323,31 +323,43 @@ namespace Cowboy.WebSockets
                                         break;
                                     case OpCode.Text:
                                         {
-                                            var text = Encoding.UTF8.GetString(payload, payloadOffset, payloadCount);
-                                            try
+                                            if (frameHeader.IsFIN)
                                             {
-                                                await _dispatcher.OnServerTextReceived(this, text);
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                HandleUserSideError(ex);
+                                                var text = Encoding.UTF8.GetString(payload, payloadOffset, payloadCount);
+                                                try
+                                                {
+                                                    await _dispatcher.OnServerTextReceived(this, text);
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    HandleUserSideError(ex);
+                                                }
                                             }
                                         }
                                         break;
                                     case OpCode.Binary:
                                         {
-                                            try
+                                            if (frameHeader.IsFIN)
                                             {
-                                                await _dispatcher.OnServerBinaryReceived(this, payload, payloadOffset, payloadCount);
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                HandleUserSideError(ex);
+                                                try
+                                                {
+                                                    await _dispatcher.OnServerBinaryReceived(this, payload, payloadOffset, payloadCount);
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    HandleUserSideError(ex);
+                                                }
                                             }
                                         }
                                         break;
                                     case OpCode.Close:
                                         {
+                                            if (!frameHeader.IsFIN)
+                                            {
+                                                throw new WebSocketException(string.Format(
+                                                    "Client received unfinished frame [{0}] from remote [{1}].", frameHeader.OpCode, RemoteEndPoint));
+                                            }
+
                                             if (payloadCount > 1)
                                             {
                                                 var statusCode = payload[0] * 256 + payload[1];
@@ -378,6 +390,12 @@ namespace Cowboy.WebSockets
                                         break;
                                     case OpCode.Ping:
                                         {
+                                            if (!frameHeader.IsFIN)
+                                            {
+                                                throw new WebSocketException(string.Format(
+                                                    "Client received unfinished frame [{0}] from remote [{1}].", frameHeader.OpCode, RemoteEndPoint));
+                                            }
+
                                             // Upon receipt of a Ping frame, an endpoint MUST send a Pong frame in
                                             // response, unless it already received a Close frame.  It SHOULD
                                             // respond with Pong frame as soon as is practical.  Pong frames are
@@ -406,6 +424,12 @@ namespace Cowboy.WebSockets
                                         break;
                                     case OpCode.Pong:
                                         {
+                                            if (!frameHeader.IsFIN)
+                                            {
+                                                throw new WebSocketException(string.Format(
+                                                    "Client received unfinished frame [{0}] from remote [{1}].", frameHeader.OpCode, RemoteEndPoint));
+                                            }
+
                                             // If an endpoint receives a Ping frame and has not yet sent Pong
                                             // frame(s) in response to previous Ping frame(s), the endpoint MAY
                                             // elect to send a Pong frame for only the most recently processed Ping frame.
