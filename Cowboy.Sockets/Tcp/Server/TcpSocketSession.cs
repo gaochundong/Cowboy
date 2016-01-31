@@ -180,7 +180,8 @@ namespace Cowboy.Sockets
                 || ex is NullReferenceException
                 )
             {
-                _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
+                if (ex is SocketException)
+                    _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
 
                 // connection has been closed
                 Close();

@@ -264,6 +264,9 @@ namespace Cowboy.Sockets
                 || ex is NullReferenceException
                 )
             {
+                if (ex is SocketException)
+                    _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
+
                 return false;
             }
             return true;
