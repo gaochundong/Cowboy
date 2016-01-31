@@ -42,6 +42,8 @@
       <Link>SolutionVersion.cs</Link>
     </Compile>
     <Compile Include="SaeaPool.cs" />
+    <Compile Include="SessionAcceptSaeaUserToken.cs" />
+    <Compile Include="SessionHandleSaeaUserToken.cs" />
     <Compile Include="TcpSocketSaeaServer.cs" />
     <Compile Include="Tcp\Client\AsyncTcpSocketClientConfiguration.cs" />
     <Compile Include="Tcp\Client\TcpSocketClientConfiguration.cs" />
