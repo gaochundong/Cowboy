@@ -15,7 +15,7 @@ namespace Cowboy.Sockets
     {
         #region Fields
 
-        private static readonly ILog _log = Logger.Get<TcpSocketServer>();
+        private static readonly ILog _log = Logger.Get<TcpSocketSaeaServer>();
         private IBufferManager _bufferManager;
         //private TcpListener _listener;
         //private readonly ConcurrentDictionary<string, TcpSocketSession> _sessions = new ConcurrentDictionary<string, TcpSocketSession>();
@@ -75,6 +75,33 @@ namespace Cowboy.Sockets
             }
         }
 
+        #endregion
+
+        #region Properties
+
+        public IPEndPoint ListenedEndPoint { get; private set; }
+        public bool Active { get { return _state == _listening; } }
+        //public int SessionCount { get { return _sessions.Count; } }
+
+        #endregion
+
+        public void Start()
+        {
+            _listener = new Socket(this.ListenedEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            _listener.Bind(this.ListenedEndPoint);
+
+            ConfigureListener();
+
+            _listener.Listen(_configuration.PendingConnectionBacklog);
+
+            StartAccept();
+        }
+
+        public void Stop()
+        {
+
+        }
+
         private void ConfigureListener()
         {
             AllowNatTraversal(_configuration.AllowNatTraversal);
@@ -90,27 +117,6 @@ namespace Cowboy.Sockets
             {
                 _listener.SetIPProtectionLevel(IPProtectionLevel.EdgeRestricted);
             }
-        }
-
-        #endregion
-
-        #region Properties
-
-        public IPEndPoint ListenedEndPoint { get; private set; }
-        public bool Active { get { return _state == _listening; } }
-        //public int SessionCount { get { return _sessions.Count; } }
-
-        #endregion
-
-        private void StartListen()
-        {
-            _listener = new Socket(this.ListenedEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            _listener.Bind(this.ListenedEndPoint);
-            _listener.Listen(_configuration.PendingConnectionBacklog);
-
-            ConfigureListener();
-
-            StartAccept();
         }
 
         private SocketAsyncEventArgs CreateSaeaForSessionAccept()
@@ -135,8 +141,8 @@ namespace Cowboy.Sockets
                 throw new Exception();
             }
 
-            bool willRaiseEvent = _listener.AcceptAsync(sessionAcceptSaea);
-            if (!willRaiseEvent)
+            bool isIoOperationPending = _listener.AcceptAsync(sessionAcceptSaea);
+            if (!isIoOperationPending)
             {
                 ProcessAccept(sessionAcceptSaea);
             }
@@ -155,8 +161,6 @@ namespace Cowboy.Sockets
                 return;
             }
 
-            StartAccept();
-
             SocketAsyncEventArgs sessionHandleSaea = null;
             if (!_sessionHandleSaeaPool.TryPop(out sessionHandleSaea))
             {
@@ -169,6 +173,8 @@ namespace Cowboy.Sockets
             _sessionAcceptSaeaPool.Push(saea);
 
             StartReceive(sessionHandleSaea);
+
+            StartAccept();
         }
 
         private SocketAsyncEventArgs CreateSaeaForSessionHandle()
@@ -182,16 +188,25 @@ namespace Cowboy.Sockets
 
         private void OnSessionHandleSaeaCompleted(object sender, SocketAsyncEventArgs e)
         {
-
+            switch (e.LastOperation)
+            {
+                case SocketAsyncOperation.Receive:
+                    ProcessReceive(e);
+                    break;
+                case SocketAsyncOperation.Send:
+                    ProcessSend(e);
+                    break;
+                default:
+                    throw new ArgumentException("The last operation completed on the socket was not a receive or send");
+            }
         }
 
         private void StartReceive(SocketAsyncEventArgs saea)
         {
             //saea.SetBuffer(receiveSendToken.bufferOffsetReceive, this.socketListenerSettings.BufferSize);
 
-            bool willRaiseEvent = saea.AcceptSocket.ReceiveAsync(saea);
-
-            if (!willRaiseEvent)
+            bool isIoOperationPending = saea.AcceptSocket.ReceiveAsync(saea);
+            if (!isIoOperationPending)
             {
                 ProcessReceive(saea);
             }
@@ -199,23 +214,20 @@ namespace Cowboy.Sockets
 
         private void ProcessReceive(SocketAsyncEventArgs saea)
         {
-            //if (saea.SocketError != SocketError.Success)
-            //{
-            //    receiveSendToken.Reset();
-            //    CloseClientSocket(saea);
+            if (saea.SocketError != SocketError.Success)
+            {
+                CloseClientSocket(saea);
+                return;
+            }
 
-            //    return;
-            //}
+            if (saea.BytesTransferred == 0)
+            {
+                CloseClientSocket(saea);
+                return;
+            }
 
-            //if (saea.BytesTransferred == 0)
-            //{
-            //    receiveSendToken.Reset();
-            //    CloseClientSocket(saea);
-            //    return;
-            //}
+            //int remainingBytesToProcess = saea.BytesTransferred;
 
-            //Int32 remainingBytesToProcess = saea.BytesTransferred;
-                 
             //if (receiveSendToken.receivedPrefixBytesDoneCount < this.socketListenerSettings.ReceivePrefixLength)
             //{
             //    remainingBytesToProcess = prefixHandler.HandlePrefix(saea, receiveSendToken, remainingBytesToProcess);
@@ -230,7 +242,7 @@ namespace Cowboy.Sockets
             //bool incomingTcpMessageIsReady = messageHandler.HandleMessage(saea, receiveSendToken, remainingBytesToProcess);
 
             //if (incomingTcpMessageIsReady == true)
-            //{     
+            //{
             //    receiveSendToken.theMediator.HandleData(receiveSendToken.theDataHolder);
             //    receiveSendToken.CreateNewDataHolder();
             //    receiveSendToken.Reset();
@@ -296,7 +308,7 @@ namespace Cowboy.Sockets
             //    ProcessSend(receiveSendEventArgs);
             //}
         }
-      
+
         private void ProcessSend(SocketAsyncEventArgs receiveSendEventArgs)
         {
             //DataHoldingUserToken receiveSendToken = (DataHoldingUserToken)receiveSendEventArgs.UserToken;

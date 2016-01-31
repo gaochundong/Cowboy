@@ -82,6 +82,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.CommandLines", "Tool
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.TcpLika", "Tools\Cowboy.TcpLika\Cowboy.TcpLika.csproj", "{0ED6CD14-9182-486B-8AF3-1D9770449046}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Sockets.TestTcpSocketSaeaServer", "Tests\Cowboy.Sockets.TestTcpSocketSaeaServer\Cowboy.Sockets.TestTcpSocketSaeaServer.csproj", "{37614B0F-9817-4952-92CA-0F5E53055792}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Sockets.TestTcpSocketSaeaClient", "Tests\Cowboy.Sockets.TestTcpSocketSaeaClient\Cowboy.Sockets.TestTcpSocketSaeaClient.csproj", "{52607359-5DA9-4976-A91E-666939956A06}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -164,6 +168,14 @@ Global
 		{0ED6CD14-9182-486B-8AF3-1D9770449046}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0ED6CD14-9182-486B-8AF3-1D9770449046}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0ED6CD14-9182-486B-8AF3-1D9770449046}.Release|Any CPU.Build.0 = Release|Any CPU
+		{37614B0F-9817-4952-92CA-0F5E53055792}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37614B0F-9817-4952-92CA-0F5E53055792}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37614B0F-9817-4952-92CA-0F5E53055792}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37614B0F-9817-4952-92CA-0F5E53055792}.Release|Any CPU.Build.0 = Release|Any CPU
+		{52607359-5DA9-4976-A91E-666939956A06}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52607359-5DA9-4976-A91E-666939956A06}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52607359-5DA9-4976-A91E-666939956A06}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52607359-5DA9-4976-A91E-666939956A06}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -186,5 +198,7 @@ Global
 		{3CA5D56E-C9FD-4E8A-BB04-A89179DEAE7E} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
 		{E7A41D23-4F6B-4BE2-A311-0D3D25BFE6E7} = {FBDC6AFC-D9E3-43AE-B68F-54A3586A20DD}
 		{0ED6CD14-9182-486B-8AF3-1D9770449046} = {FBDC6AFC-D9E3-43AE-B68F-54A3586A20DD}
+		{37614B0F-9817-4952-92CA-0F5E53055792} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
+		{52607359-5DA9-4976-A91E-666939956A06} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
 	EndGlobalSection
 EndGlobal
