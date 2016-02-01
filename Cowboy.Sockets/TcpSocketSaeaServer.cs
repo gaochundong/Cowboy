@@ -320,19 +320,13 @@ namespace Cowboy.Sockets
             {
                 saea.AcceptSocket.Shutdown(SocketShutdown.Both);
             }
-            catch (Exception)
-            {
-                _log.ErrorFormat("xxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
-            }
+            catch { }
 
             try
             {
                 saea.AcceptSocket.Dispose();
             }
-            catch (Exception)
-            {
-                _log.ErrorFormat("xxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
-            }
+            catch { }
         }
     }
 }
