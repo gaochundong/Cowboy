@@ -18,6 +18,7 @@ namespace Cowboy.Sockets
         private readonly ConcurrentDictionary<string, TcpSocketSession> _sessions = new ConcurrentDictionary<string, TcpSocketSession>();
         private readonly object _opsLock = new object();
         private readonly TcpSocketServerConfiguration _configuration;
+        private bool _isListening = false;
 
         #endregion
 
@@ -57,7 +58,7 @@ namespace Cowboy.Sockets
         #region Properties
 
         public IPEndPoint ListenedEndPoint { get; private set; }
-        public bool Active { get; private set; }
+        public bool Active { get { return _isListening; } }
         public int SessionCount { get { return _sessions.Count; } }
 
         #endregion
@@ -68,13 +69,13 @@ namespace Cowboy.Sockets
         {
             lock (_opsLock)
             {
-                if (Active)
+                if (_isListening)
                     return;
 
                 _listener = new TcpListener(this.ListenedEndPoint);
                 ConfigureListener();
 
-                Active = true;
+                _isListening = true;
                 _listener.Start(_configuration.PendingConnectionBacklog);
 
                 ContinueAcceptSession(_listener);
@@ -85,12 +86,12 @@ namespace Cowboy.Sockets
         {
             lock (_opsLock)
             {
-                if (!Active)
+                if (!_isListening)
                     return;
 
                 try
                 {
-                    Active = false;
+                    _isListening = false;
                     _listener.Stop();
 
                     foreach (var session in _sessions.Values)
@@ -115,7 +116,7 @@ namespace Cowboy.Sockets
         {
             lock (_opsLock)
             {
-                if (!Active)
+                if (!_isListening)
                     throw new InvalidOperationException("The tcp server is not active.");
 
                 // determine if there are pending connection requests.
@@ -146,7 +147,7 @@ namespace Cowboy.Sockets
 
         private void HandleTcpClientAccepted(IAsyncResult ar)
         {
-            if (!Active) return;
+            if (!_isListening) return;
 
             try
             {
@@ -216,7 +217,7 @@ namespace Cowboy.Sockets
 
         private void GuardRunning()
         {
-            if (!Active)
+            if (!_isListening)
                 throw new InvalidProgramException("This tcp server has not been started yet.");
         }
 
