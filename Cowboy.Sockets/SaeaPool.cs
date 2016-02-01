@@ -99,6 +99,7 @@ namespace Cowboy.Sockets
                 throw new ArgumentOutOfRangeException("acceptBufferSize");
 
             _acceptBufferSize = acceptBufferSize;
+
             int batchCount = (SingleBatchSize + _acceptBufferSize - 1) / _acceptBufferSize;
             if (batchCount > MaxBatchCount)
             {
@@ -132,12 +133,7 @@ namespace Cowboy.Sockets
                 {
                     socket.Close(0);
                 }
-                catch (SocketException ex)
-                {
-                }
-                catch (ObjectDisposedException ex)
-                {
-                }
+                catch (Exception) { }
             }
         }
 

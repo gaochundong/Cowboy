@@ -16,8 +16,8 @@ namespace Cowboy.Sockets
         private IBufferManager _bufferManager;
         private TcpListener _listener;
         private readonly ConcurrentDictionary<string, TcpSocketSession> _sessions = new ConcurrentDictionary<string, TcpSocketSession>();
-        private readonly object _opsLock = new object();
         private readonly TcpSocketServerConfiguration _configuration;
+        private readonly object _opsLock = new object();
         private bool _isListening = false;
 
         #endregion

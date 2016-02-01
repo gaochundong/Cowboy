@@ -41,7 +41,6 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>SolutionVersion.cs</Link>
     </Compile>
-    <Compile Include="ConnectionListenercs.cs" />
     <Compile Include="SaeaPool.cs" />
     <Compile Include="SessionAcceptSaeaUserToken.cs" />
     <Compile Include="SessionHandleSaeaUserToken.cs" />

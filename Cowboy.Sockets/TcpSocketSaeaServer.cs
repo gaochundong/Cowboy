@@ -22,14 +22,11 @@ namespace Cowboy.Sockets
         private readonly ConcurrentDictionary<string, TcpSocketSaeaSession> _sessions = new ConcurrentDictionary<string, TcpSocketSaeaSession>();
         private readonly TcpSocketSaeaServerConfiguration _configuration;
 
+        private readonly object _opsLock = new object();
+        private bool _isListening = false;
         private Socket _listener;
         private SaeaPool _sessionAcceptSaeaPool;
         private SaeaPool _sessionHandleSaeaPool;
-
-        private int _state;
-        private const int _none = 0;
-        private const int _listening = 1;
-        private const int _disposed = 5;
 
         #endregion
 
@@ -80,57 +77,56 @@ namespace Cowboy.Sockets
         #region Properties
 
         public IPEndPoint ListenedEndPoint { get; private set; }
-        public bool Active { get { return _state == _listening; } }
+        public bool Active { get { return _isListening; } }
         //public int SessionCount { get { return _sessions.Count; } }
 
         #endregion
 
         public void Start()
         {
-            int origin = Interlocked.CompareExchange(ref _state, _listening, _none);
-            if (origin == _disposed)
+            lock (_opsLock)
             {
-                throw new ObjectDisposedException(GetType().FullName);
+                if (_isListening)
+                    return;
+
+                try
+                {
+                    _listener = new Socket(this.ListenedEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                    _listener.Bind(this.ListenedEndPoint);
+
+                    ConfigureListener();
+
+                    _listener.Listen(_configuration.PendingConnectionBacklog);
+                    _isListening = true;
+
+                    StartAccept();
+                }
+                catch (Exception ex) when (!ShouldThrow(ex)) { }
             }
-            else if (origin != _none)
-            {
-                throw new InvalidOperationException("This tcp server has already started.");
-            }
-
-            try
-            {
-                _listener = new Socket(this.ListenedEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                _listener.Bind(this.ListenedEndPoint);
-
-                ConfigureListener();
-
-                _listener.Listen(_configuration.PendingConnectionBacklog);
-
-                StartAccept();
-            }
-            catch (Exception ex) when (!ShouldThrow(ex)) { }
         }
 
         public void Stop()
         {
-            if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
+            lock (_opsLock)
             {
-                return;
-            }
+                if (!_isListening)
+                    return;
 
-            try
-            {
-                _listener.Dispose();
+                try
+                {
+                    _isListening = false;
+                    _listener.Dispose();
 
-                //foreach (var session in _sessions.Values)
-                //{
-                //    await session.Close();
-                //}
-            }
-            catch (Exception ex) when (!ShouldThrow(ex)) { }
-            finally
-            {
-                _listener = null;
+                    //foreach (var session in _sessions.Values)
+                    //{
+                    //    await session.Close();
+                    //}
+                }
+                catch (Exception ex) when (!ShouldThrow(ex)) { }
+                finally
+                {
+                    _listener = null;
+                }
             }
         }
 
