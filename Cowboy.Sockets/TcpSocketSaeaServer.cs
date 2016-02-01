@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Cowboy.Buffer;
 using Cowboy.Logging;
@@ -87,19 +89,51 @@ namespace Cowboy.Sockets
 
         public void Start()
         {
-            _listener = new Socket(this.ListenedEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            _listener.Bind(this.ListenedEndPoint);
+            int origin = Interlocked.CompareExchange(ref _state, _listening, _none);
+            if (origin == _disposed)
+            {
+                throw new ObjectDisposedException(GetType().FullName);
+            }
+            else if (origin != _none)
+            {
+                throw new InvalidOperationException("This tcp server has already started.");
+            }
 
-            ConfigureListener();
+            try
+            {
+                _listener = new Socket(this.ListenedEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                _listener.Bind(this.ListenedEndPoint);
 
-            _listener.Listen(_configuration.PendingConnectionBacklog);
+                ConfigureListener();
 
-            StartAccept();
+                _listener.Listen(_configuration.PendingConnectionBacklog);
+
+                StartAccept();
+            }
+            catch (Exception ex) when (!ShouldThrow(ex)) { }
         }
 
         public void Stop()
         {
+            if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
+            {
+                return;
+            }
 
+            try
+            {
+                _listener.Dispose();
+
+                //foreach (var session in _sessions.Values)
+                //{
+                //    await session.Close();
+                //}
+            }
+            catch (Exception ex) when (!ShouldThrow(ex)) { }
+            finally
+            {
+                _listener = null;
+            }
         }
 
         private void ConfigureListener()
@@ -117,6 +151,18 @@ namespace Cowboy.Sockets
             {
                 _listener.SetIPProtectionLevel(IPProtectionLevel.EdgeRestricted);
             }
+        }
+
+        private bool ShouldThrow(Exception ex)
+        {
+            if (ex is ObjectDisposedException
+                || ex is InvalidOperationException
+                || ex is SocketException
+                || ex is IOException)
+            {
+                return false;
+            }
+            return true;
         }
 
         private SocketAsyncEventArgs CreateSaeaForSessionAccept()
@@ -138,6 +184,7 @@ namespace Cowboy.Sockets
             SocketAsyncEventArgs sessionAcceptSaea = null;
             if (!_sessionAcceptSaeaPool.TryPop(out sessionAcceptSaea))
             {
+                _log.ErrorFormat("xxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
                 throw new Exception();
             }
 
@@ -150,31 +197,30 @@ namespace Cowboy.Sockets
 
         private void ProcessAccept(SocketAsyncEventArgs saea)
         {
+            StartAccept();
+
             if (saea.SocketError != SocketError.Success)
             {
-                StartAccept();
+                _log.ErrorFormat("xxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
 
                 saea.AcceptSocket.Close();
                 saea.AcceptSocket = null;
                 _sessionAcceptSaeaPool.Push(saea);
-
                 return;
             }
 
             SocketAsyncEventArgs sessionHandleSaea = null;
             if (!_sessionHandleSaeaPool.TryPop(out sessionHandleSaea))
             {
+                _log.ErrorFormat("xxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
                 throw new Exception();
             }
 
             sessionHandleSaea.AcceptSocket = saea.AcceptSocket;
-
             saea.AcceptSocket = null;
             _sessionAcceptSaeaPool.Push(saea);
 
             StartReceive(sessionHandleSaea);
-
-            StartAccept();
         }
 
         private SocketAsyncEventArgs CreateSaeaForSessionHandle()
@@ -197,13 +243,15 @@ namespace Cowboy.Sockets
                     ProcessSend(e);
                     break;
                 default:
-                    throw new ArgumentException("The last operation completed on the socket was not a receive or send");
+                    throw new InvalidOperationException(
+                        string.Format("The last operation [{0}] completed on the socket was not a receive or send.", e.LastOperation));
             }
         }
 
         private void StartReceive(SocketAsyncEventArgs saea)
         {
-            //saea.SetBuffer(receiveSendToken.bufferOffsetReceive, this.socketListenerSettings.BufferSize);
+            var buffer = _bufferManager.BorrowBuffer();
+            saea.SetBuffer(buffer, 0, buffer.Length);
 
             bool isIoOperationPending = saea.AcceptSocket.ReceiveAsync(saea);
             if (!isIoOperationPending)
@@ -216,122 +264,75 @@ namespace Cowboy.Sockets
         {
             if (saea.SocketError != SocketError.Success)
             {
-                CloseClientSocket(saea);
+                _log.ErrorFormat("xxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+
+                CloseSession(saea);
                 return;
             }
 
-            if (saea.BytesTransferred == 0)
+            var receiveCount = saea.BytesTransferred;
+            if (receiveCount == 0)
             {
-                CloseClientSocket(saea);
+                CloseSession(saea);
                 return;
             }
 
-            //int remainingBytesToProcess = saea.BytesTransferred;
+            var buffer = new byte[99999];
+            Array.Copy(saea.Buffer, 0, buffer, 0, receiveCount);
 
-            //if (receiveSendToken.receivedPrefixBytesDoneCount < this.socketListenerSettings.ReceivePrefixLength)
-            //{
-            //    remainingBytesToProcess = prefixHandler.HandlePrefix(saea, receiveSendToken, remainingBytesToProcess);
-
-            //    if (remainingBytesToProcess == 0)
-            //    {
-            //        StartReceive(saea);
-            //        return;
-            //    }
-            //}
-
-            //bool incomingTcpMessageIsReady = messageHandler.HandleMessage(saea, receiveSendToken, remainingBytesToProcess);
-
-            //if (incomingTcpMessageIsReady == true)
-            //{
-            //    receiveSendToken.theMediator.HandleData(receiveSendToken.theDataHolder);
-            //    receiveSendToken.CreateNewDataHolder();
-            //    receiveSendToken.Reset();
-
-            //    receiveSendToken.theMediator.PrepareOutgoingData();
-            //    StartSend(receiveSendToken.theMediator.GiveBack());
-            //}
-            //else
-            //{
-            //    receiveSendToken.receiveMessageOffset = receiveSendToken.bufferOffsetReceive;
-
-            //    receiveSendToken.recPrefixBytesDoneThisOp = 0;
-
-            //    StartReceive(saea);
-            //}
+            StartReceive(saea);
         }
 
-        private void CloseClientSocket(SocketAsyncEventArgs saea)
+        private void StartSend(SocketAsyncEventArgs saea)
         {
-            //var receiveSendToken = (saea.UserToken as DataHoldingUserToken);
-
-            //try
-            //{
-            //    saea.AcceptSocket.Shutdown(SocketShutdown.Both);
-            //}
-            //catch (Exception)
-            //{
-            //}
-
-            //saea.AcceptSocket.Close();
-
-            //if (receiveSendToken.theDataHolder.dataMessageReceived != null)
-            //{
-            //    receiveSendToken.CreateNewDataHolder();
-            //}
-
-            //this.poolOfRecSendEventArgs.Push(saea);
-
-            //Interlocked.Decrement(ref this.numberOfAcceptedSockets);
-
-            //this.theMaxConnectionsEnforcer.Release();
+            bool isIoOperationPending = saea.AcceptSocket.SendAsync(saea);
+            if (!isIoOperationPending)
+            {
+                ProcessSend(saea);
+            }
         }
 
-        private void StartSend(SocketAsyncEventArgs receiveSendEventArgs)
+        private void ProcessSend(SocketAsyncEventArgs saea)
         {
-            //DataHoldingUserToken receiveSendToken = (DataHoldingUserToken)receiveSendEventArgs.UserToken;
+            if (saea.SocketError == SocketError.Success)
+            {
+                //receiveSendToken.sendBytesRemainingCount = receiveSendToken.sendBytesRemainingCount - saea.BytesTransferred;
 
-            //if (receiveSendToken.sendBytesRemainingCount <= this.socketListenerSettings.BufferSize)
-            //{
-            //    receiveSendEventArgs.SetBuffer(receiveSendToken.bufferOffsetSend, receiveSendToken.sendBytesRemainingCount);
-            //    Buffer.BlockCopy(receiveSendToken.dataToSend, receiveSendToken.bytesSentAlreadyCount, receiveSendEventArgs.Buffer, receiveSendToken.bufferOffsetSend, receiveSendToken.sendBytesRemainingCount);
-            //}
-            //else
-            //{
-            //    receiveSendEventArgs.SetBuffer(receiveSendToken.bufferOffsetSend, this.socketListenerSettings.BufferSize);
-            //    Buffer.BlockCopy(receiveSendToken.dataToSend, receiveSendToken.bytesSentAlreadyCount, receiveSendEventArgs.Buffer, receiveSendToken.bufferOffsetSend, this.socketListenerSettings.BufferSize);
-            //}
-
-            //bool willRaiseEvent = receiveSendEventArgs.AcceptSocket.SendAsync(receiveSendEventArgs);
-
-            //if (!willRaiseEvent)
-            //{
-            //    ProcessSend(receiveSendEventArgs);
-            //}
+                //if (receiveSendToken.sendBytesRemainingCount == 0)
+                //{
+                //    StartReceive(saea);
+                //}
+                //else
+                //{
+                //    receiveSendToken.bytesSentAlreadyCount += saea.BytesTransferred;
+                //    StartSend(saea);
+                //}
+            }
+            else
+            {
+                CloseSession(saea);
+            }
         }
 
-        private void ProcessSend(SocketAsyncEventArgs receiveSendEventArgs)
+        private void CloseSession(SocketAsyncEventArgs saea)
         {
-            //DataHoldingUserToken receiveSendToken = (DataHoldingUserToken)receiveSendEventArgs.UserToken;
+            try
+            {
+                saea.AcceptSocket.Shutdown(SocketShutdown.Both);
+            }
+            catch (Exception)
+            {
+                _log.ErrorFormat("xxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+            }
 
-            //if (receiveSendEventArgs.SocketError == SocketError.Success)
-            //{
-            //    receiveSendToken.sendBytesRemainingCount = receiveSendToken.sendBytesRemainingCount - receiveSendEventArgs.BytesTransferred;
-
-            //    if (receiveSendToken.sendBytesRemainingCount == 0)
-            //    {
-            //        StartReceive(receiveSendEventArgs);
-            //    }
-            //    else
-            //    {                   
-            //        receiveSendToken.bytesSentAlreadyCount += receiveSendEventArgs.BytesTransferred;
-            //        StartSend(receiveSendEventArgs);
-            //    }
-            //}
-            //else
-            //{
-            //    receiveSendToken.Reset();
-            //    CloseClientSocket(receiveSendEventArgs);
-            //}
+            try
+            {
+                saea.AcceptSocket.Dispose();
+            }
+            catch (Exception)
+            {
+                _log.ErrorFormat("xxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+            }
         }
     }
 }
