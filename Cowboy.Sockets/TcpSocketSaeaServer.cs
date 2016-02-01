@@ -63,16 +63,16 @@ namespace Cowboy.Sockets
         {
             _bufferManager = new GrowingByteBufferManager(_configuration.InitialBufferAllocationCount, _configuration.ReceiveBufferSize);
 
-            _sessionAcceptSaeaPool = new SaeaPool();
-            _sessionHandleSaeaPool = new SaeaPool();
-            for (int i = 0; i < 10; i++)
-            {
-                _sessionAcceptSaeaPool.Push(CreateSaeaForSessionAccept());
-            }
-            for (int i = 0; i < 100; i++)
-            {
-                _sessionHandleSaeaPool.Push(CreateSaeaForSessionHandle());
-            }
+            //_sessionAcceptSaeaPool = new SaeaPool();
+            //_sessionHandleSaeaPool = new SaeaPool();
+            //for (int i = 0; i < 10; i++)
+            //{
+            //    _sessionAcceptSaeaPool.Push(CreateSaeaForSessionAccept());
+            //}
+            //for (int i = 0; i < 100; i++)
+            //{
+            //    _sessionHandleSaeaPool.Push(CreateSaeaForSessionHandle());
+            //}
         }
 
         #endregion
