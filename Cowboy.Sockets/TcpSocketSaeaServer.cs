@@ -180,11 +180,11 @@ namespace Cowboy.Sockets
         private void StartAccept()
         {
             SocketAsyncEventArgs sessionAcceptSaea = null;
-            if (!_sessionAcceptSaeaPool.TryPop(out sessionAcceptSaea))
-            {
-                _log.ErrorFormat("xxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
-                throw new Exception();
-            }
+            //if (!_sessionAcceptSaeaPool.TryPop(out sessionAcceptSaea))
+            //{
+            //    _log.ErrorFormat("xxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+            //    throw new Exception();
+            //}
 
             bool isIoOperationPending = _listener.AcceptAsync(sessionAcceptSaea);
             if (!isIoOperationPending)
@@ -203,20 +203,20 @@ namespace Cowboy.Sockets
 
                 saea.AcceptSocket.Close();
                 saea.AcceptSocket = null;
-                _sessionAcceptSaeaPool.Push(saea);
+                //_sessionAcceptSaeaPool.Push(saea);
                 return;
             }
 
             SocketAsyncEventArgs sessionHandleSaea = null;
-            if (!_sessionHandleSaeaPool.TryPop(out sessionHandleSaea))
-            {
-                _log.ErrorFormat("xxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
-                throw new Exception();
-            }
+            //if (!_sessionHandleSaeaPool.TryPop(out sessionHandleSaea))
+            //{
+            //    _log.ErrorFormat("xxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+            //    throw new Exception();
+            //}
 
             sessionHandleSaea.AcceptSocket = saea.AcceptSocket;
             saea.AcceptSocket = null;
-            _sessionAcceptSaeaPool.Push(saea);
+            //_sessionAcceptSaeaPool.Push(saea);
 
             StartReceive(sessionHandleSaea);
         }
