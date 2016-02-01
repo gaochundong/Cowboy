@@ -46,6 +46,7 @@
     <Compile Include="SessionHandleSaeaUserToken.cs" />
     <Compile Include="AwaitableSaea.cs" />
     <Compile Include="TcpSocketSaeaServer.cs" />
+    <Compile Include="TcpSocketSaeaSession.cs" />
     <Compile Include="Tcp\Client\AsyncTcpSocketClientConfiguration.cs" />
     <Compile Include="Tcp\Client\TcpSocketClientConfiguration.cs" />
     <Compile Include="Tcp\Framing\IFrameBuilder.cs" />

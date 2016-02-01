@@ -19,12 +19,8 @@ namespace Cowboy.Sockets
 
         private static readonly ILog _log = Logger.Get<TcpSocketSaeaServer>();
         private IBufferManager _bufferManager;
-        //private TcpListener _listener;
-        //private readonly ConcurrentDictionary<string, TcpSocketSession> _sessions = new ConcurrentDictionary<string, TcpSocketSession>();
-        private readonly object _opsLock = new object();
+        private readonly ConcurrentDictionary<string, TcpSocketSaeaSession> _sessions = new ConcurrentDictionary<string, TcpSocketSaeaSession>();
         private readonly TcpSocketSaeaServerConfiguration _configuration;
-
-        #endregion
 
         private Socket _listener;
         private SaeaPool _sessionAcceptSaeaPool;
@@ -34,6 +30,8 @@ namespace Cowboy.Sockets
         private const int _none = 0;
         private const int _listening = 1;
         private const int _disposed = 5;
+
+        #endregion
 
         #region Constructors
 
