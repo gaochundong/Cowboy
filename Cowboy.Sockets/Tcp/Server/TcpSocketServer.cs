@@ -50,14 +50,6 @@ namespace Cowboy.Sockets
         private void Initialize()
         {
             _bufferManager = new GrowingByteBufferManager(_configuration.InitialBufferAllocationCount, _configuration.ReceiveBufferSize);
-
-            _listener = new TcpListener(this.ListenedEndPoint);
-            ConfigureListener();
-        }
-
-        private void ConfigureListener()
-        {
-            _listener.AllowNatTraversal(_configuration.AllowNatTraversal);
         }
 
         #endregion
@@ -78,6 +70,9 @@ namespace Cowboy.Sockets
             {
                 if (Active)
                     return;
+
+                _listener = new TcpListener(this.ListenedEndPoint);
+                ConfigureListener();
 
                 Active = true;
                 _listener.Start(_configuration.PendingConnectionBacklog);
@@ -126,6 +121,11 @@ namespace Cowboy.Sockets
                 // determine if there are pending connection requests.
                 return _listener.Pending();
             }
+        }
+
+        private void ConfigureListener()
+        {
+            _listener.AllowNatTraversal(_configuration.AllowNatTraversal);
         }
 
         private void ContinueAcceptSession(TcpListener listener)
