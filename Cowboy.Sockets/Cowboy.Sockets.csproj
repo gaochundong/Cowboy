@@ -41,19 +41,23 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>SolutionVersion.cs</Link>
     </Compile>
-    <Compile Include="SaeaPool.cs" />
-    <Compile Include="SessionAcceptSaeaUserToken.cs" />
-    <Compile Include="SessionHandleSaeaUserToken.cs" />
-    <Compile Include="AwaitableSaea.cs" />
-    <Compile Include="TcpSocketSaeaServer.cs" />
-    <Compile Include="TcpSocketSaeaSession.cs" />
+    <Compile Include="Tcp\Saea\Extensions\SaeaAwaiter.cs" />
+    <Compile Include="Tcp\Saea\Extensions\SaeaExtensions.cs" />
+    <Compile Include="Tcp\Saea\Pool\QueuedObjectPool.cs" />
+    <Compile Include="Tcp\Saea\Pool\SessionPool.cs" />
+    <Compile Include="Tcp\Saea\Pool\SaeaPool.cs" />
+    <Compile Include="Tcp\Saea\SessionAcceptSaeaUserToken.cs" />
+    <Compile Include="Tcp\Saea\SessionHandleSaeaUserToken.cs" />
+    <Compile Include="Tcp\Saea\Extensions\SaeaAwaitable.cs" />
+    <Compile Include="Tcp\Saea\TcpSocketSaeaServer.cs" />
+    <Compile Include="Tcp\Saea\TcpSocketSaeaSession.cs" />
     <Compile Include="Tcp\Client\AsyncTcpSocketClientConfiguration.cs" />
     <Compile Include="Tcp\Client\TcpSocketClientConfiguration.cs" />
     <Compile Include="Tcp\Framing\IFrameBuilder.cs" />
     <Compile Include="Tcp\Framing\LineBasedFrameBuilder.cs" />
     <Compile Include="Tcp\Framing\SizePrefixedFrameBuilder.cs" />
     <Compile Include="Tcp\Server\AsyncTcpSocketServerConfiguration.cs" />
-    <Compile Include="TcpSocketSaeaServerConfiguration.cs" />
+    <Compile Include="Tcp\Saea\TcpSocketSaeaServerConfiguration.cs" />
     <Compile Include="Tcp\Server\TcpSocketServerConfiguration.cs" />
     <Compile Include="Tcp\Client\EventArgs\TcpClientConnectedEventArgs.cs" />
     <Compile Include="Tcp\Client\EventArgs\TcpClientDisconnectedEventArgs.cs" />

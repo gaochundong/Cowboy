@@ -14,9 +14,8 @@ namespace Cowboy.Sockets
         #region Fields
 
         private static readonly ILog _log = Logger.Get<TcpSocketSession>();
-        private TcpClient _tcpClient;
         private readonly object _opsLock = new object();
-        private bool _closed = false;
+        private TcpClient _tcpClient;
         private readonly TcpSocketServerConfiguration _configuration;
         private readonly IBufferManager _bufferManager;
         private readonly TcpSocketServer _server;
@@ -27,6 +26,7 @@ namespace Cowboy.Sockets
         private int _sessionBufferCount = 0;
         private IPEndPoint _remoteEndPoint;
         private IPEndPoint _localEndPoint;
+        private bool _closed = false;
 
         #endregion
 

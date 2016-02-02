@@ -20,7 +20,6 @@ namespace Cowboy.Sockets.TestAsyncTcpSocketServer
                 //config.UseSsl = true;
                 //config.SslServerCertificate = new System.Security.Cryptography.X509Certificates.X509Certificate2(@"D:\\Cowboy.pfx", "Cowboy");
                 //config.SslPolicyErrorsBypassed = false;
-                config.FrameBuilder = new LineBasedFrameBuilder();
 
                 _server = new AsyncTcpSocketServer(22222, new SimpleMessageDispatcher(), config);
                 _server.Listen();

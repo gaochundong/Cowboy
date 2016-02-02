@@ -43,7 +43,7 @@ namespace Cowboy.Sockets.TestTcpSocketSaeaServer
                 }
             }
 
-            _server.Stop();
+            _server.Shutdown();
             Console.WriteLine("TCP server has been stopped on [{0}].", _server.ListenedEndPoint);
 
             Console.ReadKey();
@@ -60,7 +60,7 @@ namespace Cowboy.Sockets.TestTcpSocketSaeaServer
             //_server.ClientConnected += server_ClientConnected;
             //_server.ClientDisconnected += server_ClientDisconnected;
             //_server.ClientDataReceived += server_ClientDataReceived;
-            _server.Start();
+            _server.Listen();
         }
 
         static void server_ClientConnected(object sender, TcpClientConnectedEventArgs e)
