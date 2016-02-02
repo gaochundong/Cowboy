@@ -183,10 +183,9 @@ namespace Cowboy.Sockets
                 while (IsListening)
                 {
                     var tcpClient = await _listener.AcceptTcpClientAsync();
-                    var session = new AsyncTcpSocketSession(tcpClient, _configuration, _bufferManager, _dispatcher, this);
                     Task.Run(async () =>
                     {
-                        await Process(session);
+                        await Process(tcpClient);
                     })
                     .Forget();
                 }
@@ -194,8 +193,10 @@ namespace Cowboy.Sockets
             catch (Exception ex) when (!ShouldThrow(ex)) { }
         }
 
-        private async Task Process(AsyncTcpSocketSession session)
+        private async Task Process(TcpClient acceptedTcpClient)
         {
+            var session = new AsyncTcpSocketSession(acceptedTcpClient, _configuration, _bufferManager, _dispatcher, this);
+
             if (_sessions.TryAdd(session.SessionKey, session))
             {
                 _log.DebugFormat("New session [{0}].", session);

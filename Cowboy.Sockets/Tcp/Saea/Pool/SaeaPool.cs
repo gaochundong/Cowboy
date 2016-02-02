@@ -9,17 +9,19 @@ using System.Threading.Tasks;
 
 namespace Cowboy.Sockets
 {
-    public class SaeaPool : QueuedObjectPool<SocketAsyncEventArgs>
+    public class SaeaPool : QueuedObjectPool<SaeaAwaitable>
     {
-        private Func<SocketAsyncEventArgs> _saeaCreator;
-        private Action<SocketAsyncEventArgs> _saeaCleaner;
+        private Func<SaeaAwaitable> _saeaCreator;
+        private Action<SaeaAwaitable> _saeaCleaner;
 
-        public SaeaPool(int batchCount, int maxFreeCount, Func<SocketAsyncEventArgs> saeaCreator, Action<SocketAsyncEventArgs> saeaCleaner)
+        public SaeaPool(int batchCount, int maxFreeCount, Func<SaeaAwaitable> saeaCreator, Action<SaeaAwaitable> saeaCleaner)
         {
             if (batchCount <= 0)
                 throw new ArgumentOutOfRangeException("batchCount");
             if (maxFreeCount <= 0)
                 throw new ArgumentOutOfRangeException("maxFreeCount");
+            if (saeaCreator == null)
+                throw new ArgumentNullException("saeaCreator");
 
             _saeaCreator = saeaCreator;
             _saeaCleaner = saeaCleaner;
@@ -32,7 +34,7 @@ namespace Cowboy.Sockets
             Initialize(batchCount, maxFreeCount);
         }
 
-        public override bool Return(SocketAsyncEventArgs saea)
+        public override bool Return(SaeaAwaitable saea)
         {
             if (_saeaCleaner != null)
             {
@@ -48,21 +50,14 @@ namespace Cowboy.Sockets
             return true;
         }
 
-        protected override void CleanupItem(SocketAsyncEventArgs item)
+        protected override void CleanupItem(SaeaAwaitable item)
         {
             item.Dispose();
         }
 
-        protected override SocketAsyncEventArgs Create()
+        protected override SaeaAwaitable Create()
         {
-            if (_saeaCreator == null)
-            {
-                return new SocketAsyncEventArgs();
-            }
-            else
-            {
-                return _saeaCreator();
-            }
+            return _saeaCreator();
         }
     }
 }

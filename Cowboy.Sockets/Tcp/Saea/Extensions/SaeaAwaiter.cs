@@ -60,10 +60,7 @@ namespace Cowboy.Sockets
         void INotifyCompletion.OnCompleted(Action continuation)
         {
             if (_continuation == SENTINEL
-                || Interlocked.CompareExchange(
-                       ref _continuation,
-                       continuation,
-                       null) == SENTINEL)
+                || Interlocked.CompareExchange(ref _continuation, continuation, null) == SENTINEL)
             {
                 Complete();
                 if (!_awaitable.ShouldCaptureContext)
@@ -86,14 +83,14 @@ namespace Cowboy.Sockets
         {
             if (!IsCompleted)
             {
-                var buffer = _awaitable.Buffer;
-                _awaitable.Transferred = 
-                    buffer.Count == 0
-                    ? buffer
-                    : new ArraySegment<byte>(
-                        buffer.Array,
-                        buffer.Offset,
-                        _awaitable.Saea.BytesTransferred);
+                //var buffer = _awaitable.Buffer;
+                //_awaitable.Transferred =
+                //    buffer.Count == 0
+                //    ? buffer
+                //    : new ArraySegment<byte>(
+                //        buffer.Array,
+                //        buffer.Offset,
+                //        _awaitable.Saea.BytesTransferred);
 
                 if (_awaitable.ShouldCaptureContext)
                     _syncCtx = null;
@@ -106,7 +103,7 @@ namespace Cowboy.Sockets
         {
             _awaitable.Saea.AcceptSocket = null;
             _awaitable.Saea.SocketError = SocketError.AlreadyInProgress;
-            _awaitable.Transferred = SaeaAwaitable.EmptyArraySegment;
+            //_awaitable.Transferred = SaeaAwaitable.EmptyArraySegment;
             _isCompleted = false;
             _continuation = null;
         }

@@ -52,7 +52,7 @@ namespace Cowboy.Sockets
 
         protected override void CleanupItem(TcpSocketSaeaSession item)
         {
-            item.Close();
+            //item.Close();
         }
 
         protected override TcpSocketSaeaSession Create()

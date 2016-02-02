@@ -43,6 +43,8 @@
     </Compile>
     <Compile Include="Tcp\Saea\Extensions\SaeaAwaiter.cs" />
     <Compile Include="Tcp\Saea\Extensions\SaeaExtensions.cs" />
+    <Compile Include="Tcp\Saea\ITcpSocketSaeaServerMessageDispatcher.cs" />
+    <Compile Include="Tcp\Saea\InternalTcpSocketSaeaServerMessageDispatcherImplementation.cs" />
     <Compile Include="Tcp\Saea\Pool\QueuedObjectPool.cs" />
     <Compile Include="Tcp\Saea\Pool\SessionPool.cs" />
     <Compile Include="Tcp\Saea\Pool\SaeaPool.cs" />

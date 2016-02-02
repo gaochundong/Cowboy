@@ -160,10 +160,9 @@ namespace Cowboy.WebSockets
                 while (IsListening)
                 {
                     var tcpClient = await _listener.AcceptTcpClientAsync();
-                    var session = new AsyncWebSocketSession(tcpClient, _configuration, _bufferManager, _routeResolver, this);
                     Task.Run(async () =>
                     {
-                        await Process(session);
+                        await Process(tcpClient);
                     })
                     .Forget();
                 }
@@ -171,8 +170,10 @@ namespace Cowboy.WebSockets
             catch (Exception ex) when (!ShouldThrow(ex)) { }
         }
 
-        private async Task Process(AsyncWebSocketSession session)
+        private async Task Process(TcpClient acceptedTcpClient)
         {
+            var session = new AsyncWebSocketSession(acceptedTcpClient, _configuration, _bufferManager, _routeResolver, this);
+
             if (_sessions.TryAdd(session.SessionKey, session))
             {
                 _log.DebugFormat("New session [{0}].", session);

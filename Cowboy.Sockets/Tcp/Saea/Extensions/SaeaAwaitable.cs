@@ -38,62 +38,62 @@ namespace Cowboy.Sockets
             get { return Saea.AcceptSocket; }
         }
 
-        public ArraySegment<byte> Buffer
-        {
-            get
-            {
-                lock (_sync)
-                    return new ArraySegment<byte>(
-                        this.Saea.Buffer ?? EmptyArray,
-                        this.Saea.Offset,
-                        this.Saea.Count);
-            }
-            set
-            {
-                lock (_sync)
-                    this.Saea.SetBuffer(value.Array ?? EmptyArray, value.Offset, value.Count);
-            }
-        }
+        //public ArraySegment<byte> Buffer
+        //{
+        //    get
+        //    {
+        //        lock (_sync)
+        //            return new ArraySegment<byte>(
+        //                this.Saea.Buffer ?? EmptyArray,
+        //                this.Saea.Offset,
+        //                this.Saea.Count);
+        //    }
+        //    set
+        //    {
+        //        lock (_sync)
+        //            this.Saea.SetBuffer(value.Array ?? EmptyArray, value.Offset, value.Count);
+        //    }
+        //}
 
-        public ArraySegment<byte> Transferred
-        {
-            get { return _transferredBytes; }
-            internal set { _transferredBytes = value; }
-        }
+        //public ArraySegment<byte> Transferred
+        //{
+        //    get { return _transferredBytes; }
+        //    internal set { _transferredBytes = value; }
+        //}
 
-        public Exception ConnectByNameError
-        {
-            get { return this.Saea.ConnectByNameError; }
-        }
+        //public Exception ConnectByNameError
+        //{
+        //    get { return this.Saea.ConnectByNameError; }
+        //}
 
-        public bool DisconnectReuseSocket
-        {
-            get { return this.Saea.DisconnectReuseSocket; }
-            set { this.Saea.DisconnectReuseSocket = value; }
-        }
+        //public bool DisconnectReuseSocket
+        //{
+        //    get { return this.Saea.DisconnectReuseSocket; }
+        //    set { this.Saea.DisconnectReuseSocket = value; }
+        //}
 
-        public SocketAsyncOperation LastOperation
-        {
-            get { return this.Saea.LastOperation; }
-        }
+        //public SocketAsyncOperation LastOperation
+        //{
+        //    get { return this.Saea.LastOperation; }
+        //}
 
-        public EndPoint RemoteEndPoint
-        {
-            get { return this.Saea.RemoteEndPoint; }
-            set { this.Saea.RemoteEndPoint = value; }
-        }
+        //public EndPoint RemoteEndPoint
+        //{
+        //    get { return this.Saea.RemoteEndPoint; }
+        //    set { this.Saea.RemoteEndPoint = value; }
+        //}
 
-        public SocketFlags SocketFlags
-        {
-            get { return this.Saea.SocketFlags; }
-            set { this.Saea.SocketFlags = value; }
-        }
+        //public SocketFlags SocketFlags
+        //{
+        //    get { return this.Saea.SocketFlags; }
+        //    set { this.Saea.SocketFlags = value; }
+        //}
 
-        public object UserToken
-        {
-            get { return this.Saea.UserToken; }
-            set { this.Saea.UserToken = value; }
-        }
+        //public object UserToken
+        //{
+        //    get { return this.Saea.UserToken; }
+        //    set { this.Saea.UserToken = value; }
+        //}
 
         public bool ShouldCaptureContext
         {
@@ -116,10 +116,10 @@ namespace Cowboy.Sockets
         {
             this.Saea.AcceptSocket = null;
             this.Saea.SetBuffer(EmptyArray, 0, 0);
-            this.RemoteEndPoint = null;
-            this.SocketFlags = SocketFlags.None;
-            this.Transferred = EmptyArraySegment;
-            this.UserToken = null;
+            //this.RemoteEndPoint = null;
+            //this.SocketFlags = SocketFlags.None;
+            //this.Transferred = EmptyArraySegment;
+            //this.UserToken = null;
         }
 
         public SaeaAwaiter GetAwaiter()

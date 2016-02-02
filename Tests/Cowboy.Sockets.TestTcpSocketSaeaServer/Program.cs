@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Text;
+using System.Threading.Tasks;
+using Cowboy.Logging;
 using Cowboy.Logging.NLogIntegration;
 
 namespace Cowboy.Sockets.TestTcpSocketSaeaServer
@@ -12,74 +14,46 @@ namespace Cowboy.Sockets.TestTcpSocketSaeaServer
         {
             NLogLogger.Use();
 
-            StartServer();
-
-            Console.WriteLine("TCP server has been started.");
-            Console.WriteLine("Type something to send to client...");
-            while (true)
+            try
             {
-                try
+                var config = new TcpSocketSaeaServerConfiguration();
+                //config.UseSsl = true;
+                //config.SslServerCertificate = new System.Security.Cryptography.X509Certificates.X509Certificate2(@"D:\\Cowboy.pfx", "Cowboy");
+                //config.SslPolicyErrorsBypassed = false;
+
+                _server = new TcpSocketSaeaServer(22222, new SimpleMessageDispatcher(), config);
+                _server.Listen();
+
+                Console.WriteLine("TCP server has been started on [{0}].", _server.ListenedEndPoint);
+                Console.WriteLine("Type something to send to clients...");
+                while (true)
                 {
-                    string text = Console.ReadLine();
-                    if (text == "quit")
-                        break;
-                    else if (text == "many")
+                    try
                     {
-                        text = new string('x', 8192);
-                        for (int i = 0; i < 1000000; i++)
-                        {
-                            //_server.Broadcast(Encoding.UTF8.GetBytes(text));
-                        }
+                        string text = Console.ReadLine();
+                        if (text == "quit")
+                            break;
+                        //Task.Run(async () =>
+                        //{
+                        //    //await _server.BroadcastAsync(Encoding.UTF8.GetBytes(text));
+                        //    Console.WriteLine("Server [{0}] broadcasts text -> [{1}].", _server.ListenedEndPoint, text);
+                        //});
                     }
-                    else if (text == "big")
+                    catch (Exception ex)
                     {
-                        text = new string('x', 1024 * 1024 * 100);
-                        //_server.Broadcast(Encoding.UTF8.GetBytes(text));
+                        Console.WriteLine(ex.Message);
                     }
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                }
+
+                _server.Shutdown();
+                Console.WriteLine("TCP server has been stopped on [{0}].", _server.ListenedEndPoint);
+            }
+            catch (Exception ex)
+            {
+                Logger.Get<Program>().Error(ex.Message, ex);
             }
 
-            _server.Shutdown();
-            Console.WriteLine("TCP server has been stopped on [{0}].", _server.ListenedEndPoint);
-
             Console.ReadKey();
-        }
-
-        private static void StartServer()
-        {
-            var config = new TcpSocketSaeaServerConfiguration();
-            //config.UseSsl = true;
-            //config.SslServerCertificate = new System.Security.Cryptography.X509Certificates.X509Certificate2(@"D:\\Cowboy.pfx", "Cowboy");
-            //config.SslPolicyErrorsBypassed = false;
-
-            _server = new TcpSocketSaeaServer(22222, config);
-            //_server.ClientConnected += server_ClientConnected;
-            //_server.ClientDisconnected += server_ClientDisconnected;
-            //_server.ClientDataReceived += server_ClientDataReceived;
-            _server.Listen();
-        }
-
-        static void server_ClientConnected(object sender, TcpClientConnectedEventArgs e)
-        {
-            Console.WriteLine(string.Format("TCP client {0} has connected {1}.", e.Session.RemoteEndPoint, e.Session));
-        }
-
-        static void server_ClientDisconnected(object sender, TcpClientDisconnectedEventArgs e)
-        {
-            Console.WriteLine(string.Format("TCP client {0} has disconnected.", e.Session));
-        }
-
-        static void server_ClientDataReceived(object sender, TcpClientDataReceivedEventArgs e)
-        {
-            var text = Encoding.UTF8.GetString(e.Data, e.DataOffset, e.DataLength);
-            Console.Write(string.Format("Client : {0} {1} --> ", e.Session.RemoteEndPoint, e.Session));
-            Console.WriteLine(string.Format("{0}", text));
-            //_server.Broadcast(Encoding.UTF8.GetBytes(text));
-            //System.Threading.Thread.Sleep(TimeSpan.FromSeconds(5));
         }
     }
 }
