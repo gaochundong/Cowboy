@@ -25,7 +25,7 @@ namespace Cowboy.WebSockets.TestAsyncWebSocketServer
                 //config.SslPolicyErrorsBypassed = true;
 
                 _server = new AsyncWebSocketServer(22222, catalog, config);
-                _server.Start();
+                _server.Listen();
 
                 Console.WriteLine("WebSocket server has been started on [{0}].", _server.ListenedEndPoint);
                 Console.WriteLine("Type something to send to clients...");
@@ -39,7 +39,7 @@ namespace Cowboy.WebSockets.TestAsyncWebSocketServer
                         Task.Run(async () =>
                         {
                             //await _server.BroadcastText(text);
-                            //Console.WriteLine("WebSocket server [{0}] broadcasts data -> [{1}].", _server.ListenedEndPoint, text);
+                            //Console.WriteLine("WebSocket server [{0}] broadcasts text -> [{1}].", _server.ListenedEndPoint, text);
                             await _server.BroadcastBinaryAsync(Encoding.UTF8.GetBytes(text));
                             Console.WriteLine("WebSocket server [{0}] broadcasts binary -> [{1}].", _server.ListenedEndPoint, text);
                         });
@@ -50,7 +50,7 @@ namespace Cowboy.WebSockets.TestAsyncWebSocketServer
                     }
                 }
 
-                _server.Stop().Wait();
+                _server.Shutdown();
                 Console.WriteLine("WebSocket server has been stopped on [{0}].", _server.ListenedEndPoint);
             }
             catch (Exception ex)

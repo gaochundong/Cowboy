@@ -23,7 +23,7 @@ namespace Cowboy.Sockets.TestAsyncTcpSocketServer
                 config.FrameBuilder = new LineBasedFrameBuilder();
 
                 _server = new AsyncTcpSocketServer(22222, new SimpleMessageDispatcher(), config);
-                _server.Start();
+                _server.Listen();
 
                 Console.WriteLine("TCP server has been started on [{0}].", _server.ListenedEndPoint);
                 Console.WriteLine("Type something to send to clients...");
@@ -37,7 +37,7 @@ namespace Cowboy.Sockets.TestAsyncTcpSocketServer
                         Task.Run(async () =>
                         {
                             await _server.BroadcastAsync(Encoding.UTF8.GetBytes(text));
-                            Console.WriteLine("Server [{0}] broadcasts data -> [{1}].", _server.ListenedEndPoint, text);
+                            Console.WriteLine("Server [{0}] broadcasts text -> [{1}].", _server.ListenedEndPoint, text);
                         });
                     }
                     catch (Exception ex)
@@ -46,7 +46,7 @@ namespace Cowboy.Sockets.TestAsyncTcpSocketServer
                     }
                 }
 
-                _server.Stop().Wait();
+                _server.Shutdown();
                 Console.WriteLine("TCP server has been stopped on [{0}].", _server.ListenedEndPoint);
             }
             catch (Exception ex)

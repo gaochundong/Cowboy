@@ -99,14 +99,14 @@ namespace Cowboy.Sockets
         #region Properties
 
         public IPEndPoint ListenedEndPoint { get; private set; }
-        public bool Active { get { return _state == _listening; } }
+        public bool IsListening { get { return _state == _listening; } }
         public int SessionCount { get { return _sessions.Count; } }
 
         #endregion
 
         #region Server
 
-        public void Start()
+        public void Listen()
         {
             int origin = Interlocked.CompareExchange(ref _state, _listening, _none);
             if (origin == _disposed)
@@ -134,7 +134,7 @@ namespace Cowboy.Sockets
             catch (Exception ex) when (!ShouldThrow(ex)) { }
         }
 
-        public async Task Stop()
+        public void Shutdown()
         {
             if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
             {
@@ -146,10 +146,18 @@ namespace Cowboy.Sockets
                 _listener.Stop();
                 _listener = null;
 
-                foreach (var session in _sessions.Values)
+                Task.Run(async () =>
                 {
-                    await session.Close();
-                }
+                    try
+                    {
+                        foreach (var session in _sessions.Values)
+                        {
+                            await session.Close();
+                        }
+                    }
+                    catch (Exception ex) when (!ShouldThrow(ex)) { }
+                })
+                .Wait();
             }
             catch (Exception ex) when (!ShouldThrow(ex)) { }
         }
@@ -161,7 +169,7 @@ namespace Cowboy.Sockets
 
         public bool Pending()
         {
-            if (!Active)
+            if (!IsListening)
                 throw new InvalidOperationException("The tcp server is not active.");
 
             // determine if there are pending connection requests.
@@ -172,7 +180,7 @@ namespace Cowboy.Sockets
         {
             try
             {
-                while (Active)
+                while (IsListening)
                 {
                     var tcpClient = await _listener.AcceptTcpClientAsync();
                     var session = new AsyncTcpSocketSession(tcpClient, _configuration, _bufferManager, _dispatcher, this);

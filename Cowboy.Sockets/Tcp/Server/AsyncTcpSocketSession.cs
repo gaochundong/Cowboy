@@ -97,22 +97,22 @@ namespace Cowboy.Sockets
         public AsyncTcpSocketServer Server { get { return _server; } }
         public TimeSpan ConnectTimeout { get { return _configuration.ConnectTimeout; } }
 
-        public TcpSocketState State
+        public TcpSocketConnectionState State
         {
             get
             {
                 switch (_state)
                 {
                     case _none:
-                        return TcpSocketState.None;
+                        return TcpSocketConnectionState.None;
                     case _connecting:
-                        return TcpSocketState.Connecting;
+                        return TcpSocketConnectionState.Connecting;
                     case _connected:
-                        return TcpSocketState.Connected;
+                        return TcpSocketConnectionState.Connected;
                     case _disposed:
-                        return TcpSocketState.Closed;
+                        return TcpSocketConnectionState.Closed;
                     default:
-                        return TcpSocketState.Closed;
+                        return TcpSocketConnectionState.Closed;
                 }
             }
         }
@@ -203,7 +203,7 @@ namespace Cowboy.Sockets
                 int payloadOffset;
                 int payloadCount;
 
-                while (State == TcpSocketState.Connected)
+                while (State == TcpSocketConnectionState.Connected)
                 {
                     int receiveCount = await _stream.ReadAsync(_receiveBuffer, 0, _receiveBuffer.Length);
                     if (receiveCount == 0)
@@ -405,7 +405,7 @@ namespace Cowboy.Sockets
         {
             BufferValidator.ValidateBuffer(data, offset, count, "data");
 
-            if (State != TcpSocketState.Connected)
+            if (State != TcpSocketConnectionState.Connected)
             {
                 throw new InvalidOperationException("This session has not connected.");
             }

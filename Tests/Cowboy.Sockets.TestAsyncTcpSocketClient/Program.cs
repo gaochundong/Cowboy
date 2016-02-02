@@ -40,7 +40,7 @@ namespace Cowboy.Sockets.TestAsyncTcpSocketClient
                         Task.Run(async () =>
                         {
                             await _client.SendAsync(Encoding.UTF8.GetBytes(text));
-                            Console.WriteLine("Client [{0}] send data -> [{1}].", _client.LocalEndPoint, text);
+                            Console.WriteLine("Client [{0}] send text -> [{1}].", _client.LocalEndPoint, text);
                         });
                     }
                     catch (Exception ex)

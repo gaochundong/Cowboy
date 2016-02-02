@@ -58,14 +58,14 @@ namespace Cowboy.Sockets
         #region Properties
 
         public IPEndPoint ListenedEndPoint { get; private set; }
-        public bool Active { get { return _isListening; } }
+        public bool IsListening { get { return _isListening; } }
         public int SessionCount { get { return _sessions.Count; } }
 
         #endregion
 
         #region Server
 
-        public void Start()
+        public void Listen()
         {
             lock (_opsLock)
             {
@@ -82,7 +82,7 @@ namespace Cowboy.Sockets
             }
         }
 
-        public void Stop()
+        public void Shutdown()
         {
             lock (_opsLock)
             {
@@ -117,7 +117,7 @@ namespace Cowboy.Sockets
             lock (_opsLock)
             {
                 if (!_isListening)
-                    throw new InvalidOperationException("The tcp server is not active.");
+                    throw new InvalidOperationException("The server is not listening.");
 
                 // determine if there are pending connection requests.
                 return _listener.Pending();

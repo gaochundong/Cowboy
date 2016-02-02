@@ -57,8 +57,8 @@ namespace Cowboy.Sockets
 
             ConfigureClient();
 
-            _remoteEndPoint = Connected ? (IPEndPoint)_tcpClient.Client.RemoteEndPoint : null;
-            _localEndPoint = Connected ? (IPEndPoint)_tcpClient.Client.LocalEndPoint : null;
+            _remoteEndPoint = Active ? (IPEndPoint)_tcpClient.Client.RemoteEndPoint : null;
+            _localEndPoint = Active ? (IPEndPoint)_tcpClient.Client.LocalEndPoint : null;
         }
 
         #endregion
@@ -67,9 +67,9 @@ namespace Cowboy.Sockets
 
         public string SessionKey { get { return _sessionKey; } }
         public DateTime StartTime { get; private set; }
-        public bool Connected { get { return _tcpClient != null && _tcpClient.Connected; } }
-        public IPEndPoint RemoteEndPoint { get { return Connected ? (IPEndPoint)_tcpClient.Client.RemoteEndPoint : _remoteEndPoint; } }
-        public IPEndPoint LocalEndPoint { get { return Connected ? (IPEndPoint)_tcpClient.Client.LocalEndPoint : _localEndPoint; } }
+        public bool Active { get { return _tcpClient != null && _tcpClient.Connected; } }
+        public IPEndPoint RemoteEndPoint { get { return Active ? (IPEndPoint)_tcpClient.Client.RemoteEndPoint : _remoteEndPoint; } }
+        public IPEndPoint LocalEndPoint { get { return Active ? (IPEndPoint)_tcpClient.Client.LocalEndPoint : _localEndPoint; } }
         public TcpSocketServer Server { get { return _server; } }
         public TimeSpan ConnectTimeout { get { return _configuration.ConnectTimeout; } }
 
@@ -89,7 +89,7 @@ namespace Cowboy.Sockets
             {
                 try
                 {
-                    if (Connected)
+                    if (Active)
                     {
                         _closed = false;
 
@@ -283,7 +283,7 @@ namespace Cowboy.Sockets
 
         private void HandleDataReceived(IAsyncResult ar)
         {
-            if (!Connected)
+            if (!Active)
                 return;
 
             try
@@ -396,7 +396,7 @@ namespace Cowboy.Sockets
         {
             BufferValidator.ValidateBuffer(data, offset, count, "data");
 
-            if (!Connected)
+            if (!Active)
             {
                 throw new InvalidProgramException("This session has been closed.");
             }
@@ -438,7 +438,7 @@ namespace Cowboy.Sockets
         {
             BufferValidator.ValidateBuffer(data, offset, count, "data");
 
-            if (!Connected)
+            if (!Active)
             {
                 throw new InvalidProgramException("This session has been closed.");
             }

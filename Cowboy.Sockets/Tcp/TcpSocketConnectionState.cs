@@ -1,6 +1,6 @@
 ﻿namespace Cowboy.Sockets
 {
-    public enum TcpSocketState
+    public enum TcpSocketConnectionState
     {
         None = 0,
         Connecting = 1,
