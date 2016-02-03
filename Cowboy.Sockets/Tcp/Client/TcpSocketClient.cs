@@ -9,7 +9,7 @@ using Cowboy.Logging;
 
 namespace Cowboy.Sockets
 {
-    public class TcpSocketClient
+    public class TcpSocketClient : IDisposable
     {
         #region Fields
 
@@ -18,6 +18,7 @@ namespace Cowboy.Sockets
         private TcpClient _tcpClient;
         private readonly object _opsLock = new object();
         private bool _closed = false;
+        private bool _disposed = false;
         private readonly TcpSocketClientConfiguration _configuration;
         private readonly IPEndPoint _remoteEndPoint;
         private readonly IPEndPoint _localEndPoint;
@@ -125,12 +126,12 @@ namespace Cowboy.Sockets
                     {
                         if (_stream != null)
                         {
-                            _stream.Close();
+                            _stream.Dispose();
                             _stream = null;
                         }
                         if (_tcpClient != null && _tcpClient.Connected)
                         {
-                            _tcpClient.Close();
+                            _tcpClient.Dispose();
                             _tcpClient = null;
                         }
 
@@ -525,6 +526,36 @@ namespace Cowboy.Sockets
         private void HandleUserSideError(Exception ex)
         {
             _log.Error(string.Format("Session [{0}] error occurred in user side [{1}].", this, ex.Message), ex);
+        }
+
+        #endregion
+
+        #region IDisposable Members
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    try
+                    {
+                        Close();
+                    }
+                    catch (Exception ex)
+                    {
+                        _log.Error(ex.Message, ex);
+                    }
+                }
+
+                _disposed = true;
+            }
         }
 
         #endregion

@@ -2,6 +2,7 @@
 
 namespace Cowboy.WebSockets
 {
+    [Serializable]
     public class WebSocketException : Exception
     {
         public WebSocketException(string message)

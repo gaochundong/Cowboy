@@ -10,7 +10,7 @@ using Cowboy.Logging;
 
 namespace Cowboy.Sockets
 {
-    public class TcpSocketSaeaServer
+    public class TcpSocketSaeaServer : IDisposable
     {
         #region Fields
 
@@ -300,5 +300,30 @@ namespace Cowboy.Sockets
 
             _sessionPool.Return(session);
         }
+
+        #region IDisposable Members
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                try
+                {
+                    Shutdown();
+                }
+                catch (Exception ex)
+                {
+                    _log.Error(ex.Message, ex);
+                }
+            }
+        }
+
+        #endregion
     }
 }

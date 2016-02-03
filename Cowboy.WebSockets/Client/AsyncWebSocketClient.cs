@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -16,7 +17,7 @@ using Cowboy.WebSockets.SubProtocols;
 
 namespace Cowboy.WebSockets
 {
-    public sealed class AsyncWebSocketClient
+    public sealed class AsyncWebSocketClient : IDisposable
     {
         #region Fields
 
@@ -1090,6 +1091,34 @@ namespace Cowboy.WebSockets
                 throw new WebSocketHandshakeException(string.Format(
                     "Negotiate sub-protocol with remote [{0}] failed due to sub-protocol [{1}] has invalid parameter [{2}].",
                     this.RemoteEndPoint, protocol, invalidParameter));
+            }
+        }
+
+        #endregion
+
+        #region IDisposable Members
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        [SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "_keepAliveTimeoutTimer")]
+        [SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "_keepAliveLocker")]
+        [SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "_closingTimeoutTimer")]
+        private void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                try
+                {
+                    Close().Wait();
+                }
+                catch (Exception ex)
+                {
+                    _log.Error(ex.Message, ex);
+                }
             }
         }
 

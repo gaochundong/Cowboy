@@ -12,12 +12,10 @@ namespace Cowboy.WebSockets.Extensions
 
         public static byte[] Compress(byte[] raw, int offset, int count)
         {
-            using (var memory = new MemoryStream())
+            var memory = new MemoryStream();
+            using (var deflate = new DeflateStream(memory, CompressionMode.Compress, true))
             {
-                using (var deflate = new DeflateStream(memory, CompressionMode.Compress, true))
-                {
-                    deflate.Write(raw, offset, count);
-                }
+                deflate.Write(raw, offset, count);
                 return memory.ToArray();
             }
         }
@@ -29,26 +27,23 @@ namespace Cowboy.WebSockets.Extensions
 
         public static byte[] Decompress(byte[] raw, int offset, int count)
         {
-            using (var input = new MemoryStream(raw, offset, count))
+            byte[] buffer = new byte[1024];
+            var input = new MemoryStream(raw, offset, count);
             using (var deflate = new DeflateStream(input, CompressionMode.Decompress))
+            using (var memory = new MemoryStream())
             {
-                const int size = 1024;
-                byte[] buffer = new byte[size];
-                using (var memory = new MemoryStream())
+                int readCount = 0;
+                do
                 {
-                    int readCount = 0;
-                    do
+                    readCount = deflate.Read(buffer, 0, buffer.Length);
+                    if (readCount > 0)
                     {
-                        readCount = deflate.Read(buffer, 0, size);
-                        if (readCount > 0)
-                        {
-                            memory.Write(buffer, 0, readCount);
-                        }
+                        memory.Write(buffer, 0, readCount);
                     }
-                    while (readCount > 0);
-
-                    return memory.ToArray();
                 }
+                while (readCount > 0);
+
+                return memory.ToArray();
             }
         }
     }

@@ -2,6 +2,7 @@
 
 namespace Cowboy.WebSockets
 {
+    [Serializable]
     public sealed class WebSocketHandshakeException : WebSocketException
     {
         public WebSocketHandshakeException(string message)

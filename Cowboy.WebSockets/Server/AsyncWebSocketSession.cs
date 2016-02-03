@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -16,7 +17,7 @@ using Cowboy.WebSockets.SubProtocols;
 
 namespace Cowboy.WebSockets
 {
-    public sealed class AsyncWebSocketSession
+    public sealed class AsyncWebSocketSession : IDisposable
     {
         #region Fields
 
@@ -990,6 +991,34 @@ namespace Cowboy.WebSockets
         {
             if (string.IsNullOrWhiteSpace(protocols))
                 throw new ArgumentNullException("protocols");
+        }
+
+        #endregion
+
+        #region IDisposable Members
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        [SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "_keepAliveTimeoutTimer")]
+        [SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "_keepAliveLocker")]
+        [SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "_closingTimeoutTimer")]
+        private void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                try
+                {
+                    Close().Wait();
+                }
+                catch (Exception ex)
+                {
+                    _log.Error(ex.Message, ex);
+                }
+            }
         }
 
         #endregion
