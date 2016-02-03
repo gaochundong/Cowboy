@@ -15,6 +15,7 @@ namespace Cowboy.Sockets
         #region Fields
 
         private static readonly ILog _log = Logger.Get<TcpSocketSaeaServer>();
+        private static readonly byte[] EmptyArray = new byte[0];
         private IBufferManager _bufferManager;
         private readonly ConcurrentDictionary<string, TcpSocketSaeaSession> _sessions = new ConcurrentDictionary<string, TcpSocketSaeaSession>();
         private readonly TcpSocketSaeaServerConfiguration _configuration;
@@ -107,7 +108,10 @@ namespace Cowboy.Sockets
                 {
                     try
                     {
-                        saea.Clear();
+                        saea.Saea.AcceptSocket = null;
+                        saea.Saea.SetBuffer(0, 0);
+                        saea.Saea.RemoteEndPoint = null;
+                        saea.Saea.SocketFlags = SocketFlags.None;
                     }
                     catch (Exception ex)
                     {
@@ -124,7 +128,10 @@ namespace Cowboy.Sockets
                 {
                     try
                     {
-                        saea.Clear();
+                        saea.Saea.AcceptSocket = null;
+                        saea.Saea.SetBuffer(EmptyArray, 0, 0);
+                        saea.Saea.RemoteEndPoint = null;
+                        saea.Saea.SocketFlags = SocketFlags.None;
                     }
                     catch (Exception ex)
                     {
@@ -204,18 +211,18 @@ namespace Cowboy.Sockets
                 _listener.Close(0);
                 _listener = null;
 
-                //Task.Run(async () =>
-                //{
-                //    try
-                //    {
-                //        foreach (var session in _sessions.Values)
-                //        {
-                //            await session.Close();
-                //        }
-                //    }
-                //    catch (Exception ex) when (!ShouldThrow(ex)) { }
-                //})
-                //.Wait();
+                Task.Run(async () =>
+                {
+                    try
+                    {
+                        foreach (var session in _sessions.Values)
+                        {
+                            await session.Close();
+                        }
+                    }
+                    catch (Exception ex) when (!ShouldThrow(ex)) { }
+                })
+                .Wait();
             }
             catch (Exception ex) when (!ShouldThrow(ex)) { }
         }
@@ -276,6 +283,10 @@ namespace Cowboy.Sockets
                 }
             }
             catch (Exception ex) when (!ShouldThrow(ex)) { }
+            catch (Exception ex)
+            {
+                _log.Error(ex.Message, ex);
+            }
         }
 
         private async Task Process(Socket acceptedSocket)

@@ -121,7 +121,17 @@ namespace Cowboy.TcpLika
                 }
                 catch (Exception ex) when (!ShouldThrow(ex))
                 {
-                    _logger(string.Format("Connect to [{0}] error occurred [{1}].", remoteEP, ex.Message));
+                    if (ex is AggregateException)
+                    {
+                        var a = ex as AggregateException;
+                        if (a.InnerExceptions != null && a.InnerExceptions.Any())
+                        {
+                            _logger(string.Format("Connect to [{0}] error occurred [{1}].", remoteEP, a.InnerExceptions.First().Message));
+                        }
+                    }
+                    else
+                        _logger(string.Format("Connect to [{0}] error occurred [{1}].", remoteEP, ex.Message));
+
                     if (client != null)
                     {
                         await client.Close(WebSocketCloseCode.AbnormalClosure);
@@ -143,7 +153,16 @@ namespace Cowboy.TcpLika
                 }
                 catch (Exception ex) when (!ShouldThrow(ex))
                 {
-                    _logger(string.Format("Closed to [{0}] error occurred [{1}].", remoteEP, ex.Message));
+                    if (ex is AggregateException)
+                    {
+                        var a = ex as AggregateException;
+                        if (a.InnerExceptions != null && a.InnerExceptions.Any())
+                        {
+                            _logger(string.Format("Closed to [{0}] error occurred [{1}].", remoteEP, a.InnerExceptions.First().Message));
+                        }
+                    }
+                    else
+                        _logger(string.Format("Closed to [{0}] error occurred [{1}].", remoteEP, ex.Message));
                 }
             }
         }
@@ -174,7 +193,17 @@ namespace Cowboy.TcpLika
                 }
                 catch (Exception ex) when (!ShouldThrow(ex))
                 {
-                    _logger(string.Format("Connect to [{0}] error occurred [{1}].", remoteEP, ex.Message));
+                    if (ex is AggregateException)
+                    {
+                        var a = ex as AggregateException;
+                        if (a.InnerExceptions != null && a.InnerExceptions.Any())
+                        {
+                            _logger(string.Format("Connect to [{0}] error occurred [{1}].", remoteEP, a.InnerExceptions.First().Message));
+                        }
+                    }
+                    else
+                        _logger(string.Format("Connect to [{0}] error occurred [{1}].", remoteEP, ex.Message));
+
                     if (client != null)
                     {
                         await client.Close();
@@ -196,7 +225,16 @@ namespace Cowboy.TcpLika
                 }
                 catch (Exception ex) when (!ShouldThrow(ex))
                 {
-                    _logger(string.Format("Closed to [{0}] error occurred [{1}].", remoteEP, ex.Message));
+                    if (ex is AggregateException)
+                    {
+                        var a = ex as AggregateException;
+                        if (a.InnerExceptions != null && a.InnerExceptions.Any())
+                        {
+                            _logger(string.Format("Closed to [{0}] error occurred [{1}].", remoteEP, a.InnerExceptions.First().Message));
+                        }
+                    }
+                    else
+                        _logger(string.Format("Closed to [{0}] error occurred [{1}].", remoteEP, ex.Message));
                 }
             }
         }

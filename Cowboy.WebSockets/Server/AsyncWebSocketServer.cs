@@ -168,6 +168,10 @@ namespace Cowboy.WebSockets
                 }
             }
             catch (Exception ex) when (!ShouldThrow(ex)) { }
+            catch (Exception ex)
+            {
+                _log.Error(ex.Message, ex);
+            }
         }
 
         private async Task Process(TcpClient acceptedTcpClient)

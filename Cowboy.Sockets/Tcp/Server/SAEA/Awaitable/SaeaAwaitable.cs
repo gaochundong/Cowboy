@@ -5,7 +5,6 @@ namespace Cowboy.Sockets
 {
     public sealed class SaeaAwaitable : IDisposable
     {
-        private static readonly byte[] EmptyArray = new byte[0];
         private readonly object _sync = new object();
         private readonly SocketAsyncEventArgs _saea = new SocketAsyncEventArgs();
         private readonly SaeaAwaiter _awaiter;
@@ -24,12 +23,6 @@ namespace Cowboy.Sockets
         public object SyncRoot
         {
             get { return _sync; }
-        }
-
-        public void Clear()
-        {
-            this.Saea.AcceptSocket = null;
-            this.Saea.SetBuffer(EmptyArray, 0, 0);
         }
 
         public SaeaAwaiter GetAwaiter()

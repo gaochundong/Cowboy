@@ -14,6 +14,7 @@ namespace Cowboy.Sockets
         #region Fields
 
         private static readonly ILog _log = Logger.Get<TcpSocketSaeaClient>();
+        private static readonly byte[] EmptyArray = new byte[0];
         private IBufferManager _bufferManager;
         private readonly ITcpSocketSaeaClientMessageDispatcher _dispatcher;
         private readonly TcpSocketSaeaClientConfiguration _configuration;
@@ -139,7 +140,10 @@ namespace Cowboy.Sockets
                 {
                     try
                     {
-                        saea.Clear();
+                        saea.Saea.AcceptSocket = null;
+                        saea.Saea.SetBuffer(EmptyArray, 0, 0);
+                        saea.Saea.RemoteEndPoint = null;
+                        saea.Saea.SocketFlags = SocketFlags.None;
                     }
                     catch (Exception ex)
                     {
