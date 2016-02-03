@@ -18,7 +18,7 @@ namespace Cowboy.Sockets.TestTcpSocketSaeaServer
             Console.Write(string.Format("Client : {0} --> ", session.RemoteEndPoint));
             Console.WriteLine(string.Format("{0}", text));
 
-            await session.SendAsync(Encoding.UTF8.GetBytes("Echo -> " + text));
+            await session.SendAsync(Encoding.UTF8.GetBytes(text));
         }
 
         public async Task OnSessionClosed(TcpSocketSaeaSession session)

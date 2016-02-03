@@ -79,7 +79,6 @@ namespace Cowboy.Sockets.TestTcpSocketServer
             Console.Write(string.Format("Client : {0} {1} --> ", e.Session.RemoteEndPoint, e.Session));
             Console.WriteLine(string.Format("{0}", text));
             _server.Broadcast(Encoding.UTF8.GetBytes(text));
-            //System.Threading.Thread.Sleep(TimeSpan.FromSeconds(5));
         }
     }
 }
