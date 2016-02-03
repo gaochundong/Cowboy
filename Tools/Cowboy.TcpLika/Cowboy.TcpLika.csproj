@@ -59,10 +59,6 @@
     <Compile Include="Extensions\TplExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Cowboy.Buffer\Cowboy.Buffer.csproj">
-      <Project>{555192b1-c597-4279-bf19-00ca30c6df8d}</Project>
-      <Name>Cowboy.Buffer</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\Cowboy.Sockets\Cowboy.Sockets.csproj">
       <Project>{39d916fe-2c09-47ab-a5a2-1a23787f20ba}</Project>
       <Name>Cowboy.Sockets</Name>
