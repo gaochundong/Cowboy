@@ -42,16 +42,14 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>SolutionVersion.cs</Link>
     </Compile>
-    <Compile Include="Tcp\Server\SAEA\Extensions\SaeaAwaiter.cs" />
-    <Compile Include="Tcp\Server\SAEA\Extensions\SaeaExtensions.cs" />
+    <Compile Include="Tcp\Server\SAEA\Awaitable\SaeaAwaiter.cs" />
+    <Compile Include="Tcp\Server\SAEA\Awaitable\SaeaExtensions.cs" />
     <Compile Include="Tcp\Server\SAEA\ITcpSocketSaeaServerMessageDispatcher.cs" />
     <Compile Include="Tcp\Server\SAEA\InternalTcpSocketSaeaServerMessageDispatcherImplementation.cs" />
-    <Compile Include="Tcp\Server\SAEA\Pool\QueuedObjectPool.cs" />
-    <Compile Include="Tcp\Server\SAEA\Pool\SessionPool.cs" />
-    <Compile Include="Tcp\Server\SAEA\Pool\SaeaPool.cs" />
-    <Compile Include="Tcp\Server\SAEA\SessionAcceptSaeaUserToken.cs" />
-    <Compile Include="Tcp\Server\SAEA\SessionHandleSaeaUserToken.cs" />
-    <Compile Include="Tcp\Server\SAEA\Extensions\SaeaAwaitable.cs" />
+    <Compile Include="Tcp\Server\SAEA\Pooling\QueuedObjectPool.cs" />
+    <Compile Include="Tcp\Server\SAEA\Pooling\SessionPool.cs" />
+    <Compile Include="Tcp\Server\SAEA\Pooling\SaeaPool.cs" />
+    <Compile Include="Tcp\Server\SAEA\Awaitable\SaeaAwaitable.cs" />
     <Compile Include="Tcp\Server\SAEA\TcpSocketSaeaServer.cs" />
     <Compile Include="Tcp\Server\SAEA\TcpSocketSaeaSession.cs" />
     <Compile Include="Tcp\Client\TAP\AsyncTcpSocketClientConfiguration.cs" />

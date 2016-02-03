@@ -30,7 +30,6 @@ namespace Cowboy.Sockets
         {
             this.Saea.AcceptSocket = null;
             this.Saea.SetBuffer(EmptyArray, 0, 0);
-            this.Saea.UserToken = null;
         }
 
         public SaeaAwaiter GetAwaiter()
