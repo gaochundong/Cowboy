@@ -33,11 +33,11 @@ namespace Cowboy.Sockets.TestTcpSocketSaeaServer
                         string text = Console.ReadLine();
                         if (text == "quit")
                             break;
-                        //Task.Run(async () =>
-                        //{
-                        //    //await _server.BroadcastAsync(Encoding.UTF8.GetBytes(text));
-                        //    Console.WriteLine("Server [{0}] broadcasts text -> [{1}].", _server.ListenedEndPoint, text);
-                        //});
+                        Task.Run(async () =>
+                        {
+                            await _server.BroadcastAsync(Encoding.UTF8.GetBytes(text));
+                            Console.WriteLine("Server [{0}] broadcasts text -> [{1}].", _server.ListenedEndPoint, text);
+                        });
                     }
                     catch (Exception ex)
                     {

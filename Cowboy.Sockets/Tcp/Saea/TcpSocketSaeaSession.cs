@@ -106,6 +106,8 @@ namespace Cowboy.Sockets
 
         #endregion
 
+        #region Attach
+
         internal void Attach(Socket socket)
         {
             if (socket == null)
@@ -114,6 +116,8 @@ namespace Cowboy.Sockets
             lock (_opsLock)
             {
                 _socket = socket;
+                ConfigureSocket(_socket);
+
                 _sessionKey = Guid.NewGuid().ToString();
                 this.StartTime = DateTime.UtcNow;
 
@@ -135,6 +139,20 @@ namespace Cowboy.Sockets
                 _sessionBufferCount = 0;
             }
         }
+
+        private void ConfigureSocket(Socket socket)
+        {
+            socket.ReceiveBufferSize = _configuration.ReceiveBufferSize;
+            socket.SendBufferSize = _configuration.SendBufferSize;
+            socket.ReceiveTimeout = (int)_configuration.ReceiveTimeout.TotalMilliseconds;
+            socket.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
+            socket.NoDelay = _configuration.NoDelay;
+            socket.LingerState = _configuration.LingerState;
+        }
+
+        #endregion
+
+        #region Start
 
         internal async Task Start()
         {
@@ -309,5 +327,38 @@ namespace Cowboy.Sockets
         {
             _log.Error(string.Format("Session [{0}] error occurred in user side [{1}].", this, ex.Message), ex);
         }
+
+        #endregion
+
+        #region Send
+
+        public async Task SendAsync(byte[] data)
+        {
+            await SendAsync(data, 0, data.Length);
+        }
+
+        public async Task SendAsync(byte[] data, int offset, int count)
+        {
+            BufferValidator.ValidateBuffer(data, offset, count, "data");
+
+            if (State != TcpSocketConnectionState.Connected)
+            {
+                throw new InvalidOperationException("This session has not connected.");
+            }
+
+            try
+            {
+                var frame = _configuration.FrameBuilder.EncodeFrame(data, offset, count);
+                var saea = _saeaPool.Take();
+                saea.Saea.SetBuffer(frame, 0, frame.Length);
+
+                await _socket.SendAsync(saea);
+
+                _saeaPool.Return(saea);
+            }
+            catch (Exception ex) when (!ShouldThrow(ex)) { }
+        }
+
+        #endregion
     }
 }

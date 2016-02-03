@@ -160,6 +160,8 @@ namespace Cowboy.Sockets
 
         #endregion
 
+        #region Server
+
         public void Listen()
         {
             int origin = Interlocked.CompareExchange(ref _state, _listening, _none);
@@ -300,6 +302,61 @@ namespace Cowboy.Sockets
 
             _sessionPool.Return(session);
         }
+
+        #endregion
+
+        #region Send
+
+        public async Task SendToAsync(string sessionKey, byte[] data)
+        {
+            await SendToAsync(sessionKey, data, 0, data.Length);
+        }
+
+        public async Task SendToAsync(string sessionKey, byte[] data, int offset, int count)
+        {
+            TcpSocketSaeaSession sessionFound;
+            if (_sessions.TryGetValue(sessionKey, out sessionFound))
+            {
+                await sessionFound.SendAsync(data, offset, count);
+            }
+            else
+            {
+                _log.WarnFormat("Cannot find session [{0}].", sessionKey);
+            }
+        }
+
+        public async Task SendToAsync(TcpSocketSaeaSession session, byte[] data)
+        {
+            await SendToAsync(session, data, 0, data.Length);
+        }
+
+        public async Task SendToAsync(TcpSocketSaeaSession session, byte[] data, int offset, int count)
+        {
+            TcpSocketSaeaSession sessionFound;
+            if (_sessions.TryGetValue(session.SessionKey, out sessionFound))
+            {
+                await sessionFound.SendAsync(data, offset, count);
+            }
+            else
+            {
+                _log.WarnFormat("Cannot find session [{0}].", session);
+            }
+        }
+
+        public async Task BroadcastAsync(byte[] data)
+        {
+            await BroadcastAsync(data, 0, data.Length);
+        }
+
+        public async Task BroadcastAsync(byte[] data, int offset, int count)
+        {
+            foreach (var session in _sessions.Values)
+            {
+                await session.SendAsync(data, offset, count);
+            }
+        }
+
+        #endregion
 
         #region IDisposable Members
 
