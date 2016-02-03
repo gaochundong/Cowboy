@@ -287,6 +287,8 @@ namespace Cowboy.Sockets
                         break;
 
                     var receiveCount = saea.Saea.BytesTransferred;
+                    if (receiveCount == 0)
+                        break;
 
                     BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
 
