@@ -1,11 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Cowboy.Sockets
 {
@@ -52,7 +45,11 @@ namespace Cowboy.Sockets
 
         protected override void CleanupItem(SaeaAwaitable item)
         {
-            item.Dispose();
+            try
+            {
+                item.Dispose();
+            }
+            catch (Exception) { }
         }
 
         protected override SaeaAwaitable Create()
