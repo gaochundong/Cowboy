@@ -683,9 +683,9 @@ namespace Cowboy.WebSockets
             return handshakeResult;
         }
 
-        private static void HandleUserSideError(Exception ex)
+        private void HandleUserSideError(Exception ex)
         {
-            _log.Error(string.Format("Error occurred in user side [{0}].", ex.Message), ex);
+            _log.Error(string.Format("Session [{0}] error occurred in user side [{1}].", this, ex.Message), ex);
         }
 
         #endregion

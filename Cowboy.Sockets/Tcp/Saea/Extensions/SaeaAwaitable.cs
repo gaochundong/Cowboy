@@ -13,113 +13,32 @@ namespace Cowboy.Sockets
 {
     public sealed class SaeaAwaitable : IDisposable
     {
-        internal static readonly byte[] EmptyArray = new byte[0];
-        internal static readonly ArraySegment<byte> EmptyArraySegment = new ArraySegment<byte>(EmptyArray);
-        private readonly SocketAsyncEventArgs _saea = new SocketAsyncEventArgs();
+        private static readonly byte[] EmptyArray = new byte[0];
         private readonly object _sync = new object();
+        private readonly SocketAsyncEventArgs _saea = new SocketAsyncEventArgs();
         private readonly SaeaAwaiter _awaiter;
-        private ArraySegment<byte> _transferredBytes;
         private bool _isDisposed;
-        private bool _shouldCaptureContext;
 
         public SaeaAwaitable()
         {
             _awaiter = new SaeaAwaiter(this);
-            _transferredBytes = new ArraySegment<byte>(EmptyArray);
         }
 
-        internal SocketAsyncEventArgs Saea
+        public SocketAsyncEventArgs Saea
         {
             get { return _saea; }
         }
 
-        public Socket AcceptSocket
+        public object SyncRoot
         {
-            get { return Saea.AcceptSocket; }
-        }
-
-        //public ArraySegment<byte> Buffer
-        //{
-        //    get
-        //    {
-        //        lock (_sync)
-        //            return new ArraySegment<byte>(
-        //                this.Saea.Buffer ?? EmptyArray,
-        //                this.Saea.Offset,
-        //                this.Saea.Count);
-        //    }
-        //    set
-        //    {
-        //        lock (_sync)
-        //            this.Saea.SetBuffer(value.Array ?? EmptyArray, value.Offset, value.Count);
-        //    }
-        //}
-
-        //public ArraySegment<byte> Transferred
-        //{
-        //    get { return _transferredBytes; }
-        //    internal set { _transferredBytes = value; }
-        //}
-
-        //public Exception ConnectByNameError
-        //{
-        //    get { return this.Saea.ConnectByNameError; }
-        //}
-
-        //public bool DisconnectReuseSocket
-        //{
-        //    get { return this.Saea.DisconnectReuseSocket; }
-        //    set { this.Saea.DisconnectReuseSocket = value; }
-        //}
-
-        //public SocketAsyncOperation LastOperation
-        //{
-        //    get { return this.Saea.LastOperation; }
-        //}
-
-        //public EndPoint RemoteEndPoint
-        //{
-        //    get { return this.Saea.RemoteEndPoint; }
-        //    set { this.Saea.RemoteEndPoint = value; }
-        //}
-
-        //public SocketFlags SocketFlags
-        //{
-        //    get { return this.Saea.SocketFlags; }
-        //    set { this.Saea.SocketFlags = value; }
-        //}
-
-        //public object UserToken
-        //{
-        //    get { return this.Saea.UserToken; }
-        //    set { this.Saea.UserToken = value; }
-        //}
-
-        public bool ShouldCaptureContext
-        {
-            get
-            {
-                return _shouldCaptureContext;
-            }
-            set
-            {
-                lock (_awaiter.SyncRoot)
-                    if (_awaiter.IsCompleted)
-                        _shouldCaptureContext = value;
-                    else
-                        throw new InvalidOperationException(
-                            "A socket operation is already in progress using the same await-able SAEA.");
-            }
+            get { return _sync; }
         }
 
         public void Clear()
         {
             this.Saea.AcceptSocket = null;
             this.Saea.SetBuffer(EmptyArray, 0, 0);
-            //this.RemoteEndPoint = null;
-            //this.SocketFlags = SocketFlags.None;
-            //this.Transferred = EmptyArraySegment;
-            //this.UserToken = null;
+            this.Saea.UserToken = null;
         }
 
         public SaeaAwaiter GetAwaiter()
@@ -134,7 +53,7 @@ namespace Cowboy.Sockets
 
         public void Dispose()
         {
-            lock (_sync)
+            lock (SyncRoot)
             {
                 if (!IsDisposed)
                 {

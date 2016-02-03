@@ -29,7 +29,6 @@ namespace Cowboy.Sockets
             SslCheckCertificateRevocation = false;
             SslPolicyErrorsBypassed = false;
 
-            ConnectTimeout = TimeSpan.FromSeconds(15);
             FrameBuilder = new SizePrefixedFrameBuilder();
         }
 
@@ -52,7 +51,6 @@ namespace Cowboy.Sockets
         public bool SslCheckCertificateRevocation { get; set; }
         public bool SslPolicyErrorsBypassed { get; set; }
 
-        public TimeSpan ConnectTimeout { get; set; }
         public IFrameBuilder FrameBuilder { get; set; }
     }
 }

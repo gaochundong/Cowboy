@@ -112,7 +112,10 @@ namespace Cowboy.Sockets
                     {
                         saea.Clear();
                     }
-                    catch (Exception) { }
+                    catch (Exception ex)
+                    {
+                        _log.Error(ex.Message, ex);
+                    }
                 });
             _handleSaeaPool = new SaeaPool(1024, int.MaxValue,
                 () =>
@@ -126,7 +129,10 @@ namespace Cowboy.Sockets
                     {
                         saea.Clear();
                     }
-                    catch (Exception) { }
+                    catch (Exception ex)
+                    {
+                        _log.Error(ex.Message, ex);
+                    }
                 });
             _sessionPool = new SessionPool(1024, int.MaxValue,
                 () =>
@@ -136,7 +142,14 @@ namespace Cowboy.Sockets
                 },
                 (session) =>
                 {
-
+                    try
+                    {
+                        session.Clear();
+                    }
+                    catch (Exception ex)
+                    {
+                        _log.Error(ex.Message, ex);
+                    }
                 });
         }
 
@@ -248,7 +261,7 @@ namespace Cowboy.Sockets
                     var socketError = await _listener.AcceptAsync(saea);
                     if (socketError == SocketError.Success)
                     {
-                        var acceptedSocket = saea.AcceptSocket;
+                        var acceptedSocket = saea.Saea.AcceptSocket;
                         Task.Run(async () =>
                         {
                             await Process(acceptedSocket);
@@ -260,7 +273,6 @@ namespace Cowboy.Sockets
                         _log.ErrorFormat("Error occurred when accept incoming socket [{0}].", socketError);
                     }
 
-                    saea.Clear();
                     _acceptSaeaPool.Return(saea);
                 }
             }
@@ -270,7 +282,7 @@ namespace Cowboy.Sockets
         private async Task Process(Socket acceptedSocket)
         {
             var session = _sessionPool.Take();
-            session.Assign(acceptedSocket);
+            session.Attach(acceptedSocket);
 
             if (_sessions.TryAdd(session.SessionKey, session))
             {
@@ -289,7 +301,6 @@ namespace Cowboy.Sockets
                 }
             }
 
-            session.Clear();
             _sessionPool.Return(session);
         }
     }

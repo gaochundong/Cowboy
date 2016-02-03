@@ -26,6 +26,9 @@ namespace Cowboy.Sockets
         private string _sessionKey;
         private IPEndPoint _remoteEndPoint;
         private IPEndPoint _localEndPoint;
+        private byte[] _receiveBuffer;
+        private byte[] _sessionBuffer;
+        private int _sessionBufferCount = 0;
 
         private int _state;
         private const int _none = 0;
@@ -60,6 +63,10 @@ namespace Cowboy.Sockets
             _saeaPool = saeaPool;
             _dispatcher = dispatcher;
             _server = server;
+
+            _receiveBuffer = _bufferManager.BorrowBuffer();
+            _sessionBuffer = _bufferManager.BorrowBuffer();
+            _sessionBufferCount = 0;
         }
 
         #endregion
@@ -72,7 +79,6 @@ namespace Cowboy.Sockets
         public IPEndPoint RemoteEndPoint { get { return Connected ? (IPEndPoint)_socket.RemoteEndPoint : _remoteEndPoint; } }
         public IPEndPoint LocalEndPoint { get { return Connected ? (IPEndPoint)_socket.LocalEndPoint : _localEndPoint; } }
         public TcpSocketSaeaServer Server { get { return _server; } }
-        public TimeSpan ConnectTimeout { get { return _configuration.ConnectTimeout; } }
 
         public TcpSocketConnectionState State
         {
@@ -102,7 +108,7 @@ namespace Cowboy.Sockets
 
         #endregion
 
-        internal void Assign(Socket socket)
+        internal void Attach(Socket socket)
         {
             if (socket == null)
                 throw new ArgumentNullException("socket");
@@ -122,13 +128,13 @@ namespace Cowboy.Sockets
         {
             lock (_opsLock)
             {
-                //Close();
-
                 _socket = null;
                 _sessionKey = Guid.Empty.ToString();
 
                 _remoteEndPoint = null;
                 _localEndPoint = null;
+                _state = _none;
+                _sessionBufferCount = 0;
             }
         }
 
@@ -151,46 +157,38 @@ namespace Cowboy.Sockets
                     throw new ObjectDisposedException(GetType().FullName);
                 }
 
-                _receiveBuffer = _bufferManager.BorrowBuffer();
-                _sessionBuffer = _bufferManager.BorrowBuffer();
-                _sessionBufferCount = 0;
+                _log.DebugFormat("Session started for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
+                    this.RemoteEndPoint,
+                    this.StartTime.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"),
+                    _dispatcher.GetType().Name,
+                    this.Server.SessionCount);
+                bool isErrorOccurredInUserSide = false;
+                try
+                {
+                    await _dispatcher.OnSessionStarted(this);
+                }
+                catch (Exception ex)
+                {
+                    isErrorOccurredInUserSide = true;
+                    HandleUserSideError(ex);
+                }
 
-                //_log.DebugFormat("Session started for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
-                //    this.RemoteEndPoint,
-                //    this.StartTime.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"),
-                //    _dispatcher.GetType().Name,
-                //    this.Server.SessionCount);
-                //bool isErrorOccurredInUserSide = false;
-                //try
-                //{
-                //    await _dispatcher.OnSessionStarted(this);
-                //}
-                //catch (Exception ex)
-                //{
-                //    isErrorOccurredInUserSide = true;
-                //    HandleUserSideError(ex);
-                //}
-                await Process();
-                //if (!isErrorOccurredInUserSide)
-                //{
-                //    await Process();
-                //}
-                //else
-                //{
-                //    //await Close();
-                //}
+                if (!isErrorOccurredInUserSide)
+                {
+                    await Process();
+                }
+                else
+                {
+                    await Close();
+                }
             }
             catch (Exception ex)
             when (ex is TimeoutException)
             {
                 _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
-                //await Close();
+                await Close();
             }
         }
-
-        private byte[] _receiveBuffer;
-        private byte[] _sessionBuffer;
-        private int _sessionBufferCount = 0;
 
         private async Task Process()
         {
@@ -207,48 +205,48 @@ namespace Cowboy.Sockets
                 while (State == TcpSocketConnectionState.Connected)
                 {
                     saea.Saea.SetBuffer(0, _receiveBuffer.Length);
+
                     var socketError = await _socket.ReceiveAsync(saea);
-                    if (socketError == SocketError.Success)
+                    if (socketError != SocketError.Success)
+                        break;
+
+                    var receiveCount = saea.Saea.BytesTransferred;
+
+                    BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
+
+                    while (true)
                     {
-                        var receiveCount = saea.Saea.BytesTransferred;
-
-                        BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
-
-                        while (true)
+                        if (_configuration.FrameBuilder.TryDecodeFrame(_sessionBuffer, _sessionBufferCount,
+                            out frameLength, out payload, out payloadOffset, out payloadCount))
                         {
-                            if (_configuration.FrameBuilder.TryDecodeFrame(_sessionBuffer, _sessionBufferCount,
-                                out frameLength, out payload, out payloadOffset, out payloadCount))
+                            try
                             {
-                                try
-                                {
-                                    await _dispatcher.OnSessionDataReceived(this, payload, payloadOffset, payloadCount);
-                                }
-                                catch (Exception ex)
-                                {
-                                    //HandleUserSideError(ex);
-                                }
-                                finally
-                                {
-                                    BufferDeflector.ShiftBuffer(_bufferManager, frameLength, ref _sessionBuffer, ref _sessionBufferCount);
-#if DEBUG
-                                    _log.DebugFormat("Session [{0}] buffer length [{1}].", this, _sessionBufferCount);
-#endif
-                                }
+                                await _dispatcher.OnSessionDataReceived(this, payload, payloadOffset, payloadCount);
                             }
-                            else
+                            catch (Exception ex)
                             {
-                                break;
+                                HandleUserSideError(ex);
+                            }
+                            finally
+                            {
+                                BufferDeflector.ShiftBuffer(_bufferManager, frameLength, ref _sessionBuffer, ref _sessionBufferCount);
+#if DEBUG
+                                _log.DebugFormat("Session [{0}] buffer length [{1}].", this, _sessionBufferCount);
+#endif
                             }
                         }
-                    }
-                    else
-                    {
-                        break;
+                        else
+                        {
+                            break;
+                        }
                     }
                 }
             }
-            catch (Exception ex) { }
-
+            catch (Exception ex) when (!ShouldThrow(ex)) { }
+            finally
+            {
+                await Close();
+            }
         }
 
         public async Task Close()
@@ -260,23 +258,13 @@ namespace Cowboy.Sockets
 
             try
             {
-                //if (_stream != null)
-                //{
-                //    _stream.Dispose();
-                //    _stream = null;
-                //}
-                //if (_tcpClient != null && _tcpClient.Connected)
-                //{
-                //    _tcpClient.Dispose();
-                //    _tcpClient = null;
-                //}
+                if (_socket != null)
+                {
+                    _socket.Dispose();
+                    _socket = null;
+                }
             }
             catch (Exception) { }
-
-            if (_receiveBuffer != null)
-                _bufferManager.ReturnBuffer(_receiveBuffer);
-            if (_sessionBuffer != null)
-                _bufferManager.ReturnBuffer(_sessionBuffer);
 
             _log.DebugFormat("Session closed for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
                 this.RemoteEndPoint,
@@ -289,8 +277,39 @@ namespace Cowboy.Sockets
             }
             catch (Exception ex)
             {
-                //HandleUserSideError(ex);
+                HandleUserSideError(ex);
             }
+        }
+
+        private bool ShouldThrow(Exception ex)
+        {
+            if (ex is IOException
+                && ex.InnerException != null
+                && ex.InnerException is SocketException
+                && (ex.InnerException as SocketException).SocketErrorCode == SocketError.TimedOut)
+            {
+                _log.Error(ex.Message, ex);
+                return false;
+            }
+
+            if (ex is SocketException
+                || ex is IOException
+                || ex is InvalidOperationException
+                || ex is ObjectDisposedException
+                || ex is NullReferenceException
+                )
+            {
+                if (ex is SocketException)
+                    _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
+
+                return false;
+            }
+            return true;
+        }
+
+        private void HandleUserSideError(Exception ex)
+        {
+            _log.Error(string.Format("Session [{0}] error occurred in user side [{1}].", this, ex.Message), ex);
         }
     }
 }

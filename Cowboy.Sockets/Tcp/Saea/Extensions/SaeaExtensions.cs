@@ -49,34 +49,31 @@ namespace Cowboy.Sockets
             if (awaitable == null)
                 throw new ArgumentNullException("awaitable");
 
-            var a = awaitable.GetAwaiter();
+            var awaiter = awaitable.GetAwaiter();
 
-            lock (a.SyncRoot)
+            lock (awaiter.SyncRoot)
             {
-                if (!a.IsCompleted)
+                if (!awaiter.IsCompleted)
                     throw new InvalidOperationException(
                         "A socket operation is already in progress using the same await-able SAEA.");
 
-                a.Reset();
-                if (awaitable.ShouldCaptureContext)
-                    a.SyncContext = SynchronizationContext.Current;
+                awaiter.Reset();
             }
 
             try
             {
                 if (!operation.Invoke(socket, awaitable))
-                    a.Complete();
+                    awaiter.Complete();
             }
-            catch (SocketException x)
+            catch (SocketException ex)
             {
-                a.Complete();
-                awaitable.Saea.SocketError = x.SocketErrorCode != SocketError.Success
-                    ? x.SocketErrorCode
-                    : SocketError.SocketError;
+                awaiter.Complete();
+                awaitable.Saea.SocketError =
+                    ex.SocketErrorCode != SocketError.Success ? ex.SocketErrorCode : SocketError.SocketError;
             }
             catch (Exception)
             {
-                a.Complete();
+                awaiter.Complete();
                 awaitable.Saea.SocketError = SocketError.Success;
                 throw;
             }
