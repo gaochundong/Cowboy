@@ -42,6 +42,10 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>SolutionVersion.cs</Link>
     </Compile>
+    <Compile Include="Tcp\Client\SAEA\TcpSocketSaeaClient.cs" />
+    <Compile Include="Tcp\Client\SAEA\TcpSocketSaeaClientConfiguration.cs" />
+    <Compile Include="Tcp\Client\SAEA\ITcpSocketSaeaClientMessageDispatcher.cs" />
+    <Compile Include="Tcp\Client\SAEA\InternalTcpSocketSaeaClientMessageDispatcherImplementation.cs" />
     <Compile Include="Tcp\Server\SAEA\Awaitable\SaeaAwaiter.cs" />
     <Compile Include="Tcp\Server\SAEA\Awaitable\SaeaExtensions.cs" />
     <Compile Include="Tcp\Server\SAEA\ITcpSocketSaeaServerMessageDispatcher.cs" />

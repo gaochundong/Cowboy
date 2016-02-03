@@ -17,9 +17,6 @@ namespace Cowboy.Sockets.TestTcpSocketSaeaServer
             try
             {
                 var config = new TcpSocketSaeaServerConfiguration();
-                //config.UseSsl = true;
-                //config.SslServerCertificate = new System.Security.Cryptography.X509Certificates.X509Certificate2(@"D:\\Cowboy.pfx", "Cowboy");
-                //config.SslPolicyErrorsBypassed = false;
 
                 _server = new TcpSocketSaeaServer(22222, new SimpleMessageDispatcher(), config);
                 _server.Listen();

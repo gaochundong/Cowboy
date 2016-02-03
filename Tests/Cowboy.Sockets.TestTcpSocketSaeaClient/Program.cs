@@ -1,88 +1,58 @@
 ﻿using System;
 using System.Net;
 using System.Text;
+using System.Threading.Tasks;
+using Cowboy.Logging;
 using Cowboy.Logging.NLogIntegration;
 
 namespace Cowboy.Sockets.TestTcpSocketSaeaClient
 {
     class Program
     {
-        static TcpSocketClient _client;
+        static TcpSocketSaeaClient _client;
 
         static void Main(string[] args)
         {
             NLogLogger.Use();
 
-            ConnectToServer();
-
-            Console.WriteLine("TCP client has connected to server.");
-            Console.WriteLine("Type something to send to server...");
-            while (true)
+            try
             {
-                try
+                var config = new TcpSocketSaeaClientConfiguration();
+
+                IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 22222);
+                _client = new TcpSocketSaeaClient(remoteEP, new SimpleMessageDispatcher(), config);
+                _client.Connect().Wait();
+
+                Console.WriteLine("TCP client has connected to server [{0}].", remoteEP);
+                Console.WriteLine("Type something to send to server...");
+                while (true)
                 {
-                    string text = Console.ReadLine();
-                    if (text == "quit")
-                        break;
-                    else if (text == "many")
+                    try
                     {
-                        text = new string('x', 8192);
-                        for (int i = 0; i < 1000000; i++)
+                        string text = Console.ReadLine();
+                        if (text == "quit")
+                            break;
+                        Task.Run(async () =>
                         {
-                            _client.Send(Encoding.UTF8.GetBytes(text));
-                        }
+                            await _client.SendAsync(Encoding.UTF8.GetBytes(text));
+                            Console.WriteLine("Client [{0}] send text -> [{1}].", _client.LocalEndPoint, text);
+                        });
                     }
-                    else if (text == "big")
+                    catch (Exception ex)
                     {
-                        text = new string('x', 1024 * 1024 * 100);
-                        _client.Send(Encoding.UTF8.GetBytes(text));
+                        Console.WriteLine(ex.Message);
                     }
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                }
+
+                _client.Close().Wait();
+                Console.WriteLine("TCP client has disconnected from server [{0}].", remoteEP);
+            }
+            catch (Exception ex)
+            {
+                Logger.Get<Program>().Error(ex.Message, ex);
             }
 
-            _client.Close();
-            Console.WriteLine("TCP client has disconnected from server.");
-
             Console.ReadKey();
-        }
-
-        private static void ConnectToServer()
-        {
-            var config = new TcpSocketClientConfiguration();
-            //config.UseSsl = true;
-            //config.SslTargetHost = "Cowboy";
-            //config.SslClientCertificates.Add(new System.Security.Cryptography.X509Certificates.X509Certificate2(@"D:\\Cowboy.cer"));
-            //config.SslPolicyErrorsBypassed = false;
-            //config.SendTimeout = TimeSpan.FromSeconds(2);
-
-            IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 22222);
-
-            _client = new TcpSocketClient(remoteEP, config);
-            _client.ServerConnected += client_ServerConnected;
-            _client.ServerDisconnected += client_ServerDisconnected;
-            _client.ServerDataReceived += client_ServerDataReceived;
-            _client.Connect();
-        }
-
-        static void client_ServerConnected(object sender, TcpServerConnectedEventArgs e)
-        {
-            Console.WriteLine(string.Format("TCP server {0} has connected.", e.RemoteEndPoint));
-        }
-
-        static void client_ServerDisconnected(object sender, TcpServerDisconnectedEventArgs e)
-        {
-            Console.WriteLine(string.Format("TCP server {0} has disconnected.", e.RemoteEndPoint));
-        }
-
-        static void client_ServerDataReceived(object sender, TcpServerDataReceivedEventArgs e)
-        {
-            var text = Encoding.UTF8.GetString(e.Data, e.DataOffset, e.DataLength);
-            Console.Write(string.Format("Server : {0} --> ", e.Client.RemoteEndPoint));
-            Console.WriteLine(string.Format("{0}", text));
         }
     }
 }
