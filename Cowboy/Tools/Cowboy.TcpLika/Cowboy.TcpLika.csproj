@@ -58,6 +58,20 @@
     <Compile Include="Extensions\ThreadExtensions.cs" />
     <Compile Include="Extensions\TplExtensions.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Cowboy.Sockets\Cowboy.Sockets.csproj">
+      <Project>{39d916fe-2c09-47ab-a5a2-1a23787f20ba}</Project>
+      <Name>Cowboy.Sockets</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Cowboy.WebSockets\Cowboy.WebSockets.csproj">
+      <Project>{3a79448c-5d23-4325-8076-576e64ba65be}</Project>
+      <Name>Cowboy.WebSockets</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Cowboy.CommandLines\Cowboy.CommandLines.csproj">
+      <Project>{e7a41d23-4f6b-4be2-a311-0d3d25bfe6e7}</Project>
+      <Name>Cowboy.CommandLines</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

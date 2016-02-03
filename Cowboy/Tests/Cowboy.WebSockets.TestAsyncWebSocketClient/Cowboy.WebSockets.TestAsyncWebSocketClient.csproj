@@ -56,6 +56,10 @@
       <Project>{7ada144a-a176-437b-812e-889b6aa2536e}</Project>
       <Name>Cowboy.Logging</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\Cowboy.WebSockets\Cowboy.WebSockets.csproj">
+      <Project>{3a79448c-5d23-4325-8076-576e64ba65be}</Project>
+      <Name>Cowboy.WebSockets</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
