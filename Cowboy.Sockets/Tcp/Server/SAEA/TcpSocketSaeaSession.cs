@@ -116,7 +116,7 @@ namespace Cowboy.Sockets
             lock (_opsLock)
             {
                 _socket = socket;
-                ConfigureSocket(_socket);
+                ConfigureSocket();
 
                 _sessionKey = Guid.NewGuid().ToString();
                 this.StartTime = DateTime.UtcNow;
@@ -140,14 +140,14 @@ namespace Cowboy.Sockets
             }
         }
 
-        private void ConfigureSocket(Socket socket)
+        private void ConfigureSocket()
         {
-            socket.ReceiveBufferSize = _configuration.ReceiveBufferSize;
-            socket.SendBufferSize = _configuration.SendBufferSize;
-            socket.ReceiveTimeout = (int)_configuration.ReceiveTimeout.TotalMilliseconds;
-            socket.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
-            socket.NoDelay = _configuration.NoDelay;
-            socket.LingerState = _configuration.LingerState;
+            _socket.ReceiveBufferSize = _configuration.ReceiveBufferSize;
+            _socket.SendBufferSize = _configuration.SendBufferSize;
+            _socket.ReceiveTimeout = (int)_configuration.ReceiveTimeout.TotalMilliseconds;
+            _socket.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
+            _socket.NoDelay = _configuration.NoDelay;
+            _socket.LingerState = _configuration.LingerState;
         }
 
         #endregion
