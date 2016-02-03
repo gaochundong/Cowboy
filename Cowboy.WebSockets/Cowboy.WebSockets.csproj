@@ -34,7 +34,6 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
   </ItemGroup>
@@ -42,6 +41,10 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>SolutionVersion.cs</Link>
     </Compile>
+    <Compile Include="Buffer\BufferDeflector.cs" />
+    <Compile Include="Buffer\BufferValidator.cs" />
+    <Compile Include="Buffer\GrowingByteBufferManager.cs" />
+    <Compile Include="Buffer\IBufferManager.cs" />
     <Compile Include="Client\AsyncWebSocketClientConfiguration.cs" />
     <Compile Include="Client\AsyncWebSocketClient.cs" />
     <Compile Include="Extensions\IWebSocketExtensionNegotiator.cs" />
@@ -99,10 +102,6 @@
     <Compile Include="WebSocketState.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Cowboy.Buffer\Cowboy.Buffer.csproj">
-      <Project>{555192b1-c597-4279-bf19-00ca30c6df8d}</Project>
-      <Name>Cowboy.Buffer</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Cowboy.Logging\Cowboy.Logging.csproj">
       <Project>{7ada144a-a176-437b-812e-889b6aa2536e}</Project>
       <Name>Cowboy.Logging</Name>
