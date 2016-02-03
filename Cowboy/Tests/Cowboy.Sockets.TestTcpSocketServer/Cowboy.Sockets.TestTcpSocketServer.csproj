@@ -4,14 +4,15 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{37614B0F-9817-4952-92CA-0F5E53055792}</ProjectGuid>
+    <ProjectGuid>{B07B5EB4-1892-465E-BC17-150EDC281EB5}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Cowboy.Sockets.TestTcpSocketSaeaServer</RootNamespace>
-    <AssemblyName>Cowboy.Sockets.TestTcpSocketSaeaServer</AssemblyName>
+    <RootNamespace>Cowboy.Sockets.TestTcpSocketServer</RootNamespace>
+    <AssemblyName>Cowboy.Sockets.TestTcpSocketServer</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -42,7 +43,6 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SimpleMessageDispatcher.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -55,10 +55,6 @@
     <ProjectReference Include="..\..\Cowboy.Logging\Cowboy.Logging.csproj">
       <Project>{7ada144a-a176-437b-812e-889b6aa2536e}</Project>
       <Name>Cowboy.Logging</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Cowboy.Sockets\Cowboy.Sockets.csproj">
-      <Project>{39d916fe-2c09-47ab-a5a2-1a23787f20ba}</Project>
-      <Name>Cowboy.Sockets</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
