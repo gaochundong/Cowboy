@@ -11,30 +11,24 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Logging.NLogIntegrat
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D36E264D-BB94-4D14-A292-A852A3D6D5F7}"
 	ProjectSection(SolutionItems) = preProject
-		.gitattributes = .gitattributes
-		.gitignore = .gitignore
-		LICENSE = LICENSE
-		README.md = README.md
+		..\LICENSE = ..\LICENSE
+		..\MAKECERT.md = ..\MAKECERT.md
+		..\README.md = ..\README.md
 		SolutionVersion.cs = SolutionVersion.cs
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{D27BF014-D1A0-41BC-8DEB-35B14D774DF3}"
-	ProjectSection(SolutionItems) = preProject
-		.nuget\NuGet.Config = .nuget\NuGet.Config
-		.nuget\NuGet.exe = .nuget\NuGet.exe
-		.nuget\NuGet.md = .nuget\NuGet.md
-		.nuget\NuGet.targets = .nuget\NuGet.targets
+		..\TCPLIKA.md = ..\TCPLIKA.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{FBDC6AFC-D9E3-43AE-B68F-54A3586A20DD}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Logging", "Logging", "{3E483F7D-8F0A-42B7-A883-58A37C1AF1B6}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{E6476984-7A43-40E1-ABF9-F67A9D81F46C}"
-	ProjectSection(SolutionItems) = preProject
-		Docs\MAKECERT.md = Docs\MAKECERT.md
-		Docs\TCPLIKA.md = Docs\TCPLIKA.md
-	EndProjectSection
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Sockets", "Cowboy.Sockets\Cowboy.Sockets.csproj", "{39D916FE-2C09-47AB-A5A2-1A23787F20BA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.WebSockets", "Cowboy.WebSockets\Cowboy.WebSockets.csproj", "{3A79448C-5D23-4325-8076-576E64BA65BE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.CommandLines", "Tools\Cowboy.CommandLines\Cowboy.CommandLines.csproj", "{E7A41D23-4F6B-4BE2-A311-0D3D25BFE6E7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.TcpLika", "Tools\Cowboy.TcpLika\Cowboy.TcpLika.csproj", "{0ED6CD14-9182-486B-8AF3-1D9770449046}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -50,6 +44,22 @@ Global
 		{BE0E384E-A89C-4CC1-AE7C-E390AC8349F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BE0E384E-A89C-4CC1-AE7C-E390AC8349F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BE0E384E-A89C-4CC1-AE7C-E390AC8349F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{39D916FE-2C09-47AB-A5A2-1A23787F20BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{39D916FE-2C09-47AB-A5A2-1A23787F20BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{39D916FE-2C09-47AB-A5A2-1A23787F20BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{39D916FE-2C09-47AB-A5A2-1A23787F20BA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3A79448C-5D23-4325-8076-576E64BA65BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A79448C-5D23-4325-8076-576E64BA65BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A79448C-5D23-4325-8076-576E64BA65BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A79448C-5D23-4325-8076-576E64BA65BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E7A41D23-4F6B-4BE2-A311-0D3D25BFE6E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E7A41D23-4F6B-4BE2-A311-0D3D25BFE6E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E7A41D23-4F6B-4BE2-A311-0D3D25BFE6E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E7A41D23-4F6B-4BE2-A311-0D3D25BFE6E7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0ED6CD14-9182-486B-8AF3-1D9770449046}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0ED6CD14-9182-486B-8AF3-1D9770449046}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0ED6CD14-9182-486B-8AF3-1D9770449046}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0ED6CD14-9182-486B-8AF3-1D9770449046}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -57,5 +67,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{7ADA144A-A176-437B-812E-889B6AA2536E} = {3E483F7D-8F0A-42B7-A883-58A37C1AF1B6}
 		{BE0E384E-A89C-4CC1-AE7C-E390AC8349F3} = {3E483F7D-8F0A-42B7-A883-58A37C1AF1B6}
+		{E7A41D23-4F6B-4BE2-A311-0D3D25BFE6E7} = {FBDC6AFC-D9E3-43AE-B68F-54A3586A20DD}
+		{0ED6CD14-9182-486B-8AF3-1D9770449046} = {FBDC6AFC-D9E3-43AE-B68F-54A3586A20DD}
 	EndGlobalSection
 EndGlobal
