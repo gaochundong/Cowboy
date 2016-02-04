@@ -22,6 +22,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <RunCodeAnalysis>true</RunCodeAnalysis>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -45,10 +46,28 @@
     <Compile Include="Buffer\BufferValidator.cs" />
     <Compile Include="Buffer\GrowingByteBufferManager.cs" />
     <Compile Include="Buffer\IBufferManager.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Tcp\Client\SAEA\TcpSocketSaeaClient.cs" />
     <Compile Include="Tcp\Client\SAEA\TcpSocketSaeaClientConfiguration.cs" />
     <Compile Include="Tcp\Client\SAEA\ITcpSocketSaeaClientMessageDispatcher.cs" />
     <Compile Include="Tcp\Client\SAEA\InternalTcpSocketSaeaClientMessageDispatcherImplementation.cs" />
+    <Compile Include="Tcp\Server\RIO\InternalTcpSocketRioServerMessageDispatcherImplementation.cs" />
+    <Compile Include="Tcp\Server\RIO\ITcpSocketRioServerMessageDispatcher.cs" />
+    <Compile Include="Tcp\Server\RIO\RioSharp\Kernel32.cs" />
+    <Compile Include="Tcp\Server\RIO\RioSharp\RioBufferSegment.cs" />
+    <Compile Include="Tcp\Server\RIO\RioSharp\RioConnectionOrientedSocket.cs" />
+    <Compile Include="Tcp\Server\RIO\RioSharp\RioConnectionOrientedSocketPool.cs" />
+    <Compile Include="Tcp\Server\RIO\RioSharp\RioFixedBufferPool.cs" />
+    <Compile Include="Tcp\Server\RIO\RioSharp\RioSocketBase.cs" />
+    <Compile Include="Tcp\Server\RIO\RioSharp\RioSocketPool.cs" />
+    <Compile Include="Tcp\Server\RIO\RioSharp\RioStream.cs" />
+    <Compile Include="Tcp\Server\RIO\RioSharp\RioTcpClientPool.cs" />
+    <Compile Include="Tcp\Server\RIO\RioSharp\RioTcpListener.cs" />
+    <Compile Include="Tcp\Server\RIO\RioSharp\SegmentAwaiter.cs" />
+    <Compile Include="Tcp\Server\RIO\RioSharp\WinSock.cs" />
+    <Compile Include="Tcp\Server\RIO\TcpSocketRioServer.cs" />
+    <Compile Include="Tcp\Server\RIO\TcpSocketRioServerConfiguration.cs" />
+    <Compile Include="Tcp\Server\RIO\TcpSocketRioSession.cs" />
     <Compile Include="Tcp\Server\SAEA\Awaitable\SaeaAwaiter.cs" />
     <Compile Include="Tcp\Server\SAEA\Awaitable\SaeaExtensions.cs" />
     <Compile Include="Tcp\Server\SAEA\ITcpSocketSaeaServerMessageDispatcher.cs" />
