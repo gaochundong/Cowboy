@@ -1,30 +1,12 @@
-﻿// The MIT License (MIT)
-// 
-// Copyright (c) 2015 Allan Lindqvist
-// 
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-// 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Cowboy.Sockets.Experimental
 {
@@ -64,6 +46,7 @@ namespace Cowboy.Sockets.Experimental
         internal WinSock.RIOResizeRequestQueue ResizeRequestQueue;
         internal const long CachedValue = long.MinValue;
     }
+
 
     internal static class RioStatic
     {
@@ -235,6 +218,7 @@ namespace Cowboy.Sockets.Experimental
         internal IntPtr RIOResizeRequestQueue;
     }
 
+
     [StructLayout(LayoutKind.Sequential)]
     internal struct WSAData
     {
@@ -288,6 +272,7 @@ namespace Cowboy.Sockets.Experimental
         internal int Length;
     }
 
+
     [StructLayout(LayoutKind.Sequential)]
     internal struct RIO_NOTIFICATION_COMPLETION
     {
@@ -310,42 +295,43 @@ namespace Cowboy.Sockets.Experimental
         public NativeOverlapped* Overlapped;
     }
 
+
     public enum ADDRESS_FAMILIES : short
     {
-        AF_UNSPEC = 0,             // unspecified
+        AF_UNSPEC = 0,               // unspecified
         AF_UNIX = 1,               // local to host (pipes, portals)
         AF_INET = 2,               // internetwork: UDP, TCP, etc.
-        AF_IMPLINK = 3,            // arpanet imp addresses
-        AF_PUP = 4,                // pup protocols: e.g. BSP
-        AF_CHAOS = 5,              // mit CHAOS protocols
-        AF_NS = 6,                 // XEROX NS protocols
-        AF_IPX = AF_NS,            // IPX protocols: IPX, SPX, etc.
-        AF_ISO = 7,                // ISO protocols
-        AF_OSI = AF_ISO,           // OSI is ISO
+        AF_IMPLINK = 3,               // arpanet imp addresses
+        AF_PUP = 4,               // pup protocols: e.g. BSP
+        AF_CHAOS = 5,               // mit CHAOS protocols
+        AF_NS = 6,               // XEROX NS protocols
+        AF_IPX = AF_NS,           // IPX protocols: IPX, SPX, etc.
+        AF_ISO = 7,               // ISO protocols
+        AF_OSI = AF_ISO,          // OSI is ISO
         AF_ECMA = 8,               // european computer manufacturers
-        AF_DATAKIT = 9,            // datakit protocols
-        AF_CCITT = 10,             // CCITT protocols, X.25 etc
-        AF_SNA = 11,               // IBM SNA
-        AF_DECnet = 12,            // DECnet
-        AF_DLI = 13,               // Direct data link interface
-        AF_LAT = 14,               // LAT
-        AF_HYLINK = 15,            // NSC Hyperchannel
-        AF_APPLETALK = 16,         // AppleTalk
-        AF_NETBIOS = 17,           // NetBios-style addresses
-        AF_VOICEVIEW = 18,         // VoiceView
-        AF_FIREFOX = 19,           // Protocols from Firefox
-        AF_UNKNOWN1 = 20,          // Somebody is using this!
-        AF_BAN = 21,               // Banyan
-        AF_ATM = 22,               // Native ATM Services
-        AF_INET6 = 23,             // Internetwork Version 6
-        AF_CLUSTER = 24,           // Microsoft Wolfpack
-        AF_12844 = 25,             // IEEE 1284.4 WG AF
+        AF_DATAKIT = 9,               // datakit protocols
+        AF_CCITT = 10,              // CCITT protocols, X.25 etc
+        AF_SNA = 11,              // IBM SNA
+        AF_DECnet = 12,              // DECnet
+        AF_DLI = 13,              // Direct data link interface
+        AF_LAT = 14,              // LAT
+        AF_HYLINK = 15,              // NSC Hyperchannel
+        AF_APPLETALK = 16,              // AppleTalk
+        AF_NETBIOS = 17,              // NetBios-style addresses
+        AF_VOICEVIEW = 18,              // VoiceView
+        AF_FIREFOX = 19,              // Protocols from Firefox
+        AF_UNKNOWN1 = 20,              // Somebody is using this!
+        AF_BAN = 21,              // Banyan
+        AF_ATM = 22,              // Native ATM Services
+        AF_INET6 = 23,              // Internetwork Version 6
+        AF_CLUSTER = 24,              // Microsoft Wolfpack
+        AF_12844 = 25,              // IEEE 1284.4 WG AF
         AF_IRDA = 26,              // IrDA
-        AF_NETDES = 28,            // Network Designers OSI & gateway              
+        AF_NETDES = 28,              // Network Designers OSI & gateway              
         AF_TCNPROCESS = 29,
         AF_TCNMESSAGE = 30,
         AF_ICLFXBM = 31,
-        AF_BTH = 32,               // Bluetooth RFCOMM/L2CAP protocols
+        AF_BTH = 32,              // Bluetooth RFCOMM/L2CAP protocols
         AF_LINK = 33,
         AF_HYPERV = 34,
         AF_MAX = 35,
@@ -586,7 +572,9 @@ namespace Cowboy.Sockets.Experimental
                                       // outbound connections
         SO_REUSE_MULTICASTPORT = 0x3008, // enable port reuse and disable unicast 
                                          //reception.
+
     }
+
 
     internal class WinSock
     {

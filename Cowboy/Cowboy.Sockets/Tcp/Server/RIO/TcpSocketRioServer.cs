@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -26,9 +27,9 @@ namespace Cowboy.Sockets.Experimental
         private const int _listening = 1;
         private const int _disposed = 5;
 
-        private static RioFixedBufferPool _sendPool;
-        private static RioFixedBufferPool _receivePool;
-        private static RioTcpListener _listener;
+        private RioFixedBufferPool _sendPool;
+        private RioFixedBufferPool _receivePool;
+        private RioTcpListener _listener;
 
         #endregion
 
@@ -103,7 +104,7 @@ namespace Cowboy.Sockets.Experimental
             _sendPool = new RioFixedBufferPool(10 * connections, 140 * pipeLineDeph);
             _receivePool = new RioFixedBufferPool(10 * connections, 128 * pipeLineDeph);
 
-            _listener = new RioTcpListener(_sendPool, _receivePool, (uint)connections);
+            _listener = new RioTcpListener(_sendPool, _receivePool, 1024);
 
             _listener.OnAccepted = (acceptedSocket) =>
             {
@@ -170,6 +171,11 @@ namespace Cowboy.Sockets.Experimental
                     catch (Exception ex) when (!ShouldThrow(ex)) { }
                 })
                 .Wait();
+
+                _sendPool.Dispose();
+                _receivePool.Dispose();
+                _sendPool = null;
+                _receivePool = null;
             }
             catch (Exception ex) when (!ShouldThrow(ex)) { }
         }
@@ -271,6 +277,8 @@ namespace Cowboy.Sockets.Experimental
             GC.SuppressFinalize(this);
         }
 
+        [SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "_sendPool")]
+        [SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "_receivePool")]
         protected virtual void Dispose(bool disposing)
         {
             if (disposing)
