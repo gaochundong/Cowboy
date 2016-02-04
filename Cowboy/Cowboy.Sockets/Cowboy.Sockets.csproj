@@ -55,6 +55,8 @@
     <Compile Include="Tcp\Server\RIO\ITcpSocketRioServerMessageDispatcher.cs" />
     <Compile Include="Tcp\Server\RIO\RioSharp\Kernel32.cs" />
     <Compile Include="Tcp\Server\RIO\RioSharp\RioBufferSegment.cs" />
+    <Compile Include="Tcp\Server\RIO\RioSharp\RioConnectionlessSocket.cs" />
+    <Compile Include="Tcp\Server\RIO\RioSharp\RioConnectionlessSocketPool.cs" />
     <Compile Include="Tcp\Server\RIO\RioSharp\RioConnectionOrientedSocket.cs" />
     <Compile Include="Tcp\Server\RIO\RioSharp\RioConnectionOrientedSocketPool.cs" />
     <Compile Include="Tcp\Server\RIO\RioSharp\RioFixedBufferPool.cs" />
