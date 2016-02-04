@@ -103,7 +103,7 @@ namespace Cowboy.Sockets.Experimental
             _sendPool = new RioFixedBufferPool(10 * connections, 140 * pipeLineDeph);
             _receivePool = new RioFixedBufferPool(10 * connections, 128 * pipeLineDeph);
 
-            _listener = new RioTcpListener(_sendPool, _receivePool, 1024);
+            _listener = new RioTcpListener(_sendPool, _receivePool, (uint)connections);
 
             _listener.OnAccepted = (acceptedSocket) =>
             {
