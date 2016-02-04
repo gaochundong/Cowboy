@@ -1,4 +1,26 @@
-﻿using System;
+﻿// The MIT License (MIT)
+// 
+// Copyright (c) 2015 Allan Lindqvist
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -637,7 +659,7 @@ namespace Cowboy.Sockets.Experimental
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
         internal unsafe delegate bool AcceptEx([In] IntPtr sListenSocket, [In] IntPtr sAcceptSocket, [In] IntPtr lpOutputBuffer, [In] int dwReceiveDataLength, [In] int dwLocalAddressLength, [In] int dwRemoteAddressLength, [Out] out int lpdwBytesReceived, [In]RioNativeOverlapped* lpOverlapped);
-        
+
         internal unsafe static RIO Initalize(IntPtr socket)
         {
             uint dwBytes = 0;
@@ -763,7 +785,7 @@ namespace Cowboy.Sockets.Experimental
 
         [DllImport(WS2_32)]
         internal static extern Int32 WSAGetLastError();
-        
+
         internal static int ThrowLastWSAError()
         {
             var error = WinSock.WSAGetLastError();
@@ -773,7 +795,7 @@ namespace Cowboy.Sockets.Experimental
             else
                 return error;
         }
-        
+
         [DllImport(WS2_32, SetLastError = true)]
         internal static extern Int32 WSACleanup();
 
