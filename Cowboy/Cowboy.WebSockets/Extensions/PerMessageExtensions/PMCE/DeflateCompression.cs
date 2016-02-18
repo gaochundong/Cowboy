@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.IO.Compression;
 
 namespace Cowboy.WebSockets.Extensions
@@ -10,12 +11,16 @@ namespace Cowboy.WebSockets.Extensions
             return Compress(raw, 0, raw.Length);
         }
 
+        [SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times")]
         public static byte[] Compress(byte[] raw, int offset, int count)
         {
-            var memory = new MemoryStream();
-            using (var deflate = new DeflateStream(memory, CompressionMode.Compress, true))
+            using (var memory = new MemoryStream())
             {
-                deflate.Write(raw, offset, count);
+                using (var deflate = new DeflateStream(memory, CompressionMode.Compress, leaveOpen: true))
+                {
+                    deflate.Write(raw, offset, count);
+                }
+
                 return memory.ToArray();
             }
         }
@@ -25,11 +30,13 @@ namespace Cowboy.WebSockets.Extensions
             return Decompress(raw, 0, raw.Length);
         }
 
+        [SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times")]
         public static byte[] Decompress(byte[] raw, int offset, int count)
         {
             byte[] buffer = new byte[1024];
-            var input = new MemoryStream(raw, offset, count);
-            using (var deflate = new DeflateStream(input, CompressionMode.Decompress))
+
+            using (var input = new MemoryStream(raw, offset, count))
+            using (var deflate = new DeflateStream(input, CompressionMode.Decompress, leaveOpen: true))
             using (var memory = new MemoryStream())
             {
                 int readCount = 0;
