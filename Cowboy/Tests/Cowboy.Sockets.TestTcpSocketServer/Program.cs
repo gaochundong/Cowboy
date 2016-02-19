@@ -22,7 +22,9 @@ namespace Cowboy.Sockets.TestTcpSocketServer
                 {
                     string text = Console.ReadLine();
                     if (text == "quit")
+                    {
                         break;
+                    }
                     else if (text == "many")
                     {
                         text = new string('x', 8192);
@@ -34,6 +36,10 @@ namespace Cowboy.Sockets.TestTcpSocketServer
                     else if (text == "big")
                     {
                         text = new string('x', 1024 * 1024 * 100);
+                        _server.Broadcast(Encoding.UTF8.GetBytes(text));
+                    }
+                    else
+                    {
                         _server.Broadcast(Encoding.UTF8.GetBytes(text));
                     }
                 }

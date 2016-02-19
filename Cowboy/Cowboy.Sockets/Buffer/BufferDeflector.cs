@@ -49,5 +49,29 @@ namespace Cowboy.Buffer
                 bufferManager.ReturnBuffer(copyBuffer);
             }
         }
+
+        public static void ReplaceBuffer(IBufferManager bufferManager, ref byte[] receiveBuffer, ref int receiveBufferOffset, int receiveCount)
+        {
+            if ((receiveBufferOffset + receiveCount) < receiveBuffer.Length)
+            {
+                receiveBufferOffset = receiveBufferOffset + receiveCount;
+            }
+            else
+            {
+                byte[] autoExpandedBuffer = bufferManager.BorrowBuffer();
+                if (autoExpandedBuffer.Length < (receiveBufferOffset + receiveCount) * 2)
+                {
+                    bufferManager.ReturnBuffer(autoExpandedBuffer);
+                    autoExpandedBuffer = new byte[(receiveBufferOffset + receiveCount) * 2];
+                }
+
+                Array.Copy(receiveBuffer, 0, autoExpandedBuffer, 0, receiveBufferOffset + receiveCount);
+                receiveBufferOffset = receiveBufferOffset + receiveCount;
+
+                var discardBuffer = receiveBuffer;
+                receiveBuffer = autoExpandedBuffer;
+                bufferManager.ReturnBuffer(discardBuffer);
+            }
+        }
     }
 }
