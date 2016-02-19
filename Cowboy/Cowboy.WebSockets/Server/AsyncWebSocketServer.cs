@@ -58,7 +58,7 @@ namespace Cowboy.WebSockets
 
         private void Initialize()
         {
-            _bufferManager = new GrowingByteBufferManager(_configuration.InitialBufferAllocationCount, _configuration.ReceiveBufferSize);
+            _bufferManager = new GrowingByteBufferManager(_configuration.InitialPooledBufferCount, _configuration.ReceiveBufferSize);
             _routeResolver = new AsyncWebSocketRouteResolver(_catalog);
         }
 

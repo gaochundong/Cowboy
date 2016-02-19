@@ -63,7 +63,7 @@ namespace Cowboy.Sockets
 
         private void Initialize()
         {
-            _bufferManager = new GrowingByteBufferManager(_configuration.InitialBufferAllocationCount, _configuration.ReceiveBufferSize);
+            _bufferManager = new GrowingByteBufferManager(_configuration.InitialPooledBufferCount, _configuration.ReceiveBufferSize);
         }
 
         #endregion

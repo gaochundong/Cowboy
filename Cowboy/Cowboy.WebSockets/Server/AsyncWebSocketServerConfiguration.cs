@@ -13,7 +13,7 @@ namespace Cowboy.WebSockets
     {
         public AsyncWebSocketServerConfiguration()
         {
-            InitialBufferAllocationCount = 100;
+            InitialPooledBufferCount = 100;
             ReceiveBufferSize = 8192;
             SendBufferSize = 8192;
             ReceiveTimeout = TimeSpan.Zero;
@@ -45,7 +45,7 @@ namespace Cowboy.WebSockets
             EnabledSubProtocols = new Dictionary<string, IWebSocketSubProtocolNegotiator>();
         }
 
-        public int InitialBufferAllocationCount { get; set; }
+        public int InitialPooledBufferCount { get; set; }
         public int ReceiveBufferSize { get; set; }
         public int SendBufferSize { get; set; }
         public TimeSpan ReceiveTimeout { get; set; }

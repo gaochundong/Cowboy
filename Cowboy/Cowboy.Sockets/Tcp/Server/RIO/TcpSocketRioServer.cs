@@ -96,7 +96,7 @@ namespace Cowboy.Sockets.Experimental
 
         private void Initialize()
         {
-            _bufferManager = new GrowingByteBufferManager(_configuration.InitialBufferAllocationCount, _configuration.ReceiveBufferSize);
+            _bufferManager = new GrowingByteBufferManager(_configuration.InitialPooledBufferCount, _configuration.ReceiveBufferSize);
 
             int pipeLineDeph = 16;
             int connections = 1024;
