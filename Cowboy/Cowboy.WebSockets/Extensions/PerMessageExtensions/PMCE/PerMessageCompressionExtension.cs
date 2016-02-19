@@ -13,10 +13,12 @@ namespace Cowboy.WebSockets.Extensions
         // server indicates that it wishes to use the extension.
         public static readonly string RegisteredToken = @"permessage-deflate";
 
+        private readonly DeflateCompression _deflater;
         private SortedList<int, AgreedExtensionParameter> _agreedParameters;
 
         public PerMessageCompressionExtension()
         {
+            _deflater = new DeflateCompression();
         }
 
         public PerMessageCompressionExtension(SortedList<int, AgreedExtensionParameter> agreedParameters)
@@ -79,12 +81,12 @@ namespace Cowboy.WebSockets.Extensions
 
         public byte[] ProcessIncomingMessagePayload(byte[] payload, int offset, int count)
         {
-            return DeflateCompression.Decompress(payload, offset, count);
+            return _deflater.Decompress(payload, offset, count);
         }
 
         public byte[] ProcessOutgoingMessagePayload(byte[] payload, int offset, int count)
         {
-            return DeflateCompression.Compress(payload, offset, count);
+            return _deflater.Compress(payload, offset, count);
         }
     }
 }

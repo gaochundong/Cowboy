@@ -1,18 +1,31 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.IO.Compression;
+using Cowboy.Buffer;
 
 namespace Cowboy.WebSockets.Extensions
 {
-    public static class DeflateCompression
+    public class DeflateCompression
     {
-        public static byte[] Compress(byte[] raw)
+        private readonly IBufferManager _bufferAllocator;
+
+        public DeflateCompression()
+            : this(16, 1024)
+        {
+        }
+
+        public DeflateCompression(int initialPooledBufferCount, int bufferSize)
+        {
+            _bufferAllocator = new GrowingByteBufferManager(initialPooledBufferCount, bufferSize);
+        }
+
+        public byte[] Compress(byte[] raw)
         {
             return Compress(raw, 0, raw.Length);
         }
 
         [SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times")]
-        public static byte[] Compress(byte[] raw, int offset, int count)
+        public byte[] Compress(byte[] raw, int offset, int count)
         {
             using (var memory = new MemoryStream())
             {
@@ -25,32 +38,39 @@ namespace Cowboy.WebSockets.Extensions
             }
         }
 
-        public static byte[] Decompress(byte[] raw)
+        public byte[] Decompress(byte[] raw)
         {
             return Decompress(raw, 0, raw.Length);
         }
 
         [SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times")]
-        public static byte[] Decompress(byte[] raw, int offset, int count)
+        public byte[] Decompress(byte[] raw, int offset, int count)
         {
-            byte[] buffer = new byte[1024];
+            var buffer = _bufferAllocator.BorrowBuffer();
 
-            using (var input = new MemoryStream(raw, offset, count))
-            using (var deflate = new DeflateStream(input, CompressionMode.Decompress, leaveOpen: true))
-            using (var memory = new MemoryStream())
+            try
             {
-                int readCount = 0;
-                do
+                using (var input = new MemoryStream(raw, offset, count))
+                using (var deflate = new DeflateStream(input, CompressionMode.Decompress, leaveOpen: true))
+                using (var memory = new MemoryStream())
                 {
-                    readCount = deflate.Read(buffer, 0, buffer.Length);
-                    if (readCount > 0)
+                    int readCount = 0;
+                    do
                     {
-                        memory.Write(buffer, 0, readCount);
+                        readCount = deflate.Read(buffer, 0, buffer.Length);
+                        if (readCount > 0)
+                        {
+                            memory.Write(buffer, 0, readCount);
+                        }
                     }
-                }
-                while (readCount > 0);
+                    while (readCount > 0);
 
-                return memory.ToArray();
+                    return memory.ToArray();
+                }
+            }
+            finally
+            {
+                _bufferAllocator.ReturnBuffer(buffer);
             }
         }
     }
