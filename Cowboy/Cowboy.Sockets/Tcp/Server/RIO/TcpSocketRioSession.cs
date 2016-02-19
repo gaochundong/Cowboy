@@ -22,10 +22,8 @@ namespace Cowboy.Sockets.Experimental
         private RioConnectionOrientedSocket _socket;
         private Stream _stream;
         private string _sessionKey;
-
         private byte[] _receiveBuffer;
-        private byte[] _sessionBuffer;
-        private int _sessionBufferCount = 0;
+        private int _receiveBufferOffset = 0;
 
         private int _state;
         private const int _none = 0;
@@ -65,8 +63,7 @@ namespace Cowboy.Sockets.Experimental
             this.StartTime = DateTime.UtcNow;
 
             _receiveBuffer = _bufferManager.BorrowBuffer();
-            _sessionBuffer = _bufferManager.BorrowBuffer();
-            _sessionBufferCount = 0;
+            _receiveBufferOffset = 0;
 
             _stream = new RioStream(_socket);
         }
@@ -124,8 +121,7 @@ namespace Cowboy.Sockets.Experimental
             try
             {
                 _receiveBuffer = _bufferManager.BorrowBuffer();
-                _sessionBuffer = _bufferManager.BorrowBuffer();
-                _sessionBufferCount = 0;
+                _receiveBufferOffset = 0;
 
                 if (Interlocked.CompareExchange(ref _state, _connected, _connecting) != _connecting)
                 {
@@ -179,11 +175,11 @@ namespace Cowboy.Sockets.Experimental
                     if (receiveCount == 0)
                         break;
 
-                    BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
+                    BufferDeflector.ReplaceBuffer(_bufferManager, ref _receiveBuffer, ref _receiveBufferOffset, receiveCount);
 
                     while (true)
                     {
-                        if (_configuration.FrameBuilder.TryDecodeFrame(_sessionBuffer, _sessionBufferCount,
+                        if (_configuration.FrameBuilder.TryDecodeFrame(_receiveBuffer, _receiveBufferOffset,
                             out frameLength, out payload, out payloadOffset, out payloadCount))
                         {
                             try
@@ -196,10 +192,7 @@ namespace Cowboy.Sockets.Experimental
                             }
                             finally
                             {
-                                BufferDeflector.ShiftBuffer(_bufferManager, frameLength, ref _sessionBuffer, ref _sessionBufferCount);
-#if DEBUG
-                                _log.DebugFormat("Session [{0}] buffer length [{1}].", this, _sessionBufferCount);
-#endif
+                                BufferDeflector.ShiftBuffer(_bufferManager, frameLength, ref _receiveBuffer, ref _receiveBufferOffset);
                             }
                         }
                         else
@@ -275,8 +268,7 @@ namespace Cowboy.Sockets.Experimental
 
             if (_receiveBuffer != null)
                 _bufferManager.ReturnBuffer(_receiveBuffer);
-            if (_sessionBuffer != null)
-                _bufferManager.ReturnBuffer(_sessionBuffer);
+            _receiveBufferOffset = 0;
 
             _log.DebugFormat("Session closed on [{0}] in dispatcher [{1}] with session count [{2}].",
                 DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"),

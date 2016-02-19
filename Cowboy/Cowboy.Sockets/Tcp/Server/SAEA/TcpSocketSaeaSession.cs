@@ -25,8 +25,7 @@ namespace Cowboy.Sockets
         private IPEndPoint _remoteEndPoint;
         private IPEndPoint _localEndPoint;
         private byte[] _receiveBuffer;
-        private byte[] _sessionBuffer;
-        private int _sessionBufferCount = 0;
+        private int _receiveBufferOffset = 0;
 
         private int _state;
         private const int _none = 0;
@@ -63,8 +62,7 @@ namespace Cowboy.Sockets
             _server = server;
 
             _receiveBuffer = _bufferManager.BorrowBuffer();
-            _sessionBuffer = _bufferManager.BorrowBuffer();
-            _sessionBufferCount = 0;
+            _receiveBufferOffset = 0;
         }
 
         #endregion
@@ -136,7 +134,7 @@ namespace Cowboy.Sockets
                 _remoteEndPoint = null;
                 _localEndPoint = null;
                 _state = _none;
-                _sessionBufferCount = 0;
+                _receiveBufferOffset = 0;
             }
         }
 
@@ -230,11 +228,11 @@ namespace Cowboy.Sockets
                     if (receiveCount == 0)
                         break;
 
-                    BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
+                    BufferDeflector.ReplaceBuffer(_bufferManager, ref _receiveBuffer, ref _receiveBufferOffset, receiveCount);
 
                     while (true)
                     {
-                        if (_configuration.FrameBuilder.TryDecodeFrame(_sessionBuffer, _sessionBufferCount,
+                        if (_configuration.FrameBuilder.TryDecodeFrame(_receiveBuffer, _receiveBufferOffset,
                             out frameLength, out payload, out payloadOffset, out payloadCount))
                         {
                             try
@@ -247,10 +245,7 @@ namespace Cowboy.Sockets
                             }
                             finally
                             {
-                                BufferDeflector.ShiftBuffer(_bufferManager, frameLength, ref _sessionBuffer, ref _sessionBufferCount);
-#if DEBUG
-                                _log.DebugFormat("Session [{0}] buffer length [{1}].", this, _sessionBufferCount);
-#endif
+                                BufferDeflector.ShiftBuffer(_bufferManager, frameLength, ref _receiveBuffer, ref _receiveBufferOffset);
                             }
                         }
                         else

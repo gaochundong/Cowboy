@@ -22,8 +22,7 @@ namespace Cowboy.Sockets
         private readonly string _sessionKey;
         private Stream _stream;
         private byte[] _receiveBuffer;
-        private byte[] _sessionBuffer;
-        private int _sessionBufferCount = 0;
+        private int _receiveBufferOffset = 0;
         private IPEndPoint _remoteEndPoint;
         private IPEndPoint _localEndPoint;
         private bool _closed = false;
@@ -96,8 +95,7 @@ namespace Cowboy.Sockets
                         _stream = NegotiateStream(_tcpClient.GetStream());
 
                         _receiveBuffer = _bufferManager.BorrowBuffer();
-                        _sessionBuffer = _bufferManager.BorrowBuffer();
-                        _sessionBufferCount = 0;
+                        _receiveBufferOffset = 0;
 
                         bool isErrorOccurredInUserSide = false;
                         try
@@ -156,7 +154,7 @@ namespace Cowboy.Sockets
                     finally
                     {
                         _bufferManager.ReturnBuffer(_receiveBuffer);
-                        _bufferManager.ReturnBuffer(_sessionBuffer);
+                        _receiveBufferOffset = 0;
                     }
 
                     try
@@ -272,7 +270,7 @@ namespace Cowboy.Sockets
         {
             try
             {
-                _stream.BeginRead(_receiveBuffer, 0, _receiveBuffer.Length, HandleDataReceived, _stream);
+                _stream.BeginRead(_receiveBuffer, _receiveBufferOffset, _receiveBuffer.Length - _receiveBufferOffset, HandleDataReceived, _stream);
             }
             catch (Exception ex)
             {
@@ -345,11 +343,11 @@ namespace Cowboy.Sockets
             int payloadOffset;
             int payloadCount;
 
-            BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
+            BufferDeflector.ReplaceBuffer(_bufferManager, ref _receiveBuffer, ref _receiveBufferOffset, receiveCount);
 
             while (true)
             {
-                if (_configuration.FrameBuilder.TryDecodeFrame(_sessionBuffer, _sessionBufferCount,
+                if (_configuration.FrameBuilder.TryDecodeFrame(_receiveBuffer, _receiveBufferOffset,
                     out frameLength, out payload, out payloadOffset, out payloadCount))
                 {
                     try
@@ -362,10 +360,7 @@ namespace Cowboy.Sockets
                     }
                     finally
                     {
-                        BufferDeflector.ShiftBuffer(_bufferManager, frameLength, ref _sessionBuffer, ref _sessionBufferCount);
-#if DEBUG
-                        _log.DebugFormat("Session [{0}] buffer length [{1}].", this, _sessionBufferCount);
-#endif
+                        BufferDeflector.ShiftBuffer(_bufferManager, frameLength, ref _receiveBuffer, ref _receiveBufferOffset);
                     }
                 }
                 else

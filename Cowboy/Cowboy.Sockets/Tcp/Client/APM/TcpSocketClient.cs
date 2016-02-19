@@ -376,9 +376,6 @@ namespace Cowboy.Sockets
                     finally
                     {
                         BufferDeflector.ShiftBuffer(_bufferManager, frameLength, ref _receiveBuffer, ref _receiveBufferOffset);
-#if DEBUG
-                        _log.DebugFormat("Session [{0}] buffer length [{1}].", this, _receiveBufferOffset);
-#endif
                     }
                 }
                 else
