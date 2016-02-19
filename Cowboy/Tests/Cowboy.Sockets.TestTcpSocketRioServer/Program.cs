@@ -33,8 +33,26 @@ namespace Cowboy.Sockets.TestTcpSocketRioServer
                             break;
                         Task.Run(async () =>
                         {
-                            await _server.BroadcastAsync(Encoding.UTF8.GetBytes(text));
-                            Console.WriteLine("Server [{0}] broadcasts text -> [{1}].", _server.ListenedEndPoint, text);
+                            if (text == "many")
+                            {
+                                text = new string('x', 8192);
+                                for (int i = 0; i < 1000000; i++)
+                                {
+                                    await _server.BroadcastAsync(Encoding.UTF8.GetBytes(text));
+                                    Console.WriteLine("Server [{0}] broadcasts text -> [{1}].", _server.ListenedEndPoint, text);
+                                }
+                            }
+                            else if (text == "big")
+                            {
+                                text = new string('x', 1024 * 1024 * 100);
+                                await _server.BroadcastAsync(Encoding.UTF8.GetBytes(text));
+                                Console.WriteLine("Server [{0}] broadcasts text -> [{1}].", _server.ListenedEndPoint, text);
+                            }
+                            else
+                            {
+                                await _server.BroadcastAsync(Encoding.UTF8.GetBytes(text));
+                                Console.WriteLine("Server [{0}] broadcasts text -> [{1}].", _server.ListenedEndPoint, text);
+                            }
                         });
                     }
                     catch (Exception ex)

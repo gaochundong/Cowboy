@@ -3,8 +3,8 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using Cowboy.Buffer;
 using Cowboy.Logging;
+using Cowboy.Sockets.Buffer;
 
 namespace Cowboy.Sockets
 {

@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.IO.Compression;
-using Cowboy.Buffer;
+using Cowboy.WebSockets.Buffer;
 
 namespace Cowboy.WebSockets.Extensions
 {

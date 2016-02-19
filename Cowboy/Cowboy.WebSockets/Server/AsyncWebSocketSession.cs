@@ -10,8 +10,8 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Cowboy.Buffer;
 using Cowboy.Logging;
+using Cowboy.WebSockets.Buffer;
 using Cowboy.WebSockets.Extensions;
 using Cowboy.WebSockets.SubProtocols;
 
@@ -32,8 +32,7 @@ namespace Cowboy.WebSockets
         private readonly string _sessionKey;
         private Stream _stream;
         private byte[] _receiveBuffer;
-        private byte[] _sessionBuffer;
-        private int _sessionBufferCount = 0;
+        private int _receiveBufferOffset = 0;
         private IPEndPoint _remoteEndPoint;
         private IPEndPoint _localEndPoint;
 
@@ -182,8 +181,7 @@ namespace Cowboy.WebSockets
                 _stream = negotiator.Result;
 
                 _receiveBuffer = _bufferManager.BorrowBuffer();
-                _sessionBuffer = _bufferManager.BorrowBuffer();
-                _sessionBufferCount = 0;
+                _receiveBufferOffset = 0;
 
                 var handshaker = OpenHandshake();
                 if (!handshaker.Wait(ConnectTimeout))
@@ -252,13 +250,13 @@ namespace Cowboy.WebSockets
                         break;
 
                     _keepAliveTracker.OnDataReceived();
-                    BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
+                    BufferDeflector.ReplaceBuffer(_bufferManager, ref _receiveBuffer, ref _receiveBufferOffset, receiveCount);
 
                     while (true)
                     {
                         Header frameHeader = null;
-                        if (_frameBuilder.TryDecodeFrameHeader(_sessionBuffer, _sessionBufferCount, out frameHeader)
-                            && frameHeader.Length + frameHeader.PayloadLength <= _sessionBufferCount)
+                        if (_frameBuilder.TryDecodeFrameHeader(_receiveBuffer, _receiveBufferOffset, out frameHeader)
+                            && frameHeader.Length + frameHeader.PayloadLength <= _receiveBufferOffset)
                         {
                             try
                             {
@@ -272,7 +270,7 @@ namespace Cowboy.WebSockets
                                 byte[] payload;
                                 int payloadOffset;
                                 int payloadCount;
-                                _frameBuilder.DecodePayload(_sessionBuffer, frameHeader, out payload, out payloadOffset, out payloadCount);
+                                _frameBuilder.DecodePayload(_receiveBuffer, frameHeader, out payload, out payloadOffset, out payloadCount);
 
                                 switch (frameHeader.OpCode)
                                 {
@@ -472,11 +470,10 @@ namespace Cowboy.WebSockets
                                 _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
                                 throw;
                             }
-
-                            BufferDeflector.ShiftBuffer(_bufferManager, frameHeader.Length + frameHeader.PayloadLength, ref _sessionBuffer, ref _sessionBufferCount);
-#if DEBUG
-                            _log.DebugFormat("Session [{0}] buffer length [{1}].", this, _sessionBufferCount);
-#endif
+                            finally
+                            {
+                                BufferDeflector.ShiftBuffer(_bufferManager, frameHeader.Length + frameHeader.PayloadLength, ref _receiveBuffer, ref _receiveBufferOffset);
+                            }
                         }
                         else
                         {
@@ -594,18 +591,18 @@ namespace Cowboy.WebSockets
             try
             {
                 int terminatorIndex = -1;
-                while (!WebSocketHelpers.FindHeaderTerminator(_sessionBuffer, _sessionBufferCount, out terminatorIndex))
+                while (!WebSocketHelpers.FindHeaderTerminator(_receiveBuffer, _receiveBufferOffset, out terminatorIndex))
                 {
-                    int receiveCount = await _stream.ReadAsync(_receiveBuffer, 0, _receiveBuffer.Length);
+                    int receiveCount = await _stream.ReadAsync(_receiveBuffer, _receiveBufferOffset, _receiveBuffer.Length - _receiveBufferOffset);
                     if (receiveCount == 0)
                     {
                         throw new WebSocketHandshakeException(string.Format(
                             "Handshake with remote [{0}] failed due to receive zero bytes.", RemoteEndPoint));
                     }
 
-                    BufferDeflector.AppendBuffer(_bufferManager, ref _receiveBuffer, receiveCount, ref _sessionBuffer, ref _sessionBufferCount);
+                    BufferDeflector.ReplaceBuffer(_bufferManager, ref _receiveBuffer, ref _receiveBufferOffset, receiveCount);
 
-                    if (_sessionBufferCount > 2048)
+                    if (_receiveBufferOffset > 2048)
                     {
                         throw new WebSocketHandshakeException(string.Format(
                             "Handshake with remote [{0}] failed due to receive weird stream.", RemoteEndPoint));
@@ -616,7 +613,7 @@ namespace Cowboy.WebSockets
                 string path = string.Empty;
                 string query = string.Empty;
                 handshakeResult = WebSocketServerHandshaker.HandleOpenningHandshakeRequest(this,
-                    _sessionBuffer, 0, terminatorIndex + Consts.HeaderTerminator.Length,
+                    _receiveBuffer, 0, terminatorIndex + Consts.HeaderTerminator.Length,
                     out secWebSocketKey, out path, out query);
 
                 _module = _routeResolver.Resolve(path, query);
@@ -632,7 +629,7 @@ namespace Cowboy.WebSockets
                     await _stream.WriteAsync(responseBuffer, 0, responseBuffer.Length);
                 }
 
-                BufferDeflector.ShiftBuffer(_bufferManager, terminatorIndex + Consts.HeaderTerminator.Length, ref _sessionBuffer, ref _sessionBufferCount);
+                BufferDeflector.ShiftBuffer(_bufferManager, terminatorIndex + Consts.HeaderTerminator.Length, ref _receiveBuffer, ref _receiveBufferOffset);
             }
             catch (WebSocketHandshakeException ex)
             {
@@ -731,8 +728,7 @@ namespace Cowboy.WebSockets
 
             if (_receiveBuffer != null)
                 _bufferManager.ReturnBuffer(_receiveBuffer);
-            if (_sessionBuffer != null)
-                _bufferManager.ReturnBuffer(_sessionBuffer);
+            _receiveBufferOffset = 0;
 
             _log.DebugFormat("Session closed for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
                 this.RemoteEndPoint,

@@ -38,10 +38,29 @@ namespace Cowboy.WebSockets.TestAsyncWebSocketServer
                             break;
                         Task.Run(async () =>
                         {
+                            if (text == "many")
+                            {
+                                text = new string('x', 8192);
+                                for (int i = 0; i < 1000000; i++)
+                                {
+                                    await _server.BroadcastBinaryAsync(Encoding.UTF8.GetBytes(text));
+                                    Console.WriteLine("WebSocket server [{0}] broadcasts binary -> [{1}].", _server.ListenedEndPoint, text);
+                                }
+                            }
+                            else if (text == "big")
+                            {
+                                text = new string('x', 1024 * 1024 * 100);
+                                await _server.BroadcastBinaryAsync(Encoding.UTF8.GetBytes(text));
+                                Console.WriteLine("WebSocket server [{0}] broadcasts binary -> [{1}].", _server.ListenedEndPoint, text);
+                            }
+                            else
+                            {
+                                await _server.BroadcastBinaryAsync(Encoding.UTF8.GetBytes(text));
+                                Console.WriteLine("WebSocket server [{0}] broadcasts binary -> [{1}].", _server.ListenedEndPoint, text);
+                            }
+
                             //await _server.BroadcastText(text);
                             //Console.WriteLine("WebSocket server [{0}] broadcasts text -> [{1}].", _server.ListenedEndPoint, text);
-                            await _server.BroadcastBinaryAsync(Encoding.UTF8.GetBytes(text));
-                            Console.WriteLine("WebSocket server [{0}] broadcasts binary -> [{1}].", _server.ListenedEndPoint, text);
                         });
                     }
                     catch (Exception ex)

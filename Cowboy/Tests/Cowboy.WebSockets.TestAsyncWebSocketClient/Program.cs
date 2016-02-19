@@ -45,10 +45,29 @@ namespace Cowboy.WebSockets.TestAsyncWebSocketClient
                                 break;
                             Task.Run(async () =>
                             {
+                                if (text == "many")
+                                {
+                                    text = new string('x', 8192);
+                                    for (int i = 0; i < 1000000; i++)
+                                    {
+                                        await _client.SendBinaryAsync(Encoding.UTF8.GetBytes(text));
+                                        Console.WriteLine("Client [{0}] send binary -> [{1}].", _client.LocalEndPoint, text);
+                                    }
+                                }
+                                else if (text == "big")
+                                {
+                                    text = new string('x', 1024 * 1024 * 100);
+                                    await _client.SendBinaryAsync(Encoding.UTF8.GetBytes(text));
+                                    Console.WriteLine("Client [{0}] send binary -> [{1}].", _client.LocalEndPoint, text);
+                                }
+                                else
+                                {
+                                    await _client.SendBinaryAsync(Encoding.UTF8.GetBytes(text));
+                                    Console.WriteLine("Client [{0}] send binary -> [{1}].", _client.LocalEndPoint, text);
+                                }
+
                                 //await _client.SendText(text);
                                 //Console.WriteLine("Client [{0}] send text -> [{1}].", _client.LocalEndPoint, text);
-                                await _client.SendBinaryAsync(Encoding.UTF8.GetBytes(text));
-                                Console.WriteLine("Client [{0}] send binary -> [{1}].", _client.LocalEndPoint, text);
                             }).Forget();
                         }
                         catch (Exception ex)

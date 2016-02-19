@@ -1,5 +1,5 @@
 ﻿using System;
-using Cowboy.Buffer;
+using Cowboy.WebSockets.Buffer;
 
 namespace Cowboy.WebSockets
 {

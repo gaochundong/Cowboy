@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Cowboy.Buffer
+namespace Cowboy.Sockets.Buffer
 {
     public class GrowingByteBufferManager : IBufferManager
     {

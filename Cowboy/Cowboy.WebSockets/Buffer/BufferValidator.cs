@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Cowboy.Buffer
+namespace Cowboy.WebSockets.Buffer
 {
     public class BufferValidator
     {
