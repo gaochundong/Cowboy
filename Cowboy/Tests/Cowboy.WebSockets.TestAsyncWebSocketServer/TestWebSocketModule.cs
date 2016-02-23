@@ -32,9 +32,9 @@ namespace Cowboy.WebSockets.TestAsyncWebSocketServer
             Console.WriteLine(string.Format("{0}", text));
 
             //await Task.Delay(TimeSpan.FromSeconds(10));
-            await Task.CompletedTask;
+            //await Task.CompletedTask;
 
-            //await session.SendBinaryAsync(Encoding.UTF8.GetBytes(text));
+            await session.SendBinaryAsync(Encoding.UTF8.GetBytes(text));
         }
 
         public override async Task OnSessionClosed(AsyncWebSocketSession session)
