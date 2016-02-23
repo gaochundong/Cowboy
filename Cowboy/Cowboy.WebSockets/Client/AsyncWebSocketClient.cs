@@ -568,6 +568,8 @@ namespace Cowboy.WebSockets
             {
                 return false;
             }
+
+            _log.Error(string.Format("Client [{0}] exception occurred, [{1}].", this, ex.Message), ex);
             return true;
         }
 

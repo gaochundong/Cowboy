@@ -273,11 +273,11 @@ namespace Cowboy.Sockets
                 int payloadCount;
 
                 var saea = _saeaPool.Take();
-                saea.Saea.SetBuffer(_receiveBuffer, 0, _receiveBuffer.Length);
+                saea.Saea.SetBuffer(_receiveBuffer, _receiveBufferOffset, _receiveBuffer.Length - _receiveBufferOffset);
 
                 while (State == TcpSocketConnectionState.Connected)
                 {
-                    saea.Saea.SetBuffer(0, _receiveBuffer.Length);
+                    saea.Saea.SetBuffer(_receiveBufferOffset, _receiveBuffer.Length - _receiveBufferOffset);
 
                     var socketError = await _socket.ReceiveAsync(saea);
                     if (socketError != SocketError.Success)
@@ -339,6 +339,8 @@ namespace Cowboy.Sockets
             {
                 return false;
             }
+
+            _log.Error(string.Format("Client [{0}] exception occurred, [{1}].", this, ex.Message), ex);
             return true;
         }
 

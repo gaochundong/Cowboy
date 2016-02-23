@@ -31,7 +31,10 @@ namespace Cowboy.WebSockets.TestAsyncWebSocketServer
             Console.Write(string.Format("WebSocket session [{0}] received Binary --> ", session.RemoteEndPoint));
             Console.WriteLine(string.Format("{0}", text));
 
-            await session.SendBinaryAsync(Encoding.UTF8.GetBytes(text));
+            //await Task.Delay(TimeSpan.FromSeconds(10));
+            await Task.CompletedTask;
+
+            //await session.SendBinaryAsync(Encoding.UTF8.GetBytes(text));
         }
 
         public override async Task OnSessionClosed(AsyncWebSocketSession session)

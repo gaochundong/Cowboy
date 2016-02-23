@@ -171,7 +171,7 @@ namespace Cowboy.Sockets.Experimental
 
                 while (State == TcpSocketConnectionState.Connected)
                 {
-                    int receiveCount = await _stream.ReadAsync(_receiveBuffer, 0, _receiveBuffer.Length);
+                    int receiveCount = await _stream.ReadAsync(_receiveBuffer, _receiveBufferOffset, _receiveBuffer.Length - _receiveBufferOffset);
                     if (receiveCount == 0)
                         break;
 
@@ -232,6 +232,8 @@ namespace Cowboy.Sockets.Experimental
 
                 return false;
             }
+
+            _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
             return true;
         }
 

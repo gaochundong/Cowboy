@@ -47,11 +47,11 @@ namespace Cowboy.WebSockets.TestAsyncWebSocketClient
                             {
                                 if (text == "many")
                                 {
-                                    text = new string('x', 8192);
-                                    for (int i = 0; i < 1000000; i++)
+                                    text = new string('x', 1024);
+                                    for (int i = 1; i <= 1000000; i++)
                                     {
                                         await _client.SendBinaryAsync(Encoding.UTF8.GetBytes(text));
-                                        Console.WriteLine("Client [{0}] send binary -> [{1}].", _client.LocalEndPoint, text);
+                                        Console.WriteLine("Client [{0}] send binary -> Sequence[{1}] -> TextLength[{2}].", _client.LocalEndPoint, i, text.Length);
                                     }
                                 }
                                 else if (text == "big")
