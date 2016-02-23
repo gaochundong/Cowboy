@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Text;
 using System.Threading.Tasks;
 using Cowboy.Logging;
@@ -48,11 +49,17 @@ namespace Cowboy.WebSockets.TestAsyncWebSocketClient
                                 if (text == "many")
                                 {
                                     text = new string('x', 1024);
-                                    for (int i = 1; i <= 1000000; i++)
+                                    Stopwatch watch = Stopwatch.StartNew();
+                                    int count = 10000;
+                                    for (int i = 1; i <= count; i++)
                                     {
                                         await _client.SendBinaryAsync(Encoding.UTF8.GetBytes(text));
-                                        Console.WriteLine("Client [{0}] send binary -> Sequence[{1}] -> TextLength[{2}].", _client.LocalEndPoint, i, text.Length);
+                                        Console.WriteLine("Client [{0}] send binary -> Sequence[{1}] -> TextLength[{2}].",
+                                            _client.LocalEndPoint, i, text.Length);
                                     }
+                                    watch.Stop();
+                                    Console.WriteLine("Client [{0}] send binary -> Count[{1}] -> Cost[{2}] -> PerSecond[{3}].",
+                                        _client.LocalEndPoint, count, watch.ElapsedMilliseconds / 1000, count / (watch.ElapsedMilliseconds / 1000));
                                 }
                                 else if (text == "big")
                                 {
