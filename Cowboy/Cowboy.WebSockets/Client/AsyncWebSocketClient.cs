@@ -683,6 +683,10 @@ namespace Cowboy.WebSockets
 
                 BufferDeflector.ShiftBuffer(_bufferManager, terminatorIndex + Consts.HeaderTerminator.Length, ref _receiveBuffer, ref _receiveBufferOffset);
             }
+            catch (ArgumentOutOfRangeException)
+            {
+                handshakeResult = false;
+            }
             catch (WebSocketHandshakeException ex)
             {
                 _log.Error(ex.Message, ex);

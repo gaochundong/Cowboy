@@ -637,6 +637,10 @@ namespace Cowboy.WebSockets
 
                 BufferDeflector.ShiftBuffer(_bufferManager, terminatorIndex + Consts.HeaderTerminator.Length, ref _receiveBuffer, ref _receiveBufferOffset);
             }
+            catch (ArgumentOutOfRangeException)
+            {
+                handshakeResult = false;
+            }
             catch (WebSocketHandshakeException ex)
             {
                 _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
