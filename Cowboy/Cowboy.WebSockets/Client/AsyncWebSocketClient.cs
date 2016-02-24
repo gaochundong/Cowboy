@@ -533,7 +533,11 @@ namespace Cowboy.WebSockets
                             }
                             finally
                             {
-                                BufferDeflector.ShiftBuffer(_bufferManager, frameHeader.Length + frameHeader.PayloadLength, ref _receiveBuffer, ref _receiveBufferOffset);
+                                try
+                                {
+                                    BufferDeflector.ShiftBuffer(_bufferManager, frameHeader.Length + frameHeader.PayloadLength, ref _receiveBuffer, ref _receiveBufferOffset);
+                                }
+                                catch (ArgumentOutOfRangeException) { }
                             }
                         }
                         else

@@ -192,7 +192,11 @@ namespace Cowboy.Sockets.Experimental
                             }
                             finally
                             {
-                                BufferDeflector.ShiftBuffer(_bufferManager, frameLength, ref _receiveBuffer, ref _receiveBufferOffset);
+                                try
+                                {
+                                    BufferDeflector.ShiftBuffer(_bufferManager, frameLength, ref _receiveBuffer, ref _receiveBufferOffset);
+                                }
+                                catch (ArgumentOutOfRangeException) { }
                             }
                         }
                         else
