@@ -564,8 +564,13 @@ namespace Cowboy.WebSockets
             if (ex is ObjectDisposedException
                 || ex is InvalidOperationException
                 || ex is SocketException
-                || ex is IOException)
+                || ex is IOException
+                || ex is NullReferenceException
+                )
             {
+                if (ex is SocketException)
+                    _log.Error(string.Format("Client [{0}] exception occurred, [{1}].", this, ex.Message), ex);
+
                 return false;
             }
 

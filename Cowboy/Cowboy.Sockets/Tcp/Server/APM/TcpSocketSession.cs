@@ -171,10 +171,10 @@ namespace Cowboy.Sockets
 
         private bool CloseIfShould(Exception ex)
         {
-            if (ex is SocketException
-                || ex is IOException
+            if (ex is ObjectDisposedException
                 || ex is InvalidOperationException
-                || ex is ObjectDisposedException
+                || ex is SocketException
+                || ex is IOException
                 || ex is NullReferenceException
                 )
             {

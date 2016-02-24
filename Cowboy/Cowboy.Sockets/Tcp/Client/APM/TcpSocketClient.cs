@@ -156,7 +156,9 @@ namespace Cowboy.Sockets
             if (ex is ObjectDisposedException
                 || ex is InvalidOperationException
                 || ex is SocketException
-                || ex is IOException)
+                || ex is IOException
+                || ex is NullReferenceException
+                )
             {
                 _log.Error(ex.Message, ex);
 
