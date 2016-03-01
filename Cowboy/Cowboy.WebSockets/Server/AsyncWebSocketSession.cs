@@ -861,12 +861,20 @@ namespace Cowboy.WebSockets
 
         private void StartKeepAliveTimeoutTimer()
         {
-            _keepAliveTimeoutTimer.Change((int)KeepAliveTimeout.TotalMilliseconds, Timeout.Infinite);
+            try
+            {
+                _keepAliveTimeoutTimer.Change((int)KeepAliveTimeout.TotalMilliseconds, Timeout.Infinite);
+            }
+            catch (ObjectDisposedException) { }
         }
 
         private void StopKeepAliveTimeoutTimer()
         {
-            _keepAliveTimeoutTimer.Change(Timeout.Infinite, Timeout.Infinite);
+            try
+            {
+                _keepAliveTimeoutTimer.Change(Timeout.Infinite, Timeout.Infinite);
+            }
+            catch (ObjectDisposedException) { }
         }
 
         private async void OnKeepAliveTimeout()
