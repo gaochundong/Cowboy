@@ -42,6 +42,7 @@
     </Compile>
     <Compile Include="BufferDeflector.cs" />
     <Compile Include="BufferValidator.cs" />
+    <Compile Include="ByteBuffers\AbstractByteBuffer.cs" />
     <Compile Include="ByteBuffers\ByteArrayExtensions.cs" />
     <Compile Include="ByteBuffers\ByteOrder.cs" />
     <Compile Include="ByteBuffers\EmptyByteBuffer.cs" />
