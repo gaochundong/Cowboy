@@ -139,7 +139,7 @@ namespace Cowboy.Buffer
 
         public void AddRange(IEnumerable<T> items)
         {
-            if (_count + items.Count() >= Capacity)
+            if (_count + items.Count() > Capacity)
                 Capacity += items.Count();
 
             foreach (var item in items)
@@ -239,6 +239,92 @@ namespace Cowboy.Buffer
 
             return false;
         }
+
+        public void Clear()
+        {
+            _head = 0;
+            _tail = 0;
+            _count = 0;
+        }
+
+        public T[] ToArray()
+        {
+            var newArray = new T[Count];
+            CopyTo(newArray, 0, newArray.Length);
+            return newArray;
+        }
+
+        public T this[int index]
+        {
+            get
+            {
+                return _buffer[(_head + index) % Capacity];
+            }
+            set
+            {
+                _buffer[(_head + index) % Capacity] = value;
+            }
+        }
+
+        #region IEnumerable
+
+        public IEnumerator<T> GetEnumerator()
+        {
+            return new CircularBufferIterator(this);
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
+        private class CircularBufferIterator : IEnumerator<T>
+        {
+            private CircularBuffer<T> _container;
+            private int _internalIndex = -1;
+
+            public CircularBufferIterator(CircularBuffer<T> container)
+            {
+                _container = container;
+            }
+
+            public T Current
+            {
+                get
+                {
+                    return _container[(_container.Head + _internalIndex) % _container.Capacity];
+                }
+            }
+
+            object IEnumerator.Current
+            {
+                get { return Current; }
+            }
+
+            public bool MoveNext()
+            {
+                _internalIndex++;
+
+                if (_internalIndex >= _container.Count)
+                    return false;
+                else
+                    return true;
+            }
+
+            public void Reset()
+            {
+                _internalIndex = 0;
+            }
+
+            public void Dispose()
+            {
+                _internalIndex = 0;
+            }
+        }
+
+        #endregion
+
+        #region Copy
 
         public void CopyFrom(T[] sourceArray)
         {
@@ -447,88 +533,6 @@ namespace Cowboy.Buffer
             if (destinationBuffer == null)
                 throw new ArgumentNullException("destinationBuffer");
             destinationBuffer.CopyFrom(this, sourceOffset, count);
-        }
-
-        public void Clear()
-        {
-            _head = 0;
-            _tail = 0;
-            _count = 0;
-        }
-
-        public T[] ToArray()
-        {
-            var newArray = new T[Count];
-            CopyTo(newArray, 0, newArray.Length);
-            return newArray;
-        }
-
-        public T this[int index]
-        {
-            get
-            {
-                return _buffer[(_head + index) % Capacity];
-            }
-            set
-            {
-                _buffer[(_head + index) % Capacity] = value;
-            }
-        }
-
-        #region IEnumerable
-
-        public IEnumerator<T> GetEnumerator()
-        {
-            return new CircularBufferIterator(this);
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
-        private class CircularBufferIterator : IEnumerator<T>
-        {
-            private CircularBuffer<T> _container;
-            private int _internalIndex = -1;
-
-            public CircularBufferIterator(CircularBuffer<T> container)
-            {
-                _container = container;
-            }
-
-            public T Current
-            {
-                get
-                {
-                    return _container[(_container.Head + _internalIndex) % _container.Capacity];
-                }
-            }
-
-            object IEnumerator.Current
-            {
-                get { return Current; }
-            }
-
-            public bool MoveNext()
-            {
-                _internalIndex++;
-
-                if (_internalIndex >= _container.Count)
-                    return false;
-                else
-                    return true;
-            }
-
-            public void Reset()
-            {
-                _internalIndex = 0;
-            }
-
-            public void Dispose()
-            {
-                _internalIndex = 0;
-            }
         }
 
         #endregion
