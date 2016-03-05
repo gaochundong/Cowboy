@@ -42,6 +42,7 @@
     </Compile>
     <Compile Include="BufferDeflector.cs" />
     <Compile Include="BufferValidator.cs" />
+    <Compile Include="CircularBuffercs.cs" />
     <Compile Include="GrowingByteBufferManager.cs" />
     <Compile Include="IBufferManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

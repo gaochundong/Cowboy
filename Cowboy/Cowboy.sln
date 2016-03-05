@@ -62,6 +62,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Sockets.TestTcpSocke
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Buffer", "Cowboy.Buffer\Cowboy.Buffer.csproj", "{11AE03D6-DB99-436B-950A-2EBCEF1C82C5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Buffer.UnitTests", "Tests\Cowboy.Buffer.UnitTests\Cowboy.Buffer.UnitTests.csproj", "{610C2717-7AB1-46C1-89C3-07A22F89A6BF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -132,6 +134,10 @@ Global
 		{11AE03D6-DB99-436B-950A-2EBCEF1C82C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{11AE03D6-DB99-436B-950A-2EBCEF1C82C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{11AE03D6-DB99-436B-950A-2EBCEF1C82C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{610C2717-7AB1-46C1-89C3-07A22F89A6BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{610C2717-7AB1-46C1-89C3-07A22F89A6BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{610C2717-7AB1-46C1-89C3-07A22F89A6BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{610C2717-7AB1-46C1-89C3-07A22F89A6BF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -156,5 +162,6 @@ Global
 		{ABEDD03B-9587-41A2-BA14-22BD0AAC29B5} = {AE0D79BA-5B26-4179-B316-B3489183F95A}
 		{563E2008-51A7-4DF1-9F3E-3AE14BFA8605} = {AE0D79BA-5B26-4179-B316-B3489183F95A}
 		{4D899C99-E59E-4BB6-B67D-D9C06528AB6B} = {563E2008-51A7-4DF1-9F3E-3AE14BFA8605}
+		{610C2717-7AB1-46C1-89C3-07A22F89A6BF} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
 	EndGlobalSection
 EndGlobal
