@@ -15,8 +15,6 @@ namespace Cowboy.Buffer.ByteBuffers
     /// </summary>
     public interface IByteBuffer : IReferenceCounted
     {
-        int MaxCapacity { get; }
-
         int Capacity { get; }
 
         /// <summary>
@@ -24,8 +22,10 @@ namespace Cowboy.Buffer.ByteBuffers
         /// </summary>
         IByteBuffer AdjustCapacity(int newCapacity);
 
+        int MaxCapacity { get; }
+
         /// <summary>
-        /// The allocator who created this buffer
+        /// The allocator who created this buffer.
         /// </summary>
         IByteBufferAllocator Allocator { get; }
 
@@ -34,14 +34,14 @@ namespace Cowboy.Buffer.ByteBuffers
         int WriterIndex { get; }
 
         /// <summary>
-        /// Sets the <see cref="WriterIndex"/> of this buffer
+        /// Sets the <see cref="WriterIndex"/> of this buffer.
         /// </summary>
         /// <exception cref="IndexOutOfRangeException">thrown if <see cref="WriterIndex"/> 
         /// exceeds the length of the buffer</exception>
         IByteBuffer SetWriterIndex(int writerIndex);
 
         /// <summary>
-        /// Sets the <see cref="ReaderIndex"/> of this buffer
+        /// Sets the <see cref="ReaderIndex"/> of this buffer.
         /// </summary>
         /// <exception cref="IndexOutOfRangeException"> thrown if <see cref="ReaderIndex"/> 
         /// is greater than <see cref="WriterIndex"/> or less than <c>0</c>.</exception>
