@@ -54,46 +54,43 @@ namespace Cowboy.Buffer
         }
 
         public int MaxCapacity { get { return _maxCapacity; } }
+        public int Capacity { get { return _currentCapacity; } set { AdjustCapacity(value); } }
         public int Head { get { return _head; } }
         public int Tail { get { return _tail; } }
         public int Count { get { return _count; } }
         public object SyncRoot { get { return _sync; } }
         public bool IsSynchronized { get { return false; } }
 
-        public int Capacity
+        private void AdjustCapacity(int newCapacity)
         {
-            get
+            if (newCapacity <= 0)
+                throw new ArgumentException("The new capacity must be greater than 0.", "newCapacity");
+
+            if (newCapacity > _currentCapacity && _currentCapacity < MaxCapacity)
             {
-                return _currentCapacity;
+                var adjustedCapacity = CalculateNewCapacity(newCapacity);
+                ExpandBuffer(adjustedCapacity);
+                _currentCapacity = adjustedCapacity;
             }
-            set
+            else if (newCapacity < _currentCapacity)
             {
-                if (value > _currentCapacity && _currentCapacity < MaxCapacity)
-                {
-                    var newCapacity = CalculateNewCapacity(value);
-                    ExpandBuffer(newCapacity);
-                    _currentCapacity = newCapacity;
-                }
-                else if (value < _currentCapacity)
-                {
-                    ShrinkBuffer(value);
-                    _currentCapacity = value;
-                }
+                ShrinkBuffer(newCapacity);
+                _currentCapacity = newCapacity;
             }
         }
 
-        private int CalculateNewCapacity(int minNewCapacity)
+        private int CalculateNewCapacity(int requiredCapacity)
         {
             var newCapacity = 64;
 
-            if (minNewCapacity > 1048576)
+            if (requiredCapacity > 1048576)
             {
-                newCapacity = minNewCapacity;
+                newCapacity = requiredCapacity;
                 newCapacity += 1048576;
             }
             else
             {
-                while (newCapacity < minNewCapacity)
+                while (newCapacity < requiredCapacity)
                 {
                     newCapacity <<= 1;
                 }

@@ -42,7 +42,11 @@
     </Compile>
     <Compile Include="BufferDeflector.cs" />
     <Compile Include="BufferValidator.cs" />
-    <Compile Include="CircularBuffercs.cs" />
+    <Compile Include="ByteBuffers\ByteOrder.cs" />
+    <Compile Include="ByteBuffers\IByteBuffer.cs" />
+    <Compile Include="ByteBuffers\IByteBufferAllocator.cs" />
+    <Compile Include="ByteBuffers\IReferenceCounted.cs" />
+    <Compile Include="CircularBuffer.cs" />
     <Compile Include="GrowingByteBufferManager.cs" />
     <Compile Include="IBufferManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
