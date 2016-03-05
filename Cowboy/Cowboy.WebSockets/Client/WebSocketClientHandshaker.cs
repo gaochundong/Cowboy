@@ -4,8 +4,8 @@ using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
+using Cowboy.Buffer;
 using Cowboy.Logging;
-using Cowboy.WebSockets.Buffer;
 
 namespace Cowboy.WebSockets
 {

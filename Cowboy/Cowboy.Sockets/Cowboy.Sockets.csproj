@@ -40,13 +40,21 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\Cowboy.Buffer\BufferDeflector.cs">
+      <Link>Buffer\BufferDeflector.cs</Link>
+    </Compile>
+    <Compile Include="..\Cowboy.Buffer\BufferValidator.cs">
+      <Link>Buffer\BufferValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\Cowboy.Buffer\GrowingByteBufferManager.cs">
+      <Link>Buffer\GrowingByteBufferManager.cs</Link>
+    </Compile>
+    <Compile Include="..\Cowboy.Buffer\IBufferManager.cs">
+      <Link>Buffer\IBufferManager.cs</Link>
+    </Compile>
     <Compile Include="..\SolutionVersion.cs">
       <Link>SolutionVersion.cs</Link>
     </Compile>
-    <Compile Include="Buffer\BufferDeflector.cs" />
-    <Compile Include="Buffer\BufferValidator.cs" />
-    <Compile Include="Buffer\GrowingByteBufferManager.cs" />
-    <Compile Include="Buffer\IBufferManager.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Tcp\Client\SAEA\TcpSocketSaeaClient.cs" />
     <Compile Include="Tcp\Client\SAEA\TcpSocketSaeaClientConfiguration.cs" />

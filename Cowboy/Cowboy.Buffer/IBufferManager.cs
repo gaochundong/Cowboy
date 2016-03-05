@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Cowboy.WebSockets.Buffer
+namespace Cowboy.Buffer
 {
     public interface IBufferManager
     {

@@ -60,6 +60,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "RIO", "RIO", "{563E2008-51A
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Sockets.TestTcpSocketRioServer", "Tests\Cowboy.Sockets.TestTcpSocketRioServer\Cowboy.Sockets.TestTcpSocketRioServer.csproj", "{4D899C99-E59E-4BB6-B67D-D9C06528AB6B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Buffer", "Cowboy.Buffer\Cowboy.Buffer.csproj", "{11AE03D6-DB99-436B-950A-2EBCEF1C82C5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -126,6 +128,10 @@ Global
 		{4D899C99-E59E-4BB6-B67D-D9C06528AB6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4D899C99-E59E-4BB6-B67D-D9C06528AB6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4D899C99-E59E-4BB6-B67D-D9C06528AB6B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{11AE03D6-DB99-436B-950A-2EBCEF1C82C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{11AE03D6-DB99-436B-950A-2EBCEF1C82C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{11AE03D6-DB99-436B-950A-2EBCEF1C82C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{11AE03D6-DB99-436B-950A-2EBCEF1C82C5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

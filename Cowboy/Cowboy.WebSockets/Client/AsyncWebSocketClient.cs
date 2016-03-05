@@ -10,8 +10,8 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Cowboy.Buffer;
 using Cowboy.Logging;
-using Cowboy.WebSockets.Buffer;
 using Cowboy.WebSockets.Extensions;
 using Cowboy.WebSockets.SubProtocols;
 

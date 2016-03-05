@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Cowboy.WebSockets.Buffer
+namespace Cowboy.Buffer
 {
     public class BufferDeflector
     {
