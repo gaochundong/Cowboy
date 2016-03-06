@@ -49,6 +49,7 @@
     <Compile Include="ByteBuffers\EmptyByteBuffer.cs" />
     <Compile Include="ByteBuffers\IByteBuffer.cs" />
     <Compile Include="ByteBuffers\IByteBufferAllocator.cs" />
+    <Compile Include="ByteBuffers\IllegalReferenceCountException.cs" />
     <Compile Include="ByteBuffers\IReferenceCounted.cs" />
     <Compile Include="ByteBuffers\StringUtil.cs" />
     <Compile Include="ByteBuffers\TaskEx.cs" />
