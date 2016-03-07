@@ -27,7 +27,7 @@ namespace Cowboy.Buffer.ByteBuffers
          * 5 - Extra allowance for anticipated escape characters that may be added.
         */
         static readonly int CsvNumberEscapeCharacters = 2 + 5;
-        static readonly char PackageSeparatorChar = '.';
+        //static readonly char PackageSeparatorChar = '.';
 
         static StringUtil()
         {
