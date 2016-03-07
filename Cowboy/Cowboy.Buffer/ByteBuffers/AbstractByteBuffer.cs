@@ -14,11 +14,11 @@ namespace Cowboy.Buffer.ByteBuffers
     /// </summary>
     public abstract class AbstractByteBuffer : IByteBuffer
     {
-        internal static readonly ResourceLeakDetector LeakDetector = ResourceLeakDetector.Create<IByteBuffer>();
+        //internal static readonly ResourceLeakDetector LeakDetector = ResourceLeakDetector.Create<IByteBuffer>();
 
         int markedReaderIndex;
         int markedWriterIndex;
-        SwappedByteBuffer swappedByteBuffer;
+        //SwappedByteBuffer swappedByteBuffer;
 
         protected AbstractByteBuffer(int maxCapacity)
         {
@@ -533,16 +533,17 @@ namespace Cowboy.Buffer.ByteBuffers
 
         public IByteBuffer ReadBytes(int length)
         {
-            this.CheckReadableBytes(length);
-            if (length == 0)
-            {
-                return Unpooled.Empty;
-            }
+            //this.CheckReadableBytes(length);
+            //if (length == 0)
+            //{
+            //    return Unpooled.Empty;
+            //}
 
-            IByteBuffer buf = Unpooled.Buffer(length, this.MaxCapacity);
-            buf.WriteBytes(this, this.ReaderIndex, length);
-            this.ReaderIndex += length;
-            return buf;
+            //IByteBuffer buf = Unpooled.Buffer(length, this.MaxCapacity);
+            //buf.WriteBytes(this, this.ReaderIndex, length);
+            //this.ReaderIndex += length;
+            //return buf;
+            return null;
         }
 
         public virtual IByteBuffer ReadBytes(IByteBuffer destination)
@@ -733,34 +734,34 @@ namespace Cowboy.Buffer.ByteBuffers
             return this.WriteBytesAsync(stream, length, CancellationToken.None);
         }
 
-        public abstract bool HasArray { get; }
+        //public abstract bool HasArray { get; }
 
-        public abstract byte[] Array { get; }
+        //public abstract byte[] Array { get; }
 
-        public abstract int ArrayOffset { get; }
+        //public abstract int ArrayOffset { get; }
 
-        public virtual byte[] ToArray()
-        {
-            int readableBytes = this.ReadableBytes;
-            if (readableBytes == 0)
-            {
-                return ByteArrayExtensions.Empty;
-            }
+        //public virtual byte[] ToArray()
+        //{
+        //    int readableBytes = this.ReadableBytes;
+        //    if (readableBytes == 0)
+        //    {
+        //        return ByteArrayExtensions.Empty;
+        //    }
 
-            if (this.HasArray)
-            {
-                return this.Array.Slice(this.ArrayOffset + this.ReaderIndex, readableBytes);
-            }
+        //    if (this.HasArray)
+        //    {
+        //        return this.Array.Slice(this.ArrayOffset + this.ReaderIndex, readableBytes);
+        //    }
 
-            var bytes = new byte[readableBytes];
-            this.GetBytes(this.ReaderIndex, bytes);
-            return bytes;
-        }
+        //    var bytes = new byte[readableBytes];
+        //    this.GetBytes(this.ReaderIndex, bytes);
+        //    return bytes;
+        //}
 
-        public virtual IByteBuffer Duplicate()
-        {
-            return new DuplicatedByteBuffer(this);
-        }
+        //public virtual IByteBuffer Duplicate()
+        //{
+        //    return new DuplicatedByteBuffer(this);
+        //}
 
         public abstract IByteBuffer Unwrap();
 
@@ -769,28 +770,28 @@ namespace Cowboy.Buffer.ByteBuffers
             get { return ByteOrder.BigEndian; }
         }
 
-        public IByteBuffer WithOrder(ByteOrder order)
-        {
-            if (order == this.Order)
-            {
-                return this;
-            }
-            SwappedByteBuffer swappedBuf = this.swappedByteBuffer;
-            if (swappedBuf == null)
-            {
-                this.swappedByteBuffer = swappedBuf = this.NewSwappedByteBuffer();
-            }
-            return swappedBuf;
-        }
+        //public IByteBuffer WithOrder(ByteOrder order)
+        //{
+        //    if (order == this.Order)
+        //    {
+        //        return this;
+        //    }
+        //    SwappedByteBuffer swappedBuf = this.swappedByteBuffer;
+        //    if (swappedBuf == null)
+        //    {
+        //        this.swappedByteBuffer = swappedBuf = this.NewSwappedByteBuffer();
+        //    }
+        //    return swappedBuf;
+        //}
 
-        /// <summary>
-        /// Creates a new <see cref="SwappedByteBuffer"/> for this <see cref="IByteBuffer"/> instance.
-        /// </summary>
-        /// <returns>A <see cref="SwappedByteBuffer"/> for this buffer.</returns>
-        protected SwappedByteBuffer NewSwappedByteBuffer()
-        {
-            return new SwappedByteBuffer(this);
-        }
+        ///// <summary>
+        ///// Creates a new <see cref="SwappedByteBuffer"/> for this <see cref="IByteBuffer"/> instance.
+        ///// </summary>
+        ///// <returns>A <see cref="SwappedByteBuffer"/> for this buffer.</returns>
+        //protected SwappedByteBuffer NewSwappedByteBuffer()
+        //{
+        //    return new SwappedByteBuffer(this);
+        //}
 
         protected void AdjustMarkers(int decrement)
         {
@@ -895,22 +896,22 @@ namespace Cowboy.Buffer.ByteBuffers
 
         public abstract IByteBuffer Copy(int index, int length);
 
-        public IByteBuffer Slice()
-        {
-            return this.Slice(this.ReaderIndex, this.ReadableBytes);
-        }
+        //public IByteBuffer Slice()
+        //{
+        //    return this.Slice(this.ReaderIndex, this.ReadableBytes);
+        //}
 
-        public virtual IByteBuffer Slice(int index, int length)
-        {
-            return new SlicedByteBuffer(this, index, length);
-        }
+        //public virtual IByteBuffer Slice(int index, int length)
+        //{
+        //    return new SlicedByteBuffer(this, index, length);
+        //}
 
-        public IByteBuffer ReadSlice(int length)
-        {
-            IByteBuffer slice = this.Slice(this.ReaderIndex, length);
-            this.ReaderIndex += length;
-            return slice;
-        }
+        //public IByteBuffer ReadSlice(int length)
+        //{
+        //    IByteBuffer slice = this.Slice(this.ReaderIndex, length);
+        //    this.ReaderIndex += length;
+        //    return slice;
+        //}
 
         public abstract int ReferenceCount { get; }
 
@@ -931,14 +932,14 @@ namespace Cowboy.Buffer.ByteBuffers
             this.markedReaderIndex = this.markedWriterIndex = 0;
         }
 
-        public string ToString(Encoding encoding)
-        {
-            return this.ToString(ReaderIndex, ReadableBytes, encoding);
-        }
+        //public string ToString(Encoding encoding)
+        //{
+        //    return this.ToString(ReaderIndex, ReadableBytes, encoding);
+        //}
 
-        public string ToString(int index, int length, Encoding encoding)
-        {
-            return ByteBufferUtil.DecodeString(this, index, length, encoding);
-        }
+        //public string ToString(int index, int length, Encoding encoding)
+        //{
+        //    return ByteBufferUtil.DecodeString(this, index, length, encoding);
+        //}
     }
 }

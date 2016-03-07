@@ -569,28 +569,30 @@ namespace Cowboy.Buffer.ByteBuffers
 
         IByteBuffer WriteBytes(byte[] src, int srcIndex, int length);
 
-        /// <summary>
-        /// Flag that indicates if this <see cref="IByteBuffer"/> is backed by a byte array or not
-        /// </summary>
-        bool HasArray { get; }
+        ///// <summary>
+        ///// Flag that indicates if this <see cref="IByteBuffer"/> is backed by a byte array or not
+        ///// </summary>
+        //bool HasArray { get; }
 
-        /// <summary>
-        /// Grabs the underlying byte array for this buffer
-        /// </summary>
-        /// <value></value>
-        byte[] Array { get; }
+        ///// <summary>
+        ///// Grabs the underlying byte array for this buffer
+        ///// </summary>
+        ///// <value></value>
+        //byte[] Array { get; }
 
-        /// <summary>
-        /// Converts the readable contents of the buffer into an array.
-        /// 
-        /// Does not affect the <see cref="ReaderIndex"/> or <see cref="WriterIndex"/> of the <see cref="IByteBuffer"/>
-        /// </summary>
-        byte[] ToArray();
+        //int ArrayOffset { get; }
+
+        ///// <summary>
+        ///// Converts the readable contents of the buffer into an array.
+        ///// 
+        ///// Does not affect the <see cref="ReaderIndex"/> or <see cref="WriterIndex"/> of the <see cref="IByteBuffer"/>
+        ///// </summary>
+        //byte[] ToArray();
 
         /// <summary>
         /// Creates a deep clone of the existing byte array and returns it
         /// </summary>
-        IByteBuffer Duplicate();
+        //IByteBuffer Duplicate();
 
         /// <summary>
         /// Unwraps a nested buffer
@@ -599,26 +601,24 @@ namespace Cowboy.Buffer.ByteBuffers
 
         ByteOrder Order { get; }
 
-        IByteBuffer WithOrder(ByteOrder order);
+        //IByteBuffer WithOrder(ByteOrder order);
 
         IByteBuffer Copy();
 
         IByteBuffer Copy(int index, int length);
 
-        IByteBuffer Slice();
+        //IByteBuffer Slice();
 
-        IByteBuffer Slice(int index, int length);
+        //IByteBuffer Slice(int index, int length);
 
-        int ArrayOffset { get; }
-
-        IByteBuffer ReadSlice(int length);
+        //IByteBuffer ReadSlice(int length);
 
         Task WriteBytesAsync(Stream stream, int length);
 
         Task WriteBytesAsync(Stream stream, int length, CancellationToken cancellationToken);
 
-        string ToString(Encoding encoding);
+        //string ToString(Encoding encoding);
 
-        string ToString(int index, int length, Encoding encoding);
+        //string ToString(int index, int length, Encoding encoding);
     }
 }

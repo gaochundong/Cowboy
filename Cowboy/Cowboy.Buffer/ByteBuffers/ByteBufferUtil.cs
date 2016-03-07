@@ -570,31 +570,31 @@ namespace Cowboy.Buffer.ByteBuffers
             }
         }
 
-        public static string DecodeString(IByteBuffer src, int readerIndex, int len, Encoding encoding)
-        {
-            if (len == 0)
-            {
-                return string.Empty;
-            }
+        //public static string DecodeString(IByteBuffer src, int readerIndex, int len, Encoding encoding)
+        //{
+        //    if (len == 0)
+        //    {
+        //        return string.Empty;
+        //    }
 
-            if (src.HasArray)
-            {
-                return encoding.GetString(src.Array, readerIndex, len);
-            }
-            else
-            {
-                IByteBuffer buffer = src.Allocator.Buffer(len);
-                try
-                {
-                    buffer.WriteBytes(src, readerIndex, len);
-                    return encoding.GetString(buffer.Array, 0, len);
-                }
-                finally
-                {
-                    // Release the temporary buffer again.
-                    buffer.Release();
-                }
-            }
-        }
+        //    if (src.HasArray)
+        //    {
+        //        return encoding.GetString(src.Array, readerIndex, len);
+        //    }
+        //    else
+        //    {
+        //        IByteBuffer buffer = src.Allocator.Buffer(len);
+        //        try
+        //        {
+        //            buffer.WriteBytes(src, readerIndex, len);
+        //            return encoding.GetString(buffer.Array, 0, len);
+        //        }
+        //        finally
+        //        {
+        //            // Release the temporary buffer again.
+        //            buffer.Release();
+        //        }
+        //    }
+        //}
     }
 }
