@@ -24,8 +24,7 @@ namespace Cowboy.Buffer.ByteBuffers
         {
         }
 
-        public UnpooledHeapByteBuffer(
-            IByteBufferAllocator allocator, byte[] initialArray, int readerIndex, int writerIndex, int maxCapacity)
+        public UnpooledHeapByteBuffer(IByteBufferAllocator allocator, byte[] initialArray, int readerIndex, int writerIndex, int maxCapacity)
             : base(maxCapacity)
         {
             Contract.Requires(allocator != null);
@@ -114,6 +113,8 @@ namespace Cowboy.Buffer.ByteBuffers
         //    get { return 0; }
         //}
 
+        #region Get
+
         public override IByteBuffer GetBytes(int index, IByteBuffer dst, int dstIndex, int length)
         {
             //this.CheckDstIndex(index, length, dstIndex, dst.Capacity);
@@ -141,44 +142,6 @@ namespace Cowboy.Buffer.ByteBuffers
             //destination.Write(this.Array, this.ArrayOffset + this.ReaderIndex, this.ReadableBytes);
             //return this;
             return null;
-        }
-
-        public override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length)
-        {
-            //this.CheckSrcIndex(index, length, srcIndex, src.Capacity);
-            //if (src.HasArray)
-            //{
-            //    this.SetBytes(index, src.Array, src.ArrayOffset + srcIndex, length);
-            //}
-            //else
-            //{
-            //    src.GetBytes(srcIndex, _array, index, length);
-            //}
-            //return this;
-            return null;
-        }
-
-        public override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length)
-        {
-            this.CheckSrcIndex(index, length, srcIndex, src.Length);
-            System.Array.Copy(src, srcIndex, _array, index, length);
-            return this;
-        }
-        public override async Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken)
-        {
-            //int readTotal = 0;
-            //int read;
-            //int offset = this.ArrayOffset + index;
-            //do
-            //{
-            //    read = await src.ReadAsync(this.Array, offset + readTotal, length - readTotal, cancellationToken);
-            //    readTotal += read;
-            //}
-            //while (read > 0 && readTotal < length);
-
-            //return readTotal;
-            await Task.CompletedTask;
-            return 0;
         }
 
         public override byte GetByte(int index)
@@ -237,6 +200,49 @@ namespace Cowboy.Buffer.ByteBuffers
                     _array[index + 7];
                 return (uint)i2 | ((long)i1 << 32);
             }
+        }
+
+        #endregion
+
+        #region Set
+
+        public override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length)
+        {
+            //this.CheckSrcIndex(index, length, srcIndex, src.Capacity);
+            //if (src.HasArray)
+            //{
+            //    this.SetBytes(index, src.Array, src.ArrayOffset + srcIndex, length);
+            //}
+            //else
+            //{
+            //    src.GetBytes(srcIndex, _array, index, length);
+            //}
+            //return this;
+            return null;
+        }
+
+        public override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length)
+        {
+            this.CheckSrcIndex(index, length, srcIndex, src.Length);
+            System.Array.Copy(src, srcIndex, _array, index, length);
+            return this;
+        }
+
+        public override async Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken)
+        {
+            //int readTotal = 0;
+            //int read;
+            //int offset = this.ArrayOffset + index;
+            //do
+            //{
+            //    read = await src.ReadAsync(this.Array, offset + readTotal, length - readTotal, cancellationToken);
+            //    readTotal += read;
+            //}
+            //while (read > 0 && readTotal < length);
+
+            //return readTotal;
+            await Task.CompletedTask;
+            return 0;
         }
 
         public override IByteBuffer SetByte(int index, int value)
@@ -308,6 +314,8 @@ namespace Cowboy.Buffer.ByteBuffers
                 _array[index + 7] = (byte)value;
             }
         }
+
+        #endregion
 
         public override IByteBuffer Copy(int index, int length)
         {

@@ -16,6 +16,8 @@ namespace Cowboy.Buffer.ByteBuffers
         {
         }
 
+        #region IReferenceCounted Members
+
         public override int ReferenceCount
         {
             get { return this.referenceCount; }
@@ -135,5 +137,7 @@ namespace Cowboy.Buffer.ByteBuffers
         }
 
         protected abstract void Deallocate();
+
+        #endregion
     }
 }

@@ -28,6 +28,8 @@ namespace Cowboy.Buffer.ByteBuffers
         /// The allocator who created this buffer.
         /// </summary>
         IByteBufferAllocator Allocator { get; }
+        
+        #region Index
 
         int ReaderIndex { get; }
 
@@ -60,6 +62,10 @@ namespace Cowboy.Buffer.ByteBuffers
 
         int MaxWritableBytes { get; }
 
+        #endregion
+
+        #region Mark
+
         /// <summary>
         /// Returns true if <see cref="WriterIndex"/> - <see cref="ReaderIndex"/> is greater than <c>0</c>.
         /// </summary>
@@ -82,6 +88,12 @@ namespace Cowboy.Buffer.ByteBuffers
         /// </summary>
         /// <param name="size">The number of additional elements we would like to write.</param>
         bool IsWritable(int size);
+
+        /// <summary>
+        /// Increases the current <see cref="ReaderIndex"/> by the specified <see cref="length"/> in this buffer.
+        /// </summary>
+        /// <exception cref="IndexOutOfRangeException"> if <see cref="length"/> is greater than <see cref="ReadableBytes"/>.</exception>
+        IByteBuffer SkipBytes(int length);
 
         /// <summary>
         /// Sets the <see cref="WriterIndex"/> and <see cref="ReaderIndex"/> to <c>0</c>. 
@@ -167,6 +179,10 @@ namespace Cowboy.Buffer.ByteBuffers
         /// <c>3</c> if the buffer does not have enough bytes, but its capacity has been increased to its maximum.
         /// </returns>
         int EnsureWritable(int minWritableBytes, bool force);
+
+        #endregion
+
+        #region Get
 
         /// <summary>
         /// Gets a boolean at the specified absolute <see cref="index"/> in this buffer.
@@ -301,13 +317,16 @@ namespace Cowboy.Buffer.ByteBuffers
         /// <param name="index">absolute index in this buffer to start getting bytes from</param>
         /// <param name="destination">destination stream</param>
         /// <param name="length">the number of bytes to transfer</param>
-
         /// <exception cref="IndexOutOfRangeException">
         ///          if the specified <c>index</c> is less than <c>0</c> or
         ///          if <c>index + length</c> is greater than
         ///             <c>this.capacity</c>
         /// </exception> 
         IByteBuffer GetBytes(int index, Stream destination, int length);
+
+        #endregion
+
+        #region Set
 
         /// <summary>
         /// Sets the specified boolean at the specified absolute <see cref="index"/> in this buffer.
@@ -452,6 +471,10 @@ namespace Cowboy.Buffer.ByteBuffers
         /// </exception>
         Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken);
 
+        #endregion
+
+        #region Read
+
         /// <summary>
         /// Gets a boolean at the current <see cref="ReaderIndex"/> and increases the <see cref="ReaderIndex"/>
         /// by <c>1</c> in this buffer.
@@ -535,11 +558,9 @@ namespace Cowboy.Buffer.ByteBuffers
 
         IByteBuffer ReadBytes(Stream destination, int length);
 
-        /// <summary>
-        /// Increases the current <see cref="ReaderIndex"/> by the specified <see cref="length"/> in this buffer.
-        /// </summary>
-        /// <exception cref="IndexOutOfRangeException"> if <see cref="length"/> is greater than <see cref="ReadableBytes"/>.</exception>
-        IByteBuffer SkipBytes(int length);
+        #endregion
+
+        #region Write
 
         IByteBuffer WriteBoolean(bool value);
 
@@ -568,6 +589,8 @@ namespace Cowboy.Buffer.ByteBuffers
         IByteBuffer WriteBytes(byte[] src);
 
         IByteBuffer WriteBytes(byte[] src, int srcIndex, int length);
+
+        #endregion
 
         ///// <summary>
         ///// Flag that indicates if this <see cref="IByteBuffer"/> is backed by a byte array or not

@@ -33,6 +33,8 @@ namespace Cowboy.Buffer.ByteBuffers
 
         public abstract IByteBufferAllocator Allocator { get; }
 
+        #region Index
+
         public virtual int ReaderIndex { get; protected set; }
 
         public virtual int WriterIndex { get; protected set; }
@@ -91,6 +93,10 @@ namespace Cowboy.Buffer.ByteBuffers
             get { return this.MaxCapacity - this.WriterIndex; }
         }
 
+        #endregion
+
+        #region Mark
+
         public bool IsReadable()
         {
             return this.IsReadable(1);
@@ -109,6 +115,13 @@ namespace Cowboy.Buffer.ByteBuffers
         public bool IsWritable(int size)
         {
             return this.WritableBytes >= size;
+        }
+
+        public virtual IByteBuffer SkipBytes(int length)
+        {
+            this.CheckReadableBytes(length);
+            this.ReaderIndex += length;
+            return this;
         }
 
         public virtual IByteBuffer Clear()
@@ -276,6 +289,10 @@ namespace Cowboy.Buffer.ByteBuffers
             return Math.Min(newCapacity, maxCapacity);
         }
 
+        #endregion
+
+        #region Get
+
         public virtual bool GetBoolean(int index)
         {
             return this.GetByte(index) != 0;
@@ -362,6 +379,10 @@ namespace Cowboy.Buffer.ByteBuffers
         public abstract IByteBuffer GetBytes(int index, byte[] destination, int dstIndex, int length);
 
         public abstract IByteBuffer GetBytes(int index, Stream destination, int length);
+
+        #endregion
+
+        #region Set
 
         public virtual IByteBuffer SetBoolean(int index, bool value)
         {
@@ -466,6 +487,10 @@ namespace Cowboy.Buffer.ByteBuffers
         public abstract IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length);
 
         public abstract Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken);
+
+        #endregion
+
+        #region Read
 
         public virtual bool ReadBoolean()
         {
@@ -595,12 +620,9 @@ namespace Cowboy.Buffer.ByteBuffers
             return this;
         }
 
-        public virtual IByteBuffer SkipBytes(int length)
-        {
-            this.CheckReadableBytes(length);
-            this.ReaderIndex += length;
-            return this;
-        }
+        #endregion
+
+        #region Write
 
         public virtual IByteBuffer WriteBoolean(bool value)
         {
@@ -733,6 +755,8 @@ namespace Cowboy.Buffer.ByteBuffers
         {
             return this.WriteBytesAsync(stream, length, CancellationToken.None);
         }
+
+        #endregion
 
         //public abstract bool HasArray { get; }
 
@@ -913,6 +937,8 @@ namespace Cowboy.Buffer.ByteBuffers
         //    return slice;
         //}
 
+        #region IReferenceCounted Members
+
         public abstract int ReferenceCount { get; }
 
         public abstract IReferenceCounted Retain();
@@ -926,6 +952,8 @@ namespace Cowboy.Buffer.ByteBuffers
         public abstract bool Release();
 
         public abstract bool Release(int decrement);
+
+        #endregion
 
         protected void DiscardMarkers()
         {

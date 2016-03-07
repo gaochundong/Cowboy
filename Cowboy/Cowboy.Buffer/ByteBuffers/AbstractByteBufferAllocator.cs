@@ -42,7 +42,7 @@ namespace Cowboy.Buffer.ByteBuffers
         //    return buf;
         //}
 
-        readonly IByteBuffer emptyBuffer;
+        private readonly IByteBuffer emptyBuffer;
 
         protected AbstractByteBufferAllocator()
         {
