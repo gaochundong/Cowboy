@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Text;
 using System.Threading.Tasks;
-using Cowboy.Logging;
-using Cowboy.Logging.NLogIntegration;
+using Logrila.Logging;
+using Logrila.Logging.NLogIntegration;
 using Cowboy.Sockets.Experimental;
 
 namespace Cowboy.Sockets.TestTcpSocketRioServer

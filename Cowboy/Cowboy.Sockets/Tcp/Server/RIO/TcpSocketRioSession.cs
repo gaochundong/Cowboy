@@ -5,7 +5,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Cowboy.Buffer;
-using Cowboy.Logging;
+using Logrila.Logging;
 
 namespace Cowboy.Sockets.Experimental
 {

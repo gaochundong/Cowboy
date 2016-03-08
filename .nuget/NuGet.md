@@ -9,4 +9,4 @@ nuget pack ..\Cowboy\Cowboy.Sockets\Cowboy.Sockets.csproj -IncludeReferencedProj
 nuget pack ..\Cowboy\Cowboy.WebSockets\Cowboy.WebSockets.csproj -IncludeReferencedProjects -Symbols -Build -Prop Configuration=Release -OutputDirectory ".\packages"
 
 nuget push .\packages\Cowboy.1.0.0.0.nupkg
-nuget pack ..\Cowboy\Cowboy.WebSockets\Cowboy.WebSockets.csproj -IncludeReferencedProjects -Symbols -Build -Prop Configuration=Release -OutputDirectory ".\packages"
+nuget pack ..\Cowboy\Cowboy.Sockets\Cowboy.Sockets.csproj -IncludeReferencedProjects -Symbols -Build -Prop Configuration=Release -OutputDirectory ".\packages"

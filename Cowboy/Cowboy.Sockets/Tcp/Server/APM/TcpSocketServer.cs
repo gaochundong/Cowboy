@@ -4,7 +4,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using Cowboy.Buffer;
-using Cowboy.Logging;
+using Logrila.Logging;
 
 namespace Cowboy.Sockets
 {

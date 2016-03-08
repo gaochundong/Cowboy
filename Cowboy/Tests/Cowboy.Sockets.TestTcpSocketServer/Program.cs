@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Text;
-using Cowboy.Logging.NLogIntegration;
+using Logrila.Logging.NLogIntegration;
 
 namespace Cowboy.Sockets.TestTcpSocketServer
 {

@@ -7,7 +7,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Cowboy.Buffer;
-using Cowboy.Logging;
+using Logrila.Logging;
 
 namespace Cowboy.Sockets
 {

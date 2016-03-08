@@ -5,7 +5,7 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using Cowboy.Buffer;
-using Cowboy.Logging;
+using Logrila.Logging;
 
 namespace Cowboy.WebSockets
 {

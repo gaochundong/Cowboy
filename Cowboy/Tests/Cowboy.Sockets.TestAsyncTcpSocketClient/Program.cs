@@ -2,8 +2,8 @@
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
-using Cowboy.Logging;
-using Cowboy.Logging.NLogIntegration;
+using Logrila.Logging;
+using Logrila.Logging.NLogIntegration;
 
 namespace Cowboy.Sockets.TestAsyncTcpSocketClient
 {
