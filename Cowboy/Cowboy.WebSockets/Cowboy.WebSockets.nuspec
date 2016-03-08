@@ -12,10 +12,7 @@
     <description>Cowboy is a library for building sockets based services.</description>
     <copyright>Copyright © 2015-2016 Dennis Gao.</copyright>
     <dependencies>
-      <dependency id="Logrila" version="1.0.0" />
+      <dependency id="Logrila.Logging" version="1.0.0" />
     </dependencies>
   </metadata>
-  <files>
-    <file src="..\Cowboy.WebSockets\bin\Release\Cowboy.WebSockets.dll" target="lib\net46" />
-  </files>
 </package>

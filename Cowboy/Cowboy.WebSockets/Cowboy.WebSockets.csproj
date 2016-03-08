@@ -106,6 +106,10 @@
       <Project>{7ada144a-a176-437b-812e-889b6aa2536e}</Project>
       <Name>Cowboy.Logging</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Cowboy.Sockets\Cowboy.Sockets.csproj">
+      <Project>{39d916fe-2c09-47ab-a5a2-1a23787f20ba}</Project>
+      <Name>Cowboy.Sockets</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
