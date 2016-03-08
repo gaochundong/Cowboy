@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Cowboy</id>
+    <version>1.2.11.0</version>
+    <title>Cowboy</title>
+    <authors>Dennis Gao</authors>
+    <owners>Dennis Gao</owners>
+    <licenseUrl>https://github.com/gaochundong/Cowboy/blob/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/gaochundong/Cowboy</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Cowboy is a library for building sockets based services.</description>
+    <copyright>Copyright © 2015-2016 Dennis Gao.</copyright>
+    <dependencies>
+      <dependency id="Logrila" version="1.0.0" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="..\Cowboy.WebSockets\bin\Release\Cowboy.WebSockets.dll" target="lib\net46" />
+  </files>
+</package>

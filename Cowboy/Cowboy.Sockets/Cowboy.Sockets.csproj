@@ -40,18 +40,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\Cowboy.Buffer\BufferDeflector.cs">
-      <Link>Buffer\BufferDeflector.cs</Link>
-    </Compile>
-    <Compile Include="..\Cowboy.Buffer\BufferValidator.cs">
-      <Link>Buffer\BufferValidator.cs</Link>
-    </Compile>
-    <Compile Include="..\Cowboy.Buffer\GrowingByteBufferManager.cs">
-      <Link>Buffer\GrowingByteBufferManager.cs</Link>
-    </Compile>
-    <Compile Include="..\Cowboy.Buffer\IBufferManager.cs">
-      <Link>Buffer\IBufferManager.cs</Link>
-    </Compile>
     <Compile Include="..\SolutionVersion.cs">
       <Link>SolutionVersion.cs</Link>
     </Compile>
@@ -119,6 +107,10 @@
     <Compile Include="Extensions\TplExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Cowboy.Buffer\Cowboy.Buffer.csproj">
+      <Project>{11ae03d6-db99-436b-950a-2ebcef1c82c5}</Project>
+      <Name>Cowboy.Buffer</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Cowboy.Logging\Cowboy.Logging.csproj">
       <Project>{7ada144a-a176-437b-812e-889b6aa2536e}</Project>
       <Name>Cowboy.Logging</Name>
