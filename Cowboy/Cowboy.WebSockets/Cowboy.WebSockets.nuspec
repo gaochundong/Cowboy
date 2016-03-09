@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <package >
   <metadata>
-    <id>Cowboy.Sockets</id>
+    <id>Cowboy.WebSockets</id>
     <version>1.2.11.0</version>
-    <title>Cowboy.Sockets</title>
+    <title>Cowboy.WebSockets</title>
     <authors>Dennis Gao</authors>
     <owners>Dennis Gao</owners>
     <licenseUrl>https://github.com/gaochundong/Cowboy/blob/master/LICENSE</licenseUrl>
