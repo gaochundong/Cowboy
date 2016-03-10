@@ -313,34 +313,6 @@ namespace Cowboy.Sockets
             }
         }
 
-        private bool ShouldThrow(Exception ex)
-        {
-            if (ex is IOException
-                && ex.InnerException != null
-                && ex.InnerException is SocketException
-                && (ex.InnerException as SocketException).SocketErrorCode == SocketError.TimedOut)
-            {
-                _log.Error(ex.Message, ex);
-                return false;
-            }
-
-            if (ex is ObjectDisposedException
-                || ex is InvalidOperationException
-                || ex is SocketException
-                || ex is IOException
-                || ex is NullReferenceException
-                )
-            {
-                if (ex is SocketException)
-                    _log.Error(string.Format("Client [{0}] exception occurred, [{1}].", this, ex.Message), ex);
-
-                return false;
-            }
-
-            _log.Error(string.Format("Client [{0}] exception occurred, [{1}].", this, ex.Message), ex);
-            return true;
-        }
-
         private void ConfigureClient()
         {
             _tcpClient.ReceiveBufferSize = _configuration.ReceiveBufferSize;
@@ -410,11 +382,6 @@ namespace Cowboy.Sockets
             return sslStream;
         }
 
-        private void HandleUserSideError(Exception ex)
-        {
-            _log.Error(string.Format("Session [{0}] error occurred in user side [{1}].", this, ex.Message), ex);
-        }
-
         #endregion
 
         #region Close
@@ -457,6 +424,43 @@ namespace Cowboy.Sockets
             {
                 HandleUserSideError(ex);
             }
+        }
+
+        #endregion
+
+        #region Exception Handler
+
+        private bool ShouldThrow(Exception ex)
+        {
+            if (ex is IOException
+                && ex.InnerException != null
+                && ex.InnerException is SocketException
+                && (ex.InnerException as SocketException).SocketErrorCode == SocketError.TimedOut)
+            {
+                _log.Error(ex.Message, ex);
+                return false;
+            }
+
+            if (ex is ObjectDisposedException
+                || ex is InvalidOperationException
+                || ex is SocketException
+                || ex is IOException
+                || ex is NullReferenceException
+                )
+            {
+                if (ex is SocketException)
+                    _log.Error(string.Format("Client [{0}] exception occurred, [{1}].", this, ex.Message), ex);
+
+                return false;
+            }
+
+            _log.Error(string.Format("Client [{0}] exception occurred, [{1}].", this, ex.Message), ex);
+            return true;
+        }
+
+        private void HandleUserSideError(Exception ex)
+        {
+            _log.Error(string.Format("Client [{0}] error occurred in user side [{1}].", this, ex.Message), ex);
         }
 
         #endregion

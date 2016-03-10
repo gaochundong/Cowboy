@@ -58,6 +58,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Buffer", "Cowboy.Buf
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Buffer.UnitTests", "Tests\Cowboy.Buffer.UnitTests\Cowboy.Buffer.UnitTests.csproj", "{610C2717-7AB1-46C1-89C3-07A22F89A6BF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.WebSockets.UnityWebSocketClient", "Cowboy.WebSockets.UnityWebSocketClient\Cowboy.WebSockets.UnityWebSocketClient.csproj", "{671E566B-878A-4642-8011-AA4168773ADF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.WebSockets.TestUnityWebSocketClient", "Tests\Cowboy.WebSockets.TestUnityWebSocketClient\Cowboy.WebSockets.TestUnityWebSocketClient.csproj", "{D6DB086F-FFE4-461A-89BF-343195E09287}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -124,6 +128,14 @@ Global
 		{610C2717-7AB1-46C1-89C3-07A22F89A6BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{610C2717-7AB1-46C1-89C3-07A22F89A6BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{610C2717-7AB1-46C1-89C3-07A22F89A6BF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{671E566B-878A-4642-8011-AA4168773ADF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{671E566B-878A-4642-8011-AA4168773ADF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{671E566B-878A-4642-8011-AA4168773ADF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{671E566B-878A-4642-8011-AA4168773ADF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D6DB086F-FFE4-461A-89BF-343195E09287}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6DB086F-FFE4-461A-89BF-343195E09287}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6DB086F-FFE4-461A-89BF-343195E09287}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6DB086F-FFE4-461A-89BF-343195E09287}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -147,5 +159,6 @@ Global
 		{563E2008-51A7-4DF1-9F3E-3AE14BFA8605} = {AE0D79BA-5B26-4179-B316-B3489183F95A}
 		{4D899C99-E59E-4BB6-B67D-D9C06528AB6B} = {563E2008-51A7-4DF1-9F3E-3AE14BFA8605}
 		{610C2717-7AB1-46C1-89C3-07A22F89A6BF} = {0E04BEDA-90F9-4E44-91B9-FAE42EF01498}
+		{D6DB086F-FFE4-461A-89BF-343195E09287} = {587FEB1F-1F50-41B0-89CC-B5423ED04842}
 	EndGlobalSection
 EndGlobal

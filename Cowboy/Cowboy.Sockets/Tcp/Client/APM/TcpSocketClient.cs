@@ -151,25 +151,6 @@ namespace Cowboy.Sockets
             }
         }
 
-        private bool CloseIfShould(Exception ex)
-        {
-            if (ex is ObjectDisposedException
-                || ex is InvalidOperationException
-                || ex is SocketException
-                || ex is IOException
-                || ex is NullReferenceException
-                )
-            {
-                _log.Error(ex.Message, ex);
-
-                Close();
-
-                return true;
-            }
-
-            return false;
-        }
-
         private void ConfigureClient()
         {
             _tcpClient.ReceiveBufferSize = _configuration.ReceiveBufferSize;
@@ -393,6 +374,34 @@ namespace Cowboy.Sockets
 
         #endregion
 
+        #region Exception Handler
+
+        private bool CloseIfShould(Exception ex)
+        {
+            if (ex is ObjectDisposedException
+                || ex is InvalidOperationException
+                || ex is SocketException
+                || ex is IOException
+                || ex is NullReferenceException
+                )
+            {
+                _log.Error(ex.Message, ex);
+
+                Close();
+
+                return true;
+            }
+
+            return false;
+        }
+
+        private void HandleUserSideError(Exception ex)
+        {
+            _log.Error(string.Format("Client [{0}] error occurred in user side [{1}].", this, ex.Message), ex);
+        }
+
+        #endregion
+
         #region Send
 
         public void Send(byte[] data)
@@ -522,11 +531,6 @@ namespace Cowboy.Sockets
             {
                 ServerDataReceived(this, new TcpServerDataReceivedEventArgs(this, data, dataOffset, dataLength));
             }
-        }
-
-        private void HandleUserSideError(Exception ex)
-        {
-            _log.Error(string.Format("Session [{0}] error occurred in user side [{1}].", this, ex.Message), ex);
         }
 
         #endregion

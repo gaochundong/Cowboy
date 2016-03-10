@@ -104,7 +104,7 @@ namespace Cowboy.Sockets.Experimental
 
         #endregion
 
-        #region Start
+        #region Process
 
         internal async Task Start()
         {
@@ -213,43 +213,6 @@ namespace Cowboy.Sockets.Experimental
             }
         }
 
-        private bool ShouldThrow(Exception ex)
-        {
-            if (ex is IOException
-                && ex.InnerException != null
-                && ex.InnerException is SocketException
-                && (ex.InnerException as SocketException).SocketErrorCode == SocketError.TimedOut)
-            {
-                _log.Error(ex.Message, ex);
-                return false;
-            }
-
-            if (ex is ObjectDisposedException
-                || ex is InvalidOperationException
-                || ex is SocketException
-                || ex is IOException
-                || ex is NullReferenceException
-                )
-            {
-                if (ex is SocketException)
-                    _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
-
-                return false;
-            }
-
-            _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
-            return true;
-        }
-
-        private void HandleUserSideError(Exception ex)
-        {
-            _log.Error(string.Format("Session [{0}] error occurred in user side [{1}].", this, ex.Message), ex);
-        }
-
-        #endregion
-
-        #region Close
-
         public async Task Close()
         {
             if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
@@ -288,6 +251,43 @@ namespace Cowboy.Sockets.Experimental
             {
                 HandleUserSideError(ex);
             }
+        }
+
+        #endregion
+
+        #region Exception Handler
+
+        private bool ShouldThrow(Exception ex)
+        {
+            if (ex is IOException
+                && ex.InnerException != null
+                && ex.InnerException is SocketException
+                && (ex.InnerException as SocketException).SocketErrorCode == SocketError.TimedOut)
+            {
+                _log.Error(ex.Message, ex);
+                return false;
+            }
+
+            if (ex is ObjectDisposedException
+                || ex is InvalidOperationException
+                || ex is SocketException
+                || ex is IOException
+                || ex is NullReferenceException
+                )
+            {
+                if (ex is SocketException)
+                    _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
+
+                return false;
+            }
+
+            _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
+            return true;
+        }
+
+        private void HandleUserSideError(Exception ex)
+        {
+            _log.Error(string.Format("Session [{0}] error occurred in user side [{1}].", this, ex.Message), ex);
         }
 
         #endregion

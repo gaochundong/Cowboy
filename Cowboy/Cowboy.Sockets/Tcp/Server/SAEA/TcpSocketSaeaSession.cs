@@ -150,7 +150,7 @@ namespace Cowboy.Sockets
 
         #endregion
 
-        #region Start
+        #region Process
 
         internal async Task Start()
         {
@@ -297,6 +297,10 @@ namespace Cowboy.Sockets
                 HandleUserSideError(ex);
             }
         }
+
+        #endregion
+
+        #region Exception Handler
 
         private bool ShouldThrow(Exception ex)
         {

@@ -64,36 +64,7 @@ namespace Cowboy.WebSockets
                     string.Format("Not support the specified scheme [{0}].", uri.Scheme));
 
             _uri = uri;
-
-            var host = _uri.Host;
-            var port = _uri.Port > 0 ? _uri.Port : uri.Scheme.ToLowerInvariant() == "wss" ? 443 : 80;
-
-            IPAddress ipAddress;
-            if (IPAddress.TryParse(host, out ipAddress))
-            {
-                _remoteEndPoint = new IPEndPoint(ipAddress, port);
-            }
-            else
-            {
-                if (host.ToLowerInvariant() == "localhost")
-                {
-                    _remoteEndPoint = new IPEndPoint(IPAddress.Parse(@"127.0.0.1"), port);
-                }
-                else
-                {
-                    IPAddress[] addresses = Dns.GetHostAddresses(host);
-                    if (addresses.Any())
-                    {
-                        _remoteEndPoint = new IPEndPoint(addresses.First(), port);
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException(
-                            string.Format("Cannot resolve host [{0}] by DNS.", host));
-                    }
-                }
-            }
-
+            _remoteEndPoint = ResolveRemoteEndPoint(_uri);
             _dispatcher = dispatcher;
             _configuration = configuration ?? new AsyncWebSocketClientConfiguration();
             _sslEnabled = uri.Scheme.ToLowerInvariant() == "wss";
@@ -137,6 +108,38 @@ namespace Cowboy.WebSockets
             _keepAliveTracker = KeepAliveTracker.Create(KeepAliveInterval, new TimerCallback((s) => OnKeepAlive()));
             _keepAliveTimeoutTimer = new Timer(new TimerCallback((s) => OnKeepAliveTimeout()), null, Timeout.Infinite, Timeout.Infinite);
             _closingTimeoutTimer = new Timer(new TimerCallback((s) => OnCloseTimeout()), null, Timeout.Infinite, Timeout.Infinite);
+        }
+
+        private IPEndPoint ResolveRemoteEndPoint(Uri uri)
+        {
+            var host = uri.Host;
+            var port = uri.Port > 0 ? uri.Port : uri.Scheme.ToLowerInvariant() == "wss" ? 443 : 80;
+
+            IPAddress ipAddress;
+            if (IPAddress.TryParse(host, out ipAddress))
+            {
+                return new IPEndPoint(ipAddress, port);
+            }
+            else
+            {
+                if (host.ToLowerInvariant() == "localhost")
+                {
+                    return new IPEndPoint(IPAddress.Parse(@"127.0.0.1"), port);
+                }
+                else
+                {
+                    IPAddress[] addresses = Dns.GetHostAddresses(host);
+                    if (addresses.Length > 0)
+                    {
+                        return new IPEndPoint(addresses[0], port);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException(
+                            string.Format("Cannot resolve host [{0}] by DNS.", host));
+                    }
+                }
+            }
         }
 
         #endregion
@@ -554,34 +557,6 @@ namespace Cowboy.WebSockets
             }
         }
 
-        private bool ShouldThrow(Exception ex)
-        {
-            if (ex is IOException
-                && ex.InnerException != null
-                && ex.InnerException is SocketException
-                && (ex.InnerException as SocketException).SocketErrorCode == SocketError.TimedOut)
-            {
-                _log.Error(ex.Message, ex);
-                return false;
-            }
-
-            if (ex is ObjectDisposedException
-                || ex is InvalidOperationException
-                || ex is SocketException
-                || ex is IOException
-                || ex is NullReferenceException
-                )
-            {
-                if (ex is SocketException)
-                    _log.Error(string.Format("Client [{0}] exception occurred, [{1}].", this, ex.Message), ex);
-
-                return false;
-            }
-
-            _log.Error(string.Format("Client [{0}] exception occurred, [{1}].", this, ex.Message), ex);
-            return true;
-        }
-
         private void ConfigureClient()
         {
             _tcpClient.ReceiveBufferSize = _configuration.ReceiveBufferSize;
@@ -694,11 +669,6 @@ namespace Cowboy.WebSockets
             }
 
             return handshakeResult;
-        }
-
-        private void HandleUserSideError(Exception ex)
-        {
-            _log.Error(string.Format("Session [{0}] error occurred in user side [{1}].", this, ex.Message), ex);
         }
 
         #endregion
@@ -823,6 +793,43 @@ namespace Cowboy.WebSockets
             // TCP Close from the server in a reasonable time period.
             _log.WarnFormat("Closing timer timeout [{0}] then close automatically.", CloseTimeout);
             await Close();
+        }
+
+        #endregion
+
+        #region Exception Handler
+
+        private bool ShouldThrow(Exception ex)
+        {
+            if (ex is IOException
+                && ex.InnerException != null
+                && ex.InnerException is SocketException
+                && (ex.InnerException as SocketException).SocketErrorCode == SocketError.TimedOut)
+            {
+                _log.Error(ex.Message, ex);
+                return false;
+            }
+
+            if (ex is ObjectDisposedException
+                || ex is InvalidOperationException
+                || ex is SocketException
+                || ex is IOException
+                || ex is NullReferenceException
+                )
+            {
+                if (ex is SocketException)
+                    _log.Error(string.Format("Client [{0}] exception occurred, [{1}].", this, ex.Message), ex);
+
+                return false;
+            }
+
+            _log.Error(string.Format("Client [{0}] exception occurred, [{1}].", this, ex.Message), ex);
+            return true;
+        }
+
+        private void HandleUserSideError(Exception ex)
+        {
+            _log.Error(string.Format("Client [{0}] error occurred in user side [{1}].", this, ex.Message), ex);
         }
 
         #endregion

@@ -80,7 +80,7 @@ namespace Cowboy.Sockets
 
         #endregion
 
-        #region Connect
+        #region Process
 
         internal void Start()
         {
@@ -167,27 +167,6 @@ namespace Cowboy.Sockets
                     }
                 }
             }
-        }
-
-        private bool CloseIfShould(Exception ex)
-        {
-            if (ex is ObjectDisposedException
-                || ex is InvalidOperationException
-                || ex is SocketException
-                || ex is IOException
-                || ex is NullReferenceException
-                )
-            {
-                if (ex is SocketException)
-                    _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
-
-                // connection has been closed
-                Close();
-
-                return true;
-            }
-
-            return false;
         }
 
         private void ConfigureClient()
@@ -372,6 +351,31 @@ namespace Cowboy.Sockets
                     break;
                 }
             }
+        }
+
+        #endregion
+
+        #region Exception Handler
+
+        private bool CloseIfShould(Exception ex)
+        {
+            if (ex is ObjectDisposedException
+                || ex is InvalidOperationException
+                || ex is SocketException
+                || ex is IOException
+                || ex is NullReferenceException
+                )
+            {
+                if (ex is SocketException)
+                    _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
+
+                // connection has been closed
+                Close();
+
+                return true;
+            }
+
+            return false;
         }
 
         private void HandleUserSideError(Exception ex)
