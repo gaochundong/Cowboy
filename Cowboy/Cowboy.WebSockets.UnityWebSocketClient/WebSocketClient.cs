@@ -393,14 +393,17 @@ namespace Cowboy.WebSockets
 
         private void ContinueReadBuffer()
         {
-            try
+            if (State == WebSocketState.Open || State == WebSocketState.Closing)
             {
-                _stream.BeginRead(_receiveBuffer, _receiveBufferOffset, _receiveBuffer.Length - _receiveBufferOffset, HandleDataReceived, _tcpClient);
-            }
-            catch (Exception ex)
-            {
-                if (!CloseIfShould(ex))
-                    throw;
+                try
+                {
+                    _stream.BeginRead(_receiveBuffer, _receiveBufferOffset, _receiveBuffer.Length - _receiveBufferOffset, HandleDataReceived, _tcpClient);
+                }
+                catch (Exception ex)
+                {
+                    if (!CloseIfShould(ex))
+                        throw;
+                }
             }
         }
 
@@ -661,7 +664,13 @@ namespace Cowboy.WebSockets
                             if (_stream.CanWrite)
                             {
                                 StartClosingTimer();
-                                _stream.Write(closingHandshake, 0, closingHandshake.Length);
+                                var ar = _stream.BeginWrite(closingHandshake, 0, closingHandshake.Length, null, _stream);
+                                if (!ar.AsyncWaitHandle.WaitOne(ConnectTimeout))
+                                {
+                                    InternalClose();
+                                    throw new TimeoutException(string.Format(
+                                        "Closing handshake with remote [{0}] timeout [{1}].", RemoteEndPoint, ConnectTimeout));
+                                }
                             }
                         }
                         catch (Exception ex)
@@ -855,7 +864,6 @@ namespace Cowboy.WebSockets
                 if (_stream.CanWrite)
                 {
                     _stream.BeginWrite(frame, 0, frame.Length, HandleDataWritten, _stream);
-                    _keepAliveTracker.OnDataSent();
                 }
             }
             catch (Exception ex)
@@ -870,6 +878,7 @@ namespace Cowboy.WebSockets
             try
             {
                 _stream.EndWrite(ar);
+                _keepAliveTracker.OnDataSent();
             }
             catch (Exception ex)
             {
@@ -951,7 +960,7 @@ namespace Cowboy.WebSockets
                     if (_keepAliveTracker.ShouldSendKeepAlive())
                     {
                         var keepAliveFrame = new PingFrame().ToArray(_frameBuilder);
-                        //SendFrame(keepAliveFrame);
+                        SendFrame(keepAliveFrame);
                         StartKeepAliveTimeoutTimer();
 
                         _keepAliveTracker.ResetTimer();

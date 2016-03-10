@@ -695,10 +695,16 @@ namespace Cowboy.WebSockets
                             if (_stream.CanWrite)
                             {
                                 StartClosingTimer();
-                                await _stream.WriteAsync(closingHandshake, 0, closingHandshake.Length);
 #if DEBUG
                                 _log.DebugFormat("Send client side close frame [{0}] [{1}].", closeCode, closeReason);
 #endif
+                                var awaiter = _stream.WriteAsync(closingHandshake, 0, closingHandshake.Length);
+                                if (!awaiter.Wait(ConnectTimeout))
+                                {
+                                    await InternalClose();
+                                    throw new TimeoutException(string.Format(
+                                        "Closing handshake with [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
+                                }
                             }
                         }
                         catch (Exception ex) when (!ShouldThrow(ex)) { }
