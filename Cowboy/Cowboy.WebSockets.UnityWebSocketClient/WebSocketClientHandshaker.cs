@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
-using Cowboy.Buffer;
 
 namespace Cowboy.WebSockets
 {

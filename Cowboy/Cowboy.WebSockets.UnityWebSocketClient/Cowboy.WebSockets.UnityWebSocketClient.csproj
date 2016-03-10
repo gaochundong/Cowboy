@@ -35,28 +35,20 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\cowboy.buffer\BufferDeflector.cs">
-      <Link>Buffer\BufferDeflector.cs</Link>
-    </Compile>
-    <Compile Include="..\cowboy.buffer\BufferValidator.cs">
-      <Link>Buffer\BufferValidator.cs</Link>
-    </Compile>
-    <Compile Include="..\cowboy.buffer\GrowingByteBufferManager.cs">
-      <Link>Buffer\GrowingByteBufferManager.cs</Link>
-    </Compile>
-    <Compile Include="..\cowboy.buffer\IBufferManager.cs">
-      <Link>Buffer\IBufferManager.cs</Link>
-    </Compile>
     <Compile Include="..\SolutionVersion.cs">
       <Link>SolutionVersion.cs</Link>
     </Compile>
-    <Compile Include="Client\EventArgs\WebSocketServerTextReceivedEventArgs.cs" />
-    <Compile Include="Client\EventArgs\WebSocketServerConnectedEventArgs.cs" />
-    <Compile Include="Client\EventArgs\WebSocketServerBinaryReceivedEventArgs.cs" />
-    <Compile Include="Client\EventArgs\WebSocketServerDisconnectedEventArgs.cs" />
-    <Compile Include="Client\WebSocketClient.cs" />
-    <Compile Include="Client\WebSocketClientConfiguration.cs" />
-    <Compile Include="Client\WebSocketClientHandshaker.cs" />
+    <Compile Include="Buffer\BufferDeflector.cs" />
+    <Compile Include="Buffer\BufferValidator.cs" />
+    <Compile Include="Buffer\GrowingByteBufferManager.cs" />
+    <Compile Include="Buffer\IBufferManager.cs" />
+    <Compile Include="EventArgs\WebSocketServerTextReceivedEventArgs.cs" />
+    <Compile Include="EventArgs\WebSocketServerConnectedEventArgs.cs" />
+    <Compile Include="EventArgs\WebSocketServerBinaryReceivedEventArgs.cs" />
+    <Compile Include="EventArgs\WebSocketServerDisconnectedEventArgs.cs" />
+    <Compile Include="WebSocketClient.cs" />
+    <Compile Include="WebSocketClientConfiguration.cs" />
+    <Compile Include="WebSocketClientHandshaker.cs" />
     <Compile Include="Exceptions\WebSocketException.cs" />
     <Compile Include="Exceptions\WebSocketHandshakeException.cs" />
     <Compile Include="Framing\BinaryFragmentationFrame.cs" />
