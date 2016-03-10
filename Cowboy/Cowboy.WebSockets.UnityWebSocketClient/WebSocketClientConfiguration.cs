@@ -19,7 +19,6 @@ namespace Cowboy.WebSockets
 
             SslTargetHost = null;
             SslClientCertificates = new X509CertificateCollection();
-            //SslEncryptionPolicy = EncryptionPolicy.RequireEncryption;
             SslEnabledProtocols = SslProtocols.Ssl3 | SslProtocols.Tls;
             SslCheckCertificateRevocation = false;
             SslPolicyErrorsBypassed = false;
@@ -41,7 +40,6 @@ namespace Cowboy.WebSockets
 
         public string SslTargetHost { get; set; }
         public X509CertificateCollection SslClientCertificates { get; set; }
-        //public EncryptionPolicy SslEncryptionPolicy { get; set; }
         public SslProtocols SslEnabledProtocols { get; set; }
         public bool SslCheckCertificateRevocation { get; set; }
         public bool SslPolicyErrorsBypassed { get; set; }

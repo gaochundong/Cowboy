@@ -71,10 +71,10 @@ namespace Cowboy.WebSockets.TestAsyncWebSocketClient
                                 {
                                     await _client.SendBinaryAsync(Encoding.UTF8.GetBytes(text));
                                     Console.WriteLine("Client [{0}] send binary -> [{1}].", _client.LocalEndPoint, text);
-                                }
 
-                                //await _client.SendText(text);
-                                //Console.WriteLine("Client [{0}] send text -> [{1}].", _client.LocalEndPoint, text);
+                                    //await _client.SendTextAsync(text);
+                                    //Console.WriteLine("Client [{0}] send text -> [{1}].", _client.LocalEndPoint, text);
+                                }
                             }).Forget();
                         }
                         catch (Exception ex)
