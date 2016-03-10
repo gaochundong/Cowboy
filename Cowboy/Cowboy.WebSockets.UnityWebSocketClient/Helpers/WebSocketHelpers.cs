@@ -1,7 +1,4 @@
-﻿using System;
-using System.Globalization;
-
-namespace Cowboy.WebSockets
+﻿namespace Cowboy.WebSockets
 {
     internal sealed class WebSocketHelpers
     {

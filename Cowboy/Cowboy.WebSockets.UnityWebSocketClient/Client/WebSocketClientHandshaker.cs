@@ -188,7 +188,7 @@ namespace Cowboy.WebSockets
                 // subprotocol not requested by the client), the client MUST _Fail
                 // the WebSocket Connection_.
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw;
             }

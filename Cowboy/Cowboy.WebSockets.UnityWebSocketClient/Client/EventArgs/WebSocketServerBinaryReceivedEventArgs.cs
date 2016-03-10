@@ -2,14 +2,14 @@
 
 namespace Cowboy.WebSockets
 {
-    public class WebSocketServerDataReceivedEventArgs : EventArgs
+    public class WebSocketServerBinaryReceivedEventArgs : EventArgs
     {
-        public WebSocketServerDataReceivedEventArgs(WebSocketClient client, byte[] data)
+        public WebSocketServerBinaryReceivedEventArgs(WebSocketClient client, byte[] data)
             : this(client, data, 0, data.Length)
         {
         }
 
-        public WebSocketServerDataReceivedEventArgs(WebSocketClient client, byte[] data, int dataOffset, int dataLength)
+        public WebSocketServerBinaryReceivedEventArgs(WebSocketClient client, byte[] data, int dataOffset, int dataLength)
         {
             Client = client;
             Data = data;

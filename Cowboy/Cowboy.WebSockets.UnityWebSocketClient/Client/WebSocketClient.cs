@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Net;
 using System.Net.Security;
@@ -20,8 +19,8 @@ namespace Cowboy.WebSockets
         private TcpClient _tcpClient;
         private readonly WebSocketClientConfiguration _configuration;
         private readonly IFrameBuilder _frameBuilder = new WebSocketFrameBuilder();
-        private IPEndPoint _remoteEndPoint;
-        private IPEndPoint _localEndPoint;
+        private IPEndPoint _remoteEndPoint = null;
+        private IPEndPoint _localEndPoint = null;
         private Stream _stream;
         private byte[] _receiveBuffer;
         private int _receiveBufferOffset = 0;
@@ -162,6 +161,484 @@ namespace Cowboy.WebSockets
 
         #endregion
 
+        #region Connect
+
+        public void Connect()
+        {
+            int origin = Interlocked.CompareExchange(ref _state, _connecting, _none);
+            if (origin == _disposed)
+            {
+                throw new ObjectDisposedException(GetType().FullName);
+            }
+            else if (origin != _none)
+            {
+                throw new InvalidOperationException("This websocket client has already connected to server.");
+            }
+
+            _tcpClient = _localEndPoint != null ? new TcpClient(_localEndPoint) : new TcpClient();
+
+            _receiveBuffer = _bufferManager.BorrowBuffer();
+            _receiveBufferOffset = 0;
+
+            var ar = _tcpClient.BeginConnect(_remoteEndPoint.Address, _remoteEndPoint.Port, null, _tcpClient);
+            if (!ar.AsyncWaitHandle.WaitOne(ConnectTimeout))
+            {
+                Abort();
+                throw new TimeoutException(string.Format(
+                    "Connect to [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
+            }
+            _tcpClient.EndConnect(ar);
+
+            HandleTcpServerConnected();
+        }
+
+        private void HandleTcpServerConnected()
+        {
+            try
+            {
+                ConfigureClient();
+
+                _stream = NegotiateStream(_tcpClient.GetStream());
+
+                var handshaked = OpenHandshake();
+                if (!handshaked)
+                {
+                    Close(WebSocketCloseCode.ProtocolError, "Opening handshake failed.");
+                    throw new WebSocketException(string.Format(
+                        "Handshake with remote [{0}] failed.", RemoteEndPoint));
+                }
+
+                if (Interlocked.CompareExchange(ref _state, _connected, _connecting) != _connecting)
+                {
+                    throw new ObjectDisposedException(GetType().FullName);
+                }
+
+                _log(string.Format("Connected to server [{0}] on [{1}].",
+                    this.RemoteEndPoint, DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff")));
+
+                bool isErrorOccurredInUserSide = false;
+                try
+                {
+                    RaiseServerConnected();
+                }
+                catch (Exception ex)
+                {
+                    isErrorOccurredInUserSide = true;
+                    HandleUserSideError(ex);
+                }
+
+                if (!isErrorOccurredInUserSide)
+                {
+                    _keepAliveTracker.StartTimer();
+                    ContinueReadBuffer();
+                }
+                else
+                {
+                    Abort();
+                }
+            }
+            catch (ObjectDisposedException) { }
+            catch (TimeoutException ex)
+            {
+                _log(ex.Message);
+                Abort();
+                throw;
+            }
+            catch (WebSocketException ex)
+            {
+                _log(ex.Message);
+                Abort();
+                throw;
+            }
+        }
+
+        private void ConfigureClient()
+        {
+            _tcpClient.ReceiveBufferSize = _configuration.ReceiveBufferSize;
+            _tcpClient.SendBufferSize = _configuration.SendBufferSize;
+            _tcpClient.ReceiveTimeout = (int)_configuration.ReceiveTimeout.TotalMilliseconds;
+            _tcpClient.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
+            _tcpClient.NoDelay = _configuration.NoDelay;
+            _tcpClient.LingerState = _configuration.LingerState;
+        }
+
+        private Stream NegotiateStream(Stream stream)
+        {
+            if (!_sslEnabled)
+                return stream;
+
+            var validateRemoteCertificate = new RemoteCertificateValidationCallback(
+                (object sender,
+                X509Certificate certificate,
+                X509Chain chain,
+                SslPolicyErrors sslPolicyErrors)
+                =>
+                {
+                    if (sslPolicyErrors == SslPolicyErrors.None)
+                        return true;
+
+                    if (_configuration.SslPolicyErrorsBypassed)
+                        return true;
+                    else
+                        _log(string.Format("Error occurred when validating remote certificate: [{0}], [{1}].",
+                            this.RemoteEndPoint, sslPolicyErrors));
+
+                    return false;
+                });
+
+            var sslStream = new SslStream(
+                stream,
+                false,
+                validateRemoteCertificate,
+                null);
+
+            var ar = sslStream.BeginAuthenticateAsClient(
+                _configuration.SslTargetHost, // The name of the server that will share this SslStream.
+                _configuration.SslClientCertificates, // The X509CertificateCollection that contains client certificates.
+                _configuration.SslEnabledProtocols, // The SslProtocols value that represents the protocol used for authentication.
+                _configuration.SslCheckCertificateRevocation, // A Boolean value that specifies whether the certificate revocation list is checked during authentication.
+                null, _tcpClient);
+            if (!ar.AsyncWaitHandle.WaitOne(ConnectTimeout))
+            {
+                Close(WebSocketCloseCode.TlsHandshakeFailed, "SSL/TLS handshake timeout.");
+                throw new TimeoutException(string.Format(
+                    "Negotiate SSL/TSL with remote [{0}] timeout [{1}].", this.RemoteEndPoint, ConnectTimeout));
+            }
+            sslStream.EndAuthenticateAsClient(ar);
+
+            // When authentication succeeds, you must check the IsEncrypted and IsSigned properties 
+            // to determine what security services are used by the SslStream. 
+            // Check the IsMutuallyAuthenticated property to determine whether mutual authentication occurred.
+            _log(string.Format(
+                "Ssl Stream: SslProtocol[{0}], IsServer[{1}], IsAuthenticated[{2}], IsEncrypted[{3}], IsSigned[{4}], IsMutuallyAuthenticated[{5}], "
+                + "HashAlgorithm[{6}], HashStrength[{7}], KeyExchangeAlgorithm[{8}], KeyExchangeStrength[{9}], CipherAlgorithm[{10}], CipherStrength[{11}].",
+                sslStream.SslProtocol,
+                sslStream.IsServer,
+                sslStream.IsAuthenticated,
+                sslStream.IsEncrypted,
+                sslStream.IsSigned,
+                sslStream.IsMutuallyAuthenticated,
+                sslStream.HashAlgorithm,
+                sslStream.HashStrength,
+                sslStream.KeyExchangeAlgorithm,
+                sslStream.KeyExchangeStrength,
+                sslStream.CipherAlgorithm,
+                sslStream.CipherStrength));
+
+            return sslStream;
+        }
+
+        private bool OpenHandshake()
+        {
+            bool handshakeResult = false;
+
+            try
+            {
+                var requestBuffer = WebSocketClientHandshaker.CreateOpenningHandshakeRequest(this, out _secWebSocketKey);
+                var ar = _stream.BeginWrite(requestBuffer, 0, requestBuffer.Length, null, _stream);
+                if (!ar.AsyncWaitHandle.WaitOne(ConnectTimeout))
+                {
+                    Close(WebSocketCloseCode.ProtocolError, "Opening handshake timeout.");
+                    throw new TimeoutException(string.Format(
+                        "Handshake with remote [{0}] timeout [{1}].", RemoteEndPoint, ConnectTimeout));
+                }
+                _stream.EndWrite(ar);
+
+                int terminatorIndex = -1;
+                while (!WebSocketHelpers.FindHeaderTerminator(_receiveBuffer, _receiveBufferOffset, out terminatorIndex))
+                {
+                    ar = _stream.BeginRead(_receiveBuffer, _receiveBufferOffset, _receiveBuffer.Length - _receiveBufferOffset, null, _stream);
+                    if (!ar.AsyncWaitHandle.WaitOne(ConnectTimeout))
+                    {
+                        Close(WebSocketCloseCode.ProtocolError, "Opening handshake timeout.");
+                        throw new TimeoutException(string.Format(
+                            "Handshake with remote [{0}] timeout [{1}].", RemoteEndPoint, ConnectTimeout));
+                    }
+
+                    int receiveCount = _stream.EndRead(ar);
+                    if (receiveCount == 0)
+                    {
+                        throw new WebSocketHandshakeException(string.Format(
+                            "Handshake with remote [{0}] failed due to receive zero bytes.", RemoteEndPoint));
+                    }
+
+                    BufferDeflector.ReplaceBuffer(_bufferManager, ref _receiveBuffer, ref _receiveBufferOffset, receiveCount);
+
+                    if (_receiveBufferOffset > 2048)
+                    {
+                        throw new WebSocketHandshakeException(string.Format(
+                            "Handshake with remote [{0}] failed due to receive weird stream.", RemoteEndPoint));
+                    }
+                }
+
+                handshakeResult = WebSocketClientHandshaker.VerifyOpenningHandshakeResponse(this, _receiveBuffer, 0, terminatorIndex + Consts.HeaderTerminator.Length, _secWebSocketKey);
+
+                BufferDeflector.ShiftBuffer(_bufferManager, terminatorIndex + Consts.HeaderTerminator.Length, ref _receiveBuffer, ref _receiveBufferOffset);
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                handshakeResult = false;
+            }
+            catch (WebSocketHandshakeException ex)
+            {
+                _log(ex.Message);
+                handshakeResult = false;
+            }
+
+            return handshakeResult;
+        }
+
+        #endregion
+
+        #region Receive
+
+        private void ContinueReadBuffer()
+        {
+            try
+            {
+                _stream.BeginRead(_receiveBuffer, _receiveBufferOffset, _receiveBuffer.Length - _receiveBufferOffset, HandleDataReceived, _tcpClient);
+            }
+            catch (Exception ex)
+            {
+                if (!CloseIfShould(ex))
+                    throw;
+            }
+        }
+
+        private void HandleDataReceived(IAsyncResult ar)
+        {
+            try
+            {
+                int numberOfReadBytes = 0;
+                try
+                {
+                    // The EndRead method blocks until data is available. The EndRead method reads 
+                    // as much data as is available up to the number of bytes specified in the size 
+                    // parameter of the BeginRead method. If the remote host shuts down the Socket 
+                    // connection and all available data has been received, the EndRead method 
+                    // completes immediately and returns zero bytes.
+                    numberOfReadBytes = _stream.EndRead(ar);
+                }
+                catch (Exception)
+                {
+                    // unable to read data from transport connection, 
+                    // the existing connection was forcibly closes by remote host
+                    numberOfReadBytes = 0;
+                }
+
+                if (numberOfReadBytes == 0)
+                {
+                    // connection has been closed
+                    Abort();
+                    return;
+                }
+
+                ReceiveBuffer(numberOfReadBytes);
+
+                ContinueReadBuffer();
+            }
+            catch (Exception ex)
+            {
+                if (!CloseIfShould(ex))
+                    throw;
+            }
+        }
+
+        private void ReceiveBuffer(int receiveCount)
+        {
+            _keepAliveTracker.OnDataReceived();
+            BufferDeflector.ReplaceBuffer(_bufferManager, ref _receiveBuffer, ref _receiveBufferOffset, receiveCount);
+
+            while (true)
+            {
+                Header frameHeader = null;
+                if (_frameBuilder.TryDecodeFrameHeader(_receiveBuffer, _receiveBufferOffset, out frameHeader)
+                    && frameHeader.Length + frameHeader.PayloadLength <= _receiveBufferOffset)
+                {
+                    try
+                    {
+                        if (frameHeader.IsMasked)
+                        {
+                            Close(WebSocketCloseCode.ProtocolError, "A client MUST close a connection if it detects a masked frame.");
+                            throw new WebSocketException(string.Format(
+                                "Client received masked frame [{0}] from remote [{1}].", frameHeader.OpCode, RemoteEndPoint));
+                        }
+
+                        byte[] payload;
+                        int payloadOffset;
+                        int payloadCount;
+                        _frameBuilder.DecodePayload(_receiveBuffer, frameHeader, out payload, out payloadOffset, out payloadCount);
+
+                        switch (frameHeader.OpCode)
+                        {
+                            case OpCode.Continuation:
+                                {
+                                    throw new WebSocketException(string.Format(
+                                        "Client received continuation opcode [{0}] from remote [{1}] but not supported.", frameHeader.OpCode, RemoteEndPoint));
+                                }
+                            case OpCode.Text:
+                                {
+                                    if (frameHeader.IsFIN)
+                                    {
+                                        try
+                                        {
+                                            var text = Encoding.UTF8.GetString(payload, payloadOffset, payloadCount);
+                                            RaiseServerTextReceived(text);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            HandleUserSideError(ex);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        throw new WebSocketException(string.Format(
+                                            "Client received continuation opcode [{0}] from remote [{1}] but not supported.", frameHeader.OpCode, RemoteEndPoint));
+                                    }
+                                }
+                                break;
+                            case OpCode.Binary:
+                                {
+                                    if (frameHeader.IsFIN)
+                                    {
+                                        try
+                                        {
+                                            RaiseServerBinaryReceived(payload, payloadOffset, payloadCount);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            HandleUserSideError(ex);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        throw new WebSocketException(string.Format(
+                                            "Client received continuation opcode [{0}] from remote [{1}] but not supported.", frameHeader.OpCode, RemoteEndPoint));
+                                    }
+                                }
+                                break;
+                            case OpCode.Close:
+                                {
+                                    if (!frameHeader.IsFIN)
+                                    {
+                                        throw new WebSocketException(string.Format(
+                                            "Client received unfinished frame [{0}] from remote [{1}].", frameHeader.OpCode, RemoteEndPoint));
+                                    }
+
+                                    if (payloadCount > 1)
+                                    {
+                                        var statusCode = payload[0] * 256 + payload[1];
+                                        var closeCode = (WebSocketCloseCode)statusCode;
+                                        var closeReason = string.Empty;
+
+                                        if (payloadCount > 2)
+                                        {
+                                            closeReason = Encoding.UTF8.GetString(payload, 2, payloadCount - 2);
+                                        }
+
+                                        // If an endpoint receives a Close frame and did not previously send a
+                                        // Close frame, the endpoint MUST send a Close frame in response.  (When
+                                        // sending a Close frame in response, the endpoint typically echos the
+                                        // status code it received.)  It SHOULD do so as soon as practical.
+                                        Close(closeCode, closeReason);
+                                    }
+                                    else
+                                    {
+                                        Close(WebSocketCloseCode.InvalidPayloadData);
+                                    }
+                                }
+                                break;
+                            case OpCode.Ping:
+                                {
+                                    if (!frameHeader.IsFIN)
+                                    {
+                                        throw new WebSocketException(string.Format(
+                                            "Client received unfinished frame [{0}] from remote [{1}].", frameHeader.OpCode, RemoteEndPoint));
+                                    }
+
+                                    // Upon receipt of a Ping frame, an endpoint MUST send a Pong frame in
+                                    // response, unless it already received a Close frame.  It SHOULD
+                                    // respond with Pong frame as soon as is practical.  Pong frames are
+                                    // discussed in Section 5.5.3.
+                                    // 
+                                    // An endpoint MAY send a Ping frame any time after the connection is
+                                    // established and before the connection is closed.
+                                    // 
+                                    // A Ping frame may serve either as a keep-alive or as a means to
+                                    // verify that the remote endpoint is still responsive.
+                                    var ping = Encoding.UTF8.GetString(payload, payloadOffset, payloadCount);
+
+                                    if (State == WebSocketState.Open)
+                                    {
+                                        // A Pong frame sent in response to a Ping frame must have identical
+                                        // "Application data" as found in the message body of the Ping frame being replied to.
+                                        var pong = new PongFrame(ping).ToArray(_frameBuilder);
+                                        SendFrame(pong);
+                                    }
+                                }
+                                break;
+                            case OpCode.Pong:
+                                {
+                                    if (!frameHeader.IsFIN)
+                                    {
+                                        throw new WebSocketException(string.Format(
+                                            "Client received unfinished frame [{0}] from remote [{1}].", frameHeader.OpCode, RemoteEndPoint));
+                                    }
+
+                                    // If an endpoint receives a Ping frame and has not yet sent Pong
+                                    // frame(s) in response to previous Ping frame(s), the endpoint MAY
+                                    // elect to send a Pong frame for only the most recently processed Ping frame.
+                                    // 
+                                    // A Pong frame MAY be sent unsolicited.  This serves as a
+                                    // unidirectional heartbeat.  A response to an unsolicited Pong frame is not expected.
+                                    var pong = Encoding.UTF8.GetString(payload, payloadOffset, payloadCount);
+                                    StopKeepAliveTimeoutTimer();
+                                }
+                                break;
+                            default:
+                                {
+                                    // Incoming data MUST always be validated by both clients and servers.
+                                    // If, at any time, an endpoint is faced with data that it does not
+                                    // understand or that violates some criteria by which the endpoint
+                                    // determines safety of input, or when the endpoint sees an opening
+                                    // handshake that does not correspond to the values it is expecting
+                                    // (e.g., incorrect path or origin in the client request), the endpoint
+                                    // MAY drop the TCP connection.  If the invalid data was received after
+                                    // a successful WebSocket handshake, the endpoint SHOULD send a Close
+                                    // frame with an appropriate status code (Section 7.4) before proceeding
+                                    // to _Close the WebSocket Connection_.  Use of a Close frame with an
+                                    // appropriate status code can help in diagnosing the problem.  If the
+                                    // invalid data is sent during the WebSocket handshake, the server
+                                    // SHOULD return an appropriate HTTP [RFC2616] status code.
+                                    Close(WebSocketCloseCode.InvalidMessageType);
+                                    throw new NotSupportedException(
+                                        string.Format("Not support received opcode [{0}].", (byte)frameHeader.OpCode));
+                                }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _log(ex.Message);
+                        throw;
+                    }
+                    finally
+                    {
+                        try
+                        {
+                            BufferDeflector.ShiftBuffer(_bufferManager, frameHeader.Length + frameHeader.PayloadLength, ref _receiveBuffer, ref _receiveBufferOffset);
+                        }
+                        catch (ArgumentOutOfRangeException) { }
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+
+        #endregion
+
         #region Close
 
         public void Close(WebSocketCloseCode closeCode)
@@ -184,8 +661,8 @@ namespace Cowboy.WebSockets
                         {
                             if (_stream.CanWrite)
                             {
-                                _stream.BeginWrite(closingHandshake, 0, closingHandshake.Length, HandleClosingHandshakeDataWritten, _stream);
                                 StartClosingTimer();
+                                _stream.Write(closingHandshake, 0, closingHandshake.Length);
                             }
                         }
                         catch (Exception ex)
@@ -198,7 +675,7 @@ namespace Cowboy.WebSockets
                 case _connecting:
                 case _closing:
                     {
-                        Close();
+                        InternalClose();
                         return;
                     }
                 case _disposed:
@@ -208,16 +685,7 @@ namespace Cowboy.WebSockets
             }
         }
 
-        private void HandleClosingHandshakeDataWritten(IAsyncResult ar)
-        {
-            try
-            {
-                _stream.EndWrite(ar);
-            }
-            catch (Exception) { }
-        }
-
-        private void Close()
+        private void InternalClose()
         {
             if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
             {
@@ -269,7 +737,7 @@ namespace Cowboy.WebSockets
 
         public void Abort()
         {
-            Close();
+            InternalClose();
         }
 
         private void StartClosingTimer()
@@ -289,7 +757,7 @@ namespace Cowboy.WebSockets
             // sending and receiving a Close message, e.g., if it has not received a
             // TCP Close from the server in a reasonable time period.
             _log(string.Format("Closing timer timeout [{0}] then close automatically.", CloseTimeout));
-            Close();
+            InternalClose();
         }
 
         #endregion
@@ -307,7 +775,7 @@ namespace Cowboy.WebSockets
             {
                 _log(ex.Message);
 
-                Close();
+                Abort();
 
                 return true;
             }
@@ -350,11 +818,75 @@ namespace Cowboy.WebSockets
 
         #endregion
 
+        #region Send
+
+        public void SendText(string text)
+        {
+            SendFrame(new TextFrame(text).ToArray(_frameBuilder));
+        }
+
+        public void SendBinary(byte[] data)
+        {
+            SendBinary(data, 0, data.Length);
+        }
+
+        public void SendBinary(byte[] data, int offset, int count)
+        {
+            SendFrame(new BinaryFrame(data, offset, count).ToArray(_frameBuilder));
+        }
+
+        public void SendBinary(ArraySegment<byte> segment)
+        {
+            SendFrame(new BinaryFrame(segment).ToArray(_frameBuilder));
+        }
+
+        private void SendFrame(byte[] frame)
+        {
+            if (frame == null)
+            {
+                throw new ArgumentNullException("frame");
+            }
+            if (State != WebSocketState.Open)
+            {
+                throw new InvalidOperationException("This websocket client has not connected to server.");
+            }
+
+            try
+            {
+                if (_stream.CanWrite)
+                {
+                    _stream.BeginWrite(frame, 0, frame.Length, HandleDataWritten, _stream);
+                    _keepAliveTracker.OnDataSent();
+                }
+            }
+            catch (Exception ex)
+            {
+                if (!CloseIfShould(ex))
+                    throw;
+            }
+        }
+
+        private void HandleDataWritten(IAsyncResult ar)
+        {
+            try
+            {
+                _stream.EndWrite(ar);
+            }
+            catch (Exception ex)
+            {
+                if (!CloseIfShould(ex))
+                    throw;
+            }
+        }
+
+        #endregion
+
         #region Events
 
         public event EventHandler<WebSocketServerConnectedEventArgs> ServerConnected;
         public event EventHandler<WebSocketServerDisconnectedEventArgs> ServerDisconnected;
-        public event EventHandler<WebSocketServerDataReceivedEventArgs> ServerDataReceived;
+        public event EventHandler<WebSocketServerTextReceivedEventArgs> ServerTextReceived;
+        public event EventHandler<WebSocketServerBinaryReceivedEventArgs> ServerBinaryReceived;
 
         private void RaiseServerConnected()
         {
@@ -372,11 +904,19 @@ namespace Cowboy.WebSockets
             }
         }
 
-        private void RaiseServerDataReceived(byte[] data, int dataOffset, int dataLength)
+        private void RaiseServerTextReceived(string text)
         {
-            if (ServerDataReceived != null)
+            if (ServerTextReceived != null)
             {
-                ServerDataReceived(this, new WebSocketServerDataReceivedEventArgs(this, data, dataOffset, dataLength));
+                ServerTextReceived(this, new WebSocketServerTextReceivedEventArgs(this, text));
+            }
+        }
+
+        private void RaiseServerBinaryReceived(byte[] data, int dataOffset, int dataLength)
+        {
+            if (ServerBinaryReceived != null)
+            {
+                ServerBinaryReceived(this, new WebSocketServerBinaryReceivedEventArgs(this, data, dataOffset, dataLength));
             }
         }
 
@@ -446,7 +986,7 @@ namespace Cowboy.WebSockets
             {
                 try
                 {
-                    Close();
+                    InternalClose();
                 }
                 catch (Exception ex)
                 {

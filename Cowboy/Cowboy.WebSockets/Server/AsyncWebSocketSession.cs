@@ -230,8 +230,7 @@ namespace Cowboy.WebSockets
                 }
             }
             catch (ObjectDisposedException) { }
-            catch (Exception ex)
-            when (ex is TimeoutException || ex is WebSocketException)
+            catch (Exception ex) when (ex is TimeoutException || ex is WebSocketException)
             {
                 _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
                 await Abort();

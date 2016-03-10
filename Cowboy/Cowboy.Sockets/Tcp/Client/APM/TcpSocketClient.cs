@@ -98,16 +98,15 @@ namespace Cowboy.Sockets
                     _receiveBufferOffset = 0;
 
                     var ar = _tcpClient.BeginConnect(_remoteEndPoint.Address, _remoteEndPoint.Port, null, _tcpClient);
-                    if (ar.AsyncWaitHandle.WaitOne(ConnectTimeout))
-                    {
-                        HandleTcpServerConnected(ar);
-                    }
-                    else
+                    if (!ar.AsyncWaitHandle.WaitOne(ConnectTimeout))
                     {
                         Close();
                         throw new TimeoutException(string.Format(
                             "Connect to [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
                     }
+                    _tcpClient.EndConnect(ar);
+
+                    HandleTcpServerConnected();
                 }
             }
         }
@@ -132,44 +131,33 @@ namespace Cowboy.Sockets
                             _tcpClient.Dispose();
                             _tcpClient = null;
                         }
-
-                        try
-                        {
-                            RaiseServerDisconnected();
-                        }
-                        catch (Exception ex)
-                        {
-                            HandleUserSideError(ex);
-                        }
                     }
                     finally
                     {
                         _bufferManager.ReturnBuffer(_receiveBuffer);
                         _receiveBufferOffset = 0;
                     }
+
+                    try
+                    {
+                        RaiseServerDisconnected();
+                    }
+                    catch (Exception ex)
+                    {
+                        HandleUserSideError(ex);
+                    }
                 }
             }
-        }
-
-        private void ConfigureClient()
-        {
-            _tcpClient.ReceiveBufferSize = _configuration.ReceiveBufferSize;
-            _tcpClient.SendBufferSize = _configuration.SendBufferSize;
-            _tcpClient.ReceiveTimeout = (int)_configuration.ReceiveTimeout.TotalMilliseconds;
-            _tcpClient.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
-            _tcpClient.NoDelay = _configuration.NoDelay;
-            _tcpClient.LingerState = _configuration.LingerState;
         }
 
         #endregion
 
         #region Receive
 
-        private void HandleTcpServerConnected(IAsyncResult ar)
+        private void HandleTcpServerConnected()
         {
             try
             {
-                _tcpClient.EndConnect(ar);
                 ConfigureClient();
 
                 _stream = NegotiateStream(_tcpClient.GetStream());
@@ -199,6 +187,16 @@ namespace Cowboy.Sockets
                 _log.Error(ex.Message, ex);
                 Close();
             }
+        }
+
+        private void ConfigureClient()
+        {
+            _tcpClient.ReceiveBufferSize = _configuration.ReceiveBufferSize;
+            _tcpClient.SendBufferSize = _configuration.SendBufferSize;
+            _tcpClient.ReceiveTimeout = (int)_configuration.ReceiveTimeout.TotalMilliseconds;
+            _tcpClient.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
+            _tcpClient.NoDelay = _configuration.NoDelay;
+            _tcpClient.LingerState = _configuration.LingerState;
         }
 
         private Stream NegotiateStream(Stream stream)
@@ -244,6 +242,7 @@ namespace Cowboy.Sockets
                 throw new TimeoutException(string.Format(
                     "Negotiate SSL/TSL with remote [{0}] timeout [{1}].", this.RemoteEndPoint, ConnectTimeout));
             }
+            sslStream.EndAuthenticateAsClient(ar);
 
             // When authentication succeeds, you must check the IsEncrypted and IsSigned properties 
             // to determine what security services are used by the SslStream. 
@@ -468,7 +467,7 @@ namespace Cowboy.Sockets
                 if (_stream.CanWrite)
                 {
                     var frame = _configuration.FrameBuilder.EncodeFrame(data, offset, count);
-                    _stream.BeginWrite(frame, 0, frame.Length, HandleDataWritten, _tcpClient);
+                    _stream.BeginWrite(frame, 0, frame.Length, HandleDataWritten, _stream);
                 }
             }
             catch (Exception ex)

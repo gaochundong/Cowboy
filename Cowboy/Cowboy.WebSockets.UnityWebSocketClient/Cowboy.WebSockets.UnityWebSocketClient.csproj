@@ -50,8 +50,9 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>SolutionVersion.cs</Link>
     </Compile>
+    <Compile Include="Client\EventArgs\WebSocketServerTextReceivedEventArgs.cs" />
     <Compile Include="Client\EventArgs\WebSocketServerConnectedEventArgs.cs" />
-    <Compile Include="Client\EventArgs\WebSocketServerDataReceivedEventArgs.cs" />
+    <Compile Include="Client\EventArgs\WebSocketServerBinaryReceivedEventArgs.cs" />
     <Compile Include="Client\EventArgs\WebSocketServerDisconnectedEventArgs.cs" />
     <Compile Include="Client\WebSocketClient.cs" />
     <Compile Include="Client\WebSocketClientConfiguration.cs" />

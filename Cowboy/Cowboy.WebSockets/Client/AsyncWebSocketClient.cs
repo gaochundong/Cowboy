@@ -294,8 +294,7 @@ namespace Cowboy.WebSockets
                 }
             }
             catch (ObjectDisposedException) { }
-            catch (Exception ex)
-            when (ex is TimeoutException || ex is WebSocketException)
+            catch (Exception ex) when (ex is TimeoutException || ex is WebSocketException)
             {
                 _log.Error(ex.Message, ex);
                 await Abort();
@@ -695,8 +694,8 @@ namespace Cowboy.WebSockets
                         {
                             if (_stream.CanWrite)
                             {
-                                await _stream.WriteAsync(closingHandshake, 0, closingHandshake.Length);
                                 StartClosingTimer();
+                                await _stream.WriteAsync(closingHandshake, 0, closingHandshake.Length);
 #if DEBUG
                                 _log.DebugFormat("Send client side close frame [{0}] [{1}].", closeCode, closeReason);
 #endif
@@ -708,7 +707,7 @@ namespace Cowboy.WebSockets
                 case _connecting:
                 case _closing:
                     {
-                        await Close();
+                        await InternalClose();
                         return;
                     }
                 case _disposed:
@@ -718,7 +717,7 @@ namespace Cowboy.WebSockets
             }
         }
 
-        private async Task Close()
+        private async Task InternalClose()
         {
             if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
             {
@@ -772,7 +771,7 @@ namespace Cowboy.WebSockets
 
         public async Task Abort()
         {
-            await Close();
+            await InternalClose();
         }
 
         private void StartClosingTimer()
@@ -792,7 +791,7 @@ namespace Cowboy.WebSockets
             // sending and receiving a Close message, e.g., if it has not received a
             // TCP Close from the server in a reasonable time period.
             _log.WarnFormat("Closing timer timeout [{0}] then close automatically.", CloseTimeout);
-            await Close();
+            await InternalClose();
         }
 
         #endregion
@@ -1131,7 +1130,7 @@ namespace Cowboy.WebSockets
             {
                 try
                 {
-                    Close().Wait();
+                    InternalClose().Wait();
                 }
                 catch (Exception ex)
                 {
