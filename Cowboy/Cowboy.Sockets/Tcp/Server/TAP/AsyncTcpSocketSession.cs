@@ -286,11 +286,19 @@ namespace Cowboy.Sockets
                 null,
                 _configuration.SslEncryptionPolicy);
 
-            await sslStream.AuthenticateAsServerAsync(
-                _configuration.SslServerCertificate, // The X509Certificate used to authenticate the server.
-                _configuration.SslClientCertificateRequired, // A Boolean value that specifies whether the client must supply a certificate for authentication.
-                _configuration.SslEnabledProtocols, // The SslProtocols value that represents the protocol used for authentication.
-                _configuration.SslCheckCertificateRevocation); // A Boolean value that specifies whether the certificate revocation list is checked during authentication.
+            if (!_configuration.SslClientCertificateRequired)
+            {
+                await sslStream.AuthenticateAsServerAsync(
+                    _configuration.SslServerCertificate); // The X509Certificate used to authenticate the server.
+            }
+            else
+            {
+                await sslStream.AuthenticateAsServerAsync(
+                    _configuration.SslServerCertificate, // The X509Certificate used to authenticate the server.
+                    _configuration.SslClientCertificateRequired, // A Boolean value that specifies whether the client must supply a certificate for authentication.
+                    _configuration.SslEnabledProtocols, // The SslProtocols value that represents the protocol used for authentication.
+                    _configuration.SslCheckCertificateRevocation); // A Boolean value that specifies whether the certificate revocation list is checked during authentication.
+            }
 
             // When authentication succeeds, you must check the IsEncrypted and IsSigned properties 
             // to determine what security services are used by the SslStream. 

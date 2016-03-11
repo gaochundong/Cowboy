@@ -598,7 +598,7 @@ namespace Cowboy.WebSockets
                 _configuration.SslEncryptionPolicy);
 
             await sslStream.AuthenticateAsClientAsync(
-                _configuration.SslTargetHost, // The name of the server that will share this SslStream.
+                _configuration.SslTargetHost, // The name of the server that will share this SslStream. The value specified for targetHost must match the name on the server's certificate.
                 _configuration.SslClientCertificates, // The X509CertificateCollection that contains client certificates.
                 _configuration.SslEnabledProtocols, // The SslProtocols value that represents the protocol used for authentication.
                 _configuration.SslCheckCertificateRevocation); // A Boolean value that specifies whether the certificate revocation list is checked during authentication.

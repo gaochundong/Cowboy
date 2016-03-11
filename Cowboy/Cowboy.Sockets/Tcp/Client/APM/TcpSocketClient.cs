@@ -230,12 +230,22 @@ namespace Cowboy.Sockets
                 null,
                 _configuration.SslEncryptionPolicy);
 
-            var ar = sslStream.BeginAuthenticateAsClient(
-                _configuration.SslTargetHost, // The name of the server that will share this SslStream.
-                _configuration.SslClientCertificates, // The X509CertificateCollection that contains client certificates.
-                _configuration.SslEnabledProtocols, // The SslProtocols value that represents the protocol used for authentication.
-                _configuration.SslCheckCertificateRevocation, // A Boolean value that specifies whether the certificate revocation list is checked during authentication.
-                null, _tcpClient);
+            IAsyncResult ar = null;
+            if (_configuration.SslClientCertificates == null || _configuration.SslClientCertificates.Count == 0)
+            {
+                ar = sslStream.BeginAuthenticateAsClient( // No client certificates are used in the authentication. The certificate revocation list is not checked during authentication.
+                    _configuration.SslTargetHost, // The name of the server that will share this SslStream. The value specified for targetHost must match the name on the server's certificate.
+                    null, _tcpClient);
+            }
+            else
+            {
+                ar = sslStream.BeginAuthenticateAsClient(
+                    _configuration.SslTargetHost, // The name of the server that will share this SslStream. The value specified for targetHost must match the name on the server's certificate.
+                    _configuration.SslClientCertificates, // The X509CertificateCollection that contains client certificates.
+                    _configuration.SslEnabledProtocols, // The SslProtocols value that represents the protocol used for authentication.
+                    _configuration.SslCheckCertificateRevocation, // A Boolean value that specifies whether the certificate revocation list is checked during authentication.
+                    null, _tcpClient);
+            }
             if (!ar.AsyncWaitHandle.WaitOne(ConnectTimeout))
             {
                 Close();
