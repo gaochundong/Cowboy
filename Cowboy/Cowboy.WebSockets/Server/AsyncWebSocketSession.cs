@@ -11,9 +11,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Cowboy.Buffer;
-using Logrila.Logging;
 using Cowboy.WebSockets.Extensions;
 using Cowboy.WebSockets.SubProtocols;
+using Logrila.Logging;
 
 namespace Cowboy.WebSockets
 {
