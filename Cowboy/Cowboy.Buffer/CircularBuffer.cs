@@ -46,7 +46,7 @@ namespace Cowboy.Buffer
             if (initialCapacity > maxCapacity)
                 throw new ArgumentException("The max capacity must be greater than initial capacity.", "maxCapacity");
 
-            BufferValidator.ValidateBuffer(buffer, 0, initialCapacity, "buffer", null, "initialCapacity");
+            ValidateBuffer(buffer, 0, initialCapacity, "buffer", null, "initialCapacity");
 
             _buffer = buffer;
             _currentCapacity = initialCapacity;
@@ -337,7 +337,7 @@ namespace Cowboy.Buffer
 
         public void CopyFrom(T[] sourceArray, int sourceIndex, int length)
         {
-            BufferValidator.ValidateBuffer(sourceArray, sourceIndex, length, "sourceArray", "sourceIndex", "length");
+            ValidateBuffer(sourceArray, sourceIndex, length, "sourceArray", "sourceIndex", "length");
 
             if (Count + length >= Capacity)
                 Capacity += length;
@@ -479,7 +479,7 @@ namespace Cowboy.Buffer
 
         public void CopyTo(Array destinationArray, int destinationIndex, int length)
         {
-            BufferValidator.ValidateBuffer(destinationArray, destinationIndex, length, "destinationArray", "destinationIndex", "length");
+            ValidateBuffer(destinationArray, destinationIndex, length, "destinationArray", "destinationIndex", "length");
 
             if (length > Count)
                 length = Count;
@@ -533,5 +533,47 @@ namespace Cowboy.Buffer
         }
 
         #endregion
+
+        private static void ValidateBuffer<B>(B[] buffer, int offset, int count,
+            string bufferParameterName = null,
+            string offsetParameterName = null,
+            string countParameterName = null)
+        {
+            if (buffer == null)
+            {
+                throw new ArgumentNullException(!string.IsNullOrEmpty(bufferParameterName) ? bufferParameterName : "buffer");
+            }
+
+            if (offset < 0 || offset > buffer.Length)
+            {
+                throw new ArgumentOutOfRangeException(!string.IsNullOrEmpty(offsetParameterName) ? offsetParameterName : "offset");
+            }
+
+            if (count < 0 || count > (buffer.Length - offset))
+            {
+                throw new ArgumentOutOfRangeException(!string.IsNullOrEmpty(countParameterName) ? countParameterName : "count");
+            }
+        }
+
+        private static void ValidateBuffer(Array buffer, int offset, int count,
+            string bufferParameterName = null,
+            string offsetParameterName = null,
+            string countParameterName = null)
+        {
+            if (buffer == null)
+            {
+                throw new ArgumentNullException(!string.IsNullOrEmpty(bufferParameterName) ? bufferParameterName : "buffer");
+            }
+
+            if (offset < 0 || offset > buffer.Length)
+            {
+                throw new ArgumentOutOfRangeException(!string.IsNullOrEmpty(offsetParameterName) ? offsetParameterName : "offset");
+            }
+
+            if (count < 0 || count > (buffer.Length - offset))
+            {
+                throw new ArgumentOutOfRangeException(!string.IsNullOrEmpty(countParameterName) ? countParameterName : "count");
+            }
+        }
     }
 }
