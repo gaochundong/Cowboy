@@ -36,6 +36,7 @@ namespace Cowboy.WebSockets
     // +---------------------------------------------------------------+
     public class WebSocketFrameBuilder : IFrameBuilder
     {
+        private static readonly byte[] EmptyArray = new byte[0];
         private static readonly Random _rng = new Random(DateTime.UtcNow.Millisecond);
         private static readonly int MaskingKeyLength = 4;
 
@@ -56,7 +57,7 @@ namespace Cowboy.WebSockets
             }
             else
             {
-                return Encode(frame.OpCode, new byte[0], 0, 0, isMasked: frame.IsMasked);
+                return Encode(frame.OpCode, EmptyArray, 0, 0, isMasked: frame.IsMasked);
             }
         }
 
@@ -71,7 +72,7 @@ namespace Cowboy.WebSockets
             }
             else
             {
-                return Encode(frame.OpCode, new byte[0], 0, 0, isMasked: frame.IsMasked);
+                return Encode(frame.OpCode, EmptyArray, 0, 0, isMasked: frame.IsMasked);
             }
         }
 
@@ -122,7 +123,7 @@ namespace Cowboy.WebSockets
             }
             else
             {
-                return Encode(frame.OpCode, new byte[0], 0, 0, isMasked: frame.IsMasked);
+                return Encode(frame.OpCode, EmptyArray, 0, 0, isMasked: frame.IsMasked);
             }
         }
 
