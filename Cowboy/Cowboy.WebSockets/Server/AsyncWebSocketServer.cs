@@ -239,7 +239,7 @@ namespace Cowboy.WebSockets
             }
             else
             {
-                _log.WarnFormat("Cannot find session [{0}].", session);
+                _log.WarnFormat("Send text data but cannot find session [{0}].", session);
             }
         }
 
@@ -275,7 +275,7 @@ namespace Cowboy.WebSockets
             }
             else
             {
-                _log.WarnFormat("Cannot find session [{0}].", session);
+                _log.WarnFormat("Send binary data but cannot find session [{0}].", session);
             }
         }
 
