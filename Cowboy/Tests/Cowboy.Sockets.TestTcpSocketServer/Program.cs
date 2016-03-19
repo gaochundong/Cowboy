@@ -61,7 +61,8 @@ namespace Cowboy.Sockets.TestTcpSocketServer
             //config.UseSsl = true;
             //config.SslServerCertificate = new System.Security.Cryptography.X509Certificates.X509Certificate2(@"D:\\Cowboy.pfx", "Cowboy");
             //config.SslPolicyErrorsBypassed = false;
-            config.FrameBuilder = new FixedLengthFrameBuilder(5);
+
+            config.FrameBuilder = new FixedLengthFrameBuilder(16000);
 
             _server = new TcpSocketServer(22222, config);
             _server.ClientConnected += server_ClientConnected;
@@ -84,7 +85,7 @@ namespace Cowboy.Sockets.TestTcpSocketServer
         {
             var text = Encoding.UTF8.GetString(e.Data, e.DataOffset, e.DataLength);
             //Console.Write(string.Format("Client : {0} {1} --> ", e.Session.RemoteEndPoint, e.Session));
-            //Console.WriteLine(string.Format("{0}", text));
+            //Console.WriteLine(text);
             //_server.Broadcast(Encoding.UTF8.GetBytes(text));
             _server.SendTo(e.Session, Encoding.UTF8.GetBytes(text));
         }

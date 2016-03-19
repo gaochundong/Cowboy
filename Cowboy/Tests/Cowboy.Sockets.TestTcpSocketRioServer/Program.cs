@@ -19,6 +19,8 @@ namespace Cowboy.Sockets.TestTcpSocketRioServer
             {
                 var config = new TcpSocketRioServerConfiguration();
 
+                config.FrameBuilder = new FixedLengthFrameBuilder(16000);
+
                 _server = new TcpSocketRioServer(22222, new SimpleMessageDispatcher(), config);
                 _server.Listen();
 
