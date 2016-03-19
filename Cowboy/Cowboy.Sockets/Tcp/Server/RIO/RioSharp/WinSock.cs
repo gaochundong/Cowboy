@@ -1,33 +1,14 @@
-﻿// The MIT License (MIT)
-// 
-// Copyright (c) 2015 Allan Lindqvist
-// 
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-// 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
+using System.Threading.Tasks;
 
-namespace Cowboy.Sockets.Experimental
+namespace RioSharp
 {
     [StructLayout(LayoutKind.Sequential)]
     internal struct RIO_RESULT
@@ -407,7 +388,7 @@ namespace Cowboy.Sockets.Experimental
         IPPROTO_RESERVED_MAX = 261
     }
 
-    public enum SOCKET_FLAGS : uint
+    internal enum SOCKET_FLAGS : uint
     {
         WSA_FLAG_OVERLAPPED = 0x01,
         WSA_FLAG_MULTIPOINT_C_ROOT = 0x02,
@@ -419,7 +400,7 @@ namespace Cowboy.Sockets.Experimental
         REGISTERED_IO = 0x100
     }
 
-    public enum RIO_SEND_FLAGS : uint
+    internal enum RIO_SEND_FLAGS : uint
     {
         NONE = 0x00000000,
         DONT_NOTIFY = 0x00000001,
@@ -427,7 +408,7 @@ namespace Cowboy.Sockets.Experimental
         COMMIT_ONLY = 0x00000008
     }
 
-    public enum RIO_RECEIVE_FLAGS : uint
+    internal enum RIO_RECEIVE_FLAGS : uint
     {
         NONE = 0x00000000,
         DONT_NOTIFY = 0x00000001,
@@ -603,9 +584,11 @@ namespace Cowboy.Sockets.Experimental
         internal static extern unsafe bool WSAGetOverlappedResult(IntPtr socket, [In] RioNativeOverlapped* lpOverlapped, out int lpcbTransfer, bool fWait, out int lpdwFlags);
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
+        [SuppressUnmanagedCodeSecurity]
         internal delegate IntPtr RIORegisterBuffer([In] IntPtr DataBuffer, [In] uint DataLength);
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
+        [SuppressUnmanagedCodeSecurity]
         internal delegate void RIODeregisterBuffer([In] IntPtr BufferId);
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = false)]
@@ -617,12 +600,15 @@ namespace Cowboy.Sockets.Experimental
         internal unsafe delegate bool RIOReceive([In] IntPtr SocketQueue, RIO_BUFSEGMENT* RioBuffer, [In] uint DataBufferCount, [In] RIO_RECEIVE_FLAGS Flags, [In] long RequestCorrelation);
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
+        [SuppressUnmanagedCodeSecurity]
         internal delegate IntPtr RIOCreateCompletionQueue([In] uint QueueSize, [In] RIO_NOTIFICATION_COMPLETION NotificationCompletion);
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
+        [SuppressUnmanagedCodeSecurity]
         internal delegate void RIOCloseCompletionQueue([In] IntPtr CQ);
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
+        [SuppressUnmanagedCodeSecurity]
         internal delegate IntPtr RIOCreateRequestQueue(
                                       [In] IntPtr Socket,
                                       [In] uint MaxOutstandingReceive,
@@ -643,18 +629,23 @@ namespace Cowboy.Sockets.Experimental
         internal delegate Int32 RIONotify([In] IntPtr CQ);
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
+        [SuppressUnmanagedCodeSecurity]
         internal delegate bool RIOResizeCompletionQueue([In] IntPtr CQ, [In] uint QueueSize);
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
+        [SuppressUnmanagedCodeSecurity]
         internal delegate bool RIOResizeRequestQueue([In] IntPtr RQ, [In] uint MaxOutstandingReceive, [In] uint MaxOutstandingSend);
 
-        [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = false)]
+        [SuppressUnmanagedCodeSecurity]
         internal unsafe delegate bool DisconnectEx([In] IntPtr hSocket, [In] RioNativeOverlapped* lpOverlapped, [In] uint dwFlags, [In] uint reserved);
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = false)]
+        [SuppressUnmanagedCodeSecurity]
         internal unsafe delegate bool ConnectEx([In] IntPtr s, [In] sockaddr_in name, [In] int namelen, [In] IntPtr lpSendBuffer, [In] uint dwSendDataLength, [Out] out uint lpdwBytesSent, [In] RioNativeOverlapped* lpOverlapped);
 
-        [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = false)]
+        [SuppressUnmanagedCodeSecurity]
         internal unsafe delegate bool AcceptEx([In] IntPtr sListenSocket, [In] IntPtr sAcceptSocket, [In] IntPtr lpOutputBuffer, [In] int dwReceiveDataLength, [In] int dwLocalAddressLength, [In] int dwRemoteAddressLength, [Out] out int lpdwBytesReceived, [In]RioNativeOverlapped* lpOverlapped);
 
         internal unsafe static RIO Initalize(IntPtr socket)
@@ -713,9 +704,7 @@ namespace Cowboy.Sockets.Experimental
                 return rioFunctions;
             }
         }
-
-
-
+        
 
         [DllImport(WS2_32, SetLastError = true)]
         internal static extern int WSAIoctl(
@@ -730,7 +719,7 @@ namespace Cowboy.Sockets.Experimental
           [In] IntPtr lpCompletionRoutine
         );
 
-        [DllImport(WS2_32, SetLastError = true)]
+        [DllImport(WS2_32, SetLastError = false)]
         internal static extern int connect([In] IntPtr s, [In] ref sockaddr_in name, [In] int namelen);
 
         [DllImport(WS2_32, SetLastError = true, EntryPoint = "WSAIoctl")]
@@ -778,6 +767,10 @@ namespace Cowboy.Sockets.Experimental
         internal unsafe static extern int setsockopt(IntPtr s, int level, int optname, char* optval, int optlen);
 
         [DllImport(WS2_32, SetLastError = true)]
+        internal unsafe static extern int getsockopt(IntPtr s, int level, int optname, char* optval, int* optlen);
+
+
+        [DllImport(WS2_32, SetLastError = true)]
         internal static extern IntPtr accept(IntPtr s, ref sockaddr_in addr, ref int addrlen);
 
         [DllImport(WS2_32)]
@@ -786,9 +779,11 @@ namespace Cowboy.Sockets.Experimental
         internal static int ThrowLastWSAError()
         {
             var error = WinSock.WSAGetLastError();
-
-            if (error != 0)
+        
+            if (error != 0 && error != 997)
+            {
                 throw new Win32Exception(error);
+            }
             else
                 return error;
         }
@@ -810,6 +805,16 @@ namespace Cowboy.Sockets.Experimental
         internal const uint SIO_GET_MULTIPLE_EXTENSION_FUNCTION_POINTER = IOC_INOUT | IOC_WS2 | 36;
         internal const uint SIO_LOOPBACK_FAST_PATH = IOC_IN | IOC_WS2 | 16;
         internal const int TCP_NODELAY = 0x0001;
+
+
+        internal const int IPPROTO_IP = 0;
+        internal const int IPPROTO_IPV6 = 41;
+        //internal const int IPPROTO_RM = 6;
         internal const int IPPROTO_TCP = 6;
+        internal const int IPPROTO_UDP = 17;
+        //internal const int NSPROTO_IPX = 6;
+        //internal const int SOL_APPLETALK = 6;
+        //internal const int SOL_IRLMP = 6;
+        internal const int SOL_SOCKET = 0xffff;
     }
 }

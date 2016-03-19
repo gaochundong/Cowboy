@@ -78,7 +78,7 @@
     <Compile Include="Tcp\Server\RIO\RioSharp\RioConnectionOrientedSocket.cs" />
     <Compile Include="Tcp\Server\RIO\RioSharp\RioConnectionOrientedSocketPool.cs" />
     <Compile Include="Tcp\Server\RIO\RioSharp\RioFixedBufferPool.cs" />
-    <Compile Include="Tcp\Server\RIO\RioSharp\RioSocketBase.cs" />
+    <Compile Include="Tcp\Server\RIO\RioSharp\RioSocket.cs" />
     <Compile Include="Tcp\Server\RIO\RioSharp\RioSocketPool.cs" />
     <Compile Include="Tcp\Server\RIO\RioSharp\RioStream.cs" />
     <Compile Include="Tcp\Server\RIO\RioSharp\RioTcpClientPool.cs" />

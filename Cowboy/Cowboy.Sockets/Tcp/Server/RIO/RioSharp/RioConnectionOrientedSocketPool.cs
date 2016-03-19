@@ -1,39 +1,20 @@
-﻿// The MIT License (MIT)
-// 
-// Copyright (c) 2015 Allan Lindqvist
-// 
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-// 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-
-using System;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 
-namespace Cowboy.Sockets.Experimental
+namespace RioSharp
 {
     public abstract class RioConnectionOrientedSocketPool : RioSocketPool
     {
         protected IntPtr socketIocp;
         internal RioConnectionOrientedSocket[] allSockets;
 
-        public unsafe RioConnectionOrientedSocketPool(RioFixedBufferPool sendPool, RioFixedBufferPool revicePool, uint socketCount,
+        public unsafe RioConnectionOrientedSocketPool(RioFixedBufferPool sendPool, RioFixedBufferPool revicePool, uint socketCount, ADDRESS_FAMILIES adressFam, SOCKET_TYPE sockType, PROTOCOL protocol,
             uint maxOutstandingReceive = 1024, uint maxOutstandingSend = 1024, uint maxConnections = 1024)
-            : base(sendPool, revicePool, maxOutstandingReceive, maxOutstandingSend, maxConnections)
+            : base(sendPool, revicePool, adressFam, sockType, protocol, maxOutstandingReceive, maxOutstandingSend, maxConnections)
         {
             var adrSize = (sizeof(sockaddr_in) + 16) * 2;
             var overlapped = Marshal.AllocHGlobal(new IntPtr(socketCount * Marshal.SizeOf<RioNativeOverlapped>()));
@@ -43,10 +24,9 @@ namespace Cowboy.Sockets.Experimental
 
             for (int i = 0; i < socketCount; i++)
             {
-                allSockets[i] = new RioConnectionOrientedSocket(overlapped + (i * Marshal.SizeOf<RioNativeOverlapped>()), adressBuffer + (i * adrSize), this, SendBufferPool, ReceiveBufferPool, maxOutstandingReceive, maxOutstandingSend, SendCompletionQueue, ReceiveCompletionQueue);
+                allSockets[i] = new RioConnectionOrientedSocket(overlapped + (i * Marshal.SizeOf<RioNativeOverlapped>()), adressBuffer + (i * adrSize), this, SendBufferPool, ReceiveBufferPool, maxOutstandingReceive, maxOutstandingSend, SendCompletionQueue, ReceiveCompletionQueue, adressFam, sockType, protocol);
                 allSockets[i]._overlapped->SocketIndex = i;
             }
-
 
             if ((socketIocp = Kernel32.CreateIoCompletionPort((IntPtr)(-1), IntPtr.Zero, 0, 1)) == IntPtr.Zero)
                 Kernel32.ThrowLastError();
@@ -62,15 +42,15 @@ namespace Cowboy.Sockets.Experimental
             SocketIocpThread.Start();
         }
 
-        protected abstract unsafe void SocketIocpComplete(object o);
+        protected abstract void SocketIocpComplete(object o);
 
         internal unsafe virtual void Recycle(RioConnectionOrientedSocket socket)
         {
-            RioSocketBase c;
+            RioSocket c;
             activeSockets.TryRemove(socket.GetHashCode(), out c);
             socket.ResetOverlapped();
             socket._overlapped->Status = 1;
-            if (!RioStatic.DisconnectEx(c.Socket, socket._overlapped, 0x02, 0)) //TF_REUSE_SOCKET
+            if (!RioStatic.DisconnectEx(socket.Socket, socket._overlapped, 0x02, 0)) //TF_REUSE_SOCKET
                 if (WinSock.WSAGetLastError() != 997) // error_io_pending
                     WinSock.ThrowLastWSAError();
             //else

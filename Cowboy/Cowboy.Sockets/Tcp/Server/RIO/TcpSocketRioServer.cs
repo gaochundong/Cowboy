@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Cowboy.Buffer;
 using Logrila.Logging;
+using RioSharp;
 
 namespace Cowboy.Sockets.Experimental
 {
@@ -192,7 +193,7 @@ namespace Cowboy.Sockets.Experimental
             return true;
         }
 
-        private async Task Process(RioConnectionOrientedSocket acceptedSocket)
+        private async Task Process(RioSocket acceptedSocket)
         {
             var session = new TcpSocketRioSession(_configuration, _bufferManager, acceptedSocket, _dispatcher, this);
 

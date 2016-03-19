@@ -1,35 +1,14 @@
-﻿// The MIT License (MIT)
-// 
-// Copyright (c) 2015 Allan Lindqvist
-// 
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-// 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-
-using System;
+﻿using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Cowboy.Sockets.Experimental
+
+namespace RioSharp
 {
     public class RioStream : Stream
     {
-        RioConnectionOrientedSocket _socket;
+        RioSocket _socket;
         RioBufferSegment _currentInputSegment;
         RioBufferSegment _currentOutputSegment;
         int _bytesReadInCurrentSegment = 0;
@@ -42,14 +21,14 @@ namespace Cowboy.Sockets.Experimental
         int _readCount;
         Action _getNewSegmentDelegate;
 
-        public RioStream(RioConnectionOrientedSocket socket)
+        public RioStream(RioSocket socket)
         {
             _socket = socket;
             _currentInputSegment = null;
             _currentOutputSegment = _socket.SendBufferPool.GetBuffer();
             _getNewSegmentDelegate = GetNewSegment;
-            socket.OnIncommingSegment = s => _incommingSegments.Set(s);
-            socket.ReciveInternal();
+            socket.OnIncommingSegmentUnsafe = (sock, s) => _incommingSegments.Set(s);
+            socket.BeginReceive();
         }
 
         public void Flush(bool moreData)
@@ -107,7 +86,7 @@ namespace Cowboy.Sockets.Experimental
             }
             else
             {
-                _socket.ReciveInternal();
+                _socket.BeginReceive();
                 CompleteRead();
             }
         }
@@ -121,7 +100,7 @@ namespace Cowboy.Sockets.Experimental
             unsafe
             {
                 fixed (byte* p = &_readBuffer[_readoffset])
-                    System.Buffer.MemoryCopy(_currentInputSegment.RawPointer + _bytesReadInCurrentSegment, p, _readCount, toCopy);
+                    Buffer.MemoryCopy(_currentInputSegment.RawPointer + _bytesReadInCurrentSegment, p, _readCount, toCopy);
             }
 
             _bytesReadInCurrentSegment += toCopy;
@@ -182,7 +161,7 @@ namespace Cowboy.Sockets.Experimental
 
                 fixed (byte* p = &buffer[offset])
                 {
-                    System.Buffer.MemoryCopy(p + writtenFromBuffer, _currentOutputSegment.RawPointer + (_outputSegmentTotalLength - _remainingSpaceInOutputSegment), _remainingSpaceInOutputSegment, toWrite);
+                    Buffer.MemoryCopy(p + writtenFromBuffer, _currentOutputSegment.RawPointer + (_outputSegmentTotalLength - _remainingSpaceInOutputSegment), _remainingSpaceInOutputSegment, toWrite);
                 }
 
                 writtenFromBuffer += toWrite;

@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Cowboy.Buffer;
 using Logrila.Logging;
+using RioSharp;
 
 namespace Cowboy.Sockets.Experimental
 {
@@ -19,7 +20,7 @@ namespace Cowboy.Sockets.Experimental
         private readonly IBufferManager _bufferManager;
         private readonly ITcpSocketRioServerMessageDispatcher _dispatcher;
         private readonly TcpSocketRioServer _server;
-        private RioConnectionOrientedSocket _socket;
+        private RioSocket _socket;
         private Stream _stream;
         private string _sessionKey;
         private byte[] _receiveBuffer;
@@ -38,7 +39,7 @@ namespace Cowboy.Sockets.Experimental
         public TcpSocketRioSession(
             TcpSocketRioServerConfiguration configuration,
             IBufferManager bufferManager,
-            RioConnectionOrientedSocket socket,
+            RioSocket socket,
             ITcpSocketRioServerMessageDispatcher dispatcher,
             TcpSocketRioServer server)
         {

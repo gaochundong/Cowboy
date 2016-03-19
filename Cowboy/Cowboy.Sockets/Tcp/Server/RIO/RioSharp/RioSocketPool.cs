@@ -1,30 +1,8 @@
-﻿// The MIT License (MIT)
-// 
-// Copyright (c) 2015 Allan Lindqvist
-// 
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-// 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Threading;
 
-namespace Cowboy.Sockets.Experimental
+namespace RioSharp
 {
     public abstract class RioSocketPool : IDisposable
     {
@@ -33,9 +11,13 @@ namespace Cowboy.Sockets.Experimental
         IntPtr SendCompletionPort, ReceiveCompletionPort;
         protected IntPtr SendCompletionQueue, ReceiveCompletionQueue;
         protected uint MaxOutstandingReceive, MaxOutstandingSend, MaxOutsandingCompletions;
-        internal ConcurrentDictionary<long, RioSocketBase> activeSockets = new ConcurrentDictionary<long, RioSocketBase>();
+        internal ConcurrentDictionary<long, RioSocket> activeSockets = new ConcurrentDictionary<long, RioSocket>();
+        protected ADDRESS_FAMILIES adressFam;
+        protected SOCKET_TYPE sockType;
+        protected PROTOCOL protocol;
 
-        public unsafe RioSocketPool(RioFixedBufferPool sendPool, RioFixedBufferPool receivePool,
+
+        public unsafe RioSocketPool(RioFixedBufferPool sendPool, RioFixedBufferPool receivePool, ADDRESS_FAMILIES adressFam, SOCKET_TYPE sockType, PROTOCOL protocol,
             uint maxOutstandingReceive = 1024, uint maxOutstandingSend = 1024, uint maxOutsandingCompletions = 2048)
         {
             MaxOutstandingReceive = maxOutstandingReceive;
@@ -43,6 +25,10 @@ namespace Cowboy.Sockets.Experimental
             MaxOutsandingCompletions = maxOutsandingCompletions;
             SendBufferPool = sendPool;
             ReceiveBufferPool = receivePool;
+
+            this.adressFam = adressFam;
+            this.sockType = sockType;
+            this.protocol = protocol;
 
             var version = new Version(2, 2);
             WSAData data;
@@ -110,7 +96,7 @@ namespace Cowboy.Sockets.Experimental
             var currentSegment = SendBufferPool.GetBuffer();
             fixed (byte* p = &buffer[0])
             {
-                System.Buffer.MemoryCopy(p, currentSegment.RawPointer, currentSegment.TotalLength, buffer.Length);
+                Buffer.MemoryCopy(p, currentSegment.RawPointer, currentSegment.TotalLength, buffer.Length);
             }
 
             currentSegment.SegmentPointer->Length = buffer.Length;
@@ -120,9 +106,9 @@ namespace Cowboy.Sockets.Experimental
 
         unsafe void ProcessReceiveCompletes(object o)
         {
-            const int maxResults = 1024;
-            RIO_RESULT* results = stackalloc RIO_RESULT[maxResults];
-            RioSocketBase connection;
+            uint maxResults = Math.Min(MaxOutstandingReceive, int.MaxValue);
+            RIO_RESULT* results = stackalloc RIO_RESULT[(int)maxResults];
+            RioSocket connection;
             uint count;
             IntPtr key, bytes;
             NativeOverlapped* overlapped = stackalloc NativeOverlapped[1];
@@ -139,7 +125,8 @@ namespace Cowboy.Sockets.Experimental
                     do
                     {
                         count = RioStatic.DequeueCompletion(ReceiveCompletionQueue, (IntPtr)results, maxResults);
-                        WinSock.ThrowLastWSAError();
+                        if (count == 0xFFFFFFFF)
+                            WinSock.ThrowLastWSAError();
 
                         for (var i = 0; i < count; i++)
                         {
@@ -148,7 +135,7 @@ namespace Cowboy.Sockets.Experimental
                             if (activeSockets.TryGetValue(result.ConnectionCorrelation, out connection))
                             {
                                 buf.SegmentPointer->Length = (int)result.BytesTransferred;
-                                connection.onIncommingSegment(buf);
+                                connection.onIncommingSegment(connection, buf);
                             }
                             else
                                 buf.Dispose();
@@ -163,8 +150,8 @@ namespace Cowboy.Sockets.Experimental
 
         unsafe void ProcessSendCompletes(object o)
         {
-            const int maxResults = 1024;
-            RIO_RESULT* results = stackalloc RIO_RESULT[maxResults];
+            uint maxResults = Math.Min(MaxOutstandingSend, int.MaxValue);
+            RIO_RESULT* results = stackalloc RIO_RESULT[(int)maxResults];
             uint count;
             IntPtr key, bytes;
             NativeOverlapped* overlapped = stackalloc NativeOverlapped[1];
@@ -177,7 +164,8 @@ namespace Cowboy.Sockets.Experimental
                     do
                     {
                         count = RioStatic.DequeueCompletion(SendCompletionQueue, (IntPtr)results, maxResults);
-                        WinSock.ThrowLastWSAError();
+                        if (count == 0xFFFFFFFF)
+                            WinSock.ThrowLastWSAError();
                         for (var i = 0; i < count; i++)
                         {
                             var buf = SendBufferPool.AllSegments[results[i].RequestCorrelation];
