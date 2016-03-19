@@ -190,10 +190,11 @@ namespace Cowboy.Sockets
 
                 _listener.Listen(_configuration.PendingConnectionBacklog);
 
-                var t = Task.Run(async () =>
+                Task.Run(async () =>
                 {
                     await Accept();
-                });
+                })
+                .Forget();
             }
             catch (Exception ex) when (!ShouldThrow(ex)) { }
         }
