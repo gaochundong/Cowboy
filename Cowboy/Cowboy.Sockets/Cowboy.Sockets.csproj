@@ -124,7 +124,7 @@
     <Compile Include="Tcp\Server\TAP\AsyncTcpSocketServer.cs" />
     <Compile Include="Tcp\Server\APM\TcpSocketServer.cs" />
     <Compile Include="Tcp\TcpSocketConnectionState.cs" />
-    <Compile Include="Extensions\TplExtensions.cs" />
+    <Compile Include="Tcp\TplExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
