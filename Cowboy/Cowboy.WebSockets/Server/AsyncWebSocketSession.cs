@@ -238,10 +238,157 @@ namespace Cowboy.WebSockets
             }
         }
 
+        private void ConfigureClient()
+        {
+            _tcpClient.ReceiveBufferSize = _configuration.ReceiveBufferSize;
+            _tcpClient.SendBufferSize = _configuration.SendBufferSize;
+            _tcpClient.ReceiveTimeout = (int)_configuration.ReceiveTimeout.TotalMilliseconds;
+            _tcpClient.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
+            _tcpClient.NoDelay = _configuration.NoDelay;
+            _tcpClient.LingerState = _configuration.LingerState;
+        }
+
+        private async Task<Stream> NegotiateStream(Stream stream)
+        {
+            if (!_configuration.SslEnabled)
+                return stream;
+
+            var validateRemoteCertificate = new RemoteCertificateValidationCallback(
+                (object sender,
+                X509Certificate certificate,
+                X509Chain chain,
+                SslPolicyErrors sslPolicyErrors)
+                =>
+                {
+                    if (sslPolicyErrors == SslPolicyErrors.None)
+                        return true;
+
+                    if (_configuration.SslPolicyErrorsBypassed)
+                        return true;
+                    else
+                        _log.ErrorFormat("Session [{0}] error occurred when validating remote certificate: [{1}], [{2}].",
+                            this, this.RemoteEndPoint, sslPolicyErrors);
+
+                    return false;
+                });
+
+            var sslStream = new SslStream(
+                stream,
+                false,
+                validateRemoteCertificate,
+                null,
+                _configuration.SslEncryptionPolicy);
+
+            if (!_configuration.SslClientCertificateRequired)
+            {
+                await sslStream.AuthenticateAsServerAsync(
+                    _configuration.SslServerCertificate); // The X509Certificate used to authenticate the server.
+            }
+            else
+            {
+                await sslStream.AuthenticateAsServerAsync(
+                    _configuration.SslServerCertificate, // The X509Certificate used to authenticate the server.
+                    _configuration.SslClientCertificateRequired, // A Boolean value that specifies whether the client must supply a certificate for authentication.
+                    _configuration.SslEnabledProtocols, // The SslProtocols value that represents the protocol used for authentication.
+                    _configuration.SslCheckCertificateRevocation); // A Boolean value that specifies whether the certificate revocation list is checked during authentication.
+            }
+
+            // When authentication succeeds, you must check the IsEncrypted and IsSigned properties 
+            // to determine what security services are used by the SslStream. 
+            // Check the IsMutuallyAuthenticated property to determine whether mutual authentication occurred.
+            _log.DebugFormat(
+                "Ssl Stream: SslProtocol[{0}], IsServer[{1}], IsAuthenticated[{2}], IsEncrypted[{3}], IsSigned[{4}], IsMutuallyAuthenticated[{5}], "
+                + "HashAlgorithm[{6}], HashStrength[{7}], KeyExchangeAlgorithm[{8}], KeyExchangeStrength[{9}], CipherAlgorithm[{10}], CipherStrength[{11}].",
+                sslStream.SslProtocol,
+                sslStream.IsServer,
+                sslStream.IsAuthenticated,
+                sslStream.IsEncrypted,
+                sslStream.IsSigned,
+                sslStream.IsMutuallyAuthenticated,
+                sslStream.HashAlgorithm,
+                sslStream.HashStrength,
+                sslStream.KeyExchangeAlgorithm,
+                sslStream.KeyExchangeStrength,
+                sslStream.CipherAlgorithm,
+                sslStream.CipherStrength);
+
+            return sslStream;
+        }
+
+        private async Task<bool> OpenHandshake()
+        {
+            bool handshakeResult = false;
+
+            try
+            {
+                int terminatorIndex = -1;
+                while (!WebSocketHelpers.FindHeaderTerminator(_receiveBuffer, _receiveBufferOffset, out terminatorIndex))
+                {
+                    int receiveCount = await _stream.ReadAsync(_receiveBuffer, _receiveBufferOffset, _receiveBuffer.Length - _receiveBufferOffset);
+                    if (receiveCount == 0)
+                    {
+                        throw new WebSocketHandshakeException(string.Format(
+                            "Handshake with remote [{0}] failed due to receive zero bytes.", RemoteEndPoint));
+                    }
+
+                    BufferDeflector.ReplaceBuffer(_bufferManager, ref _receiveBuffer, ref _receiveBufferOffset, receiveCount);
+
+                    if (_receiveBufferOffset > 2048)
+                    {
+                        throw new WebSocketHandshakeException(string.Format(
+                            "Handshake with remote [{0}] failed due to receive weird stream.", RemoteEndPoint));
+                    }
+                }
+
+                string secWebSocketKey = string.Empty;
+                string path = string.Empty;
+                string query = string.Empty;
+                handshakeResult = WebSocketServerHandshaker.HandleOpenningHandshakeRequest(this,
+                    _receiveBuffer, 0, terminatorIndex + Consts.HeaderTerminator.Length,
+                    out secWebSocketKey, out path, out query);
+
+                _module = _routeResolver.Resolve(path, query);
+                if (_module == null)
+                {
+                    throw new WebSocketHandshakeException(string.Format(
+                        "Handshake with remote [{0}] failed due to cannot identify the resource name [{1}{2}].", RemoteEndPoint, path, query));
+                }
+
+                if (handshakeResult)
+                {
+                    var responseBuffer = WebSocketServerHandshaker.CreateOpenningHandshakeResponse(this, secWebSocketKey);
+                    await _stream.WriteAsync(responseBuffer, 0, responseBuffer.Length);
+                }
+
+                BufferDeflector.ShiftBuffer(_bufferManager, terminatorIndex + Consts.HeaderTerminator.Length, ref _receiveBuffer, ref _receiveBufferOffset);
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                handshakeResult = false;
+            }
+            catch (WebSocketHandshakeException ex)
+            {
+                _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
+                handshakeResult = false;
+            }
+
+            return handshakeResult;
+        }
+
+        #endregion
+
+        #region Process
+
         private async Task Process()
         {
             try
             {
+                Header frameHeader;
+                byte[] payload;
+                int payloadOffset;
+                int payloadCount;
+                int consumedLength = 0;
+
                 while (State == WebSocketState.Open || State == WebSocketState.Closing)
                 {
                     int receiveCount = await _stream.ReadAsync(_receiveBuffer, _receiveBufferOffset, _receiveBuffer.Length - _receiveBufferOffset);
@@ -250,12 +397,17 @@ namespace Cowboy.WebSockets
 
                     _keepAliveTracker.OnDataReceived();
                     BufferDeflector.ReplaceBuffer(_bufferManager, ref _receiveBuffer, ref _receiveBufferOffset, receiveCount);
+                    consumedLength = 0;
 
                     while (true)
                     {
-                        Header frameHeader = null;
-                        if (_frameBuilder.TryDecodeFrameHeader(_receiveBuffer, _receiveBufferOffset, out frameHeader)
-                            && frameHeader.Length + frameHeader.PayloadLength <= _receiveBufferOffset)
+                        frameHeader = null;
+                        payload = null;
+                        payloadOffset = 0;
+                        payloadCount = 0;
+
+                        if (_frameBuilder.TryDecodeFrameHeader(_receiveBuffer, consumedLength, _receiveBufferOffset - consumedLength, out frameHeader)
+                            && frameHeader.Length + frameHeader.PayloadLength <= _receiveBufferOffset - consumedLength)
                         {
                             try
                             {
@@ -266,10 +418,7 @@ namespace Cowboy.WebSockets
                                         "Server received unmasked frame [{0}] from remote [{1}].", frameHeader.OpCode, RemoteEndPoint));
                                 }
 
-                                byte[] payload;
-                                int payloadOffset;
-                                int payloadCount;
-                                _frameBuilder.DecodePayload(_receiveBuffer, frameHeader, out payload, out payloadOffset, out payloadCount);
+                                _frameBuilder.DecodePayload(_receiveBuffer, consumedLength, frameHeader, out payload, out payloadOffset, out payloadCount);
 
                                 switch (frameHeader.OpCode)
                                 {
@@ -471,11 +620,7 @@ namespace Cowboy.WebSockets
                             }
                             finally
                             {
-                                try
-                                {
-                                    BufferDeflector.ShiftBuffer(_bufferManager, frameHeader.Length + frameHeader.PayloadLength, ref _receiveBuffer, ref _receiveBufferOffset);
-                                }
-                                catch (ArgumentOutOfRangeException) { }
+                                consumedLength += frameHeader.Length + frameHeader.PayloadLength;
                             }
                         }
                         else
@@ -483,6 +628,12 @@ namespace Cowboy.WebSockets
                             break;
                         }
                     }
+
+                    try
+                    {
+                        BufferDeflector.ShiftBuffer(_bufferManager, consumedLength, ref _receiveBuffer, ref _receiveBufferOffset);
+                    }
+                    catch (ArgumentOutOfRangeException) { }
                 }
             }
             catch (Exception ex) when (!ShouldThrow(ex)) { }
@@ -490,143 +641,6 @@ namespace Cowboy.WebSockets
             {
                 await Abort();
             }
-        }
-
-        private void ConfigureClient()
-        {
-            _tcpClient.ReceiveBufferSize = _configuration.ReceiveBufferSize;
-            _tcpClient.SendBufferSize = _configuration.SendBufferSize;
-            _tcpClient.ReceiveTimeout = (int)_configuration.ReceiveTimeout.TotalMilliseconds;
-            _tcpClient.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
-            _tcpClient.NoDelay = _configuration.NoDelay;
-            _tcpClient.LingerState = _configuration.LingerState;
-        }
-
-        private async Task<Stream> NegotiateStream(Stream stream)
-        {
-            if (!_configuration.SslEnabled)
-                return stream;
-
-            var validateRemoteCertificate = new RemoteCertificateValidationCallback(
-                (object sender,
-                X509Certificate certificate,
-                X509Chain chain,
-                SslPolicyErrors sslPolicyErrors)
-                =>
-                {
-                    if (sslPolicyErrors == SslPolicyErrors.None)
-                        return true;
-
-                    if (_configuration.SslPolicyErrorsBypassed)
-                        return true;
-                    else
-                        _log.ErrorFormat("Session [{0}] error occurred when validating remote certificate: [{1}], [{2}].",
-                            this, this.RemoteEndPoint, sslPolicyErrors);
-
-                    return false;
-                });
-
-            var sslStream = new SslStream(
-                stream,
-                false,
-                validateRemoteCertificate,
-                null,
-                _configuration.SslEncryptionPolicy);
-
-            if (!_configuration.SslClientCertificateRequired)
-            {
-                await sslStream.AuthenticateAsServerAsync(
-                    _configuration.SslServerCertificate); // The X509Certificate used to authenticate the server.
-            }
-            else
-            {
-                await sslStream.AuthenticateAsServerAsync(
-                    _configuration.SslServerCertificate, // The X509Certificate used to authenticate the server.
-                    _configuration.SslClientCertificateRequired, // A Boolean value that specifies whether the client must supply a certificate for authentication.
-                    _configuration.SslEnabledProtocols, // The SslProtocols value that represents the protocol used for authentication.
-                    _configuration.SslCheckCertificateRevocation); // A Boolean value that specifies whether the certificate revocation list is checked during authentication.
-            }
-
-            // When authentication succeeds, you must check the IsEncrypted and IsSigned properties 
-            // to determine what security services are used by the SslStream. 
-            // Check the IsMutuallyAuthenticated property to determine whether mutual authentication occurred.
-            _log.DebugFormat(
-                "Ssl Stream: SslProtocol[{0}], IsServer[{1}], IsAuthenticated[{2}], IsEncrypted[{3}], IsSigned[{4}], IsMutuallyAuthenticated[{5}], "
-                + "HashAlgorithm[{6}], HashStrength[{7}], KeyExchangeAlgorithm[{8}], KeyExchangeStrength[{9}], CipherAlgorithm[{10}], CipherStrength[{11}].",
-                sslStream.SslProtocol,
-                sslStream.IsServer,
-                sslStream.IsAuthenticated,
-                sslStream.IsEncrypted,
-                sslStream.IsSigned,
-                sslStream.IsMutuallyAuthenticated,
-                sslStream.HashAlgorithm,
-                sslStream.HashStrength,
-                sslStream.KeyExchangeAlgorithm,
-                sslStream.KeyExchangeStrength,
-                sslStream.CipherAlgorithm,
-                sslStream.CipherStrength);
-
-            return sslStream;
-        }
-
-        private async Task<bool> OpenHandshake()
-        {
-            bool handshakeResult = false;
-
-            try
-            {
-                int terminatorIndex = -1;
-                while (!WebSocketHelpers.FindHeaderTerminator(_receiveBuffer, _receiveBufferOffset, out terminatorIndex))
-                {
-                    int receiveCount = await _stream.ReadAsync(_receiveBuffer, _receiveBufferOffset, _receiveBuffer.Length - _receiveBufferOffset);
-                    if (receiveCount == 0)
-                    {
-                        throw new WebSocketHandshakeException(string.Format(
-                            "Handshake with remote [{0}] failed due to receive zero bytes.", RemoteEndPoint));
-                    }
-
-                    BufferDeflector.ReplaceBuffer(_bufferManager, ref _receiveBuffer, ref _receiveBufferOffset, receiveCount);
-
-                    if (_receiveBufferOffset > 2048)
-                    {
-                        throw new WebSocketHandshakeException(string.Format(
-                            "Handshake with remote [{0}] failed due to receive weird stream.", RemoteEndPoint));
-                    }
-                }
-
-                string secWebSocketKey = string.Empty;
-                string path = string.Empty;
-                string query = string.Empty;
-                handshakeResult = WebSocketServerHandshaker.HandleOpenningHandshakeRequest(this,
-                    _receiveBuffer, 0, terminatorIndex + Consts.HeaderTerminator.Length,
-                    out secWebSocketKey, out path, out query);
-
-                _module = _routeResolver.Resolve(path, query);
-                if (_module == null)
-                {
-                    throw new WebSocketHandshakeException(string.Format(
-                        "Handshake with remote [{0}] failed due to cannot identify the resource name [{1}{2}].", RemoteEndPoint, path, query));
-                }
-
-                if (handshakeResult)
-                {
-                    var responseBuffer = WebSocketServerHandshaker.CreateOpenningHandshakeResponse(this, secWebSocketKey);
-                    await _stream.WriteAsync(responseBuffer, 0, responseBuffer.Length);
-                }
-
-                BufferDeflector.ShiftBuffer(_bufferManager, terminatorIndex + Consts.HeaderTerminator.Length, ref _receiveBuffer, ref _receiveBufferOffset);
-            }
-            catch (ArgumentOutOfRangeException)
-            {
-                handshakeResult = false;
-            }
-            catch (WebSocketHandshakeException ex)
-            {
-                _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
-                handshakeResult = false;
-            }
-
-            return handshakeResult;
         }
 
         #endregion

@@ -461,11 +461,16 @@ namespace Cowboy.WebSockets
             _keepAliveTracker.OnDataReceived();
             BufferDeflector.ReplaceBuffer(_bufferManager, ref _receiveBuffer, ref _receiveBufferOffset, receiveCount);
 
+            Header frameHeader;
+            byte[] payload;
+            int payloadOffset;
+            int payloadCount;
+            int consumedLength = 0;
+
             while (true)
             {
-                Header frameHeader = null;
-                if (_frameBuilder.TryDecodeFrameHeader(_receiveBuffer, _receiveBufferOffset, out frameHeader)
-                    && frameHeader.Length + frameHeader.PayloadLength <= _receiveBufferOffset)
+                if (_frameBuilder.TryDecodeFrameHeader(_receiveBuffer, consumedLength, _receiveBufferOffset - consumedLength, out frameHeader)
+                    && frameHeader.Length + frameHeader.PayloadLength <= _receiveBufferOffset - consumedLength)
                 {
                     try
                     {
@@ -476,10 +481,7 @@ namespace Cowboy.WebSockets
                                 "Client received masked frame [{0}] from remote [{1}].", frameHeader.OpCode, RemoteEndPoint));
                         }
 
-                        byte[] payload;
-                        int payloadOffset;
-                        int payloadCount;
-                        _frameBuilder.DecodePayload(_receiveBuffer, frameHeader, out payload, out payloadOffset, out payloadCount);
+                        _frameBuilder.DecodePayload(_receiveBuffer, consumedLength, frameHeader, out payload, out payloadOffset, out payloadCount);
 
                         switch (frameHeader.OpCode)
                         {
@@ -635,11 +637,7 @@ namespace Cowboy.WebSockets
                     }
                     finally
                     {
-                        try
-                        {
-                            BufferDeflector.ShiftBuffer(_bufferManager, frameHeader.Length + frameHeader.PayloadLength, ref _receiveBuffer, ref _receiveBufferOffset);
-                        }
-                        catch (ArgumentOutOfRangeException) { }
+                        consumedLength += frameHeader.Length + frameHeader.PayloadLength;
                     }
                 }
                 else
@@ -647,6 +645,12 @@ namespace Cowboy.WebSockets
                     break;
                 }
             }
+
+            try
+            {
+                BufferDeflector.ShiftBuffer(_bufferManager, consumedLength, ref _receiveBuffer, ref _receiveBufferOffset);
+            }
+            catch (ArgumentOutOfRangeException) { }
         }
 
         #endregion
@@ -954,7 +958,7 @@ namespace Cowboy.WebSockets
 
         private void OnKeepAliveTimeout()
         {
-            _log(string.Format("Keep-alive timer timeout [{1}].", KeepAliveTimeout));
+            _log(string.Format("Keep-alive timer timeout [{0}].", KeepAliveTimeout));
             Close(WebSocketCloseCode.AbnormalClosure, "Keep-Alive Timeout");
         }
 

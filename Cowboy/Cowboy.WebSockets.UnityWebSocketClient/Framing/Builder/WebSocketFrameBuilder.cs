@@ -232,13 +232,13 @@ namespace Cowboy.WebSockets
             return fragment;
         }
 
-        public bool TryDecodeFrameHeader(byte[] buffer, int count, out Header frameHeader)
+        public bool TryDecodeFrameHeader(byte[] buffer, int offset, int count, out Header frameHeader)
         {
-            frameHeader = DecodeFrameHeader(buffer, count);
+            frameHeader = DecodeFrameHeader(buffer, offset, count);
             return frameHeader != null;
         }
 
-        private Header DecodeFrameHeader(byte[] buffer, int count)
+        private Header DecodeFrameHeader(byte[] buffer, int offset, int count)
         {
             if (count < 2)
                 return null;
@@ -246,13 +246,13 @@ namespace Cowboy.WebSockets
             // parse fixed header
             var header = new Header()
             {
-                IsFIN = ((buffer[0] & 0x80) == 0x80),
-                IsRSV1 = ((buffer[0] & 0x40) == 0x40),
-                IsRSV2 = ((buffer[0] & 0x20) == 0x20),
-                IsRSV3 = ((buffer[0] & 0x10) == 0x10),
-                OpCode = (OpCode)(buffer[0] & 0x0f),
-                IsMasked = ((buffer[1] & 0x80) == 0x80),
-                PayloadLength = (buffer[1] & 0x7f),
+                IsFIN = ((buffer[offset + 0] & 0x80) == 0x80),
+                IsRSV1 = ((buffer[offset + 0] & 0x40) == 0x40),
+                IsRSV2 = ((buffer[offset + 0] & 0x20) == 0x20),
+                IsRSV3 = ((buffer[offset + 0] & 0x10) == 0x10),
+                OpCode = (OpCode)(buffer[offset + 0] & 0x0f),
+                IsMasked = ((buffer[offset + 1] & 0x80) == 0x80),
+                PayloadLength = (buffer[offset + 1] & 0x7f),
                 Length = 2,
             };
 
@@ -269,7 +269,7 @@ namespace Cowboy.WebSockets
 
                 if (header.PayloadLength == 126)
                 {
-                    header.PayloadLength = buffer[2] * 256 + buffer[3];
+                    header.PayloadLength = buffer[offset + 2] * 256 + buffer[offset + 3];
                 }
                 else
                 {
@@ -278,7 +278,7 @@ namespace Cowboy.WebSockets
 
                     for (int i = 7; i >= 0; i--)
                     {
-                        totalLength += buffer[i + 2] * level;
+                        totalLength += buffer[offset + i + 2] * level;
                         level *= 256;
                     }
 
@@ -299,10 +299,10 @@ namespace Cowboy.WebSockets
             return header;
         }
 
-        public void DecodePayload(byte[] buffer, Header frameHeader, out byte[] payload, out int payloadOffset, out int payloadCount)
+        public void DecodePayload(byte[] buffer, int offset, Header frameHeader, out byte[] payload, out int payloadOffset, out int payloadCount)
         {
             payload = buffer;
-            payloadOffset = frameHeader.Length;
+            payloadOffset = offset + frameHeader.Length;
             payloadCount = frameHeader.PayloadLength;
 
             if (frameHeader.IsMasked)
@@ -311,7 +311,7 @@ namespace Cowboy.WebSockets
 
                 for (var i = 0; i < payloadCount; i++)
                 {
-                    payload[i] = (byte)(buffer[payloadOffset + i] ^ buffer[frameHeader.MaskingKeyOffset + i % MaskingKeyLength]);
+                    payload[i] = (byte)(buffer[offset + payloadOffset + i] ^ buffer[offset + frameHeader.MaskingKeyOffset + i % MaskingKeyLength]);
                 }
 
                 payloadOffset = 0;
