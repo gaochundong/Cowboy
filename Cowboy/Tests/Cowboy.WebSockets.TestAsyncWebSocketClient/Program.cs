@@ -67,6 +67,30 @@ namespace Cowboy.WebSockets.TestAsyncWebSocketClient
                                     await _client.SendBinaryAsync(Encoding.UTF8.GetBytes(text));
                                     Console.WriteLine("Client [{0}] send binary -> [{1}].", _client.LocalEndPoint, text);
                                 }
+                                else if (text == "8192")
+                                {
+                                    text = new string('x', 1024 * 8);
+                                    await _client.SendBinaryAsync(Encoding.UTF8.GetBytes(text));
+                                    Console.WriteLine("Client [{0}] send binary -> [{1}].", _client.LocalEndPoint, text);
+                                }
+                                else if (text == "4096")
+                                {
+                                    text = new string('x', 1024 * 4);
+                                    await _client.SendBinaryAsync(Encoding.UTF8.GetBytes(text));
+                                    Console.WriteLine("Client [{0}] send binary -> [{1}].", _client.LocalEndPoint, text);
+                                }
+                                else if (text == "2048")
+                                {
+                                    text = new string('x', 1024 * 2);
+                                    await _client.SendBinaryAsync(Encoding.UTF8.GetBytes(text));
+                                    Console.WriteLine("Client [{0}] send binary -> [{1}].", _client.LocalEndPoint, text);
+                                }
+                                else if (text == "1024")
+                                {
+                                    text = new string('x', 1024);
+                                    await _client.SendBinaryAsync(Encoding.UTF8.GetBytes(text));
+                                    Console.WriteLine("Client [{0}] send binary -> [{1}].", _client.LocalEndPoint, text);
+                                }
                                 else
                                 {
                                     await _client.SendBinaryAsync(Encoding.UTF8.GetBytes(text));

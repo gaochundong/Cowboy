@@ -311,7 +311,7 @@ namespace Cowboy.WebSockets
 
                 for (var i = 0; i < payloadCount; i++)
                 {
-                    payload[i] = (byte)(buffer[offset + payloadOffset + i] ^ buffer[offset + frameHeader.MaskingKeyOffset + i % MaskingKeyLength]);
+                    payload[i] = (byte)(buffer[payloadOffset + i] ^ buffer[offset + frameHeader.MaskingKeyOffset + i % MaskingKeyLength]);
                 }
 
                 payloadOffset = 0;
