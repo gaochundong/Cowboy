@@ -33,7 +33,7 @@ namespace Cowboy.Sockets
             return buffer;
         }
 
-        public bool TryDecodeFrame(byte[] buffer, int count, out int frameLength, out byte[] payload, out int payloadOffset, out int payloadCount)
+        public bool TryDecodeFrame(byte[] buffer, int offset, int count, out int frameLength, out byte[] payload, out int payloadOffset, out int payloadCount)
         {
             frameLength = 0;
             payload = null;
@@ -45,7 +45,7 @@ namespace Cowboy.Sockets
 
             frameLength = FixedFrameLength;
             payload = buffer;
-            payloadOffset = 0;
+            payloadOffset = offset;
             payloadCount = FixedFrameLength;
             return true;
         }

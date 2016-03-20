@@ -38,26 +38,26 @@ namespace Cowboy.Sockets
             return Encode(payload, offset, count, IsMasked);
         }
 
-        public bool TryDecodeFrame(byte[] buffer, int count, out int frameLength, out byte[] payload, out int payloadOffset, out int payloadCount)
+        public bool TryDecodeFrame(byte[] buffer, int offset, int count, out int frameLength, out byte[] payload, out int payloadOffset, out int payloadCount)
         {
             frameLength = 0;
             payload = null;
             payloadOffset = 0;
             payloadCount = 0;
 
-            var frameHeader = DecodeHeader(buffer, count);
+            var frameHeader = DecodeHeader(buffer, offset, count);
             if (frameHeader != null && frameHeader.Length + frameHeader.PayloadLength <= count)
             {
                 if (IsMasked)
                 {
-                    payload = DecodeMaskedPayload(buffer, frameHeader.MaskingKeyOffset, frameHeader.Length, frameHeader.PayloadLength);
+                    payload = DecodeMaskedPayload(buffer, offset, frameHeader.MaskingKeyOffset, frameHeader.Length, frameHeader.PayloadLength);
                     payloadOffset = 0;
                     payloadCount = payload.Length;
                 }
                 else
                 {
                     payload = buffer;
-                    payloadOffset = frameHeader.Length;
+                    payloadOffset = offset + frameHeader.Length;
                     payloadCount = frameHeader.PayloadLength;
                 }
 
@@ -155,7 +155,7 @@ namespace Cowboy.Sockets
             return fragment;
         }
 
-        private static Header DecodeHeader(byte[] buffer, int count)
+        private static Header DecodeHeader(byte[] buffer, int offset, int count)
         {
             if (count < 1)
                 return null;
@@ -163,8 +163,8 @@ namespace Cowboy.Sockets
             // parse fixed header
             var header = new Header()
             {
-                IsMasked = ((buffer[0] & 0x80) == 0x80),
-                PayloadLength = (buffer[0] & 0x7f),
+                IsMasked = ((buffer[offset + 0] & 0x80) == 0x80),
+                PayloadLength = (buffer[offset + 0] & 0x7f),
                 Length = 1,
             };
 
@@ -181,7 +181,7 @@ namespace Cowboy.Sockets
 
                 if (header.PayloadLength == 126)
                 {
-                    header.PayloadLength = buffer[1] * 256 + buffer[2];
+                    header.PayloadLength = buffer[offset + 1] * 256 + buffer[offset + 2];
                 }
                 else
                 {
@@ -190,7 +190,7 @@ namespace Cowboy.Sockets
 
                     for (int i = 7; i >= 0; i--)
                     {
-                        totalLength += buffer[i + 1] * level;
+                        totalLength += buffer[offset + i + 1] * level;
                         level *= 256;
                     }
 
@@ -211,13 +211,13 @@ namespace Cowboy.Sockets
             return header;
         }
 
-        private static byte[] DecodeMaskedPayload(byte[] buffer, int maskingKeyOffset, int payloadOffset, int payloadCount)
+        private static byte[] DecodeMaskedPayload(byte[] buffer, int offset, int maskingKeyOffset, int payloadOffset, int payloadCount)
         {
             var payload = new byte[payloadCount];
 
             for (var i = 0; i < payloadCount; i++)
             {
-                payload[i] = (byte)(buffer[payloadOffset + i] ^ buffer[maskingKeyOffset + i % MaskingKeyLength]);
+                payload[i] = (byte)(buffer[offset + payloadOffset + i] ^ buffer[offset + maskingKeyOffset + i % MaskingKeyLength]);
             }
 
             return payload;

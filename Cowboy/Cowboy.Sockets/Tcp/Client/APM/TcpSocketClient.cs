@@ -349,12 +349,18 @@ namespace Cowboy.Sockets
             byte[] payload;
             int payloadOffset;
             int payloadCount;
+            int consumedLength = 0;
 
             BufferDeflector.ReplaceBuffer(_bufferManager, ref _receiveBuffer, ref _receiveBufferOffset, receiveCount);
 
             while (true)
             {
-                if (_configuration.FrameBuilder.TryDecodeFrame(_receiveBuffer, _receiveBufferOffset,
+                frameLength = 0;
+                payload = null;
+                payloadOffset = 0;
+                payloadCount = 0;
+
+                if (_configuration.FrameBuilder.TryDecodeFrame(_receiveBuffer, consumedLength, _receiveBufferOffset - consumedLength,
                     out frameLength, out payload, out payloadOffset, out payloadCount))
                 {
                     try
@@ -367,11 +373,7 @@ namespace Cowboy.Sockets
                     }
                     finally
                     {
-                        try
-                        {
-                            BufferDeflector.ShiftBuffer(_bufferManager, frameLength, ref _receiveBuffer, ref _receiveBufferOffset);
-                        }
-                        catch (ArgumentOutOfRangeException) { }
+                        consumedLength += frameLength;
                     }
                 }
                 else
@@ -379,6 +381,12 @@ namespace Cowboy.Sockets
                     break;
                 }
             }
+
+            try
+            {
+                BufferDeflector.ShiftBuffer(_bufferManager, consumedLength, ref _receiveBuffer, ref _receiveBufferOffset);
+            }
+            catch (ArgumentOutOfRangeException) { }
         }
 
         #endregion

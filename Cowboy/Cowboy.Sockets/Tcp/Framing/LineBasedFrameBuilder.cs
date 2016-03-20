@@ -71,7 +71,7 @@ namespace Cowboy.Sockets
             return buffer;
         }
 
-        public bool TryDecodeFrame(byte[] buffer, int count, out int frameLength, out byte[] payload, out int payloadOffset, out int payloadCount)
+        public bool TryDecodeFrame(byte[] buffer, int offset, int count, out int frameLength, out byte[] payload, out int payloadOffset, out int payloadCount)
         {
             frameLength = 0;
             payload = null;
@@ -87,7 +87,7 @@ namespace Cowboy.Sockets
             {
                 for (int j = 0; j < delimiter.Length; j++)
                 {
-                    if (i + j < count && buffer[i + j] == delimiter[j])
+                    if (i + j < count && buffer[offset + i + j] == delimiter[j])
                     {
                         matched = true;
                     }
@@ -102,7 +102,7 @@ namespace Cowboy.Sockets
                 {
                     frameLength = i + delimiter.Length;
                     payload = buffer;
-                    payloadOffset = 0;
+                    payloadOffset = offset;
                     payloadCount = i;
                     return true;
                 }

@@ -18,7 +18,7 @@ namespace Cowboy.Sockets.TestTcpSocketSaeaServer
             {
                 var config = new TcpSocketSaeaServerConfiguration();
 
-                config.FrameBuilder = new FixedLengthFrameBuilder(16000);
+                config.FrameBuilder = new FixedLengthFrameBuilder(20000);
 
                 _server = new TcpSocketSaeaServer(22222, new SimpleMessageDispatcher(), config);
                 _server.Listen();
