@@ -65,6 +65,11 @@ namespace Cowboy.Sockets.TestTcpSocketClient
             //config.SslPolicyErrorsBypassed = false;
             //config.SendTimeout = TimeSpan.FromSeconds(2);
 
+            //config.FrameBuilder = new FixedLengthFrameBuilder(20000);
+            //config.FrameBuilder = new FairPlainFrameBuilder();
+            //config.FrameBuilder = new LineBasedFrameBuilder();
+            //config.FrameBuilder = SizePrefixedFrameBuilder();
+
             IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 22222);
 
             _client = new TcpSocketClient(remoteEP, config);

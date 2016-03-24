@@ -63,12 +63,15 @@ namespace Cowboy.Sockets
 
         public LineDelimiter LineDelimiter { get { return _delimiter; } }
 
-        public byte[] EncodeFrame(byte[] payload, int offset, int count)
+        public void EncodeFrame(byte[] payload, int offset, int count, out byte[] frameBuffer, out int frameBufferOffset, out int frameBufferLength)
         {
             var buffer = new byte[count + _delimiter.DelimiterBytes.Length];
             Array.Copy(payload, offset, buffer, 0, count);
             Array.Copy(_delimiter.DelimiterBytes, 0, buffer, count, _delimiter.DelimiterBytes.Length);
-            return buffer;
+
+            frameBuffer = buffer;
+            frameBufferOffset = 0;
+            frameBufferLength = buffer.Length;
         }
 
         public bool TryDecodeFrame(byte[] buffer, int offset, int count, out int frameLength, out byte[] payload, out int payloadOffset, out int payloadCount)

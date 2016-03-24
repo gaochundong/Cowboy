@@ -63,6 +63,9 @@ namespace Cowboy.Sockets.TestTcpSocketServer
             //config.SslPolicyErrorsBypassed = false;
 
             //config.FrameBuilder = new FixedLengthFrameBuilder(20000);
+            //config.FrameBuilder = new FairPlainFrameBuilder();
+            //config.FrameBuilder = new LineBasedFrameBuilder();
+            //config.FrameBuilder = SizePrefixedFrameBuilder();
 
             _server = new TcpSocketServer(22222, config);
             _server.ClientConnected += server_ClientConnected;
@@ -73,20 +76,20 @@ namespace Cowboy.Sockets.TestTcpSocketServer
 
         static void server_ClientConnected(object sender, TcpClientConnectedEventArgs e)
         {
-            //Console.WriteLine(string.Format("TCP client {0} has connected {1}.", e.Session.RemoteEndPoint, e.Session));
+            Console.WriteLine(string.Format("TCP client {0} has connected {1}.", e.Session.RemoteEndPoint, e.Session));
         }
 
         static void server_ClientDisconnected(object sender, TcpClientDisconnectedEventArgs e)
         {
-            //Console.WriteLine(string.Format("TCP client {0} has disconnected.", e.Session));
+            Console.WriteLine(string.Format("TCP client {0} has disconnected.", e.Session));
         }
 
         static void server_ClientDataReceived(object sender, TcpClientDataReceivedEventArgs e)
         {
             var text = Encoding.UTF8.GetString(e.Data, e.DataOffset, e.DataLength);
-            //Console.Write(string.Format("Client : {0} {1} --> ", e.Session.RemoteEndPoint, e.Session));
-            //Console.WriteLine(text);
-            //_server.Broadcast(Encoding.UTF8.GetBytes(text));
+            Console.Write(string.Format("Client : {0} {1} --> ", e.Session.RemoteEndPoint, e.Session));
+            Console.WriteLine(text);
+
             _server.SendTo(e.Session, Encoding.UTF8.GetBytes(text));
         }
     }

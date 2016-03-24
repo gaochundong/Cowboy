@@ -440,9 +440,13 @@ namespace Cowboy.Sockets
 
             try
             {
-                var frame = _configuration.FrameBuilder.EncodeFrame(data, offset, count);
+                byte[] frameBuffer;
+                int frameBufferOffset;
+                int frameBufferLength;
+                _configuration.FrameBuilder.EncodeFrame(data, offset, count, out frameBuffer, out frameBufferOffset, out frameBufferLength);
+
                 var saea = _saeaPool.Take();
-                saea.Saea.SetBuffer(frame, 0, frame.Length);
+                saea.Saea.SetBuffer(frameBuffer, frameBufferOffset, frameBufferLength);
 
                 await _socket.SendAsync(saea);
 

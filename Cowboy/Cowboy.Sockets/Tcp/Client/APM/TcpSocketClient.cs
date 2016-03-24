@@ -442,8 +442,12 @@ namespace Cowboy.Sockets
             {
                 if (_stream.CanWrite)
                 {
-                    var frame = _configuration.FrameBuilder.EncodeFrame(data, offset, count);
-                    _stream.Write(frame, 0, frame.Length);
+                    byte[] frameBuffer;
+                    int frameBufferOffset;
+                    int frameBufferLength;
+                    _configuration.FrameBuilder.EncodeFrame(data, offset, count, out frameBuffer, out frameBufferOffset, out frameBufferLength);
+
+                    _stream.Write(frameBuffer, frameBufferOffset, frameBufferLength);
                 }
             }
             catch (Exception ex)
@@ -484,8 +488,12 @@ namespace Cowboy.Sockets
             {
                 if (_stream.CanWrite)
                 {
-                    var frame = _configuration.FrameBuilder.EncodeFrame(data, offset, count);
-                    _stream.BeginWrite(frame, 0, frame.Length, HandleDataWritten, _stream);
+                    byte[] frameBuffer;
+                    int frameBufferOffset;
+                    int frameBufferLength;
+                    _configuration.FrameBuilder.EncodeFrame(data, offset, count, out frameBuffer, out frameBufferOffset, out frameBufferLength);
+
+                    _stream.BeginWrite(frameBuffer, frameBufferOffset, frameBufferLength, HandleDataWritten, _stream);
                 }
             }
             catch (Exception ex)

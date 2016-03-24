@@ -322,8 +322,12 @@ namespace Cowboy.Sockets.Experimental
             {
                 if (_stream.CanWrite)
                 {
-                    var frame = _configuration.FrameBuilder.EncodeFrame(data, offset, count);
-                    await _stream.WriteAsync(frame, 0, frame.Length);
+                    byte[] frameBuffer;
+                    int frameBufferOffset;
+                    int frameBufferLength;
+                    _configuration.FrameBuilder.EncodeFrame(data, offset, count, out frameBuffer, out frameBufferOffset, out frameBufferLength);
+
+                    await _stream.WriteAsync(frameBuffer, frameBufferOffset, frameBufferLength);
                 }
             }
             catch (Exception ex) when (!ShouldThrow(ex)) { }

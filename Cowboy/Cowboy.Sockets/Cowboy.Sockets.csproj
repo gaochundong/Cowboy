@@ -68,6 +68,7 @@
     <Compile Include="Tcp\Client\SAEA\TcpSocketSaeaClientConfiguration.cs" />
     <Compile Include="Tcp\Client\SAEA\ITcpSocketSaeaClientMessageDispatcher.cs" />
     <Compile Include="Tcp\Client\SAEA\InternalTcpSocketSaeaClientMessageDispatcherImplementation.cs" />
+    <Compile Include="Tcp\Framing\FairPlainFrameBuilder.cs" />
     <Compile Include="Tcp\Framing\FixedLengthFrameBuilder.cs" />
     <Compile Include="Tcp\Server\RIO\InternalTcpSocketRioServerMessageDispatcherImplementation.cs" />
     <Compile Include="Tcp\Server\RIO\ITcpSocketRioServerMessageDispatcher.cs" />

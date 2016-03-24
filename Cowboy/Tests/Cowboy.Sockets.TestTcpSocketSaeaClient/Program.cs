@@ -19,6 +19,11 @@ namespace Cowboy.Sockets.TestTcpSocketSaeaClient
             {
                 var config = new TcpSocketSaeaClientConfiguration();
 
+                //config.FrameBuilder = new FixedLengthFrameBuilder(20000);
+                //config.FrameBuilder = new FairPlainFrameBuilder();
+                //config.FrameBuilder = new LineBasedFrameBuilder();
+                //config.FrameBuilder = SizePrefixedFrameBuilder();
+
                 IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 22222);
                 _client = new TcpSocketSaeaClient(remoteEP, new SimpleMessageDispatcher(), config);
                 _client.Connect().Wait();

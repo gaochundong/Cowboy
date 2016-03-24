@@ -33,9 +33,13 @@ namespace Cowboy.Sockets
 
         public bool IsMasked { get; private set; }
 
-        public byte[] EncodeFrame(byte[] payload, int offset, int count)
+        public void EncodeFrame(byte[] payload, int offset, int count, out byte[] frameBuffer, out int frameBufferOffset, out int frameBufferLength)
         {
-            return Encode(payload, offset, count, IsMasked);
+            var buffer = Encode(payload, offset, count, IsMasked);
+
+            frameBuffer = buffer;
+            frameBufferOffset = 0;
+            frameBufferLength = buffer.Length;
         }
 
         public bool TryDecodeFrame(byte[] buffer, int offset, int count, out int frameLength, out byte[] payload, out int payloadOffset, out int payloadCount)

@@ -15,22 +15,34 @@ namespace Cowboy.Sockets
 
         public int FixedFrameLength { get { return _fixedFrameLength; } }
 
-        public byte[] EncodeFrame(byte[] payload, int offset, int count)
+        public void EncodeFrame(byte[] payload, int offset, int count, out byte[] frameBuffer, out int frameBufferOffset, out int frameBufferLength)
         {
-            var buffer = new byte[FixedFrameLength];
-            if (count >= FixedFrameLength)
+            if (count == FixedFrameLength)
             {
-                Array.Copy(payload, offset, buffer, 0, FixedFrameLength);
+                frameBuffer = payload;
+                frameBufferOffset = offset;
+                frameBufferLength = count;
             }
             else
             {
-                Array.Copy(payload, offset, buffer, 0, count);
-                for (int i = 0; i < FixedFrameLength - count; i++)
+                var buffer = new byte[FixedFrameLength];
+                if (count >= FixedFrameLength)
                 {
-                    buffer[count + i] = (byte)'\n';
+                    Array.Copy(payload, offset, buffer, 0, FixedFrameLength);
                 }
+                else
+                {
+                    Array.Copy(payload, offset, buffer, 0, count);
+                    for (int i = 0; i < FixedFrameLength - count; i++)
+                    {
+                        buffer[count + i] = (byte)'\n';
+                    }
+                }
+
+                frameBuffer = buffer;
+                frameBufferOffset = 0;
+                frameBufferLength = buffer.Length;
             }
-            return buffer;
         }
 
         public bool TryDecodeFrame(byte[] buffer, int offset, int count, out int frameLength, out byte[] payload, out int payloadOffset, out int payloadCount)
