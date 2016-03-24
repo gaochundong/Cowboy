@@ -21,7 +21,7 @@ namespace Cowboy.Sockets.TestTcpSocketSaeaServer
                 //config.FrameBuilder = new FixedLengthFrameBuilder(20000);
                 //config.FrameBuilder = new FairPlainFrameBuilder();
                 //config.FrameBuilder = new LineBasedFrameBuilder();
-                //config.FrameBuilder = SizePrefixedFrameBuilder();
+                //config.FrameBuilder = new SizePrefixedFrameBuilder();
 
                 _server = new TcpSocketSaeaServer(22222, new SimpleMessageDispatcher(), config);
                 _server.Listen();
