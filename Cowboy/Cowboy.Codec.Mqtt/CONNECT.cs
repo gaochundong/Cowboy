@@ -60,10 +60,7 @@ namespace Cowboy.Codec.Mqtt
             if (string.IsNullOrWhiteSpace(this.ProtocolName))
                 throw new NotSupportedException(
                     string.Format("Invalid protocol name [{0}].", this.ProtocolName));
-            var protocolNameBytes = Encoding.UTF8.GetBytes(this.ProtocolName);
-            variableHeaderBytes.Add((byte)(protocolNameBytes.Length >> 8));
-            variableHeaderBytes.Add((byte)(protocolNameBytes.Length & 0xFF));
-            variableHeaderBytes.AddRange(protocolNameBytes);
+            variableHeaderBytes.AddRange(MqttEncoding.Default.GetBytes(this.ProtocolName));
 
             if (string.IsNullOrWhiteSpace(this.ProtocolVersion))
                 throw new NotSupportedException(

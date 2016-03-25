@@ -8,12 +8,12 @@ namespace Cowboy.Codec.Mqtt
     {
         private Encoding _encoding;
 
-        public MqttEncoding()
+        private MqttEncoding()
             : this(Encoding.UTF8)
         {
         }
 
-        public MqttEncoding(Encoding encoding)
+        private MqttEncoding(Encoding encoding)
         {
             if (encoding == null)
                 throw new ArgumentNullException("encoding");
@@ -22,10 +22,13 @@ namespace Cowboy.Codec.Mqtt
 
         public static MqttEncoding Default = new MqttEncoding();
 
+        public int GetByteCount(string str)
+        {
+            return _encoding.GetByteCount(str) + 2;
+        }
+
         public byte[] GetBytes(string str)
         {
-            SanityCheckString(str);
-
             var bytes = _encoding.GetBytes(str);
 
             var stringBytes = new List<byte>();
@@ -36,30 +39,22 @@ namespace Cowboy.Codec.Mqtt
             return stringBytes.ToArray();
         }
 
+        public int GetStringLength(byte[] bytes)
+        {
+            if (bytes == null || bytes.Length < 2)
+                throw new ArgumentException("Invalid bytes length for length prefixed string.");
+
+            return (ushort)((bytes[0] << 8) + bytes[1]);
+        }
+
         public string GetString(byte[] bytes)
         {
             return _encoding.GetString(bytes);
         }
 
-        public int GetCharCount(byte[] bytes)
+        public string GetString(byte[] bytes, int offset, int count)
         {
-            if (bytes.Length < 2)
-                throw new ArgumentException("Invalid bytes for length prefixed string.");
-
-            return (ushort)((bytes[0] << 8) + bytes[1]);
-        }
-
-        public int GetByteCount(string str)
-        {
-            SanityCheckString(str);
-            return _encoding.GetByteCount(str) + 2;
-        }
-
-        private static void SanityCheckString(string str)
-        {
-            foreach (var c in str)
-                if (c > 0x7F)
-                    throw new ArgumentException("Invalid UTF characters.");
+            return _encoding.GetString(bytes, offset, count);
         }
     }
 }
