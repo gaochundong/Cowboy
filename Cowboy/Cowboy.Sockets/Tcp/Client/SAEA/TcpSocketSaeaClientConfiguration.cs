@@ -15,7 +15,7 @@ namespace Cowboy.Sockets
             NoDelay = true;
             LingerState = new LingerOption(false, 0); // The socket will linger for x seconds after Socket.Close is called.
 
-            FrameBuilder = new SizePrefixedFrameBuilder();
+            FrameBuilder = new LengthPrefixedFrameBuilder();
         }
 
         public int InitialPooledBufferCount { get; set; }

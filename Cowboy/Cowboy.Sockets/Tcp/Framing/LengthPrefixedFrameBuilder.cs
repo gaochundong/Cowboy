@@ -21,12 +21,12 @@ namespace Cowboy.Sockets
     // + - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - +
     // |                     Payload Data continued ...                |
     // +---------------------------------------------------------------+
-    public sealed class SizePrefixedFrameBuilder : IFrameBuilder
+    public sealed class LengthPrefixedFrameBuilder : IFrameBuilder
     {
         private static readonly Random _rng = new Random(DateTime.UtcNow.Millisecond);
         private static readonly int MaskingKeyLength = 4;
 
-        public SizePrefixedFrameBuilder(bool isMasked = false)
+        public LengthPrefixedFrameBuilder(bool isMasked = false)
         {
             IsMasked = isMasked;
         }

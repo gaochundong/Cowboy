@@ -7,7 +7,7 @@
             InitialPooledBufferCount = 100;
             ReceiveBufferSize = 8192;
 
-            FrameBuilder = new SizePrefixedFrameBuilder();
+            FrameBuilder = new LengthPrefixedFrameBuilder();
         }
 
         public int InitialPooledBufferCount { get; set; }

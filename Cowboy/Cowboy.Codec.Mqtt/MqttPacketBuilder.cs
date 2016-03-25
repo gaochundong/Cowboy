@@ -17,8 +17,41 @@ namespace Cowboy.Codec.Mqtt
 
         public byte[] EncodePacket(CONNECT packet)
         {
-            //return Encode(packet.ControlPacketType, packet.Data, packet.Offset, packet.Count, isMasked: packet.IsMasked);
+            byte fixedHeaderByte = (byte)((byte)packet.ControlPacketType << 4);
+            List<byte> remainingLengthBytes = GetRemainingLengthBytes();
+
             return null;
+        }
+
+        private List<byte> GetRemainingLengthBytes()
+        {
+            // The Remaining Length is the number of bytes remaining within the current packet, 
+            // including data in the variable header and the payload. 
+            // The Remaining Length does not include the bytes used to encode the Remaining Length.
+
+            // The Remaining Length is encoded using a variable length encoding scheme which uses 
+            // a single byte for values up to 127. Larger values are handled as follows. 
+            // The least significant seven bits of each byte encode the data, and the most 
+            // significant bit is used to indicate that there are following bytes in the representation. 
+            // Thus each byte encodes 128 values and a "continuation bit". 
+            // The maximum number of bytes in the Remaining Length field is four.
+
+            var remainingLengthBytes = new List<byte>();
+            int totalPayloadLength = 33333; // VariableHeader.Length + Payload.Length
+
+            do
+            {
+                int encodedByte = totalPayloadLength % 128;
+                totalPayloadLength = totalPayloadLength / 128;
+                if (totalPayloadLength > 0)
+                {
+                    encodedByte = encodedByte | 0x80;
+                }
+                remainingLengthBytes.Add((byte)encodedByte);
+            }
+            while (totalPayloadLength > 0);
+
+            return remainingLengthBytes;
         }
 
         private byte[] Encode(ControlPacketType opCode, byte[] payload, int offset, int count, bool isMasked = true, bool isFin = true)

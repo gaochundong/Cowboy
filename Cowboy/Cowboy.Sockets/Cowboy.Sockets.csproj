@@ -103,7 +103,7 @@
     <Compile Include="Tcp\Client\APM\TcpSocketClientConfiguration.cs" />
     <Compile Include="Tcp\Framing\IFrameBuilder.cs" />
     <Compile Include="Tcp\Framing\LineBasedFrameBuilder.cs" />
-    <Compile Include="Tcp\Framing\SizePrefixedFrameBuilder.cs" />
+    <Compile Include="Tcp\Framing\LengthPrefixedFrameBuilder.cs" />
     <Compile Include="Tcp\Server\TAP\AsyncTcpSocketServerConfiguration.cs" />
     <Compile Include="Tcp\Server\SAEA\TcpSocketSaeaServerConfiguration.cs" />
     <Compile Include="Tcp\Server\APM\TcpSocketServerConfiguration.cs" />

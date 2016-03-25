@@ -18,7 +18,7 @@ namespace Cowboy.Sockets
             PendingConnectionBacklog = 200;
             AllowNatTraversal = true;
 
-            FrameBuilder = new SizePrefixedFrameBuilder();
+            FrameBuilder = new LengthPrefixedFrameBuilder();
         }
 
         public int InitialPooledBufferCount { get; set; }

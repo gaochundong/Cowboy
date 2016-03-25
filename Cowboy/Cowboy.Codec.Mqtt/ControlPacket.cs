@@ -10,10 +10,10 @@ namespace Cowboy.Codec.Mqtt
     {
         public abstract ControlPacketType ControlPacketType { get; }
 
-        public abstract byte[] FixedHeader { get; set; }
+        //public abstract byte[] FixedHeader { get; set; }
 
-        public abstract byte[] VariableHeader { get; set; }
+        //public abstract byte[] VariableHeader { get; set; }
 
-        public abstract byte[] Payload { get; set; }
+        //public abstract byte[] Payload { get; set; }
     }
 }

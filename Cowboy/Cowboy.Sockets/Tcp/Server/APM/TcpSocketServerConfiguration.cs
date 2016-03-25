@@ -30,7 +30,7 @@ namespace Cowboy.Sockets
             SslPolicyErrorsBypassed = false;
 
             ConnectTimeout = TimeSpan.FromSeconds(15);
-            FrameBuilder = new SizePrefixedFrameBuilder();
+            FrameBuilder = new LengthPrefixedFrameBuilder();
         }
 
         public int InitialPooledBufferCount { get; set; }
