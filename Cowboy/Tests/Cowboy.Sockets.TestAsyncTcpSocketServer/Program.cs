@@ -64,7 +64,7 @@ namespace Cowboy.Sockets.TestAsyncTcpSocketServer
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine(ex.Message);
+                        Logger.Get<Program>().Error(ex.Message, ex);
                     }
                 }
 

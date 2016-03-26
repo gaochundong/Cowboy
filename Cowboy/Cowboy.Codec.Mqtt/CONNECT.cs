@@ -21,53 +21,31 @@ namespace Cowboy.Codec.Mqtt
             this.CleanSession = true;
         }
 
+        public CONNECT(string clientIdentifier)
+            : this()
+        {
+            this.ClientIdentifier = clientIdentifier;
+        }
+
         public override ControlPacketType ControlPacketType { get { return ControlPacketType.CONNECT; } }
 
-        public void BuildPayload()
-        {
-            var variableHeaderBytes = GetVariableHeaderBytes();
-
-            var payloadBytes = GetPayloadBytes();
-
-            byte fixedHeaderByte = (byte)((byte)this.ControlPacketType << 4);
-            var remainingLengthBytes = GetRemainingLengthBytes(variableHeaderBytes.Count, payloadBytes.Length);
-        }
-
-        private List<byte> GetRemainingLengthBytes(int variableHeaderLength, int payloadLength)
-        {
-            var remainingLengthBytes = new List<byte>();
-            int totalLength = variableHeaderLength + payloadLength;
-
-            do
-            {
-                int encodedByte = totalLength % 128;
-                totalLength = totalLength / 128;
-                if (totalLength > 0)
-                {
-                    encodedByte = encodedByte | 0x80;
-                }
-                remainingLengthBytes.Add((byte)encodedByte);
-            }
-            while (totalLength > 0);
-
-            return remainingLengthBytes;
-        }
-
-        private List<byte> GetVariableHeaderBytes()
+        protected override List<byte> GetVariableHeaderBytes()
         {
             var variableHeaderBytes = new List<byte>();
 
             if (string.IsNullOrWhiteSpace(this.ProtocolName))
-                throw new NotSupportedException(
+                throw new InvalidControlPacketException(
                     string.Format("Invalid protocol name [{0}].", this.ProtocolName));
-            variableHeaderBytes.AddRange(MqttEncoding.Default.GetBytes(this.ProtocolName));
-
             if (string.IsNullOrWhiteSpace(this.ProtocolVersion))
-                throw new NotSupportedException(
+                throw new InvalidControlPacketException(
                     string.Format("Invalid protocol version [{0}].", this.ProtocolVersion));
             if (!VersionLevels.ContainsKey(this.ProtocolVersion))
-                throw new NotSupportedException(
+                throw new InvalidControlPacketException(
                     string.Format("Cannot support version [{0} {1}].", this.ProtocolName, this.ProtocolVersion));
+
+
+            variableHeaderBytes.AddRange(MqttEncoding.Default.GetBytes(this.ProtocolName));
+
             var protocolLevel = VersionLevels[this.ProtocolVersion];
             variableHeaderBytes.Add(protocolLevel);
 
@@ -107,20 +85,43 @@ namespace Cowboy.Codec.Mqtt
             return variableHeaderBytes;
         }
 
-        private byte[] GetPayloadBytes()
+        protected override List<byte> GetPayloadBytes()
         {
-            throw new NotImplementedException();
+            var payload = new List<byte>();
+
+            if (string.IsNullOrWhiteSpace(this.ClientIdentifier))
+                throw new InvalidControlPacketException(
+                    string.Format("Invalid client identifier [{0}].", this.ClientIdentifier));
+
+            payload.AddRange(MqttEncoding.Default.GetBytes(ClientIdentifier));
+
+            if (this.WillFlag)
+            {
+                payload.AddRange(MqttEncoding.Default.GetBytes(WillTopic));
+                payload.AddRange(MqttEncoding.Default.GetBytes(WillMessage));
+            }
+
+            if (this.UserNameFlag)
+            {
+                payload.AddRange(MqttEncoding.Default.GetBytes(UserName));
+            }
+
+            if (this.PasswordFlag)
+            {
+                payload.AddRange(MqttEncoding.Default.GetBytes(Password));
+            }
+
+            return payload;
         }
 
-        public string ClientIdentifier { get; set; } // required
-        public string WillTopic { get; set; } // optional, determined based on flags
-        public string WillMessage { get; set; } // optional, determined based on flags
-        public string UserName { get; set; } // optional, determined based on flags
-        public string Password { get; set; } // optional, determined based on flags
+        public string ClientIdentifier { get; set; }
+        public string WillTopic { get; set; }
+        public string WillMessage { get; set; }
+        public string UserName { get; set; }
+        public string Password { get; set; }
 
         public string ProtocolName { get; set; }
         public string ProtocolVersion { get; set; }
-        public byte ConnectFlags { get; set; }
         public TimeSpan KeepAliveInterval { get; set; }
 
         public bool UserNameFlag { get; set; }

@@ -33,26 +33,40 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Logrila.Logging, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Logrila.Logging.1.0.0.0\lib\net46\Logrila.Logging.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Logrila.Logging.NLogIntegration, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Logrila.Logging.NLogIntegration.1.0.0.0\lib\net46\Logrila.Logging.NLogIntegration.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\NLog.4.2.3\lib\net45\NLog.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SimpleMessageDispatcher.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Cowboy.Codec.Mqtt\Cowboy.Codec.Mqtt.csproj">
       <Project>{d287e816-2c62-460a-9c90-90d5a9479939}</Project>
       <Name>Cowboy.Codec.Mqtt</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Cowboy.Sockets\Cowboy.Sockets.csproj">
+      <Project>{39d916fe-2c09-47ab-a5a2-1a23787f20ba}</Project>
+      <Name>Cowboy.Sockets</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -103,7 +103,7 @@ namespace Cowboy.WebSockets.TestAsyncWebSocketClient
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine(ex.Message);
+                            Logger.Get<Program>().Error(ex.Message, ex);
                         }
                     }
 

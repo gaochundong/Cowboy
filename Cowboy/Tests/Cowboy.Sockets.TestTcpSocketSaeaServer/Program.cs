@@ -61,7 +61,7 @@ namespace Cowboy.Sockets.TestTcpSocketSaeaServer
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine(ex.Message);
+                        Logger.Get<Program>().Error(ex.Message, ex);
                     }
                 }
 
