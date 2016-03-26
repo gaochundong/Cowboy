@@ -22,6 +22,8 @@ namespace Cowboy.Codec.Mqtt.TestMqttClient
             {
                 var config = new AsyncTcpSocketClientConfiguration();
 
+                config.FrameBuilder = new MqttPacketBuilder();
+
                 var remoteEP = ResolveRemoteEndPoint(new Uri("http://test.mosquitto.org:1883/"));
                 _client = new AsyncTcpSocketClient(remoteEP, new SimpleMessageDispatcher(), config);
                 _client.Connect().Wait();
@@ -44,7 +46,8 @@ namespace Cowboy.Codec.Mqtt.TestMqttClient
                                 await _client.SendAsync(bytes);
                                 Console.WriteLine("Client [{0}] send CONNECT packet with length [{1}].", _client.LocalEndPoint, bytes.Length);
                             }
-                        }).Wait();
+                        })
+                        .Wait();
                     }
                     catch (Exception ex)
                     {
@@ -62,7 +65,6 @@ namespace Cowboy.Codec.Mqtt.TestMqttClient
 
             Console.ReadKey();
         }
-
 
         private static IPEndPoint ResolveRemoteEndPoint(Uri uri)
         {
