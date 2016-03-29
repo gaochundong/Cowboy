@@ -2,22 +2,22 @@
 
 namespace Cowboy.Sockets
 {
-    public sealed class FairPlainFrameBuilder : FrameBuilder
+    public sealed class RawBufferFrameBuilder : FrameBuilder
     {
-        public FairPlainFrameBuilder()
-            : this(new FairPlainFrameEncoder(), new FairPlainFrameDecoder())
+        public RawBufferFrameBuilder()
+            : this(new RawBufferFrameEncoder(), new RawBufferFrameDecoder())
         {
         }
 
-        public FairPlainFrameBuilder(FairPlainFrameEncoder encoder, FairPlainFrameDecoder decoder)
+        public RawBufferFrameBuilder(RawBufferFrameEncoder encoder, RawBufferFrameDecoder decoder)
             : base(encoder, decoder)
         {
         }
     }
 
-    public sealed class FairPlainFrameEncoder : IFrameEncoder
+    public sealed class RawBufferFrameEncoder : IFrameEncoder
     {
-        public FairPlainFrameEncoder()
+        public RawBufferFrameEncoder()
         {
         }
 
@@ -29,9 +29,9 @@ namespace Cowboy.Sockets
         }
     }
 
-    public sealed class FairPlainFrameDecoder : IFrameDecoder
+    public sealed class RawBufferFrameDecoder : IFrameDecoder
     {
-        public FairPlainFrameDecoder()
+        public RawBufferFrameDecoder()
         {
         }
 

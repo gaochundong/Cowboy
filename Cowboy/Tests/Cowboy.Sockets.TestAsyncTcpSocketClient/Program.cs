@@ -24,7 +24,7 @@ namespace Cowboy.Sockets.TestAsyncTcpSocketClient
                 //config.SslPolicyErrorsBypassed = false;
 
                 //config.FrameBuilder = new FixedLengthFrameBuilder(20000);
-                //config.FrameBuilder = new FairPlainFrameBuilder();
+                //config.FrameBuilder = new RawBufferFrameBuilder();
                 //config.FrameBuilder = new LineBasedFrameBuilder();
                 //config.FrameBuilder = new LengthPrefixedFrameBuilder();
 
