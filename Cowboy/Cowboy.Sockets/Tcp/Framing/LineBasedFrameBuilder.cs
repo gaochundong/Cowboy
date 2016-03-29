@@ -65,7 +65,6 @@ namespace Cowboy.Sockets
 
     public sealed class LineBasedFrameEncoder : IFrameEncoder
     {
-        public static readonly LineBasedFrameEncoder Singleton = new LineBasedFrameEncoder();
         private readonly LineDelimiter _delimiter;
 
         public LineBasedFrameEncoder()
@@ -96,7 +95,6 @@ namespace Cowboy.Sockets
 
     public sealed class LineBasedFrameDecoder : IFrameDecoder
     {
-        public static readonly LineBasedFrameDecoder Singleton = new LineBasedFrameDecoder();
         private readonly LineDelimiter _delimiter;
 
         public LineBasedFrameDecoder()

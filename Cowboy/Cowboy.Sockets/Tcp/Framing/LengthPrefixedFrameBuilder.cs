@@ -130,7 +130,6 @@ namespace Cowboy.Sockets
 
     public sealed class LengthPrefixedFrameDecoder : IFrameDecoder
     {
-        private static readonly Random _rng = new Random(DateTime.UtcNow.Millisecond);
         private static readonly int MaskingKeyLength = 4;
 
         public LengthPrefixedFrameDecoder(bool isMasked = false)
