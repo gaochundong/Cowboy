@@ -187,7 +187,7 @@ namespace Cowboy.Sockets.Experimental
                         payloadOffset = 0;
                         payloadCount = 0;
 
-                        if (_configuration.FrameBuilder.TryDecodeFrame(_receiveBuffer, consumedLength, _receiveBufferOffset - consumedLength,
+                        if (_configuration.FrameBuilder.Decoder.TryDecodeFrame(_receiveBuffer, consumedLength, _receiveBufferOffset - consumedLength,
                             out frameLength, out payload, out payloadOffset, out payloadCount))
                         {
                             try
@@ -325,7 +325,7 @@ namespace Cowboy.Sockets.Experimental
                     byte[] frameBuffer;
                     int frameBufferOffset;
                     int frameBufferLength;
-                    _configuration.FrameBuilder.EncodeFrame(data, offset, count, out frameBuffer, out frameBufferOffset, out frameBufferLength);
+                    _configuration.FrameBuilder.Encoder.EncodeFrame(data, offset, count, out frameBuffer, out frameBufferOffset, out frameBufferLength);
 
                     await _stream.WriteAsync(frameBuffer, frameBufferOffset, frameBufferLength);
                 }

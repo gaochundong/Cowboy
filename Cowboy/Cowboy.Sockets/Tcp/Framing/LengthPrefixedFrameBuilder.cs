@@ -23,68 +23,45 @@ namespace Cowboy.Sockets
     // +---------------------------------------------------------------+
     public sealed class LengthPrefixedFrameBuilder : IFrameBuilder
     {
+        public LengthPrefixedFrameBuilder(bool isMasked = false)
+            : this(new LengthPrefixedFrameEncoder(isMasked), new LengthPrefixedFrameDecoder(isMasked))
+        {
+        }
+
+        public LengthPrefixedFrameBuilder(IFrameEncoder encoder, IFrameDecoder decoder)
+        {
+            if (encoder == null)
+                throw new ArgumentNullException("encoder");
+            if (decoder == null)
+                throw new ArgumentNullException("decoder");
+
+            this.Encoder = encoder;
+            this.Decoder = decoder;
+        }
+
+        public IFrameEncoder Encoder { get; private set; }
+        public IFrameDecoder Decoder { get; private set; }
+    }
+
+    public sealed class LengthPrefixedFrameEncoder : AbstractChainableFrameEncoder
+    {
         private static readonly Random _rng = new Random(DateTime.UtcNow.Millisecond);
         private static readonly int MaskingKeyLength = 4;
 
-        public LengthPrefixedFrameBuilder(bool isMasked = false)
+        public LengthPrefixedFrameEncoder(bool isMasked = false)
         {
             IsMasked = isMasked;
         }
 
         public bool IsMasked { get; private set; }
 
-        public void EncodeFrame(byte[] payload, int offset, int count, out byte[] frameBuffer, out int frameBufferOffset, out int frameBufferLength)
+        protected override void OnEncodeFrame(byte[] payload, int offset, int count, out byte[] frameBuffer, out int frameBufferOffset, out int frameBufferLength)
         {
             var buffer = Encode(payload, offset, count, IsMasked);
 
             frameBuffer = buffer;
             frameBufferOffset = 0;
             frameBufferLength = buffer.Length;
-        }
-
-        public bool TryDecodeFrame(byte[] buffer, int offset, int count, out int frameLength, out byte[] payload, out int payloadOffset, out int payloadCount)
-        {
-            frameLength = 0;
-            payload = null;
-            payloadOffset = 0;
-            payloadCount = 0;
-
-            var frameHeader = DecodeHeader(buffer, offset, count);
-            if (frameHeader != null && frameHeader.Length + frameHeader.PayloadLength <= count)
-            {
-                if (IsMasked)
-                {
-                    payload = DecodeMaskedPayload(buffer, offset, frameHeader.MaskingKeyOffset, frameHeader.Length, frameHeader.PayloadLength);
-                    payloadOffset = 0;
-                    payloadCount = payload.Length;
-                }
-                else
-                {
-                    payload = buffer;
-                    payloadOffset = offset + frameHeader.Length;
-                    payloadCount = frameHeader.PayloadLength;
-                }
-
-                frameLength = frameHeader.Length + frameHeader.PayloadLength;
-
-                return true;
-            }
-
-            return false;
-        }
-
-        internal sealed class Header
-        {
-            public bool IsMasked { get; set; }
-            public int PayloadLength { get; set; }
-            public int MaskingKeyOffset { get; set; }
-            public int Length { get; set; }
-
-            public override string ToString()
-            {
-                return string.Format("IsMasked[{0}], PayloadLength[{1}], MaskingKeyOffset[{2}], Length[{3}]",
-                    IsMasked, PayloadLength, MaskingKeyOffset, Length);
-            }
         }
 
         private static byte[] Encode(byte[] payload, int offset, int count, bool isMasked = false)
@@ -157,6 +134,64 @@ namespace Cowboy.Sockets
             }
 
             return fragment;
+        }
+    }
+
+    public sealed class LengthPrefixedFrameDecoder : AbstractChainableFrameDecoder
+    {
+        private static readonly Random _rng = new Random(DateTime.UtcNow.Millisecond);
+        private static readonly int MaskingKeyLength = 4;
+
+        public LengthPrefixedFrameDecoder(bool isMasked = false)
+        {
+            IsMasked = isMasked;
+        }
+
+        public bool IsMasked { get; private set; }
+
+        protected override bool OnTryDecodeFrame(byte[] buffer, int offset, int count, out int frameLength, out byte[] payload, out int payloadOffset, out int payloadCount)
+        {
+            frameLength = 0;
+            payload = null;
+            payloadOffset = 0;
+            payloadCount = 0;
+
+            var frameHeader = DecodeHeader(buffer, offset, count);
+            if (frameHeader != null && frameHeader.Length + frameHeader.PayloadLength <= count)
+            {
+                if (IsMasked)
+                {
+                    payload = DecodeMaskedPayload(buffer, offset, frameHeader.MaskingKeyOffset, frameHeader.Length, frameHeader.PayloadLength);
+                    payloadOffset = 0;
+                    payloadCount = payload.Length;
+                }
+                else
+                {
+                    payload = buffer;
+                    payloadOffset = offset + frameHeader.Length;
+                    payloadCount = frameHeader.PayloadLength;
+                }
+
+                frameLength = frameHeader.Length + frameHeader.PayloadLength;
+
+                return true;
+            }
+
+            return false;
+        }
+
+        internal sealed class Header
+        {
+            public bool IsMasked { get; set; }
+            public int PayloadLength { get; set; }
+            public int MaskingKeyOffset { get; set; }
+            public int Length { get; set; }
+
+            public override string ToString()
+            {
+                return string.Format("IsMasked[{0}], PayloadLength[{1}], MaskingKeyOffset[{2}], Length[{3}]",
+                    IsMasked, PayloadLength, MaskingKeyOffset, Length);
+            }
         }
 
         private static Header DecodeHeader(byte[] buffer, int offset, int count)

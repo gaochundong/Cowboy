@@ -68,8 +68,14 @@
     <Compile Include="Tcp\Client\SAEA\TcpSocketSaeaClientConfiguration.cs" />
     <Compile Include="Tcp\Client\SAEA\ITcpSocketSaeaClientMessageDispatcher.cs" />
     <Compile Include="Tcp\Client\SAEA\InternalTcpSocketSaeaClientMessageDispatcherImplementation.cs" />
+    <Compile Include="Tcp\Framing\Chainable\AbstractChainableFrameDecoder.cs" />
     <Compile Include="Tcp\Framing\FairPlainFrameBuilder.cs" />
     <Compile Include="Tcp\Framing\FixedLengthFrameBuilder.cs" />
+    <Compile Include="Tcp\Framing\Chainable\IChainableFrameDecoder.cs" />
+    <Compile Include="Tcp\Framing\Chainable\AbstractChainableFrameEncoder.cs" />
+    <Compile Include="Tcp\Framing\IFrameDecoder.cs" />
+    <Compile Include="Tcp\Framing\Chainable\IChainableFrameEncoder.cs" />
+    <Compile Include="Tcp\Framing\IFrameEncoder.cs" />
     <Compile Include="Tcp\Server\RIO\InternalTcpSocketRioServerMessageDispatcherImplementation.cs" />
     <Compile Include="Tcp\Server\RIO\ITcpSocketRioServerMessageDispatcher.cs" />
     <Compile Include="Tcp\Server\RIO\RioSharp\Kernel32.cs" />

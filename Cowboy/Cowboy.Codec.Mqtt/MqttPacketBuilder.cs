@@ -1,9 +1,34 @@
-﻿using Cowboy.Sockets;
+﻿using System;
+using Cowboy.Sockets;
 
 namespace Cowboy.Codec.Mqtt
 {
     public sealed class MqttPacketBuilder : IFrameBuilder
     {
+        public IChainableFrameEncoder Encoder
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public IFrameDecoder Decoder
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        IFrameEncoder IFrameBuilder.Encoder
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+        }
+
         public MqttPacketBuilder()
         {
         }
