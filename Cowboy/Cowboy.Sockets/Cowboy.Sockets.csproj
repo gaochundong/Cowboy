@@ -73,6 +73,7 @@
     <Compile Include="Tcp\Framing\FixedLengthFrameBuilder.cs" />
     <Compile Include="Tcp\Framing\Chainable\IChainableFrameDecoder.cs" />
     <Compile Include="Tcp\Framing\Chainable\AbstractChainableFrameEncoder.cs" />
+    <Compile Include="Tcp\Framing\FrameBuilder.cs" />
     <Compile Include="Tcp\Framing\IFrameDecoder.cs" />
     <Compile Include="Tcp\Framing\Chainable\IChainableFrameEncoder.cs" />
     <Compile Include="Tcp\Framing\IFrameEncoder.cs" />

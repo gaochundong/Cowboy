@@ -2,26 +2,17 @@
 
 namespace Cowboy.Sockets
 {
-    public sealed class FairPlainFrameBuilder : IFrameBuilder
+    public sealed class FairPlainFrameBuilder : FrameBuilder
     {
         public FairPlainFrameBuilder()
             : this(new FairPlainFrameEncoder(), new FairPlainFrameDecoder())
         {
         }
 
-        public FairPlainFrameBuilder(IFrameEncoder encoder, IFrameDecoder decoder)
+        public FairPlainFrameBuilder(FairPlainFrameEncoder encoder, FairPlainFrameDecoder decoder)
+            : base(encoder, decoder)
         {
-            if (encoder == null)
-                throw new ArgumentNullException("encoder");
-            if (decoder == null)
-                throw new ArgumentNullException("decoder");
-
-            this.Encoder = encoder;
-            this.Decoder = decoder;
         }
-
-        public IFrameEncoder Encoder { get; private set; }
-        public IFrameDecoder Decoder { get; private set; }
     }
 
     public sealed class FairPlainFrameEncoder : AbstractChainableFrameEncoder

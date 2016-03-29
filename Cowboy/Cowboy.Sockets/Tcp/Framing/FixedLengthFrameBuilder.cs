@@ -2,26 +2,17 @@
 
 namespace Cowboy.Sockets
 {
-    public sealed class FixedLengthFrameBuilder : IFrameBuilder
+    public sealed class FixedLengthFrameBuilder : FrameBuilder
     {
         public FixedLengthFrameBuilder(int fixedFrameLength)
             : this(new FixedLengthFrameEncoder(fixedFrameLength), new FixedLengthFrameDecoder(fixedFrameLength))
         {
         }
 
-        public FixedLengthFrameBuilder(IFrameEncoder encoder, IFrameDecoder decoder)
+        public FixedLengthFrameBuilder(FixedLengthFrameEncoder encoder, FixedLengthFrameDecoder decoder)
+            : base(encoder, decoder)
         {
-            if (encoder == null)
-                throw new ArgumentNullException("encoder");
-            if (decoder == null)
-                throw new ArgumentNullException("decoder");
-
-            this.Encoder = encoder;
-            this.Decoder = decoder;
         }
-
-        public IFrameEncoder Encoder { get; private set; }
-        public IFrameDecoder Decoder { get; private set; }
     }
 
     public sealed class FixedLengthFrameEncoder : AbstractChainableFrameEncoder

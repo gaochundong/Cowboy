@@ -21,26 +21,17 @@ namespace Cowboy.Sockets
     // + - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - +
     // |                     Payload Data continued ...                |
     // +---------------------------------------------------------------+
-    public sealed class LengthPrefixedFrameBuilder : IFrameBuilder
+    public sealed class LengthPrefixedFrameBuilder : FrameBuilder
     {
         public LengthPrefixedFrameBuilder(bool isMasked = false)
             : this(new LengthPrefixedFrameEncoder(isMasked), new LengthPrefixedFrameDecoder(isMasked))
         {
         }
 
-        public LengthPrefixedFrameBuilder(IFrameEncoder encoder, IFrameDecoder decoder)
+        public LengthPrefixedFrameBuilder(LengthPrefixedFrameEncoder encoder, LengthPrefixedFrameDecoder decoder)
+            : base(encoder, decoder)
         {
-            if (encoder == null)
-                throw new ArgumentNullException("encoder");
-            if (decoder == null)
-                throw new ArgumentNullException("decoder");
-
-            this.Encoder = encoder;
-            this.Decoder = decoder;
         }
-
-        public IFrameEncoder Encoder { get; private set; }
-        public IFrameDecoder Decoder { get; private set; }
     }
 
     public sealed class LengthPrefixedFrameEncoder : AbstractChainableFrameEncoder

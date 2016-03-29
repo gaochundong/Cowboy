@@ -45,7 +45,7 @@ namespace Cowboy.Sockets
         }
     }
 
-    public sealed class LineBasedFrameBuilder : IFrameBuilder
+    public sealed class LineBasedFrameBuilder : FrameBuilder
     {
         public LineBasedFrameBuilder()
             : this(new LineBasedFrameEncoder(), new LineBasedFrameDecoder())
@@ -57,19 +57,10 @@ namespace Cowboy.Sockets
         {
         }
 
-        public LineBasedFrameBuilder(IFrameEncoder encoder, IFrameDecoder decoder)
+        public LineBasedFrameBuilder(LineBasedFrameEncoder encoder, LineBasedFrameDecoder decoder)
+            : base(encoder, decoder)
         {
-            if (encoder == null)
-                throw new ArgumentNullException("encoder");
-            if (decoder == null)
-                throw new ArgumentNullException("decoder");
-
-            this.Encoder = encoder;
-            this.Decoder = decoder;
         }
-
-        public IFrameEncoder Encoder { get; private set; }
-        public IFrameDecoder Decoder { get; private set; }
     }
 
     public sealed class LineBasedFrameEncoder : AbstractChainableFrameEncoder
