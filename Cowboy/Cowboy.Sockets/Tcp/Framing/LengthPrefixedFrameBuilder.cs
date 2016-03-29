@@ -34,7 +34,7 @@ namespace Cowboy.Sockets
         }
     }
 
-    public sealed class LengthPrefixedFrameEncoder : AbstractChainableFrameEncoder
+    public sealed class LengthPrefixedFrameEncoder : IFrameEncoder
     {
         private static readonly Random _rng = new Random(DateTime.UtcNow.Millisecond);
         private static readonly int MaskingKeyLength = 4;
@@ -46,7 +46,7 @@ namespace Cowboy.Sockets
 
         public bool IsMasked { get; private set; }
 
-        protected override void OnEncodeFrame(byte[] payload, int offset, int count, out byte[] frameBuffer, out int frameBufferOffset, out int frameBufferLength)
+        public void EncodeFrame(byte[] payload, int offset, int count, out byte[] frameBuffer, out int frameBufferOffset, out int frameBufferLength)
         {
             var buffer = Encode(payload, offset, count, IsMasked);
 
@@ -128,7 +128,7 @@ namespace Cowboy.Sockets
         }
     }
 
-    public sealed class LengthPrefixedFrameDecoder : AbstractChainableFrameDecoder
+    public sealed class LengthPrefixedFrameDecoder : IFrameDecoder
     {
         private static readonly Random _rng = new Random(DateTime.UtcNow.Millisecond);
         private static readonly int MaskingKeyLength = 4;
@@ -140,7 +140,7 @@ namespace Cowboy.Sockets
 
         public bool IsMasked { get; private set; }
 
-        protected override bool OnTryDecodeFrame(byte[] buffer, int offset, int count, out int frameLength, out byte[] payload, out int payloadOffset, out int payloadCount)
+        public bool TryDecodeFrame(byte[] buffer, int offset, int count, out int frameLength, out byte[] payload, out int payloadOffset, out int payloadCount)
         {
             frameLength = 0;
             payload = null;

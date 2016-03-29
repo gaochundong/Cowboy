@@ -15,7 +15,7 @@ namespace Cowboy.Sockets
         }
     }
 
-    public sealed class FixedLengthFrameEncoder : AbstractChainableFrameEncoder
+    public sealed class FixedLengthFrameEncoder : IFrameEncoder
     {
         private readonly int _fixedFrameLength;
 
@@ -28,7 +28,7 @@ namespace Cowboy.Sockets
 
         public int FixedFrameLength { get { return _fixedFrameLength; } }
 
-        protected override void OnEncodeFrame(byte[] payload, int offset, int count, out byte[] frameBuffer, out int frameBufferOffset, out int frameBufferLength)
+        public void EncodeFrame(byte[] payload, int offset, int count, out byte[] frameBuffer, out int frameBufferOffset, out int frameBufferLength)
         {
             if (count == FixedFrameLength)
             {
@@ -59,7 +59,7 @@ namespace Cowboy.Sockets
         }
     }
 
-    public sealed class FixedLengthFrameDecoder : AbstractChainableFrameDecoder
+    public sealed class FixedLengthFrameDecoder : IFrameDecoder
     {
         private readonly int _fixedFrameLength;
 
@@ -72,7 +72,7 @@ namespace Cowboy.Sockets
 
         public int FixedFrameLength { get { return _fixedFrameLength; } }
 
-        protected override bool OnTryDecodeFrame(byte[] buffer, int offset, int count, out int frameLength, out byte[] payload, out int payloadOffset, out int payloadCount)
+        public bool TryDecodeFrame(byte[] buffer, int offset, int count, out int frameLength, out byte[] payload, out int payloadOffset, out int payloadCount)
         {
             frameLength = 0;
             payload = null;

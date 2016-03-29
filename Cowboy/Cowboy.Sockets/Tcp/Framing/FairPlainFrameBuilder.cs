@@ -15,13 +15,13 @@ namespace Cowboy.Sockets
         }
     }
 
-    public sealed class FairPlainFrameEncoder : AbstractChainableFrameEncoder
+    public sealed class FairPlainFrameEncoder : IFrameEncoder
     {
         public FairPlainFrameEncoder()
         {
         }
 
-        protected override void OnEncodeFrame(byte[] payload, int offset, int count, out byte[] frameBuffer, out int frameBufferOffset, out int frameBufferLength)
+        public void EncodeFrame(byte[] payload, int offset, int count, out byte[] frameBuffer, out int frameBufferOffset, out int frameBufferLength)
         {
             frameBuffer = payload;
             frameBufferOffset = offset;
@@ -29,13 +29,13 @@ namespace Cowboy.Sockets
         }
     }
 
-    public sealed class FairPlainFrameDecoder : AbstractChainableFrameDecoder
+    public sealed class FairPlainFrameDecoder : IFrameDecoder
     {
         public FairPlainFrameDecoder()
         {
         }
 
-        protected override bool OnTryDecodeFrame(byte[] buffer, int offset, int count, out int frameLength, out byte[] payload, out int payloadOffset, out int payloadCount)
+        public bool TryDecodeFrame(byte[] buffer, int offset, int count, out int frameLength, out byte[] payload, out int payloadOffset, out int payloadCount)
         {
             frameLength = 0;
             payload = null;

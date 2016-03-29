@@ -63,7 +63,7 @@ namespace Cowboy.Sockets
         }
     }
 
-    public sealed class LineBasedFrameEncoder : AbstractChainableFrameEncoder
+    public sealed class LineBasedFrameEncoder : IFrameEncoder
     {
         public static readonly LineBasedFrameEncoder Singleton = new LineBasedFrameEncoder();
         private readonly LineDelimiter _delimiter;
@@ -82,7 +82,7 @@ namespace Cowboy.Sockets
 
         public LineDelimiter LineDelimiter { get { return _delimiter; } }
 
-        protected override void OnEncodeFrame(byte[] payload, int offset, int count, out byte[] frameBuffer, out int frameBufferOffset, out int frameBufferLength)
+        public void EncodeFrame(byte[] payload, int offset, int count, out byte[] frameBuffer, out int frameBufferOffset, out int frameBufferLength)
         {
             var buffer = new byte[count + _delimiter.DelimiterBytes.Length];
             Array.Copy(payload, offset, buffer, 0, count);
@@ -94,7 +94,7 @@ namespace Cowboy.Sockets
         }
     }
 
-    public sealed class LineBasedFrameDecoder : AbstractChainableFrameDecoder
+    public sealed class LineBasedFrameDecoder : IFrameDecoder
     {
         public static readonly LineBasedFrameDecoder Singleton = new LineBasedFrameDecoder();
         private readonly LineDelimiter _delimiter;
@@ -113,7 +113,7 @@ namespace Cowboy.Sockets
 
         public LineDelimiter LineDelimiter { get { return _delimiter; } }
 
-        protected override bool OnTryDecodeFrame(byte[] buffer, int offset, int count, out int frameLength, out byte[] payload, out int payloadOffset, out int payloadCount)
+        public bool TryDecodeFrame(byte[] buffer, int offset, int count, out int frameLength, out byte[] payload, out int payloadOffset, out int payloadCount)
         {
             frameLength = 0;
             payload = null;

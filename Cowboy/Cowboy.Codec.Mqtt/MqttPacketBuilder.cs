@@ -5,14 +5,6 @@ namespace Cowboy.Codec.Mqtt
 {
     public sealed class MqttPacketBuilder : IFrameBuilder
     {
-        public IChainableFrameEncoder Encoder
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-        }
-
         public IFrameDecoder Decoder
         {
             get
