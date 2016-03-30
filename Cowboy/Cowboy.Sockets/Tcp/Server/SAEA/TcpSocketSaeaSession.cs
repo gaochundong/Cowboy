@@ -74,6 +74,7 @@ namespace Cowboy.Sockets
         public bool Connected { get { return _socket != null && _socket.Connected; } }
         public IPEndPoint RemoteEndPoint { get { return Connected ? (IPEndPoint)_socket.RemoteEndPoint : _remoteEndPoint; } }
         public IPEndPoint LocalEndPoint { get { return Connected ? (IPEndPoint)_socket.LocalEndPoint : _localEndPoint; } }
+        public Socket Socket { get { return _socket; } }
         public TcpSocketSaeaServer Server { get { return _server; } }
 
         public TcpSocketConnectionState State

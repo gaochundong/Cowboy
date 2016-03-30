@@ -93,6 +93,8 @@ namespace Cowboy.Sockets
                     (IPEndPoint)_tcpClient.Client.LocalEndPoint : _localEndPoint;
             }
         }
+        public Socket Socket { get { return _tcpClient.Client; } }
+        public Stream Stream { get { return _stream; } }
         public AsyncTcpSocketServer Server { get { return _server; } }
         public TimeSpan ConnectTimeout { get { return _configuration.ConnectTimeout; } }
 

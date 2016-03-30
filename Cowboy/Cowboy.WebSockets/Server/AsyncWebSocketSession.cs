@@ -423,174 +423,22 @@ namespace Cowboy.WebSockets
                                 switch (frameHeader.OpCode)
                                 {
                                     case OpCode.Continuation:
-                                        {
-                                            if (!frameHeader.IsFIN)
-                                            {
-                                                try
-                                                {
-                                                    await _module.OnSessionFragmentationStreamContinued(this, payload, payloadOffset, payloadCount);
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    HandleUserSideError(ex);
-                                                }
-                                            }
-                                            else
-                                            {
-                                                try
-                                                {
-                                                    await _module.OnSessionFragmentationStreamClosed(this, payload, payloadOffset, payloadCount);
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    HandleUserSideError(ex);
-                                                }
-                                            }
-                                        }
+                                        await HandleContinuationFrame(frameHeader, payload, payloadOffset, payloadCount);
                                         break;
                                     case OpCode.Text:
-                                        {
-                                            if (frameHeader.IsFIN)
-                                            {
-                                                try
-                                                {
-                                                    var text = Encoding.UTF8.GetString(payload, payloadOffset, payloadCount);
-                                                    await _module.OnSessionTextReceived(this, text);
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    HandleUserSideError(ex);
-                                                }
-                                            }
-                                            else
-                                            {
-                                                try
-                                                {
-                                                    await _module.OnSessionFragmentationStreamOpened(this, payload, payloadOffset, payloadCount);
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    HandleUserSideError(ex);
-                                                }
-                                            }
-                                        }
+                                        await HandleTextFrame(frameHeader, payload, payloadOffset, payloadCount);
                                         break;
                                     case OpCode.Binary:
-                                        {
-                                            if (frameHeader.IsFIN)
-                                            {
-                                                try
-                                                {
-                                                    await _module.OnSessionBinaryReceived(this, payload, payloadOffset, payloadCount);
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    HandleUserSideError(ex);
-                                                }
-                                            }
-                                            else
-                                            {
-                                                try
-                                                {
-                                                    await _module.OnSessionFragmentationStreamOpened(this, payload, payloadOffset, payloadCount);
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    HandleUserSideError(ex);
-                                                }
-                                            }
-                                        }
+                                        await HandleBinaryFrame(frameHeader, payload, payloadOffset, payloadCount);
                                         break;
                                     case OpCode.Close:
-                                        {
-                                            if (!frameHeader.IsFIN)
-                                            {
-                                                throw new WebSocketException(string.Format(
-                                                    "Server received unfinished frame [{0}] from remote [{1}].", frameHeader.OpCode, RemoteEndPoint));
-                                            }
-
-                                            if (payloadCount > 1)
-                                            {
-                                                var statusCode = payload[0] * 256 + payload[1];
-                                                var closeCode = (WebSocketCloseCode)statusCode;
-                                                var closeReason = string.Empty;
-
-                                                if (payloadCount > 2)
-                                                {
-                                                    closeReason = Encoding.UTF8.GetString(payload, 2, payloadCount - 2);
-                                                }
-#if DEBUG
-                                                _log.DebugFormat("Session [{0}] received client side close frame [{1}] [{2}].", this, closeCode, closeReason);
-#endif
-                                                // If an endpoint receives a Close frame and did not previously send a
-                                                // Close frame, the endpoint MUST send a Close frame in response.  (When
-                                                // sending a Close frame in response, the endpoint typically echos the
-                                                // status code it received.)  It SHOULD do so as soon as practical.
-                                                await Close(closeCode, closeReason);
-                                            }
-                                            else
-                                            {
-#if DEBUG
-                                                _log.DebugFormat("Session [{0}] received client side close frame but no status code.", this);
-#endif
-                                                await Close(WebSocketCloseCode.InvalidPayloadData);
-                                            }
-                                        }
+                                        await HandleCloseFrame(frameHeader, payload, payloadOffset, payloadCount);
                                         break;
                                     case OpCode.Ping:
-                                        {
-                                            if (!frameHeader.IsFIN)
-                                            {
-                                                throw new WebSocketException(string.Format(
-                                                    "Server received unfinished frame [{0}] from remote [{1}].", frameHeader.OpCode, RemoteEndPoint));
-                                            }
-
-                                            // Upon receipt of a Ping frame, an endpoint MUST send a Pong frame in
-                                            // response, unless it already received a Close frame.  It SHOULD
-                                            // respond with Pong frame as soon as is practical.  Pong frames are
-                                            // discussed in Section 5.5.3.
-                                            // 
-                                            // An endpoint MAY send a Ping frame any time after the connection is
-                                            // established and before the connection is closed.
-                                            // 
-                                            // A Ping frame may serve either as a keep-alive or as a means to
-                                            // verify that the remote endpoint is still responsive.
-                                            var ping = Encoding.UTF8.GetString(payload, payloadOffset, payloadCount);
-#if DEBUG
-                                            _log.DebugFormat("Session [{0}] received client side ping frame [{1}].", this, ping);
-#endif
-                                            if (State == WebSocketState.Open)
-                                            {
-                                                // A Pong frame sent in response to a Ping frame must have identical
-                                                // "Application data" as found in the message body of the Ping frame being replied to.
-                                                var pong = new PongFrame(ping, false).ToArray(_frameBuilder);
-                                                await SendFrame(pong);
-#if DEBUG
-                                                _log.DebugFormat("Session [{0}] sends server side pong frame [{1}].", this, ping);
-#endif
-                                            }
-                                        }
+                                        await HandlePingFrame(frameHeader, payload, payloadOffset, payloadCount);
                                         break;
                                     case OpCode.Pong:
-                                        {
-                                            if (!frameHeader.IsFIN)
-                                            {
-                                                throw new WebSocketException(string.Format(
-                                                    "Server received unfinished frame [{0}] from remote [{1}].", frameHeader.OpCode, RemoteEndPoint));
-                                            }
-
-                                            // If an endpoint receives a Ping frame and has not yet sent Pong
-                                            // frame(s) in response to previous Ping frame(s), the endpoint MAY
-                                            // elect to send a Pong frame for only the most recently processed Ping frame.
-                                            // 
-                                            // A Pong frame MAY be sent unsolicited.  This serves as a
-                                            // unidirectional heartbeat.  A response to an unsolicited Pong frame is not expected.
-                                            var pong = Encoding.UTF8.GetString(payload, payloadOffset, payloadCount);
-                                            StopKeepAliveTimeoutTimer();
-#if DEBUG
-                                            _log.DebugFormat("Session [{0}] received client side pong frame [{1}].", this, pong);
-#endif
-                                        }
+                                        await HandlePongFrame(frameHeader, payload, payloadOffset, payloadCount);
                                         break;
                                     default:
                                         {
@@ -641,6 +489,177 @@ namespace Cowboy.WebSockets
             {
                 await Abort();
             }
+        }
+
+        private async Task HandleContinuationFrame(Header frameHeader, byte[] payload, int payloadOffset, int payloadCount)
+        {
+            if (!frameHeader.IsFIN)
+            {
+                try
+                {
+                    await _module.OnSessionFragmentationStreamContinued(this, payload, payloadOffset, payloadCount);
+                }
+                catch (Exception ex)
+                {
+                    HandleUserSideError(ex);
+                }
+            }
+            else
+            {
+                try
+                {
+                    await _module.OnSessionFragmentationStreamClosed(this, payload, payloadOffset, payloadCount);
+                }
+                catch (Exception ex)
+                {
+                    HandleUserSideError(ex);
+                }
+            }
+        }
+
+        private async Task HandleTextFrame(Header frameHeader, byte[] payload, int payloadOffset, int payloadCount)
+        {
+            if (frameHeader.IsFIN)
+            {
+                try
+                {
+                    var text = Encoding.UTF8.GetString(payload, payloadOffset, payloadCount);
+                    await _module.OnSessionTextReceived(this, text);
+                }
+                catch (Exception ex)
+                {
+                    HandleUserSideError(ex);
+                }
+            }
+            else
+            {
+                try
+                {
+                    await _module.OnSessionFragmentationStreamOpened(this, payload, payloadOffset, payloadCount);
+                }
+                catch (Exception ex)
+                {
+                    HandleUserSideError(ex);
+                }
+            }
+        }
+
+        private async Task HandleBinaryFrame(Header frameHeader, byte[] payload, int payloadOffset, int payloadCount)
+        {
+            if (frameHeader.IsFIN)
+            {
+                try
+                {
+                    await _module.OnSessionBinaryReceived(this, payload, payloadOffset, payloadCount);
+                }
+                catch (Exception ex)
+                {
+                    HandleUserSideError(ex);
+                }
+            }
+            else
+            {
+                try
+                {
+                    await _module.OnSessionFragmentationStreamOpened(this, payload, payloadOffset, payloadCount);
+                }
+                catch (Exception ex)
+                {
+                    HandleUserSideError(ex);
+                }
+            }
+        }
+
+        private async Task HandleCloseFrame(Header frameHeader, byte[] payload, int payloadOffset, int payloadCount)
+        {
+            if (!frameHeader.IsFIN)
+            {
+                throw new WebSocketException(string.Format(
+                    "Server received unfinished frame [{0}] from remote [{1}].", frameHeader.OpCode, RemoteEndPoint));
+            }
+
+            if (payloadCount > 1)
+            {
+                var statusCode = payload[payloadOffset + 0] * 256 + payload[payloadOffset + 1];
+                var closeCode = (WebSocketCloseCode)statusCode;
+                var closeReason = string.Empty;
+
+                if (payloadCount > 2)
+                {
+                    closeReason = Encoding.UTF8.GetString(payload, payloadOffset + 2, payloadCount - 2);
+                }
+#if DEBUG
+                _log.DebugFormat("Session [{0}] received client side close frame [{1}] [{2}].", this, closeCode, closeReason);
+#endif
+                // If an endpoint receives a Close frame and did not previously send a
+                // Close frame, the endpoint MUST send a Close frame in response.  (When
+                // sending a Close frame in response, the endpoint typically echos the
+                // status code it received.)  It SHOULD do so as soon as practical.
+                await Close(closeCode, closeReason);
+            }
+            else
+            {
+#if DEBUG
+                _log.DebugFormat("Session [{0}] received client side close frame but no status code.", this);
+#endif
+                await Close(WebSocketCloseCode.InvalidPayloadData);
+            }
+        }
+
+        private async Task HandlePingFrame(Header frameHeader, byte[] payload, int payloadOffset, int payloadCount)
+        {
+            if (!frameHeader.IsFIN)
+            {
+                throw new WebSocketException(string.Format(
+                    "Server received unfinished frame [{0}] from remote [{1}].", frameHeader.OpCode, RemoteEndPoint));
+            }
+
+            // Upon receipt of a Ping frame, an endpoint MUST send a Pong frame in
+            // response, unless it already received a Close frame.  It SHOULD
+            // respond with Pong frame as soon as is practical.  Pong frames are
+            // discussed in Section 5.5.3.
+            // 
+            // An endpoint MAY send a Ping frame any time after the connection is
+            // established and before the connection is closed.
+            // 
+            // A Ping frame may serve either as a keep-alive or as a means to
+            // verify that the remote endpoint is still responsive.
+            var ping = Encoding.UTF8.GetString(payload, payloadOffset, payloadCount);
+#if DEBUG
+            _log.DebugFormat("Session [{0}] received client side ping frame [{1}].", this, ping);
+#endif
+            if (State == WebSocketState.Open)
+            {
+                // A Pong frame sent in response to a Ping frame must have identical
+                // "Application data" as found in the message body of the Ping frame being replied to.
+                var pong = new PongFrame(ping, false).ToArray(_frameBuilder);
+                await SendFrame(pong);
+#if DEBUG
+                _log.DebugFormat("Session [{0}] sends server side pong frame [{1}].", this, ping);
+#endif
+            }
+        }
+
+        private async Task HandlePongFrame(Header frameHeader, byte[] payload, int payloadOffset, int payloadCount)
+        {
+            if (!frameHeader.IsFIN)
+            {
+                throw new WebSocketException(string.Format(
+                    "Server received unfinished frame [{0}] from remote [{1}].", frameHeader.OpCode, RemoteEndPoint));
+            }
+
+            // If an endpoint receives a Ping frame and has not yet sent Pong
+            // frame(s) in response to previous Ping frame(s), the endpoint MAY
+            // elect to send a Pong frame for only the most recently processed Ping frame.
+            // 
+            // A Pong frame MAY be sent unsolicited.  This serves as a
+            // unidirectional heartbeat.  A response to an unsolicited Pong frame is not expected.
+            var pong = Encoding.UTF8.GetString(payload, payloadOffset, payloadCount);
+            StopKeepAliveTimeoutTimer();
+#if DEBUG
+            _log.DebugFormat("Session [{0}] received client side pong frame [{1}].", this, pong);
+#endif
+            await Task.CompletedTask;
         }
 
         #endregion

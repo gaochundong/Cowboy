@@ -69,6 +69,8 @@ namespace Cowboy.Sockets
         public bool Active { get { return _tcpClient != null && _tcpClient.Connected; } }
         public IPEndPoint RemoteEndPoint { get { return Active ? (IPEndPoint)_tcpClient.Client.RemoteEndPoint : _remoteEndPoint; } }
         public IPEndPoint LocalEndPoint { get { return Active ? (IPEndPoint)_tcpClient.Client.LocalEndPoint : _localEndPoint; } }
+        public Socket Socket { get { return _tcpClient.Client; } }
+        public Stream Stream { get { return _stream; } }
         public TcpSocketServer Server { get { return _server; } }
         public TimeSpan ConnectTimeout { get { return _configuration.ConnectTimeout; } }
 
