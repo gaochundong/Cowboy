@@ -68,6 +68,7 @@
     <Compile Include="Tcp\Client\SAEA\TcpSocketSaeaClientConfiguration.cs" />
     <Compile Include="Tcp\Client\SAEA\ITcpSocketSaeaClientMessageDispatcher.cs" />
     <Compile Include="Tcp\Client\SAEA\InternalTcpSocketSaeaClientMessageDispatcherImplementation.cs" />
+    <Compile Include="Tcp\Framing\LengthFieldBasedFrameBuilder.cs" />
     <Compile Include="Tcp\Framing\RawBufferFrameBuilder.cs" />
     <Compile Include="Tcp\Framing\FixedLengthFrameBuilder.cs" />
     <Compile Include="Tcp\Framing\FrameBuilder.cs" />

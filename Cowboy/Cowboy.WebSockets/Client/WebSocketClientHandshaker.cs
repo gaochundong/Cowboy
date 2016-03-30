@@ -29,15 +29,15 @@ namespace Cowboy.WebSockets
             // The request MUST contain a |Host| header field whose value
             // contains /host/ plus optionally ":" followed by /port/ (when not
             // using the default port).
-            sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.Host, client.Uri.Host);
+            sb.AppendFormatWithCrCf(Consts.HttpHeaderLineFormat, HttpKnownHeaderNames.Host, client.Uri.Host);
 
             // The request MUST contain an |Upgrade| header field whose value
             // MUST include the "websocket" keyword.
-            sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.Upgrade, Consts.WebSocketUpgradeToken);
+            sb.AppendFormatWithCrCf(Consts.HttpHeaderLineFormat, HttpKnownHeaderNames.Upgrade, Consts.WebSocketUpgradeToken);
 
             // The request MUST contain a |Connection| header field whose value
             // MUST include the "Upgrade" token.
-            sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.Connection, Consts.WebSocketConnectionToken);
+            sb.AppendFormatWithCrCf(Consts.HttpHeaderLineFormat, HttpKnownHeaderNames.Connection, Consts.WebSocketConnectionToken);
 
             // The request MUST include a header field with the name
             // |Sec-WebSocket-Key|.  The value of this header field MUST be a
@@ -45,11 +45,11 @@ namespace Cowboy.WebSockets
             // been base64-encoded (see Section 4 of [RFC4648]).  The nonce
             // MUST be selected randomly for each connection.
             secWebSocketKey = Convert.ToBase64String(Encoding.ASCII.GetBytes(Guid.NewGuid().ToString().Substring(0, 16)));
-            sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.SecWebSocketKey, secWebSocketKey);
+            sb.AppendFormatWithCrCf(Consts.HttpHeaderLineFormat, HttpKnownHeaderNames.SecWebSocketKey, secWebSocketKey);
 
             // The request MUST include a header field with the name
             // |Sec-WebSocket-Version|.  The value of this header field MUST be 13.
-            sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.SecWebSocketVersion, Consts.WebSocketVersion);
+            sb.AppendFormatWithCrCf(Consts.HttpHeaderLineFormat, HttpKnownHeaderNames.SecWebSocketVersion, Consts.WebSocketVersion);
 
             // The request MAY include a header field with the name
             // |Sec-WebSocket-Extensions|.  If present, this value indicates
@@ -59,7 +59,7 @@ namespace Cowboy.WebSockets
             {
                 foreach (var extension in client.OfferedExtensions)
                 {
-                    sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.SecWebSocketExtensions, extension.ExtensionNegotiationOffer);
+                    sb.AppendFormatWithCrCf(Consts.HttpHeaderLineFormat, HttpKnownHeaderNames.SecWebSocketExtensions, extension.ExtensionNegotiationOffer);
                 }
             }
 
@@ -76,7 +76,7 @@ namespace Cowboy.WebSockets
             {
                 foreach (var description in client.RequestedSubProtocols)
                 {
-                    sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.SecWebSocketProtocol, description.RequestedSubProtocol);
+                    sb.AppendFormatWithCrCf(Consts.HttpHeaderLineFormat, HttpKnownHeaderNames.SecWebSocketProtocol, description.RequestedSubProtocol);
                 }
             }
 

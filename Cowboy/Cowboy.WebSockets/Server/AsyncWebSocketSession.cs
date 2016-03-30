@@ -322,7 +322,7 @@ namespace Cowboy.WebSockets
             try
             {
                 int terminatorIndex = -1;
-                while (!WebSocketHelpers.FindHeaderTerminator(_receiveBuffer, _receiveBufferOffset, out terminatorIndex))
+                while (!WebSocketHelpers.FindHttpMessageTerminator(_receiveBuffer, _receiveBufferOffset, out terminatorIndex))
                 {
                     int receiveCount = await _stream.ReadAsync(_receiveBuffer, _receiveBufferOffset, _receiveBuffer.Length - _receiveBufferOffset);
                     if (receiveCount == 0)
@@ -344,7 +344,7 @@ namespace Cowboy.WebSockets
                 string path = string.Empty;
                 string query = string.Empty;
                 handshakeResult = WebSocketServerHandshaker.HandleOpenningHandshakeRequest(this,
-                    _receiveBuffer, 0, terminatorIndex + Consts.HeaderTerminator.Length,
+                    _receiveBuffer, 0, terminatorIndex + Consts.HttpMessageTerminator.Length,
                     out secWebSocketKey, out path, out query);
 
                 _module = _routeResolver.Resolve(path, query);
@@ -360,7 +360,7 @@ namespace Cowboy.WebSockets
                     await _stream.WriteAsync(responseBuffer, 0, responseBuffer.Length);
                 }
 
-                BufferDeflector.ShiftBuffer(_bufferManager, terminatorIndex + Consts.HeaderTerminator.Length, ref _receiveBuffer, ref _receiveBufferOffset);
+                BufferDeflector.ShiftBuffer(_bufferManager, terminatorIndex + Consts.HttpMessageTerminator.Length, ref _receiveBuffer, ref _receiveBufferOffset);
             }
             catch (ArgumentOutOfRangeException)
             {

@@ -189,10 +189,10 @@ namespace Cowboy.WebSockets
                 @"Switching Protocols");
 
             // An |Upgrade| header field with value "websocket" as per RFC2616 [RFC2616].
-            sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.Upgrade, Consts.WebSocketUpgradeToken);
+            sb.AppendFormatWithCrCf(Consts.HttpHeaderLineFormat, HttpKnownHeaderNames.Upgrade, Consts.WebSocketUpgradeToken);
 
             // A |Connection| header field with value "Upgrade".
-            sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.Connection, Consts.WebSocketConnectionToken);
+            sb.AppendFormatWithCrCf(Consts.HttpHeaderLineFormat, HttpKnownHeaderNames.Connection, Consts.WebSocketConnectionToken);
 
             // A |Sec-WebSocket-Accept| header field.  The value of this
             // header field is constructed by concatenating /key/, defined
@@ -201,7 +201,7 @@ namespace Cowboy.WebSockets
             // concatenated value to obtain a 20-byte value and base64-
             // encoding (see Section 4 of [RFC4648]) this 20-byte hash.
             var secWebSocketAccept = GetSecWebSocketAcceptString(secWebSocketKey);
-            sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.SecWebSocketAccept, secWebSocketAccept);
+            sb.AppendFormatWithCrCf(Consts.HttpHeaderLineFormat, HttpKnownHeaderNames.SecWebSocketAccept, secWebSocketAccept);
 
             // Optionally, a |Sec-WebSocket-Extensions| header field, with a
             // value /extensions/ as defined in step 4 in Section 4.2.2.  If
@@ -219,7 +219,7 @@ namespace Cowboy.WebSockets
                 foreach (var extension in session.NegotiatedExtensions.Values)
                 {
                     var offer = extension.GetAgreedOffer();
-                    sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.SecWebSocketExtensions, offer);
+                    sb.AppendFormatWithCrCf(Consts.HttpHeaderLineFormat, HttpKnownHeaderNames.SecWebSocketExtensions, offer);
                 }
             }
 
@@ -278,13 +278,13 @@ namespace Cowboy.WebSockets
                 @"Bad Request");
 
             // Upgrade: websocket
-            sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.Upgrade, Consts.WebSocketUpgradeToken);
+            sb.AppendFormatWithCrCf(Consts.HttpHeaderLineFormat, HttpKnownHeaderNames.Upgrade, Consts.WebSocketUpgradeToken);
 
             // Connection: Upgrade
-            sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.Connection, Consts.WebSocketConnectionToken);
+            sb.AppendFormatWithCrCf(Consts.HttpHeaderLineFormat, HttpKnownHeaderNames.Connection, Consts.WebSocketConnectionToken);
 
             // Sec-WebSocket-Version: 13
-            sb.AppendFormatWithCrCf(Consts.HeaderLineFormat, HttpKnownHeaderNames.SecWebSocketVersion, Consts.WebSocketVersion);
+            sb.AppendFormatWithCrCf(Consts.HttpHeaderLineFormat, HttpKnownHeaderNames.SecWebSocketVersion, Consts.WebSocketVersion);
 
             sb.AppendWithCrCf();
 
