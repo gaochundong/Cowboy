@@ -53,12 +53,6 @@
     <Compile Include="CircularBufferUnitTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\Cowboy.Buffer\Cowboy.Buffer.csproj">
-      <Project>{11ae03d6-db99-436b-950a-2ebcef1c82c5}</Project>
-      <Name>Cowboy.Buffer</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>

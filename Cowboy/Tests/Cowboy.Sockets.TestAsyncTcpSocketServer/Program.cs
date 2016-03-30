@@ -25,6 +25,7 @@ namespace Cowboy.Sockets.TestAsyncTcpSocketServer
                 //config.FrameBuilder = new RawBufferFrameBuilder();
                 //config.FrameBuilder = new LineBasedFrameBuilder();
                 //config.FrameBuilder = new LengthPrefixedFrameBuilder();
+                //config.FrameBuilder = new LengthFieldBasedFrameBuilder();
 
                 _server = new AsyncTcpSocketServer(22222, new SimpleMessageDispatcher(), config);
                 _server.Listen();

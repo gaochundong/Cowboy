@@ -23,6 +23,7 @@ namespace Cowboy.Sockets.TestTcpSocketRioServer
                 //config.FrameBuilder = new RawBufferFrameBuilder();
                 //config.FrameBuilder = new LineBasedFrameBuilder();
                 //config.FrameBuilder = new LengthPrefixedFrameBuilder();
+                //config.FrameBuilder = new LengthFieldBasedFrameBuilder();
 
                 _server = new TcpSocketRioServer(22222, new SimpleMessageDispatcher(), config);
                 _server.Listen();

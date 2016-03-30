@@ -60,10 +60,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Cowboy.Codec.Mqtt\Cowboy.Codec.Mqtt.csproj">
-      <Project>{d287e816-2c62-460a-9c90-90d5a9479939}</Project>
-      <Name>Cowboy.Codec.Mqtt</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\Cowboy.Sockets\Cowboy.Sockets.csproj">
       <Project>{39d916fe-2c09-47ab-a5a2-1a23787f20ba}</Project>
       <Name>Cowboy.Sockets</Name>

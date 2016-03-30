@@ -69,6 +69,7 @@ namespace Cowboy.Sockets.TestTcpSocketClient
             //config.FrameBuilder = new RawBufferFrameBuilder();
             //config.FrameBuilder = new LineBasedFrameBuilder();
             //config.FrameBuilder = new LengthPrefixedFrameBuilder();
+            //config.FrameBuilder = new LengthFieldBasedFrameBuilder();
 
             IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 22222);
 

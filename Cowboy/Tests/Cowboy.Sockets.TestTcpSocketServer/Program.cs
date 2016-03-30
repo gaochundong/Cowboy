@@ -66,6 +66,7 @@ namespace Cowboy.Sockets.TestTcpSocketServer
             //config.FrameBuilder = new RawBufferFrameBuilder();
             //config.FrameBuilder = new LineBasedFrameBuilder();
             //config.FrameBuilder = new LengthPrefixedFrameBuilder();
+            //config.FrameBuilder = new LengthFieldBasedFrameBuilder();
 
             _server = new TcpSocketServer(22222, config);
             _server.ClientConnected += server_ClientConnected;
