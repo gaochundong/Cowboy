@@ -2,7 +2,7 @@
 
 namespace Cowboy.Sockets
 {
-    public enum LengthFieldLengthType
+    public enum LengthField
     {
         OneByte = 1,
         TwoBytes = 2,
@@ -12,8 +12,13 @@ namespace Cowboy.Sockets
 
     public sealed class LengthFieldBasedFrameBuilder : FrameBuilder
     {
-        public LengthFieldBasedFrameBuilder(LengthFieldLengthType lengthFieldLength)
-            : this(new LengthFieldBasedFrameEncoder(lengthFieldLength), new LengthFieldBasedFrameDecoder(lengthFieldLength))
+        public LengthFieldBasedFrameBuilder()
+            : this(LengthField.FourBytes)
+        {
+        }
+
+        public LengthFieldBasedFrameBuilder(LengthField lengthField)
+            : this(new LengthFieldBasedFrameEncoder(lengthField), new LengthFieldBasedFrameDecoder(lengthField))
         {
         }
 
@@ -25,20 +30,20 @@ namespace Cowboy.Sockets
 
     public sealed class LengthFieldBasedFrameEncoder : IFrameEncoder
     {
-        public LengthFieldBasedFrameEncoder(LengthFieldLengthType lengthFieldLength)
+        public LengthFieldBasedFrameEncoder(LengthField lengthField)
         {
-            LengthFieldLength = lengthFieldLength;
+            LengthField = lengthField;
         }
 
-        public LengthFieldLengthType LengthFieldLength { get; private set; }
+        public LengthField LengthField { get; private set; }
 
         public void EncodeFrame(byte[] payload, int offset, int count, out byte[] frameBuffer, out int frameBufferOffset, out int frameBufferLength)
         {
             byte[] buffer = null;
 
-            switch (this.LengthFieldLength)
+            switch (this.LengthField)
             {
-                case LengthFieldLengthType.OneByte:
+                case LengthField.OneByte:
                     {
                         if (count > byte.MaxValue)
                         {
@@ -50,7 +55,7 @@ namespace Cowboy.Sockets
                         Array.Copy(payload, offset, buffer, 1, count);
                     }
                     break;
-                case LengthFieldLengthType.TwoBytes:
+                case LengthField.TwoBytes:
                     {
                         if (count > short.MaxValue)
                         {
@@ -63,7 +68,7 @@ namespace Cowboy.Sockets
                         Array.Copy(payload, offset, buffer, 2, count);
                     }
                     break;
-                case LengthFieldLengthType.FourBytes:
+                case LengthField.FourBytes:
                     {
                         buffer = new byte[4 + count];
                         uint unsignedValue = (uint)count;
@@ -74,7 +79,7 @@ namespace Cowboy.Sockets
                         Array.Copy(payload, offset, buffer, 4, count);
                     }
                     break;
-                case LengthFieldLengthType.EigthBytes:
+                case LengthField.EigthBytes:
                     {
                         buffer = new byte[8 + count];
                         ulong unsignedValue = (ulong)count;
@@ -90,7 +95,7 @@ namespace Cowboy.Sockets
                     }
                     break;
                 default:
-                    throw new NotSupportedException("Specified length field length is not supported.");
+                    throw new NotSupportedException("Specified length field is not supported.");
             }
 
             frameBuffer = buffer;
@@ -101,12 +106,12 @@ namespace Cowboy.Sockets
 
     public sealed class LengthFieldBasedFrameDecoder : IFrameDecoder
     {
-        public LengthFieldBasedFrameDecoder(LengthFieldLengthType lengthFieldLength)
+        public LengthFieldBasedFrameDecoder(LengthField lengthField)
         {
-            LengthFieldLength = lengthFieldLength;
+            LengthField = lengthField;
         }
 
-        public LengthFieldLengthType LengthFieldLength { get; private set; }
+        public LengthField LengthField { get; private set; }
 
         public bool TryDecodeFrame(byte[] buffer, int offset, int count, out int frameLength, out byte[] payload, out int payloadOffset, out int payloadCount)
         {
@@ -118,9 +123,9 @@ namespace Cowboy.Sockets
             byte[] output = null;
             long length = 0;
 
-            switch (this.LengthFieldLength)
+            switch (this.LengthField)
             {
-                case LengthFieldLengthType.OneByte:
+                case LengthField.OneByte:
                     {
                         if (count < 1)
                         {
@@ -135,7 +140,7 @@ namespace Cowboy.Sockets
                         Array.Copy(buffer, offset + 1, output, 0, length);
                     }
                     break;
-                case LengthFieldLengthType.TwoBytes:
+                case LengthField.TwoBytes:
                     {
                         if (count < 2)
                         {
@@ -150,7 +155,7 @@ namespace Cowboy.Sockets
                         Array.Copy(buffer, offset + 2, output, 0, length);
                     }
                     break;
-                case LengthFieldLengthType.FourBytes:
+                case LengthField.FourBytes:
                     {
                         if (count < 4)
                         {
@@ -168,7 +173,7 @@ namespace Cowboy.Sockets
                         Array.Copy(buffer, offset + 4, output, 0, length);
                     }
                     break;
-                case LengthFieldLengthType.EigthBytes:
+                case LengthField.EigthBytes:
                     {
                         if (count < 8)
                         {
@@ -193,14 +198,14 @@ namespace Cowboy.Sockets
                     }
                     break;
                 default:
-                    throw new NotSupportedException("Specified length field length is not supported.");
+                    throw new NotSupportedException("Specified length field is not supported.");
             }
 
             payload = output;
             payloadOffset = 0;
             payloadCount = output.Length;
 
-            frameLength = (int)this.LengthFieldLength + output.Length;
+            frameLength = (int)this.LengthField + output.Length;
 
             return true;
         }
