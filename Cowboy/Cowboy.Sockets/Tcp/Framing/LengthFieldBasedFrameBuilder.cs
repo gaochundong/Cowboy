@@ -128,9 +128,7 @@ namespace Cowboy.Sockets
                 case LengthField.OneByte:
                     {
                         if (count < 1)
-                        {
-                            throw new ArgumentOutOfRangeException("count");
-                        }
+                            return false;
 
                         length = buffer[offset];
                         if (count - 1 < length)
@@ -143,9 +141,7 @@ namespace Cowboy.Sockets
                 case LengthField.TwoBytes:
                     {
                         if (count < 2)
-                        {
-                            throw new ArgumentOutOfRangeException("count");
-                        }
+                            return false;
 
                         length = (short)(buffer[offset] << 8 | buffer[offset + 1]);
                         if (count - 2 < length)
@@ -158,9 +154,7 @@ namespace Cowboy.Sockets
                 case LengthField.FourBytes:
                     {
                         if (count < 4)
-                        {
-                            throw new ArgumentOutOfRangeException("count");
-                        }
+                            return false;
 
                         length = buffer[offset] << 24 |
                             buffer[offset + 1] << 16 |
@@ -176,9 +170,7 @@ namespace Cowboy.Sockets
                 case LengthField.EigthBytes:
                     {
                         if (count < 8)
-                        {
-                            throw new ArgumentOutOfRangeException("count");
-                        }
+                            return false;
 
                         int i1 = buffer[offset] << 24 |
                             buffer[offset + 1] << 16 |
