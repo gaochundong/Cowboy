@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Cowboy.WebSockets</id>
-    <version>1.2.15.0</version>
+    <version>1.2.16.0</version>
     <title>Cowboy.WebSockets</title>
     <authors>Dennis Gao</authors>
     <owners>Dennis Gao</owners>
@@ -12,7 +12,7 @@
     <description>Cowboy is a library for building sockets based services.</description>
     <copyright>Copyright © 2015-2016 Dennis Gao.</copyright>
     <dependencies>
-      <dependency id="Logrila.Logging" version="1.0.0" />
+      <dependency id="Logrila.Logging" version="1.0.1" />
     </dependencies>
   </metadata>
 </package>
