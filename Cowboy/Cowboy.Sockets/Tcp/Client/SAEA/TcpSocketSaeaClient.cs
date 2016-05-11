@@ -278,7 +278,7 @@ namespace Cowboy.Sockets
 
                 while (State == TcpSocketConnectionState.Connected)
                 {
-                    saea.Saea.SetBuffer(_receiveBufferOffset, _receiveBuffer.Length - _receiveBufferOffset);
+                    saea.Saea.SetBuffer(_receiveBuffer, _receiveBufferOffset, _receiveBuffer.Length - _receiveBufferOffset);
 
                     var socketError = await _socket.ReceiveAsync(saea);
                     if (socketError != SocketError.Success)
