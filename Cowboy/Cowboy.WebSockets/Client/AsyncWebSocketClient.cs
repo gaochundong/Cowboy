@@ -343,11 +343,19 @@ namespace Cowboy.WebSockets
                 null,
                 _configuration.SslEncryptionPolicy);
 
-            await sslStream.AuthenticateAsClientAsync(
-                _configuration.SslTargetHost, // The name of the server that will share this SslStream. The value specified for targetHost must match the name on the server's certificate.
-                _configuration.SslClientCertificates, // The X509CertificateCollection that contains client certificates.
-                _configuration.SslEnabledProtocols, // The SslProtocols value that represents the protocol used for authentication.
-                _configuration.SslCheckCertificateRevocation); // A Boolean value that specifies whether the certificate revocation list is checked during authentication.
+            if (_configuration.SslClientCertificates == null || _configuration.SslClientCertificates.Count == 0)
+            {
+                await sslStream.AuthenticateAsClientAsync( // No client certificates are used in the authentication. The certificate revocation list is not checked during authentication.
+                    _configuration.SslTargetHost); // The name of the server that will share this SslStream. The value specified for targetHost must match the name on the server's certificate.
+            }
+            else
+            {
+                await sslStream.AuthenticateAsClientAsync(
+                    _configuration.SslTargetHost, // The name of the server that will share this SslStream. The value specified for targetHost must match the name on the server's certificate.
+                    _configuration.SslClientCertificates, // The X509CertificateCollection that contains client certificates.
+                    _configuration.SslEnabledProtocols, // The SslProtocols value that represents the protocol used for authentication.
+                    _configuration.SslCheckCertificateRevocation); // A Boolean value that specifies whether the certificate revocation list is checked during authentication.
+            }
 
             // When authentication succeeds, you must check the IsEncrypted and IsSigned properties 
             // to determine what security services are used by the SslStream. 
