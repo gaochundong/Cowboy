@@ -174,7 +174,7 @@ namespace Cowboy.WebSockets
                 throw new InvalidOperationException("This websocket client has already connected to server.");
             }
 
-            _tcpClient = _localEndPoint != null ? new TcpClient(_localEndPoint) : new TcpClient();
+            _tcpClient = _localEndPoint != null ? new TcpClient(_localEndPoint) : new TcpClient(_remoteEndPoint.Address.AddressFamily);
 
             _receiveBuffer = _bufferManager.BorrowBuffer();
             _receiveBufferOffset = 0;

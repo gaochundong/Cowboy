@@ -221,7 +221,7 @@ namespace Cowboy.WebSockets
 
             try
             {
-                _tcpClient = new TcpClient();
+                _tcpClient = new TcpClient(_remoteEndPoint.Address.AddressFamily);
 
                 var awaiter = _tcpClient.ConnectAsync(_remoteEndPoint.Address, _remoteEndPoint.Port);
                 if (!awaiter.Wait(ConnectTimeout))

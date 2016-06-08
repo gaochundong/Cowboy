@@ -92,7 +92,7 @@ namespace Cowboy.Sockets
                 {
                     _closed = false;
 
-                    _tcpClient = _localEndPoint != null ? new TcpClient(_localEndPoint) : new TcpClient();
+                    _tcpClient = _localEndPoint != null ? new TcpClient(_localEndPoint) : new TcpClient(_remoteEndPoint.Address.AddressFamily);
 
                     _receiveBuffer = _bufferManager.BorrowBuffer();
                     _receiveBufferOffset = 0;

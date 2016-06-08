@@ -197,7 +197,7 @@ namespace Cowboy.Sockets
 
             try
             {
-                _tcpClient = _localEndPoint != null ? new TcpClient(_localEndPoint) : new TcpClient();
+                _tcpClient = _localEndPoint != null ? new TcpClient(_localEndPoint) : new TcpClient(_remoteEndPoint.Address.AddressFamily);
 
                 var awaiter = _tcpClient.ConnectAsync(_remoteEndPoint.Address, _remoteEndPoint.Port);
                 if (!awaiter.Wait(ConnectTimeout))
