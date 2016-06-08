@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
 using Cowboy.Buffer;
@@ -53,7 +54,25 @@ namespace Cowboy.WebSockets
                 if (!headers.ContainsKey(HttpKnownHeaderNames.Host))
                     throw new WebSocketHandshakeException(string.Format(
                         "Handshake with remote [{0}] failed due to lack of host authority.", session.RemoteEndPoint));
-                string uriString = string.Format("ws://{0}{1}", headers[HttpKnownHeaderNames.Host], headers[Consts.HttpGetMethodName]);
+
+                string uriString = string.Empty;
+                var host = headers[HttpKnownHeaderNames.Host];
+                IPAddress hostIpAddress;
+                if (IPAddress.TryParse(host, out hostIpAddress))
+                {
+                    if (hostIpAddress.AddressFamily == AddressFamily.InterNetworkV6)
+                    {
+                        uriString = string.Format("ws://{0}{1}", string.Format("[{0}]", host), headers[Consts.HttpGetMethodName]);
+                    }
+                    else
+                    {
+                        uriString = string.Format("ws://{0}{1}", host, headers[Consts.HttpGetMethodName]);
+                    }
+                }
+                else
+                {
+                    uriString = string.Format("ws://{0}{1}", host, headers[Consts.HttpGetMethodName]);
+                }
                 Uri requestUri = null;
                 if (!Uri.TryCreate(uriString, UriKind.RelativeOrAbsolute, out requestUri))
                 {
