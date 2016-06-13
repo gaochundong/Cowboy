@@ -100,7 +100,7 @@ namespace Cowboy.Sockets
                     var ar = _tcpClient.BeginConnect(_remoteEndPoint.Address, _remoteEndPoint.Port, null, _tcpClient);
                     if (!ar.AsyncWaitHandle.WaitOne(ConnectTimeout))
                     {
-                        Close();
+                        Close(false);
                         throw new TimeoutException(string.Format(
                             "Connect to [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
                     }
@@ -112,6 +112,11 @@ namespace Cowboy.Sockets
         }
 
         public void Close()
+        {
+            Close(true);
+        }
+
+        private void Close(bool shallNotifyUserSide)
         {
             lock (_opsLock)
             {
@@ -138,13 +143,16 @@ namespace Cowboy.Sockets
                         _receiveBufferOffset = 0;
                     }
 
-                    try
+                    if (shallNotifyUserSide)
                     {
-                        RaiseServerDisconnected();
-                    }
-                    catch (Exception ex)
-                    {
-                        HandleUserSideError(ex);
+                        try
+                        {
+                            RaiseServerDisconnected();
+                        }
+                        catch (Exception ex)
+                        {
+                            HandleUserSideError(ex);
+                        }
                     }
                 }
             }
@@ -248,7 +256,7 @@ namespace Cowboy.Sockets
             }
             if (!ar.AsyncWaitHandle.WaitOne(ConnectTimeout))
             {
-                Close();
+                Close(false);
                 throw new TimeoutException(string.Format(
                     "Negotiate SSL/TSL with remote [{0}] timeout [{1}].", this.RemoteEndPoint, ConnectTimeout));
             }

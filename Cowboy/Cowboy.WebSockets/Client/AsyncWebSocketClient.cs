@@ -226,7 +226,7 @@ namespace Cowboy.WebSockets
                 var awaiter = _tcpClient.ConnectAsync(_remoteEndPoint.Address, _remoteEndPoint.Port);
                 if (!awaiter.Wait(ConnectTimeout))
                 {
-                    await Abort();
+                    await InternalClose(false);
                     throw new TimeoutException(string.Format(
                         "Connect to [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
                 }
@@ -235,7 +235,7 @@ namespace Cowboy.WebSockets
                 var negotiator = NegotiateStream(_tcpClient.GetStream());
                 if (!negotiator.Wait(ConnectTimeout))
                 {
-                    await Close(WebSocketCloseCode.TlsHandshakeFailed, "SSL/TLS handshake timeout.");
+                    await InternalClose(false);
                     throw new TimeoutException(string.Format(
                         "Negotiate SSL/TSL with remote [{0}] timeout [{1}].", RemoteEndPoint, ConnectTimeout));
                 }
@@ -294,10 +294,9 @@ namespace Cowboy.WebSockets
                 }
             }
             catch (ObjectDisposedException) { }
-            catch (Exception ex) when (ex is TimeoutException || ex is WebSocketException)
+            catch (Exception ex)
             {
                 _log.Error(ex.Message, ex);
-                await Abort();
                 throw;
             }
         }
@@ -742,7 +741,7 @@ namespace Cowboy.WebSockets
                                 var awaiter = _stream.WriteAsync(closingHandshake, 0, closingHandshake.Length);
                                 if (!awaiter.Wait(ConnectTimeout))
                                 {
-                                    await InternalClose();
+                                    await InternalClose(true);
                                     throw new TimeoutException(string.Format(
                                         "Closing handshake with [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
                                 }
@@ -754,7 +753,7 @@ namespace Cowboy.WebSockets
                 case _connecting:
                 case _closing:
                     {
-                        await InternalClose();
+                        await InternalClose(true);
                         return;
                     }
                 case _disposed:
@@ -764,7 +763,7 @@ namespace Cowboy.WebSockets
             }
         }
 
-        private async Task InternalClose()
+        private async Task InternalClose(bool shallNotifyUserSide)
         {
             if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
             {
@@ -802,23 +801,26 @@ namespace Cowboy.WebSockets
                 _bufferManager.ReturnBuffer(_receiveBuffer);
             _receiveBufferOffset = 0;
 
-            _log.DebugFormat("Disconnected from server [{0}] with dispatcher [{1}] on [{2}].",
-                this.RemoteEndPoint,
-                _dispatcher.GetType().Name,
-                DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
-            try
+            if (shallNotifyUserSide)
             {
-                await _dispatcher.OnServerDisconnected(this);
-            }
-            catch (Exception ex)
-            {
-                HandleUserSideError(ex);
+                _log.DebugFormat("Disconnected from server [{0}] with dispatcher [{1}] on [{2}].",
+                    this.RemoteEndPoint,
+                    _dispatcher.GetType().Name,
+                    DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
+                try
+                {
+                    await _dispatcher.OnServerDisconnected(this);
+                }
+                catch (Exception ex)
+                {
+                    HandleUserSideError(ex);
+                }
             }
         }
 
         public async Task Abort()
         {
-            await InternalClose();
+            await InternalClose(true);
         }
 
         private void StartClosingTimer()
@@ -838,7 +840,7 @@ namespace Cowboy.WebSockets
             // sending and receiving a Close message, e.g., if it has not received a
             // TCP Close from the server in a reasonable time period.
             _log.WarnFormat("Closing timer timeout [{0}] then close automatically.", CloseTimeout);
-            await InternalClose();
+            await InternalClose(true);
         }
 
         #endregion
@@ -1177,7 +1179,7 @@ namespace Cowboy.WebSockets
             {
                 try
                 {
-                    InternalClose().Wait();
+                    Abort().Wait();
                 }
                 catch (Exception ex)
                 {

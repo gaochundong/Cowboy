@@ -182,7 +182,7 @@ namespace Cowboy.WebSockets
             var ar = _tcpClient.BeginConnect(_remoteEndPoint.Address, _remoteEndPoint.Port, null, _tcpClient);
             if (!ar.AsyncWaitHandle.WaitOne(ConnectTimeout))
             {
-                Abort();
+                InternalClose(false);
                 throw new TimeoutException(string.Format(
                     "Connect to [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
             }
@@ -240,13 +240,13 @@ namespace Cowboy.WebSockets
             catch (TimeoutException ex)
             {
                 _log(ex.Message);
-                Abort();
+                InternalClose(false);
                 throw;
             }
             catch (WebSocketException ex)
             {
                 _log(ex.Message);
-                Abort();
+                InternalClose(false);
                 throw;
             }
         }
@@ -700,7 +700,7 @@ namespace Cowboy.WebSockets
                                 var ar = _stream.BeginWrite(closingHandshake, 0, closingHandshake.Length, null, _stream);
                                 if (!ar.AsyncWaitHandle.WaitOne(ConnectTimeout))
                                 {
-                                    InternalClose();
+                                    InternalClose(true);
                                     throw new TimeoutException(string.Format(
                                         "Closing handshake with remote [{0}] timeout [{1}].", RemoteEndPoint, ConnectTimeout));
                                 }
@@ -716,7 +716,7 @@ namespace Cowboy.WebSockets
                 case _connecting:
                 case _closing:
                     {
-                        InternalClose();
+                        InternalClose(true);
                         return;
                     }
                 case _disposed:
@@ -726,7 +726,7 @@ namespace Cowboy.WebSockets
             }
         }
 
-        private void InternalClose()
+        private void InternalClose(bool shallNotifyUserSide)
         {
             if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
             {
@@ -764,21 +764,24 @@ namespace Cowboy.WebSockets
                 _bufferManager.ReturnBuffer(_receiveBuffer);
             _receiveBufferOffset = 0;
 
-            _log(string.Format("Disconnected from server [{0}] on [{1}].",
-                this.RemoteEndPoint, DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff")));
-            try
+            if (shallNotifyUserSide)
             {
-                RaiseServerDisconnected();
-            }
-            catch (Exception ex)
-            {
-                HandleUserSideError(ex);
+                _log(string.Format("Disconnected from server [{0}] on [{1}].",
+                    this.RemoteEndPoint, DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff")));
+                try
+                {
+                    RaiseServerDisconnected();
+                }
+                catch (Exception ex)
+                {
+                    HandleUserSideError(ex);
+                }
             }
         }
 
         public void Abort()
         {
-            InternalClose();
+            InternalClose(true);
         }
 
         private void StartClosingTimer()
@@ -798,7 +801,7 @@ namespace Cowboy.WebSockets
             // sending and receiving a Close message, e.g., if it has not received a
             // TCP Close from the server in a reasonable time period.
             _log(string.Format("Closing timer timeout [{0}] then close automatically.", CloseTimeout));
-            InternalClose();
+            InternalClose(true);
         }
 
         #endregion
@@ -1027,7 +1030,7 @@ namespace Cowboy.WebSockets
             {
                 try
                 {
-                    InternalClose();
+                    InternalClose(true);
                 }
                 catch (Exception ex)
                 {

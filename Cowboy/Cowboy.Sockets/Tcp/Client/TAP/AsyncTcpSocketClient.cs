@@ -202,6 +202,7 @@ namespace Cowboy.Sockets
                 var awaiter = _tcpClient.ConnectAsync(_remoteEndPoint.Address, _remoteEndPoint.Port);
                 if (!awaiter.Wait(ConnectTimeout))
                 {
+                    await Close(false);
                     throw new TimeoutException(string.Format(
                         "Connect to [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
                 }
@@ -210,6 +211,7 @@ namespace Cowboy.Sockets
                 var negotiator = NegotiateStream(_tcpClient.GetStream());
                 if (!negotiator.Wait(ConnectTimeout))
                 {
+                    await Close(false);
                     throw new TimeoutException(string.Format(
                         "Negotiate SSL/TSL with remote [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
                 }
@@ -253,10 +255,9 @@ namespace Cowboy.Sockets
             }
             catch (ObjectDisposedException) { }
             catch (Exception ex)
-            when (ex is TimeoutException)
             {
                 _log.Error(ex.Message, ex);
-                await Close();
+                throw;
             }
         }
 
@@ -405,6 +406,11 @@ namespace Cowboy.Sockets
 
         public async Task Close()
         {
+            await Close(true);
+        }
+
+        private async Task Close(bool shallNotifyUserSide)
+        {
             if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
             {
                 return;
@@ -429,17 +435,20 @@ namespace Cowboy.Sockets
                 _bufferManager.ReturnBuffer(_receiveBuffer);
             _receiveBufferOffset = 0;
 
-            _log.DebugFormat("Disconnected from server [{0}] with dispatcher [{1}] on [{2}].",
-                this.RemoteEndPoint,
-                _dispatcher.GetType().Name,
-                DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
-            try
+            if (shallNotifyUserSide)
             {
-                await _dispatcher.OnServerDisconnected(this);
-            }
-            catch (Exception ex)
-            {
-                HandleUserSideError(ex);
+                _log.DebugFormat("Disconnected from server [{0}] with dispatcher [{1}] on [{2}].",
+                    this.RemoteEndPoint,
+                    _dispatcher.GetType().Name,
+                    DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
+                try
+                {
+                    await _dispatcher.OnServerDisconnected(this);
+                }
+                catch (Exception ex)
+                {
+                    HandleUserSideError(ex);
+                }
             }
         }
 
