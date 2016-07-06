@@ -694,16 +694,13 @@ namespace Cowboy.WebSockets
                         var closingHandshake = new CloseFrame(closeCode, closeReason).ToArray(_frameBuilder);
                         try
                         {
-                            if (_stream.CanWrite)
+                            StartClosingTimer();
+                            var ar = _stream.BeginWrite(closingHandshake, 0, closingHandshake.Length, null, _stream);
+                            if (!ar.AsyncWaitHandle.WaitOne(ConnectTimeout))
                             {
-                                StartClosingTimer();
-                                var ar = _stream.BeginWrite(closingHandshake, 0, closingHandshake.Length, null, _stream);
-                                if (!ar.AsyncWaitHandle.WaitOne(ConnectTimeout))
-                                {
-                                    InternalClose(true);
-                                    throw new TimeoutException(string.Format(
-                                        "Closing handshake with remote [{0}] timeout [{1}].", RemoteEndPoint, ConnectTimeout));
-                                }
+                                InternalClose(true);
+                                throw new TimeoutException(string.Format(
+                                    "Closing handshake with remote [{0}] timeout [{1}].", RemoteEndPoint, ConnectTimeout));
                             }
                         }
                         catch (Exception ex)
@@ -808,6 +805,14 @@ namespace Cowboy.WebSockets
 
         #region Exception Handler
 
+        private bool IsSocketTimeOut(Exception ex)
+        {
+            return ex is IOException
+                && ex.InnerException != null
+                && ex.InnerException is SocketException
+                && (ex.InnerException as SocketException).SocketErrorCode == SocketError.TimedOut;
+        }
+
         private bool CloseIfShould(Exception ex)
         {
             if (ex is ObjectDisposedException
@@ -829,10 +834,7 @@ namespace Cowboy.WebSockets
 
         private bool ShouldThrow(Exception ex)
         {
-            if (ex is IOException
-                && ex.InnerException != null
-                && ex.InnerException is SocketException
-                && (ex.InnerException as SocketException).SocketErrorCode == SocketError.TimedOut)
+            if (IsSocketTimeOut(ex))
             {
                 _log(ex.Message);
                 return false;
@@ -897,10 +899,7 @@ namespace Cowboy.WebSockets
 
             try
             {
-                if (_stream.CanWrite)
-                {
-                    _stream.BeginWrite(frame, 0, frame.Length, HandleDataWritten, _stream);
-                }
+                _stream.BeginWrite(frame, 0, frame.Length, HandleDataWritten, _stream);
             }
             catch (Exception ex)
             {

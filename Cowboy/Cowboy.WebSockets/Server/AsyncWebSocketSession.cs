@@ -684,14 +684,11 @@ namespace Cowboy.WebSockets
                         var closingHandshake = new CloseFrame(closeCode, closeReason, false).ToArray(_frameBuilder);
                         try
                         {
-                            if (_stream.CanWrite)
-                            {
-                                await _stream.WriteAsync(closingHandshake, 0, closingHandshake.Length);
-                                StartClosingTimer();
+                            await _stream.WriteAsync(closingHandshake, 0, closingHandshake.Length);
+                            StartClosingTimer();
 #if DEBUG
-                                _log.DebugFormat("Session [{0}] sends server side close frame [{1}] [{2}].", this, closeCode, closeReason);
+                            _log.DebugFormat("Session [{0}] sends server side close frame [{1}] [{2}].", this, closeCode, closeReason);
 #endif
-                            }
                         }
                         catch (Exception ex) when (!ShouldThrow(ex)) { }
                         return;
@@ -791,12 +788,17 @@ namespace Cowboy.WebSockets
 
         #region Exception Handler
 
-        private bool ShouldThrow(Exception ex)
+        private bool IsSocketTimeOut(Exception ex)
         {
-            if (ex is IOException
+            return ex is IOException
                 && ex.InnerException != null
                 && ex.InnerException is SocketException
-                && (ex.InnerException as SocketException).SocketErrorCode == SocketError.TimedOut)
+                && (ex.InnerException as SocketException).SocketErrorCode == SocketError.TimedOut;
+        }
+
+        private bool ShouldThrow(Exception ex)
+        {
+            if (IsSocketTimeOut(ex))
             {
                 _log.Error(ex.Message, ex);
                 return false;
@@ -890,11 +892,8 @@ namespace Cowboy.WebSockets
 
             try
             {
-                if (_stream.CanWrite)
-                {
-                    await _stream.WriteAsync(frame, 0, frame.Length);
-                    _keepAliveTracker.OnDataSent();
-                }
+                await _stream.WriteAsync(frame, 0, frame.Length);
+                _keepAliveTracker.OnDataSent();
             }
             catch (Exception ex) when (!ShouldThrow(ex)) { }
         }

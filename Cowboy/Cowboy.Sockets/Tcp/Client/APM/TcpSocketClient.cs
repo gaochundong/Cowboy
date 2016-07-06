@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 using Cowboy.Buffer;
 using Logrila.Logging;
 
@@ -401,6 +402,14 @@ namespace Cowboy.Sockets
 
         #region Exception Handler
 
+        private bool IsSocketTimeOut(Exception ex)
+        {
+            return ex is IOException
+                && ex.InnerException != null
+                && ex.InnerException is SocketException
+                && (ex.InnerException as SocketException).SocketErrorCode == SocketError.TimedOut;
+        }
+
         private bool CloseIfShould(Exception ex)
         {
             if (ex is ObjectDisposedException
@@ -448,22 +457,16 @@ namespace Cowboy.Sockets
 
             try
             {
-                if (_stream.CanWrite)
-                {
-                    byte[] frameBuffer;
-                    int frameBufferOffset;
-                    int frameBufferLength;
-                    _configuration.FrameBuilder.Encoder.EncodeFrame(data, offset, count, out frameBuffer, out frameBufferOffset, out frameBufferLength);
+                byte[] frameBuffer;
+                int frameBufferOffset;
+                int frameBufferLength;
+                _configuration.FrameBuilder.Encoder.EncodeFrame(data, offset, count, out frameBuffer, out frameBufferOffset, out frameBufferLength);
 
-                    _stream.Write(frameBuffer, frameBufferOffset, frameBufferLength);
-                }
+                _stream.Write(frameBuffer, frameBufferOffset, frameBufferLength);
             }
             catch (Exception ex)
             {
-                if (ex is IOException
-                    && ex.InnerException != null
-                    && ex.InnerException is SocketException
-                    && (ex.InnerException as SocketException).SocketErrorCode == SocketError.TimedOut)
+                if (IsSocketTimeOut(ex))
                 {
                     _log.Error(ex.Message, ex);
                 }
@@ -494,22 +497,16 @@ namespace Cowboy.Sockets
 
             try
             {
-                if (_stream.CanWrite)
-                {
-                    byte[] frameBuffer;
-                    int frameBufferOffset;
-                    int frameBufferLength;
-                    _configuration.FrameBuilder.Encoder.EncodeFrame(data, offset, count, out frameBuffer, out frameBufferOffset, out frameBufferLength);
+                byte[] frameBuffer;
+                int frameBufferOffset;
+                int frameBufferLength;
+                _configuration.FrameBuilder.Encoder.EncodeFrame(data, offset, count, out frameBuffer, out frameBufferOffset, out frameBufferLength);
 
-                    _stream.BeginWrite(frameBuffer, frameBufferOffset, frameBufferLength, HandleDataWritten, _stream);
-                }
+                _stream.BeginWrite(frameBuffer, frameBufferOffset, frameBufferLength, HandleDataWritten, _stream);
             }
             catch (Exception ex)
             {
-                if (ex is IOException
-                    && ex.InnerException != null
-                    && ex.InnerException is SocketException
-                    && (ex.InnerException as SocketException).SocketErrorCode == SocketError.TimedOut)
+                if (IsSocketTimeOut(ex))
                 {
                     _log.Error(ex.Message, ex);
                 }
@@ -519,6 +516,53 @@ namespace Cowboy.Sockets
                         throw;
                 }
             }
+        }
+
+        public IAsyncResult BeginSend(byte[] data, AsyncCallback callback, object state)
+        {
+            if (data == null)
+                throw new ArgumentNullException("data");
+
+            return BeginSend(data, 0, data.Length, callback, state);
+        }
+
+        public IAsyncResult BeginSend(byte[] data, int offset, int count, AsyncCallback callback, object state)
+        {
+            BufferValidator.ValidateBuffer(data, offset, count, "data");
+
+            if (!Connected)
+            {
+                throw new InvalidProgramException("This client has not connected to server.");
+            }
+
+            try
+            {
+                byte[] frameBuffer;
+                int frameBufferOffset;
+                int frameBufferLength;
+                _configuration.FrameBuilder.Encoder.EncodeFrame(data, offset, count, out frameBuffer, out frameBufferOffset, out frameBufferLength);
+
+                return _stream.BeginWrite(frameBuffer, frameBufferOffset, frameBufferLength, callback, state);
+            }
+            catch (Exception ex)
+            {
+                if (IsSocketTimeOut(ex))
+                {
+                    _log.Error(ex.Message, ex);
+                }
+                else
+                {
+                    if (!CloseIfShould(ex))
+                        throw;
+                }
+
+                throw;
+            }
+        }
+
+        public void EndSend(IAsyncResult asyncResult)
+        {
+            HandleDataWritten(asyncResult);
         }
 
         private void HandleDataWritten(IAsyncResult ar)

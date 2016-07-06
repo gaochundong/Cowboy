@@ -394,12 +394,17 @@ namespace Cowboy.Sockets
 
         #region Exception Handler
 
-        private bool ShouldThrow(Exception ex)
+        private bool IsSocketTimeOut(Exception ex)
         {
-            if (ex is IOException
+            return ex is IOException
                 && ex.InnerException != null
                 && ex.InnerException is SocketException
-                && (ex.InnerException as SocketException).SocketErrorCode == SocketError.TimedOut)
+                && (ex.InnerException as SocketException).SocketErrorCode == SocketError.TimedOut;
+        }
+
+        private bool ShouldThrow(Exception ex)
+        {
+            if (IsSocketTimeOut(ex))
             {
                 _log.Error(ex.Message, ex);
                 return false;

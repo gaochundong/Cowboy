@@ -267,12 +267,17 @@ namespace Cowboy.Sockets.Experimental
 
         #region Exception Handler
 
-        private bool ShouldThrow(Exception ex)
+        private bool IsSocketTimeOut(Exception ex)
         {
-            if (ex is IOException
+            return ex is IOException
                 && ex.InnerException != null
                 && ex.InnerException is SocketException
-                && (ex.InnerException as SocketException).SocketErrorCode == SocketError.TimedOut)
+                && (ex.InnerException as SocketException).SocketErrorCode == SocketError.TimedOut;
+        }
+
+        private bool ShouldThrow(Exception ex)
+        {
+            if (IsSocketTimeOut(ex))
             {
                 _log.Error(ex.Message, ex);
                 return false;
@@ -320,15 +325,12 @@ namespace Cowboy.Sockets.Experimental
 
             try
             {
-                if (_stream.CanWrite)
-                {
-                    byte[] frameBuffer;
-                    int frameBufferOffset;
-                    int frameBufferLength;
-                    _configuration.FrameBuilder.Encoder.EncodeFrame(data, offset, count, out frameBuffer, out frameBufferOffset, out frameBufferLength);
+                byte[] frameBuffer;
+                int frameBufferOffset;
+                int frameBufferLength;
+                _configuration.FrameBuilder.Encoder.EncodeFrame(data, offset, count, out frameBuffer, out frameBufferOffset, out frameBufferLength);
 
-                    await _stream.WriteAsync(frameBuffer, frameBufferOffset, frameBufferLength);
-                }
+                await _stream.WriteAsync(frameBuffer, frameBufferOffset, frameBufferLength);
             }
             catch (Exception ex) when (!ShouldThrow(ex)) { }
         }
