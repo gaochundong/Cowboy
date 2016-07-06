@@ -5,6 +5,11 @@ namespace Cowboy.WebSockets
 {
     public class WebSocketServerConnectedEventArgs : EventArgs
     {
+        public WebSocketServerConnectedEventArgs(IPEndPoint remoteEP)
+            : this(remoteEP, null)
+        {
+        }
+
         public WebSocketServerConnectedEventArgs(IPEndPoint remoteEP, IPEndPoint localEP)
         {
             if (remoteEP == null)

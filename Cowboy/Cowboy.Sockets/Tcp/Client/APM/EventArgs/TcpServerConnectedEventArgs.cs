@@ -5,6 +5,11 @@ namespace Cowboy.Sockets
 {
     public class TcpServerConnectedEventArgs : EventArgs
     {
+        public TcpServerConnectedEventArgs(IPEndPoint remoteEP)
+            : this(remoteEP, null)
+        {
+        }
+
         public TcpServerConnectedEventArgs(IPEndPoint remoteEP, IPEndPoint localEP)
         {
             if (remoteEP == null)
