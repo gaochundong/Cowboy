@@ -369,6 +369,31 @@ namespace Cowboy.Sockets
 
         #endregion
 
+        #region Session
+
+        public bool HasSession(string sessionKey)
+        {
+            return _sessions.ContainsKey(sessionKey);
+        }
+
+        public TcpSocketSaeaSession GetSession(string sessionKey)
+        {
+            TcpSocketSaeaSession session = null;
+            _sessions.TryGetValue(sessionKey, out session);
+            return session;
+        }
+
+        public async Task CloseSession(string sessionKey)
+        {
+            TcpSocketSaeaSession session = null;
+            if (_sessions.TryGetValue(sessionKey, out session))
+            {
+                await session.Close();
+            }
+        }
+
+        #endregion
+
         #region IDisposable Members
 
         public void Dispose()

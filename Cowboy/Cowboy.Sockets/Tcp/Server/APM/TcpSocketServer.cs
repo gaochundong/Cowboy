@@ -405,6 +405,31 @@ namespace Cowboy.Sockets
 
         #endregion
 
+        #region Session
+
+        public bool HasSession(string sessionKey)
+        {
+            return _sessions.ContainsKey(sessionKey);
+        }
+
+        public TcpSocketSession GetSession(string sessionKey)
+        {
+            TcpSocketSession session = null;
+            _sessions.TryGetValue(sessionKey, out session);
+            return session;
+        }
+
+        public void CloseSession(string sessionKey)
+        {
+            TcpSocketSession session = null;
+            if (_sessions.TryGetValue(sessionKey, out session))
+            {
+                session.Close();
+            }
+        }
+
+        #endregion
+
         #region Events
 
         public event EventHandler<TcpClientConnectedEventArgs> ClientConnected;

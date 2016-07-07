@@ -270,6 +270,31 @@ namespace Cowboy.Sockets.Experimental
 
         #endregion
 
+        #region Session
+
+        public bool HasSession(string sessionKey)
+        {
+            return _sessions.ContainsKey(sessionKey);
+        }
+
+        public TcpSocketRioSession GetSession(string sessionKey)
+        {
+            TcpSocketRioSession session = null;
+            _sessions.TryGetValue(sessionKey, out session);
+            return session;
+        }
+
+        public async Task CloseSession(string sessionKey)
+        {
+            TcpSocketRioSession session = null;
+            if (_sessions.TryGetValue(sessionKey, out session))
+            {
+                await session.Close();
+            }
+        }
+
+        #endregion
+
         #region IDisposable Members
 
         public void Dispose()

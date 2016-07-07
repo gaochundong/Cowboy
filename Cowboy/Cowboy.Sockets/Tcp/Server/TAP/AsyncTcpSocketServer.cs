@@ -289,5 +289,30 @@ namespace Cowboy.Sockets
         }
 
         #endregion
+
+        #region Session
+
+        public bool HasSession(string sessionKey)
+        {
+            return _sessions.ContainsKey(sessionKey);
+        }
+
+        public AsyncTcpSocketSession GetSession(string sessionKey)
+        {
+            AsyncTcpSocketSession session = null;
+            _sessions.TryGetValue(sessionKey, out session);
+            return session;
+        }
+
+        public async Task CloseSession(string sessionKey)
+        {
+            AsyncTcpSocketSession session = null;
+            if (_sessions.TryGetValue(sessionKey, out session))
+            {
+                await session.Close();
+            }
+        }
+
+        #endregion
     }
 }
