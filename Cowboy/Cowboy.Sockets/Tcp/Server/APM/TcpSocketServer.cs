@@ -447,7 +447,7 @@ namespace Cowboy.Sockets
             }
             catch (Exception ex)
             {
-                HandleUserSideError(ex);
+                HandleUserSideError(session, ex);
             }
         }
 
@@ -462,7 +462,7 @@ namespace Cowboy.Sockets
             }
             catch (Exception ex)
             {
-                HandleUserSideError(ex);
+                HandleUserSideError(session, ex);
             }
             finally
             {
@@ -482,13 +482,13 @@ namespace Cowboy.Sockets
             }
             catch (Exception ex)
             {
-                HandleUserSideError(ex);
+                HandleUserSideError(session, ex);
             }
         }
 
-        private void HandleUserSideError(Exception ex)
+        private void HandleUserSideError(TcpSocketSession session, Exception ex)
         {
-            _log.Error(string.Format("Session [{0}] error occurred in user side [{1}].", this, ex.Message), ex);
+            _log.Error(string.Format("Session [{0}] error occurred in user side [{1}].", session, ex.Message), ex);
         }
 
         #endregion
