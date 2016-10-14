@@ -30,12 +30,6 @@ namespace Cowboy.TcpLika
         public bool IsSetChannelLifetime { get; set; }
         public TimeSpan ChannelLifetime { get; set; }    // Shut down each connection after time milliseconds
 
-        public bool IsSetWebSocket { get; set; }         // Use RFC6455 WebSocket transport
-        public bool IsSetWebSocketPath { get; set; }
-        public string WebSocketPath { get; set; }
-        public bool IsSetWebSocketProtocol { get; set; }
-        public string WebSocketProtocol { get; set; }
-
         public bool IsSetSsl { get; set; }
         public bool IsSetSslTargetHost { get; set; }
         public string SslTargetHost { get; set; }
