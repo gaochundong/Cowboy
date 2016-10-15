@@ -2,14 +2,14 @@
 <package >
   <metadata>
     <id>Cowboy.Sockets</id>
-    <version>1.2.20.0</version>
+    <version>1.3.1.0</version>
     <title>Cowboy.Sockets</title>
     <authors>Dennis Gao</authors>
     <owners>Dennis Gao</owners>
     <licenseUrl>https://github.com/gaochundong/Cowboy/blob/master/LICENSE</licenseUrl>
     <projectUrl>https://github.com/gaochundong/Cowboy</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>Cowboy is a library for building sockets based services.</description>
+    <description>Cowboy is a C# library for building sockets based services.</description>
     <copyright>Copyright © 2015-2016 Dennis Gao.</copyright>
     <dependencies>
       <dependency id="Logrila.Logging" version="1.0.1" />

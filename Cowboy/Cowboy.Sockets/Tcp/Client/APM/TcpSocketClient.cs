@@ -478,15 +478,15 @@ namespace Cowboy.Sockets
             }
         }
 
-        public void SendAsync(byte[] data)
+        public void BeginSend(byte[] data)
         {
             if (data == null)
                 throw new ArgumentNullException("data");
 
-            SendAsync(data, 0, data.Length);
+            BeginSend(data, 0, data.Length);
         }
 
-        public void SendAsync(byte[] data, int offset, int count)
+        public void BeginSend(byte[] data, int offset, int count)
         {
             BufferValidator.ValidateBuffer(data, offset, count, "data");
 
@@ -515,6 +515,19 @@ namespace Cowboy.Sockets
                     if (!CloseIfShould(ex))
                         throw;
                 }
+            }
+        }
+
+        private void HandleDataWritten(IAsyncResult ar)
+        {
+            try
+            {
+                _stream.EndWrite(ar);
+            }
+            catch (Exception ex)
+            {
+                if (!CloseIfShould(ex))
+                    throw;
             }
         }
 
@@ -563,19 +576,6 @@ namespace Cowboy.Sockets
         public void EndSend(IAsyncResult asyncResult)
         {
             HandleDataWritten(asyncResult);
-        }
-
-        private void HandleDataWritten(IAsyncResult ar)
-        {
-            try
-            {
-                _stream.EndWrite(ar);
-            }
-            catch (Exception ex)
-            {
-                if (!CloseIfShould(ex))
-                    throw;
-            }
         }
 
         #endregion

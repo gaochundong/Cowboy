@@ -1,12 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{0E04BEDA-90F9-4E44-91B9-FAE42EF01498}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D36E264D-BB94-4D14-A292-A852A3D6D5F7}"
 	ProjectSection(SolutionItems) = preProject
+		Cowboy.Sockets\Cowboy.Sockets.nuspec = Cowboy.Sockets\Cowboy.Sockets.nuspec
 		..\LICENSE = ..\LICENSE
 		..\MAKECERT.md = ..\MAKECERT.md
 		..\README.md = ..\README.md

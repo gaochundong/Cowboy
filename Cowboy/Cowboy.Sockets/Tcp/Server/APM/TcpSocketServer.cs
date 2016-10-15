@@ -289,7 +289,7 @@ namespace Cowboy.Sockets
             }
         }
 
-        public void SendToAsync(string sessionKey, byte[] data)
+        public void BeginSendTo(string sessionKey, byte[] data)
         {
             GuardRunning();
 
@@ -299,10 +299,10 @@ namespace Cowboy.Sockets
             if (data == null)
                 throw new ArgumentNullException("data");
 
-            SendToAsync(sessionKey, data, 0, data.Length);
+            BeginSendTo(sessionKey, data, 0, data.Length);
         }
 
-        public void SendToAsync(string sessionKey, byte[] data, int offset, int count)
+        public void BeginSendTo(string sessionKey, byte[] data, int offset, int count)
         {
             GuardRunning();
 
@@ -315,7 +315,7 @@ namespace Cowboy.Sockets
             TcpSocketSession session = null;
             if (_sessions.TryGetValue(sessionKey, out session))
             {
-                session.SendAsync(data, offset, count);
+                session.BeginSend(data, offset, count);
             }
             else
             {
@@ -323,7 +323,7 @@ namespace Cowboy.Sockets
             }
         }
 
-        public void SendToAsync(TcpSocketSession session, byte[] data)
+        public void BeginSendTo(TcpSocketSession session, byte[] data)
         {
             GuardRunning();
 
@@ -333,10 +333,10 @@ namespace Cowboy.Sockets
             if (data == null)
                 throw new ArgumentNullException("data");
 
-            SendToAsync(session, data, 0, data.Length);
+            BeginSendTo(session, data, 0, data.Length);
         }
 
-        public void SendToAsync(TcpSocketSession session, byte[] data, int offset, int count)
+        public void BeginSendTo(TcpSocketSession session, byte[] data, int offset, int count)
         {
             GuardRunning();
 
@@ -349,11 +349,93 @@ namespace Cowboy.Sockets
             TcpSocketSession writeSession = null;
             if (_sessions.TryGetValue(session.SessionKey, out writeSession))
             {
-                session.SendAsync(data, offset, count);
+                session.BeginSend(data, offset, count);
             }
             else
             {
                 _log.WarnFormat("Cannot find session [{0}].", session);
+            }
+        }
+
+        public IAsyncResult BeginSend(string sessionKey, byte[] data, AsyncCallback callback)
+        {
+            if (data == null)
+                throw new ArgumentNullException("data");
+
+            return BeginSend(sessionKey, data, 0, data.Length, callback);
+        }
+
+        public IAsyncResult BeginSend(string sessionKey, byte[] data, int offset, int count, AsyncCallback callback)
+        {
+            GuardRunning();
+
+            if (string.IsNullOrEmpty(sessionKey))
+                throw new ArgumentNullException("sessionKey");
+
+            if (data == null)
+                throw new ArgumentNullException("data");
+
+            TcpSocketSession session = null;
+            if (_sessions.TryGetValue(sessionKey, out session))
+            {
+                return session.BeginSend(data, offset, count, callback, sessionKey);
+            }
+            else
+            {
+                _log.WarnFormat("Cannot find session [{0}].", sessionKey);
+            }
+
+            return null;
+        }
+
+        public IAsyncResult BeginSend(TcpSocketSession session, byte[] data, AsyncCallback callback)
+        {
+            GuardRunning();
+
+            if (session == null)
+                throw new ArgumentNullException("session");
+
+            if (data == null)
+                throw new ArgumentNullException("data");
+
+            return BeginSend(session, data, 0, data.Length, callback);
+        }
+
+        public IAsyncResult BeginSend(TcpSocketSession session, byte[] data, int offset, int count, AsyncCallback callback)
+        {
+            GuardRunning();
+
+            if (session == null)
+                throw new ArgumentNullException("session");
+
+            if (data == null)
+                throw new ArgumentNullException("data");
+
+            TcpSocketSession writeSession = null;
+            if (_sessions.TryGetValue(session.SessionKey, out writeSession))
+            {
+                return session.BeginSend(data, offset, count, callback, session.SessionKey);
+            }
+            else
+            {
+                _log.WarnFormat("Cannot find session [{0}].", session);
+            }
+
+            return null;
+        }
+
+        public void EndSend(IAsyncResult asyncResult)
+        {
+            string sessionKey = (string)asyncResult.AsyncState;
+
+            TcpSocketSession session = null;
+            if (_sessions.TryGetValue(sessionKey, out session))
+            {
+                session.EndSend(asyncResult);
+            }
+            else
+            {
+                _log.WarnFormat("Cannot find session [{0}].", sessionKey);
             }
         }
 
@@ -380,17 +462,17 @@ namespace Cowboy.Sockets
             }
         }
 
-        public void BroadcastAsync(byte[] data)
+        public void BeginBroadcast(byte[] data)
         {
             GuardRunning();
 
             if (data == null)
                 throw new ArgumentNullException("data");
 
-            BroadcastAsync(data, 0, data.Length);
+            BeginBroadcast(data, 0, data.Length);
         }
 
-        public void BroadcastAsync(byte[] data, int offset, int count)
+        public void BeginBroadcast(byte[] data, int offset, int count)
         {
             GuardRunning();
 
@@ -399,7 +481,7 @@ namespace Cowboy.Sockets
 
             foreach (var session in _sessions.Values)
             {
-                session.SendAsync(data, offset, count);
+                session.BeginSend(data, offset, count);
             }
         }
 
