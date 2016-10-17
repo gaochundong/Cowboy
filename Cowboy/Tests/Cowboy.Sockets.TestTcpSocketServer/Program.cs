@@ -33,7 +33,22 @@ namespace Cowboy.Sockets.TestTcpSocketServer
                             _server.Broadcast(Encoding.UTF8.GetBytes(text));
                         }
                     }
-                    else if (text == "big")
+                    else if (text == "big10")
+                    {
+                        text = new string('x', 1024 * 1024 * 10);
+                        _server.Broadcast(Encoding.UTF8.GetBytes(text));
+                    }
+                    else if (text == "big20")
+                    {
+                        text = new string('x', 1024 * 1024 * 20);
+                        _server.Broadcast(Encoding.UTF8.GetBytes(text));
+                    }
+                    else if (text == "big50")
+                    {
+                        text = new string('x', 1024 * 1024 * 50);
+                        _server.Broadcast(Encoding.UTF8.GetBytes(text));
+                    }
+                    else if (text == "big100")
                     {
                         text = new string('x', 1024 * 1024 * 100);
                         _server.Broadcast(Encoding.UTF8.GetBytes(text));

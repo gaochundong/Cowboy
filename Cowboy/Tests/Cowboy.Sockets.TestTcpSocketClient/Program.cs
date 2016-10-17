@@ -34,7 +34,22 @@ namespace Cowboy.Sockets.TestTcpSocketClient
                             _client.Send(Encoding.UTF8.GetBytes(text));
                         }
                     }
-                    else if (text == "big")
+                    else if (text == "big10")
+                    {
+                        text = new string('x', 1024 * 1024 * 10);
+                        _client.Send(Encoding.UTF8.GetBytes(text));
+                    }
+                    else if (text == "big20")
+                    {
+                        text = new string('x', 1024 * 1024 * 20);
+                        _client.Send(Encoding.UTF8.GetBytes(text));
+                    }
+                    else if (text == "big50")
+                    {
+                        text = new string('x', 1024 * 1024 * 50);
+                        _client.Send(Encoding.UTF8.GetBytes(text));
+                    }
+                    else if (text == "big100")
                     {
                         text = new string('x', 1024 * 1024 * 100);
                         _client.Send(Encoding.UTF8.GetBytes(text));
