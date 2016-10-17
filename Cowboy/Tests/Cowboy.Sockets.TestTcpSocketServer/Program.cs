@@ -33,6 +33,21 @@ namespace Cowboy.Sockets.TestTcpSocketServer
                             _server.Broadcast(Encoding.UTF8.GetBytes(text));
                         }
                     }
+                    else if (text == "big1")
+                    {
+                        text = new string('x', 1024 * 1024 * 1);
+                        _server.Broadcast(Encoding.UTF8.GetBytes(text));
+                    }
+                    else if (text == "big2")
+                    {
+                        text = new string('x', 1024 * 1024 * 2);
+                        _server.Broadcast(Encoding.UTF8.GetBytes(text));
+                    }
+                    else if (text == "big5")
+                    {
+                        text = new string('x', 1024 * 1024 * 5);
+                        _server.Broadcast(Encoding.UTF8.GetBytes(text));
+                    }
                     else if (text == "big10")
                     {
                         text = new string('x', 1024 * 1024 * 10);
@@ -83,7 +98,7 @@ namespace Cowboy.Sockets.TestTcpSocketServer
             //config.FrameBuilder = new LengthPrefixedFrameBuilder();
             //config.FrameBuilder = new LengthFieldBasedFrameBuilder();
 
-            _server = new TcpSocketServer(22222, config);
+            _server = new TcpSocketServer(65001, config);
             _server.ClientConnected += server_ClientConnected;
             _server.ClientDisconnected += server_ClientDisconnected;
             _server.ClientDataReceived += server_ClientDataReceived;

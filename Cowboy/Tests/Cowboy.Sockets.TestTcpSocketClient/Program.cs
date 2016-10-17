@@ -34,6 +34,21 @@ namespace Cowboy.Sockets.TestTcpSocketClient
                             _client.Send(Encoding.UTF8.GetBytes(text));
                         }
                     }
+                    else if (text == "big1")
+                    {
+                        text = new string('x', 1024 * 1024 * 1);
+                        _client.Send(Encoding.UTF8.GetBytes(text));
+                    }
+                    else if (text == "big2")
+                    {
+                        text = new string('x', 1024 * 1024 * 2);
+                        _client.Send(Encoding.UTF8.GetBytes(text));
+                    }
+                    else if (text == "big5")
+                    {
+                        text = new string('x', 1024 * 1024 * 5);
+                        _client.Send(Encoding.UTF8.GetBytes(text));
+                    }
                     else if (text == "big10")
                     {
                         text = new string('x', 1024 * 1024 * 10);
@@ -86,7 +101,7 @@ namespace Cowboy.Sockets.TestTcpSocketClient
             //config.FrameBuilder = new LengthPrefixedFrameBuilder();
             //config.FrameBuilder = new LengthFieldBasedFrameBuilder();
 
-            IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 22222);
+            IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 65001);
 
             _client = new TcpSocketClient(remoteEP, config);
             _client.ServerConnected += client_ServerConnected;
