@@ -2,8 +2,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Cowboy.Buffer
 {
@@ -134,11 +132,6 @@ namespace Cowboy.Buffer
                     var chunk = new ArraySegment<byte>(bytes, i * _chunkSize, _chunkSize);
                     _buffers.Push(chunk);
                 }
-
-                Console.WriteLine("Segments count: {0}, buffers count: {1}, should be when full: {2}",
-                    _segments.Count,
-                    _buffers.Count,
-                    _segments.Count * _segmentChunks);
             }
         }
 
