@@ -51,6 +51,9 @@
     <Compile Include="Buffer\BufferValidator.cs" />
     <Compile Include="Buffer\GrowingByteBufferManager.cs" />
     <Compile Include="Buffer\IBufferManager.cs" />
+    <Compile Include="Buffer\ImpressiveBufferManager.cs" />
+    <Compile Include="Buffer\UnableToAllocateBufferException.cs" />
+    <Compile Include="Buffer\UnableToCreateMemoryException .cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Tcp\Client\SAEA\TcpSocketSaeaClient.cs" />
     <Compile Include="Tcp\Client\SAEA\TcpSocketSaeaClientConfiguration.cs" />
