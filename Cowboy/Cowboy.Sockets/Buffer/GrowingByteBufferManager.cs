@@ -87,6 +87,32 @@ namespace Cowboy.Buffer
             }
         }
 
+        public IEnumerable<byte[]> BorrowBuffers(int count)
+        {
+            lock (_sync)
+            {
+                int provided = 0;
+
+                while (provided < count)
+                {
+                    if (_bufferStack.Count > 0)
+                    {
+                        provided++;
+                        yield return _bufferStack.Pop();
+                    }
+
+                    if (AutoExpanded)
+                        ExpandBufferStack();
+
+                    if (_bufferStack.Count == 0)
+                        throw new IndexOutOfRangeException("No enough available buffers.");
+
+                    provided++;
+                    yield return _bufferStack.Pop();
+                }
+            }
+        }
+
         public void ReturnBuffer(byte[] buffer)
         {
             if (buffer == null)

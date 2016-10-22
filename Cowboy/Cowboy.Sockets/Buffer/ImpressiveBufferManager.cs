@@ -38,11 +38,6 @@ namespace Cowboy.Buffer
         private readonly List<byte[]> _segments;
         private readonly object _creatingNewSegmentLock = new object();
 
-        /// <summary>
-        /// Gets the default buffer manager.
-        /// </summary>
-        /// <remarks>You should only be using this method if you don't want to manage buffers on your own.</remarks>
-        /// <value>The default buffer manager.</value>
         public static ImpressiveBufferManager Default
         {
             get
@@ -54,10 +49,6 @@ namespace Cowboy.Buffer
             }
         }
 
-        /// <summary>
-        /// Sets the default buffer manager.
-        /// </summary>
-        /// <param name="manager">The new default buffer manager.</param>
         public static void SetDefaultBufferManager(ImpressiveBufferManager manager)
         {
             if (manager == null)
@@ -80,36 +71,19 @@ namespace Cowboy.Buffer
             get { return _segmentChunks; }
         }
 
-        /// <summary>
-        /// The current number of buffers available
-        /// </summary>
         public int AvailableBuffers
         {
             get { return _buffers.Count; }
         }
 
-        /// <summary>
-        /// The total size of all buffers
-        /// </summary>
         public int TotalBufferSize
         {
             get { return _segments.Count * _segmentSize; }
         }
 
-        /// <summary>
-        /// Constructs a new <see cref="ImpressiveBufferManager"></see> object
-        /// </summary>
-        /// <param name="segmentChunks">The number of chunks to create per segment</param>
-        /// <param name="chunkSize">The size of a chunk in bytes</param>
         public ImpressiveBufferManager(int segmentChunks, int chunkSize)
             : this(segmentChunks, chunkSize, 1) { }
 
-        /// <summary>
-        /// Constructs a new <see cref="ImpressiveBufferManager"></see> object
-        /// </summary>
-        /// <param name="segmentChunks">The number of chunks to create per segment</param>
-        /// <param name="chunkSize">The size of a chunk in bytes</param>
-        /// <param name="initialSegments">The initial number of segments to create</param>
         public ImpressiveBufferManager(int segmentChunks, int chunkSize, int initialSegments)
             : this(segmentChunks, chunkSize, initialSegments, true) { }
 
@@ -143,9 +117,6 @@ namespace Cowboy.Buffer
             _allowedToCreateMemory = allowedToCreateMemory;
         }
 
-        /// <summary>
-        /// Creates a new segment, makes buffers available
-        /// </summary>
         private void CreateNewSegment(bool forceCreation)
         {
             if (!_allowedToCreateMemory)
@@ -171,15 +142,7 @@ namespace Cowboy.Buffer
             }
         }
 
-        /// <summary>
-        /// Checks out a buffer from the manager
-        /// </summary>
-        /// <remarks>
-        /// It is the client's responsibility to return the buffer to the manager by
-        /// calling <see cref="CheckIn(ArraySegment{byte})"></see> on the buffer
-        /// </remarks>
-        /// <returns>A <see cref="ArraySegment{T}"></see> that can be used as a buffer</returns>
-        public ArraySegment<byte> CheckOut()
+        public ArraySegment<byte> BorrowBuffer()
         {
             int trial = 0;
             while (trial < TrialsCount)
@@ -193,15 +156,7 @@ namespace Cowboy.Buffer
             throw new UnableToAllocateBufferException();
         }
 
-        /// <summary>
-        /// Checks out a buffer from the manager
-        /// </summary>
-        /// <remarks>
-        /// It is the client's responsibility to return the buffer to the manger by
-        /// calling <see cref="CheckIn(IEnumerable{ArraySegment{byte}})"></see> on the buffer
-        /// </remarks>
-        /// <returns>A <see cref="ArraySegment{T}"></see> that can be used as a buffer</returns>
-        public IEnumerable<ArraySegment<byte>> CheckOut(int toGet)
+        public IEnumerable<ArraySegment<byte>> BorrowBuffers(int toGet)
         {
             var result = new ArraySegment<byte>[toGet];
             var count = 0;
@@ -229,34 +184,18 @@ namespace Cowboy.Buffer
             catch
             {
                 if (totalReceived > 0)
-                    CheckIn(result.Take(totalReceived));
+                    ReturnBuffers(result.Take(totalReceived));
                 throw;
             }
         }
 
-        /// <summary>
-        /// Returns a buffer to the control of the manager
-        /// </summary>
-        /// <remarks>
-        /// It is the client's responsibility to return the buffer to the manger by
-        /// calling <see cref="CheckIn(ArraySegment{byte})"></see> on the buffer
-        /// </remarks>
-        /// <param name="buffer">The <see cref="ArraySegment{T}"></see> to return to the cache</param>
-        public void CheckIn(ArraySegment<byte> buffer)
+        public void ReturnBuffer(ArraySegment<byte> buffer)
         {
             CheckBuffer(buffer);
             _buffers.Push(buffer);
         }
 
-        /// <summary>
-        /// Returns a set of buffers to the control of the manager
-        /// </summary>
-        /// <remarks>
-        /// It is the client's responsibility to return the buffer to the manger by
-        /// calling <see cref="CheckIn(IEnumerable{ArraySegment{byte}})"></see> on the buffer
-        /// </remarks>
-        /// <param name="buffersToReturn">The <see cref="ArraySegment{T}"></see> to return to the cache</param>
-        public void CheckIn(IEnumerable<ArraySegment<byte>> buffersToReturn)
+        public void ReturnBuffers(IEnumerable<ArraySegment<byte>> buffersToReturn)
         {
             if (buffersToReturn == null)
                 throw new ArgumentNullException("buffersToReturn");
@@ -268,15 +207,7 @@ namespace Cowboy.Buffer
             }
         }
 
-        /// <summary>
-        /// Returns a set of buffers to the control of the manager
-        /// </summary>
-        /// <remarks>
-        /// It is the client's responsibility to return the buffer to the manger by
-        /// calling <see cref="CheckIn(ArraySegment{byte}[])"></see> on the buffer
-        /// </remarks>
-        /// <param name="buffersToReturn">The <see cref="ArraySegment{T}"></see> to return to the cache</param>
-        public void CheckIn(params ArraySegment<byte>[] buffersToReturn)
+        public void ReturnBuffers(params ArraySegment<byte>[] buffersToReturn)
         {
             if (buffersToReturn == null)
                 throw new ArgumentNullException("buffersToReturn");
