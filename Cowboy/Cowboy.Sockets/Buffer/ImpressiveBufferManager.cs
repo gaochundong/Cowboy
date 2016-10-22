@@ -156,28 +156,28 @@ namespace Cowboy.Buffer
             throw new UnableToAllocateBufferException();
         }
 
-        public IEnumerable<ArraySegment<byte>> BorrowBuffers(int toGet)
+        public IEnumerable<ArraySegment<byte>> BorrowBuffers(int count)
         {
-            var result = new ArraySegment<byte>[toGet];
-            var count = 0;
+            var result = new ArraySegment<byte>[count];
+            var provided = 0;
             var totalReceived = 0;
 
             try
             {
-                while (count < TrialsCount)
+                while (provided < TrialsCount)
                 {
                     ArraySegment<byte> piece;
-                    while (totalReceived < toGet)
+                    while (totalReceived < count)
                     {
                         if (!_buffers.TryPop(out piece))
                             break;
                         result[totalReceived] = piece;
                         ++totalReceived;
                     }
-                    if (totalReceived == toGet)
+                    if (totalReceived == count)
                         return result;
                     CreateNewSegment(false);
-                    count++;
+                    provided++;
                 }
                 throw new UnableToAllocateBufferException();
             }
@@ -195,24 +195,24 @@ namespace Cowboy.Buffer
             _buffers.Push(buffer);
         }
 
-        public void ReturnBuffers(IEnumerable<ArraySegment<byte>> buffersToReturn)
+        public void ReturnBuffers(IEnumerable<ArraySegment<byte>> buffers)
         {
-            if (buffersToReturn == null)
+            if (buffers == null)
                 throw new ArgumentNullException("buffersToReturn");
 
-            foreach (var buf in buffersToReturn)
+            foreach (var buf in buffers)
             {
                 CheckBuffer(buf);
                 _buffers.Push(buf);
             }
         }
 
-        public void ReturnBuffers(params ArraySegment<byte>[] buffersToReturn)
+        public void ReturnBuffers(params ArraySegment<byte>[] buffers)
         {
-            if (buffersToReturn == null)
+            if (buffers == null)
                 throw new ArgumentNullException("buffersToReturn");
 
-            foreach (var buf in buffersToReturn)
+            foreach (var buf in buffers)
             {
                 CheckBuffer(buf);
                 _buffers.Push(buf);
