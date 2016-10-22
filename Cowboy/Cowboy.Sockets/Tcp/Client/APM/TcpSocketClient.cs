@@ -23,7 +23,7 @@ namespace Cowboy.Sockets
         private readonly IPEndPoint _remoteEndPoint;
         private readonly IPEndPoint _localEndPoint;
         private Stream _stream;
-        private byte[] _receiveBuffer;
+        private ArraySegment<byte> _receiveBuffer;
         private int _receiveBufferOffset = 0;
 
         #endregion
@@ -283,7 +283,7 @@ namespace Cowboy.Sockets
         {
             try
             {
-                _stream.BeginRead(_receiveBuffer, _receiveBufferOffset, _receiveBuffer.Length - _receiveBufferOffset, HandleDataReceived, _stream);
+                _stream.BeginRead(_receiveBuffer.Array, _receiveBuffer.Offset + _receiveBufferOffset, _receiveBuffer.Count - _receiveBufferOffset, HandleDataReceived, _stream);
             }
             catch (Exception ex)
             {
@@ -354,7 +354,7 @@ namespace Cowboy.Sockets
             int payloadCount;
             int consumedLength = 0;
 
-            BufferDeflector.ReplaceBuffer(_configuration.BufferManager, ref _receiveBuffer, ref _receiveBufferOffset, receiveCount);
+            SegmentBufferDeflector.ReplaceBuffer(_configuration.BufferManager, ref _receiveBuffer, ref _receiveBufferOffset, receiveCount);
 
             while (true)
             {
@@ -363,7 +363,7 @@ namespace Cowboy.Sockets
                 payloadOffset = 0;
                 payloadCount = 0;
 
-                if (_configuration.FrameBuilder.Decoder.TryDecodeFrame(_receiveBuffer, consumedLength, _receiveBufferOffset - consumedLength,
+                if (_configuration.FrameBuilder.Decoder.TryDecodeFrame(_receiveBuffer.Array, _receiveBuffer.Offset + consumedLength, _receiveBufferOffset - consumedLength,
                     out frameLength, out payload, out payloadOffset, out payloadCount))
                 {
                     try
@@ -387,7 +387,7 @@ namespace Cowboy.Sockets
 
             try
             {
-                BufferDeflector.ShiftBuffer(_configuration.BufferManager, consumedLength, ref _receiveBuffer, ref _receiveBufferOffset);
+                SegmentBufferDeflector.ShiftBuffer(_configuration.BufferManager, consumedLength, ref _receiveBuffer, ref _receiveBufferOffset);
             }
             catch (ArgumentOutOfRangeException) { }
         }

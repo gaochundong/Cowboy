@@ -47,6 +47,7 @@
     <Compile Include="..\SolutionVersion.cs">
       <Link>SolutionVersion.cs</Link>
     </Compile>
+    <Compile Include="Buffer\SegmentBufferDeflector.cs" />
     <Compile Include="Buffer\BufferDeflector.cs" />
     <Compile Include="Buffer\BufferValidator.cs" />
     <Compile Include="Buffer\GrowingByteBufferManager.cs" />
