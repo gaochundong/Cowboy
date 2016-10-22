@@ -6,13 +6,13 @@ namespace Cowboy.Sockets.Experimental
     {
         public TcpSocketRioServerConfiguration()
         {
-            BufferManager = new GrowingByteBufferManager(20, 8192);
+            BufferManager = new SegmentBufferManager(1024, 8192, 1, true);
             ReceiveBufferSize = 8192;
 
             FrameBuilder = new LengthPrefixedFrameBuilder();
         }
 
-        public IBufferManager BufferManager { get; set; }
+        public ISegmentBufferManager BufferManager { get; set; }
         public int ReceiveBufferSize { get; set; }
 
         public IFrameBuilder FrameBuilder { get; set; }

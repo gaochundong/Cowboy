@@ -11,7 +11,7 @@ namespace Cowboy.Sockets
     {
         public AsyncTcpSocketServerConfiguration()
         {
-            BufferManager = new GrowingByteBufferManager(20, 8192);
+            BufferManager = new SegmentBufferManager(1024, 8192, 1, true);
             ReceiveBufferSize = 8192;
             SendBufferSize = 8192;
             ReceiveTimeout = TimeSpan.Zero;
@@ -34,7 +34,7 @@ namespace Cowboy.Sockets
             FrameBuilder = new LengthPrefixedFrameBuilder();
         }
 
-        public IBufferManager BufferManager { get; set; }
+        public ISegmentBufferManager BufferManager { get; set; }
         public int ReceiveBufferSize { get; set; }
         public int SendBufferSize { get; set; }
         public TimeSpan ReceiveTimeout { get; set; }

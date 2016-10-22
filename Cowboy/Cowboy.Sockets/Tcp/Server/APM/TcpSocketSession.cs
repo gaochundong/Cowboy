@@ -17,11 +17,11 @@ namespace Cowboy.Sockets
         private readonly object _opsLock = new object();
         private TcpClient _tcpClient;
         private readonly TcpSocketServerConfiguration _configuration;
-        private readonly IBufferManager _bufferManager;
+        private readonly ISegmentBufferManager _bufferManager;
         private readonly TcpSocketServer _server;
         private readonly string _sessionKey;
         private Stream _stream;
-        private byte[] _receiveBuffer;
+        private ArraySegment<byte> _receiveBuffer;
         private int _receiveBufferOffset = 0;
         private IPEndPoint _remoteEndPoint;
         private IPEndPoint _localEndPoint;
@@ -34,7 +34,7 @@ namespace Cowboy.Sockets
         public TcpSocketSession(
             TcpClient tcpClient,
             TcpSocketServerConfiguration configuration,
-            IBufferManager bufferManager,
+            ISegmentBufferManager bufferManager,
             TcpSocketServer server)
         {
             if (tcpClient == null)
@@ -261,7 +261,7 @@ namespace Cowboy.Sockets
         {
             try
             {
-                _stream.BeginRead(_receiveBuffer, _receiveBufferOffset, _receiveBuffer.Length - _receiveBufferOffset, HandleDataReceived, _stream);
+                _stream.BeginRead(_receiveBuffer.Array, _receiveBuffer.Offset + _receiveBufferOffset, _receiveBuffer.Count - _receiveBufferOffset, HandleDataReceived, _stream);
             }
             catch (Exception ex)
             {
@@ -335,7 +335,7 @@ namespace Cowboy.Sockets
             int payloadCount;
             int consumedLength = 0;
 
-            BufferDeflector.ReplaceBuffer(_bufferManager, ref _receiveBuffer, ref _receiveBufferOffset, receiveCount);
+            SegmentBufferDeflector.ReplaceBuffer(_bufferManager, ref _receiveBuffer, ref _receiveBufferOffset, receiveCount);
 
             while (true)
             {
@@ -344,7 +344,7 @@ namespace Cowboy.Sockets
                 payloadOffset = 0;
                 payloadCount = 0;
 
-                if (_configuration.FrameBuilder.Decoder.TryDecodeFrame(_receiveBuffer, consumedLength, _receiveBufferOffset - consumedLength,
+                if (_configuration.FrameBuilder.Decoder.TryDecodeFrame(_receiveBuffer.Array, _receiveBuffer.Offset + consumedLength, _receiveBufferOffset - consumedLength,
                     out frameLength, out payload, out payloadOffset, out payloadCount))
                 {
                     try
@@ -368,7 +368,7 @@ namespace Cowboy.Sockets
 
             try
             {
-                BufferDeflector.ShiftBuffer(_bufferManager, consumedLength, ref _receiveBuffer, ref _receiveBufferOffset);
+                SegmentBufferDeflector.ShiftBuffer(_bufferManager, consumedLength, ref _receiveBuffer, ref _receiveBufferOffset);
             }
             catch (ArgumentOutOfRangeException) { }
         }

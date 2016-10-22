@@ -8,7 +8,7 @@ namespace Cowboy.Sockets
     {
         public TcpSocketSaeaClientConfiguration()
         {
-            BufferManager = new SegmentBufferManager(1024, 8192, 1, true);
+            BufferManager = new SegmentBufferManager(100, 8192, 1, true);
             ReceiveBufferSize = 8192;
             SendBufferSize = 8192;
             ReceiveTimeout = TimeSpan.Zero;
