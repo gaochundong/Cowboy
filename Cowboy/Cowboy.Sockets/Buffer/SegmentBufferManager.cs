@@ -193,7 +193,7 @@ namespace Cowboy.Buffer
         public void ReturnBuffers(IEnumerable<ArraySegment<byte>> buffers)
         {
             if (buffers == null)
-                throw new ArgumentNullException("buffersToReturn");
+                throw new ArgumentNullException("buffers");
 
             foreach (var buf in buffers)
             {
@@ -207,7 +207,7 @@ namespace Cowboy.Buffer
         public void ReturnBuffers(params ArraySegment<byte>[] buffers)
         {
             if (buffers == null)
-                throw new ArgumentNullException("buffersToReturn");
+                throw new ArgumentNullException("buffers");
 
             foreach (var buf in buffers)
             {
