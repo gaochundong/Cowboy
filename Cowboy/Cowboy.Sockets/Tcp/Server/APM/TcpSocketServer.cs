@@ -13,7 +13,6 @@ namespace Cowboy.Sockets
         #region Fields
 
         private static readonly ILog _log = Logger.Get<TcpSocketServer>();
-        private IBufferManager _bufferManager;
         private TcpListener _listener;
         private readonly ConcurrentDictionary<string, TcpSocketSession> _sessions = new ConcurrentDictionary<string, TcpSocketSession>();
         private readonly TcpSocketServerConfiguration _configuration;
@@ -42,15 +41,10 @@ namespace Cowboy.Sockets
             this.ListenedEndPoint = listenedEndPoint;
             _configuration = configuration ?? new TcpSocketServerConfiguration();
 
+            if (_configuration.BufferManager == null)
+                throw new InvalidProgramException("The buffer manager in configuration cannot be null.");
             if (_configuration.FrameBuilder == null)
                 throw new InvalidProgramException("The frame handler in configuration cannot be null.");
-
-            Initialize();
-        }
-
-        private void Initialize()
-        {
-            _bufferManager = new GrowingByteBufferManager(_configuration.InitialPooledBufferCount, _configuration.ReceiveBufferSize);
         }
 
         #endregion
@@ -156,7 +150,7 @@ namespace Cowboy.Sockets
                 TcpClient tcpClient = listener.EndAcceptTcpClient(ar);
                 if (!tcpClient.Connected) return;
 
-                var session = new TcpSocketSession(tcpClient, _configuration, _bufferManager, this);
+                var session = new TcpSocketSession(tcpClient, _configuration, _configuration.BufferManager, this);
                 bool isSessionStarted = false;
                 try
                 {

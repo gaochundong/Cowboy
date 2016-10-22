@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net.Sockets;
+using Cowboy.Buffer;
 
 namespace Cowboy.Sockets
 {
@@ -7,7 +8,7 @@ namespace Cowboy.Sockets
     {
         public TcpSocketSaeaClientConfiguration()
         {
-            InitialPooledBufferCount = 4;
+            BufferManager = new GrowingByteBufferManager(4, 8192);
             ReceiveBufferSize = 8192;
             SendBufferSize = 8192;
             ReceiveTimeout = TimeSpan.Zero;
@@ -18,7 +19,7 @@ namespace Cowboy.Sockets
             FrameBuilder = new LengthPrefixedFrameBuilder();
         }
 
-        public int InitialPooledBufferCount { get; set; }
+        public IBufferManager BufferManager { get; set; }
         public int ReceiveBufferSize { get; set; }
         public int SendBufferSize { get; set; }
         public TimeSpan ReceiveTimeout { get; set; }

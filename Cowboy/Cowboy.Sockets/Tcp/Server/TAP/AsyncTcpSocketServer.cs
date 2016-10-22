@@ -15,7 +15,6 @@ namespace Cowboy.Sockets
         #region Fields
 
         private static readonly ILog _log = Logger.Get<AsyncTcpSocketServer>();
-        private IBufferManager _bufferManager;
         private TcpListener _listener;
         private readonly ConcurrentDictionary<string, AsyncTcpSocketSession> _sessions = new ConcurrentDictionary<string, AsyncTcpSocketSession>();
         private readonly IAsyncTcpSocketServerMessageDispatcher _dispatcher;
@@ -51,10 +50,10 @@ namespace Cowboy.Sockets
             _dispatcher = dispatcher;
             _configuration = configuration ?? new AsyncTcpSocketServerConfiguration();
 
+            if (_configuration.BufferManager == null)
+                throw new InvalidProgramException("The buffer manager in configuration cannot be null.");
             if (_configuration.FrameBuilder == null)
                 throw new InvalidProgramException("The frame handler in configuration cannot be null.");
-
-            Initialize();
         }
 
         public AsyncTcpSocketServer(
@@ -87,11 +86,6 @@ namespace Cowboy.Sockets
                   new InternalAsyncTcpSocketServerMessageDispatcherImplementation(onSessionDataReceived, onSessionStarted, onSessionClosed),
                   configuration)
         {
-        }
-
-        private void Initialize()
-        {
-            _bufferManager = new GrowingByteBufferManager(_configuration.InitialPooledBufferCount, _configuration.ReceiveBufferSize);
         }
 
         #endregion
@@ -199,7 +193,7 @@ namespace Cowboy.Sockets
 
         private async Task Process(TcpClient acceptedTcpClient)
         {
-            var session = new AsyncTcpSocketSession(acceptedTcpClient, _configuration, _bufferManager, _dispatcher, this);
+            var session = new AsyncTcpSocketSession(acceptedTcpClient, _configuration, _configuration.BufferManager, _dispatcher, this);
 
             if (_sessions.TryAdd(session.SessionKey, session))
             {

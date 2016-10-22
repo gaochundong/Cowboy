@@ -18,7 +18,6 @@ namespace Cowboy.Sockets.Experimental
 
         private static readonly ILog _log = Logger.Get<TcpSocketRioServer>();
         private static readonly byte[] EmptyArray = new byte[0];
-        private IBufferManager _bufferManager;
         private readonly ConcurrentDictionary<string, TcpSocketRioSession> _sessions = new ConcurrentDictionary<string, TcpSocketRioSession>();
         private readonly TcpSocketRioServerConfiguration _configuration;
         private readonly ITcpSocketRioServerMessageDispatcher _dispatcher;
@@ -57,6 +56,8 @@ namespace Cowboy.Sockets.Experimental
             _dispatcher = dispatcher;
             _configuration = configuration ?? new TcpSocketRioServerConfiguration();
 
+            if (_configuration.BufferManager == null)
+                throw new InvalidProgramException("The buffer manager in configuration cannot be null.");
             if (_configuration.FrameBuilder == null)
                 throw new InvalidProgramException("The frame handler in configuration cannot be null.");
 
@@ -97,8 +98,6 @@ namespace Cowboy.Sockets.Experimental
 
         private void Initialize()
         {
-            _bufferManager = new GrowingByteBufferManager(_configuration.InitialPooledBufferCount, _configuration.ReceiveBufferSize);
-
             int pipeLineDeph = 16;
             int connections = 1024;
 
@@ -195,7 +194,7 @@ namespace Cowboy.Sockets.Experimental
 
         private async Task Process(RioSocket acceptedSocket)
         {
-            var session = new TcpSocketRioSession(_configuration, _bufferManager, acceptedSocket, _dispatcher, this);
+            var session = new TcpSocketRioSession(_configuration, _configuration.BufferManager, acceptedSocket, _dispatcher, this);
 
             if (_sessions.TryAdd(session.SessionKey, session))
             {

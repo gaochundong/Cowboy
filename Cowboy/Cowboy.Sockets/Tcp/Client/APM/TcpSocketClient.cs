@@ -15,7 +15,6 @@ namespace Cowboy.Sockets
         #region Fields
 
         private static readonly ILog _log = Logger.Get<TcpSocketClient>();
-        private IBufferManager _bufferManager;
         private TcpClient _tcpClient;
         private readonly object _opsLock = new object();
         private bool _closed = false;
@@ -55,15 +54,10 @@ namespace Cowboy.Sockets
             _localEndPoint = localEP;
             _configuration = configuration ?? new TcpSocketClientConfiguration();
 
+            if (_configuration.BufferManager == null)
+                throw new InvalidProgramException("The buffer manager in configuration cannot be null.");
             if (_configuration.FrameBuilder == null)
                 throw new InvalidProgramException("The frame handler in configuration cannot be null.");
-
-            Initialize();
-        }
-
-        private void Initialize()
-        {
-            _bufferManager = new GrowingByteBufferManager(_configuration.InitialPooledBufferCount, _configuration.ReceiveBufferSize);
         }
 
         #endregion
@@ -95,7 +89,7 @@ namespace Cowboy.Sockets
 
                     _tcpClient = _localEndPoint != null ? new TcpClient(_localEndPoint) : new TcpClient(_remoteEndPoint.Address.AddressFamily);
 
-                    _receiveBuffer = _bufferManager.BorrowBuffer();
+                    _receiveBuffer = _configuration.BufferManager.BorrowBuffer();
                     _receiveBufferOffset = 0;
 
                     var ar = _tcpClient.BeginConnect(_remoteEndPoint.Address, _remoteEndPoint.Port, null, _tcpClient);
@@ -140,7 +134,7 @@ namespace Cowboy.Sockets
                     }
                     finally
                     {
-                        _bufferManager.ReturnBuffer(_receiveBuffer);
+                        _configuration.BufferManager.ReturnBuffer(_receiveBuffer);
                         _receiveBufferOffset = 0;
                     }
 
@@ -360,7 +354,7 @@ namespace Cowboy.Sockets
             int payloadCount;
             int consumedLength = 0;
 
-            BufferDeflector.ReplaceBuffer(_bufferManager, ref _receiveBuffer, ref _receiveBufferOffset, receiveCount);
+            BufferDeflector.ReplaceBuffer(_configuration.BufferManager, ref _receiveBuffer, ref _receiveBufferOffset, receiveCount);
 
             while (true)
             {
@@ -393,7 +387,7 @@ namespace Cowboy.Sockets
 
             try
             {
-                BufferDeflector.ShiftBuffer(_bufferManager, consumedLength, ref _receiveBuffer, ref _receiveBufferOffset);
+                BufferDeflector.ShiftBuffer(_configuration.BufferManager, consumedLength, ref _receiveBuffer, ref _receiveBufferOffset);
             }
             catch (ArgumentOutOfRangeException) { }
         }

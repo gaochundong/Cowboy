@@ -16,7 +16,6 @@ namespace Cowboy.Sockets
 
         private static readonly ILog _log = Logger.Get<TcpSocketSaeaServer>();
         private static readonly byte[] EmptyArray = new byte[0];
-        private IBufferManager _bufferManager;
         private readonly ConcurrentDictionary<string, TcpSocketSaeaSession> _sessions = new ConcurrentDictionary<string, TcpSocketSaeaSession>();
         private readonly TcpSocketSaeaServerConfiguration _configuration;
         private readonly ITcpSocketSaeaServerMessageDispatcher _dispatcher;
@@ -56,6 +55,8 @@ namespace Cowboy.Sockets
             _dispatcher = dispatcher;
             _configuration = configuration ?? new TcpSocketSaeaServerConfiguration();
 
+            if (_configuration.BufferManager == null)
+                throw new InvalidProgramException("The buffer manager in configuration cannot be null.");
             if (_configuration.FrameBuilder == null)
                 throw new InvalidProgramException("The frame handler in configuration cannot be null.");
 
@@ -96,8 +97,6 @@ namespace Cowboy.Sockets
 
         private void Initialize()
         {
-            _bufferManager = new GrowingByteBufferManager(_configuration.InitialPooledBufferCount, _configuration.ReceiveBufferSize);
-
             _acceptSaeaPool = new SaeaPool(16, 32,
                 () =>
                 {
@@ -141,7 +140,7 @@ namespace Cowboy.Sockets
             _sessionPool = new SessionPool(1024, int.MaxValue,
                 () =>
                 {
-                    var session = new TcpSocketSaeaSession(_configuration, _bufferManager, _handleSaeaPool, _dispatcher, this);
+                    var session = new TcpSocketSaeaSession(_configuration, _configuration.BufferManager, _handleSaeaPool, _dispatcher, this);
                     return session;
                 },
                 (session) =>
