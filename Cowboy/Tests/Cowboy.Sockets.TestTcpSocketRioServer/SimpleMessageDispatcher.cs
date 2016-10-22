@@ -17,7 +17,14 @@ namespace Cowboy.Sockets.TestTcpSocketRioServer
         {
             var text = Encoding.UTF8.GetString(data, offset, count);
             Console.Write(string.Format("Client : --> "));
-            Console.WriteLine(text);
+            if (count < 1024 * 1024 * 1)
+            {
+                Console.WriteLine(text);
+            }
+            else
+            {
+                Console.WriteLine("{0} Bytes", count);
+            }
 
             await session.SendAsync(Encoding.UTF8.GetBytes(text));
         }

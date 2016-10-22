@@ -124,7 +124,14 @@ namespace Cowboy.Sockets.TestTcpSocketServer
         {
             var text = Encoding.UTF8.GetString(e.Data, e.DataOffset, e.DataLength);
             Console.Write(string.Format("Client : {0} {1} --> ", e.Session.RemoteEndPoint, e.Session));
-            Console.WriteLine(text);
+            if (e.DataLength < 1024 * 1024 * 1)
+            {
+                Console.WriteLine(text);
+            }
+            else
+            {
+                Console.WriteLine("{0} Bytes", e.DataLength);
+            }
 
             _server.SendTo(e.Session, Encoding.UTF8.GetBytes(text));
         }

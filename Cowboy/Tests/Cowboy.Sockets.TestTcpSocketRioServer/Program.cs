@@ -52,30 +52,30 @@ namespace Cowboy.Sockets.TestTcpSocketRioServer
                             {
                                 text = new string('x', 1024 * 1024 * 1);
                                 await _server.BroadcastAsync(Encoding.UTF8.GetBytes(text));
-                                Console.WriteLine("Server [{0}] broadcasts text -> [{1}].", _server.ListenedEndPoint, text);
+                                Console.WriteLine("Server [{0}] broadcasts text -> [{1} Bytes].", _server.ListenedEndPoint, text.Length);
                             }
                             else if (text == "big10")
                             {
                                 text = new string('x', 1024 * 1024 * 10);
                                 await _server.BroadcastAsync(Encoding.UTF8.GetBytes(text));
-                                Console.WriteLine("Server [{0}] broadcasts text -> [{1}].", _server.ListenedEndPoint, text);
+                                Console.WriteLine("Server [{0}] broadcasts text -> [{1} Bytes].", _server.ListenedEndPoint, text.Length);
                             }
                             else if (text == "big100")
                             {
                                 text = new string('x', 1024 * 1024 * 100);
                                 await _server.BroadcastAsync(Encoding.UTF8.GetBytes(text));
-                                Console.WriteLine("Server [{0}] broadcasts text -> [{1}].", _server.ListenedEndPoint, text);
+                                Console.WriteLine("Server [{0}] broadcasts text -> [{1} Bytes].", _server.ListenedEndPoint, text.Length);
                             }
                             else if (text == "big1000")
                             {
                                 text = new string('x', 1024 * 1024 * 1000);
                                 await _server.BroadcastAsync(Encoding.UTF8.GetBytes(text));
-                                Console.WriteLine("Server [{0}] broadcasts text -> [{1}].", _server.ListenedEndPoint, text);
+                                Console.WriteLine("Server [{0}] broadcasts text -> [{1} Bytes].", _server.ListenedEndPoint, text.Length);
                             }
                             else
                             {
                                 await _server.BroadcastAsync(Encoding.UTF8.GetBytes(text));
-                                Console.WriteLine("Server [{0}] broadcasts text -> [{1}].", _server.ListenedEndPoint, text);
+                                Console.WriteLine("Server [{0}] broadcasts text -> [{1} Bytes].", _server.ListenedEndPoint, text.Length);
                             }
                         });
                     }

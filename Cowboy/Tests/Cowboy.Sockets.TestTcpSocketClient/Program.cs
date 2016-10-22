@@ -129,7 +129,14 @@ namespace Cowboy.Sockets.TestTcpSocketClient
         {
             var text = Encoding.UTF8.GetString(e.Data, e.DataOffset, e.DataLength);
             Console.Write(string.Format("Server : {0} --> ", e.Client.RemoteEndPoint));
-            Console.WriteLine(string.Format("{0}", text));
+            if (e.DataLength < 1024 * 1024 * 1)
+            {
+                Console.WriteLine(text);
+            }
+            else
+            {
+                Console.WriteLine("{0} Bytes", e.DataLength);
+            }
         }
     }
 }

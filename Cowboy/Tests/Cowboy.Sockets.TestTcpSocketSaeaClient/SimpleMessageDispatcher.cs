@@ -16,7 +16,14 @@ namespace Cowboy.Sockets.TestTcpSocketSaeaClient
         {
             var text = Encoding.UTF8.GetString(data, offset, count);
             Console.Write(string.Format("Server : {0} --> ", client.RemoteEndPoint));
-            Console.WriteLine(string.Format("{0}", text));
+            if (count < 1024 * 1024 * 1)
+            {
+                Console.WriteLine(text);
+            }
+            else
+            {
+                Console.WriteLine("{0} Bytes", count);
+            }
 
             await Task.CompletedTask;
         }
