@@ -50,8 +50,9 @@
     <Compile Include="Buffer\BufferDeflector.cs" />
     <Compile Include="Buffer\BufferValidator.cs" />
     <Compile Include="Buffer\GrowingByteBufferManager.cs" />
+    <Compile Include="Buffer\ISegmentBufferManager.cs" />
     <Compile Include="Buffer\IBufferManager.cs" />
-    <Compile Include="Buffer\ImpressiveBufferManager.cs" />
+    <Compile Include="Buffer\SegmentBufferManager.cs" />
     <Compile Include="Buffer\UnableToAllocateBufferException.cs" />
     <Compile Include="Buffer\UnableToCreateMemoryException .cs" />
     <Compile Include="GlobalSuppressions.cs" />

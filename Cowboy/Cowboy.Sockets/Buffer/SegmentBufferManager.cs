@@ -22,11 +22,11 @@ namespace Cowboy.Buffer
     /// require an update of all GC roots as would be the case with lots of smaller arrays
     /// that were in the normal heap.
     /// </remarks>
-    public class ImpressiveBufferManager
+    public class SegmentBufferManager : ISegmentBufferManager
     {
         private const int TrialsCount = 100;
 
-        private static ImpressiveBufferManager _defaultBufferManager;
+        private static SegmentBufferManager _defaultBufferManager;
 
         private readonly int _segmentChunks;
         private readonly int _chunkSize;
@@ -38,18 +38,18 @@ namespace Cowboy.Buffer
         private readonly List<byte[]> _segments;
         private readonly object _creatingNewSegmentLock = new object();
 
-        public static ImpressiveBufferManager Default
+        public static SegmentBufferManager Default
         {
             get
             {
                 // default to 1024 1kb buffers if people don't want to manage it on their own;
                 if (_defaultBufferManager == null)
-                    _defaultBufferManager = new ImpressiveBufferManager(1024, 1024, 1);
+                    _defaultBufferManager = new SegmentBufferManager(1024, 1024, 1);
                 return _defaultBufferManager;
             }
         }
 
-        public static void SetDefaultBufferManager(ImpressiveBufferManager manager)
+        public static void SetDefaultBufferManager(SegmentBufferManager manager)
         {
             if (manager == null)
                 throw new ArgumentNullException("manager");
@@ -81,20 +81,20 @@ namespace Cowboy.Buffer
             get { return _segments.Count * _segmentSize; }
         }
 
-        public ImpressiveBufferManager(int segmentChunks, int chunkSize)
+        public SegmentBufferManager(int segmentChunks, int chunkSize)
             : this(segmentChunks, chunkSize, 1) { }
 
-        public ImpressiveBufferManager(int segmentChunks, int chunkSize, int initialSegments)
+        public SegmentBufferManager(int segmentChunks, int chunkSize, int initialSegments)
             : this(segmentChunks, chunkSize, initialSegments, true) { }
 
         /// <summary>
-        /// Constructs a new <see cref="ImpressiveBufferManager"></see> object
+        /// Constructs a new <see cref="SegmentBufferManager"></see> object
         /// </summary>
         /// <param name="segmentChunks">The number of chunks to create per segment</param>
         /// <param name="chunkSize">The size of a chunk in bytes</param>
         /// <param name="initialSegments">The initial number of segments to create</param>
         /// <param name="allowedToCreateMemory">If false when empty and checkout is called an exception will be thrown</param>
-        public ImpressiveBufferManager(int segmentChunks, int chunkSize, int initialSegments, bool allowedToCreateMemory)
+        public SegmentBufferManager(int segmentChunks, int chunkSize, int initialSegments, bool allowedToCreateMemory)
         {
             if (segmentChunks <= 0)
                 throw new ArgumentException("segmentChunks");
