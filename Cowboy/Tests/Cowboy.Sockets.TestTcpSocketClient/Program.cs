@@ -69,6 +69,11 @@ namespace Cowboy.Sockets.TestTcpSocketClient
                         text = new string('x', 1024 * 1024 * 100);
                         _client.Send(Encoding.UTF8.GetBytes(text));
                     }
+                    else if (text == "big1000")
+                    {
+                        text = new string('x', 1024 * 1024 * 1000);
+                        _client.Send(Encoding.UTF8.GetBytes(text));
+                    }
                     else
                     {
                         _client.Send(Encoding.UTF8.GetBytes(text));

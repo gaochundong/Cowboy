@@ -49,9 +49,27 @@ namespace Cowboy.Sockets.TestTcpSocketSaeaClient
                                     Console.WriteLine("Client [{0}] send text -> [{1}].", _client.LocalEndPoint, text);
                                 }
                             }
-                            else if (text == "big")
+                            else if (text == "big1")
+                            {
+                                text = new string('x', 1024 * 1024 * 1);
+                                await _client.SendAsync(Encoding.UTF8.GetBytes(text));
+                                Console.WriteLine("Client [{0}] send text -> [{1}].", _client.LocalEndPoint, text);
+                            }
+                            else if (text == "big10")
+                            {
+                                text = new string('x', 1024 * 1024 * 10);
+                                await _client.SendAsync(Encoding.UTF8.GetBytes(text));
+                                Console.WriteLine("Client [{0}] send text -> [{1}].", _client.LocalEndPoint, text);
+                            }
+                            else if (text == "big100")
                             {
                                 text = new string('x', 1024 * 1024 * 100);
+                                await _client.SendAsync(Encoding.UTF8.GetBytes(text));
+                                Console.WriteLine("Client [{0}] send text -> [{1}].", _client.LocalEndPoint, text);
+                            }
+                            else if (text == "big1000")
+                            {
+                                text = new string('x', 1024 * 1024 * 1000);
                                 await _client.SendAsync(Encoding.UTF8.GetBytes(text));
                                 Console.WriteLine("Client [{0}] send text -> [{1}].", _client.LocalEndPoint, text);
                             }
