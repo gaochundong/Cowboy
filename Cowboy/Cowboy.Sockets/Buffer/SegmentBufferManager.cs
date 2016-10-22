@@ -152,12 +152,12 @@ namespace Cowboy.Buffer
         public IEnumerable<ArraySegment<byte>> BorrowBuffers(int count)
         {
             var result = new ArraySegment<byte>[count];
-            var provided = 0;
+            var trial = 0;
             var totalReceived = 0;
 
             try
             {
-                while (provided < TrialsCount)
+                while (trial < TrialsCount)
                 {
                     ArraySegment<byte> piece;
                     while (totalReceived < count)
@@ -170,7 +170,7 @@ namespace Cowboy.Buffer
                     if (totalReceived == count)
                         return result;
                     CreateNewSegment(false);
-                    provided++;
+                    trial++;
                 }
                 throw new UnableToAllocateBufferException();
             }
@@ -184,8 +184,10 @@ namespace Cowboy.Buffer
 
         public void ReturnBuffer(ArraySegment<byte> buffer)
         {
-            CheckBuffer(buffer);
-            _buffers.Push(buffer);
+            if (ValidateBuffer(buffer))
+            {
+                _buffers.Push(buffer);
+            }
         }
 
         public void ReturnBuffers(IEnumerable<ArraySegment<byte>> buffers)
@@ -195,8 +197,10 @@ namespace Cowboy.Buffer
 
             foreach (var buf in buffers)
             {
-                CheckBuffer(buf);
-                _buffers.Push(buf);
+                if (ValidateBuffer(buf))
+                {
+                    _buffers.Push(buf);
+                }
             }
         }
 
@@ -207,17 +211,22 @@ namespace Cowboy.Buffer
 
             foreach (var buf in buffers)
             {
-                CheckBuffer(buf);
-                _buffers.Push(buf);
+                if (ValidateBuffer(buf))
+                {
+                    _buffers.Push(buf);
+                }
             }
         }
 
-        private void CheckBuffer(ArraySegment<byte> buffer)
+        private bool ValidateBuffer(ArraySegment<byte> buffer)
         {
             if (buffer.Array == null || buffer.Count == 0 || buffer.Array.Length < buffer.Offset + buffer.Count)
-                throw new Exception("Attempt to check in invalid buffer");
+                return false;
+
             if (buffer.Count != _chunkSize)
-                throw new ArgumentException("Buffer was not of the same chunk size as the buffer manager", "buffer");
+                return false;
+
+            return true;
         }
     }
 }
