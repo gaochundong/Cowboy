@@ -291,6 +291,10 @@ namespace Cowboy.Sockets
 
             try
             {
+                // when callback to here the stream may have been closed
+                if (_stream == null)
+                    return;
+
                 int numberOfReadBytes = 0;
                 try
                 {

@@ -67,6 +67,30 @@ namespace Cowboy.Sockets.TestTcpMassiveConnection
                             }
                         }
                     }
+                    else if (text.StartsWith("reconnect"))
+                    {
+                        var splitter = text.Split(' ');
+                        if (splitter.Length > 1)
+                        {
+                            string input = splitter[1];
+                            int count = 0;
+                            if (int.TryParse(input, out count))
+                            {
+                                int round = count;
+
+                                foreach (var client in clients)
+                                {
+                                    ReconnectTcpSocketClient(client);
+                                    round--;
+                                    if (round <= 0)
+                                        break;
+                                }
+
+                                Console.WriteLine("Reconnected {0} TCP connections to the server, now {1} in total.",
+                                    count - round, clients.Count);
+                            }
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -78,18 +102,6 @@ namespace Cowboy.Sockets.TestTcpMassiveConnection
         private static TcpSocketClient OpenTcpSocketClient()
         {
             var config = new TcpSocketClientConfiguration();
-            //config.UseSsl = true;
-            //config.SslTargetHost = "Cowboy";
-            //config.SslClientCertificates.Add(new System.Security.Cryptography.X509Certificates.X509Certificate2(@"D:\\Cowboy.cer"));
-            //config.SslPolicyErrorsBypassed = false;
-            //config.SendTimeout = TimeSpan.FromSeconds(2);
-
-            //config.FrameBuilder = new FixedLengthFrameBuilder(20000);
-            //config.FrameBuilder = new RawBufferFrameBuilder();
-            //config.FrameBuilder = new LineBasedFrameBuilder();
-            //config.FrameBuilder = new LengthPrefixedFrameBuilder();
-            //config.FrameBuilder = new LengthFieldBasedFrameBuilder();
-
             IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 65001);
 
             var client = new TcpSocketClient(remoteEP, config);
@@ -99,6 +111,12 @@ namespace Cowboy.Sockets.TestTcpMassiveConnection
             client.Connect();
 
             return client;
+        }
+
+        private static void ReconnectTcpSocketClient(TcpSocketClient client)
+        {
+            client.Close();
+            client.Connect();
         }
 
         private static void CloseTcpSocketClient(TcpSocketClient client)
