@@ -63,7 +63,8 @@ namespace Cowboy.Sockets.Experimental
             _sessionKey = Guid.NewGuid().ToString();
             this.StartTime = DateTime.UtcNow;
 
-            _receiveBuffer = _bufferManager.BorrowBuffer();
+            if (_receiveBuffer == null)
+                _receiveBuffer = _bufferManager.BorrowBuffer();
             _receiveBufferOffset = 0;
 
             _stream = new RioStream(_socket);
@@ -121,7 +122,8 @@ namespace Cowboy.Sockets.Experimental
 
             try
             {
-                _receiveBuffer = _bufferManager.BorrowBuffer();
+                if (_receiveBuffer == null)
+                    _receiveBuffer = _bufferManager.BorrowBuffer();
                 _receiveBufferOffset = 0;
 
                 if (Interlocked.CompareExchange(ref _state, _connected, _connecting) != _connecting)

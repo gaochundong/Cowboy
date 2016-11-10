@@ -89,7 +89,8 @@ namespace Cowboy.Sockets
 
                     _tcpClient = _localEndPoint != null ? new TcpClient(_localEndPoint) : new TcpClient(_remoteEndPoint.Address.AddressFamily);
 
-                    _receiveBuffer = _configuration.BufferManager.BorrowBuffer();
+                    if (_receiveBuffer == null)
+                        _receiveBuffer = _configuration.BufferManager.BorrowBuffer();
                     _receiveBufferOffset = 0;
 
                     var ar = _tcpClient.BeginConnect(_remoteEndPoint.Address, _remoteEndPoint.Port, null, _tcpClient);

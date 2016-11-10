@@ -61,7 +61,8 @@ namespace Cowboy.Sockets
             _dispatcher = dispatcher;
             _server = server;
 
-            _receiveBuffer = _bufferManager.BorrowBuffer();
+            if (_receiveBuffer == null)
+                _receiveBuffer = _bufferManager.BorrowBuffer();
             _receiveBufferOffset = 0;
         }
 

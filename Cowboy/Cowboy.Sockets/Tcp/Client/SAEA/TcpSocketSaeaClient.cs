@@ -217,7 +217,8 @@ namespace Cowboy.Sockets
 
                 ConfigureSocket();
 
-                _receiveBuffer = _configuration.BufferManager.BorrowBuffer();
+                if (_receiveBuffer == null)
+                    _receiveBuffer = _configuration.BufferManager.BorrowBuffer();
                 _receiveBufferOffset = 0;
 
                 if (Interlocked.CompareExchange(ref _state, _connected, _connecting) != _connecting)

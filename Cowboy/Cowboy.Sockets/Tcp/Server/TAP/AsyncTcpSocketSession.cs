@@ -153,7 +153,8 @@ namespace Cowboy.Sockets
                 }
                 _stream = negotiator.Result;
 
-                _receiveBuffer = _bufferManager.BorrowBuffer();
+                if (_receiveBuffer == null)
+                    _receiveBuffer = _bufferManager.BorrowBuffer();
                 _receiveBufferOffset = 0;
 
                 if (Interlocked.CompareExchange(ref _state, _connected, _connecting) != _connecting)

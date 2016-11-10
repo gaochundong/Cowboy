@@ -96,7 +96,8 @@ namespace Cowboy.Sockets
 
                         _stream = NegotiateStream(_tcpClient.GetStream());
 
-                        _receiveBuffer = _bufferManager.BorrowBuffer();
+                        if (_receiveBuffer == null)
+                            _receiveBuffer = _bufferManager.BorrowBuffer();
                         _receiveBufferOffset = 0;
 
                         bool isErrorOccurredInUserSide = false;
