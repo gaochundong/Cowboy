@@ -23,7 +23,7 @@ namespace Cowboy.Sockets
         private readonly AsyncTcpSocketServer _server;
         private readonly string _sessionKey;
         private Stream _stream;
-        private ArraySegment<byte> _receiveBuffer;
+        private ArraySegment<byte> _receiveBuffer = default(ArraySegment<byte>);
         private int _receiveBufferOffset = 0;
         private IPEndPoint _remoteEndPoint;
         private IPEndPoint _localEndPoint;
@@ -153,7 +153,7 @@ namespace Cowboy.Sockets
                 }
                 _stream = negotiator.Result;
 
-                if (_receiveBuffer == null)
+                if (_receiveBuffer == default(ArraySegment<byte>))
                     _receiveBuffer = _bufferManager.BorrowBuffer();
                 _receiveBufferOffset = 0;
 
@@ -360,8 +360,9 @@ namespace Cowboy.Sockets
             }
             catch (Exception) { }
 
-            if (_receiveBuffer != null)
+            if (_receiveBuffer != default(ArraySegment<byte>))
                 _bufferManager.ReturnBuffer(_receiveBuffer);
+            _receiveBuffer = default(ArraySegment<byte>);
             _receiveBufferOffset = 0;
 
             _log.DebugFormat("Session closed for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",

@@ -21,7 +21,7 @@ namespace Cowboy.Sockets
         private readonly IPEndPoint _localEndPoint;
         private Socket _socket;
         private SaeaPool _saeaPool;
-        private ArraySegment<byte> _receiveBuffer;
+        private ArraySegment<byte> _receiveBuffer = default(ArraySegment<byte>);
         private int _receiveBufferOffset = 0;
 
         private int _state;
@@ -217,7 +217,7 @@ namespace Cowboy.Sockets
 
                 ConfigureSocket();
 
-                if (_receiveBuffer == null)
+                if (_receiveBuffer == default(ArraySegment<byte>))
                     _receiveBuffer = _configuration.BufferManager.BorrowBuffer();
                 _receiveBufferOffset = 0;
 
@@ -369,8 +369,9 @@ namespace Cowboy.Sockets
             }
             catch (Exception) { }
 
-            if (_receiveBuffer != null)
+            if (_receiveBuffer != default(ArraySegment<byte>))
                 _configuration.BufferManager.ReturnBuffer(_receiveBuffer);
+            _receiveBuffer = default(ArraySegment<byte>);
             _receiveBufferOffset = 0;
 
             if (shallNotifyUserSide)

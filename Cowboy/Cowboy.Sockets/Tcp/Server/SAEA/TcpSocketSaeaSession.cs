@@ -24,7 +24,7 @@ namespace Cowboy.Sockets
         private string _sessionKey;
         private IPEndPoint _remoteEndPoint;
         private IPEndPoint _localEndPoint;
-        private ArraySegment<byte> _receiveBuffer;
+        private ArraySegment<byte> _receiveBuffer = default(ArraySegment<byte>);
         private int _receiveBufferOffset = 0;
 
         private int _state;
@@ -61,7 +61,7 @@ namespace Cowboy.Sockets
             _dispatcher = dispatcher;
             _server = server;
 
-            if (_receiveBuffer == null)
+            if (_receiveBuffer == default(ArraySegment<byte>))
                 _receiveBuffer = _bufferManager.BorrowBuffer();
             _receiveBufferOffset = 0;
         }

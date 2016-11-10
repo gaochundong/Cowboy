@@ -23,7 +23,7 @@ namespace Cowboy.Sockets
         private readonly IPEndPoint _remoteEndPoint;
         private readonly IPEndPoint _localEndPoint;
         private Stream _stream;
-        private ArraySegment<byte> _receiveBuffer;
+        private ArraySegment<byte> _receiveBuffer = default(ArraySegment<byte>);
         private int _receiveBufferOffset = 0;
 
         #endregion
@@ -89,7 +89,7 @@ namespace Cowboy.Sockets
 
                     _tcpClient = _localEndPoint != null ? new TcpClient(_localEndPoint) : new TcpClient(_remoteEndPoint.Address.AddressFamily);
 
-                    if (_receiveBuffer == null)
+                    if (_receiveBuffer == default(ArraySegment<byte>))
                         _receiveBuffer = _configuration.BufferManager.BorrowBuffer();
                     _receiveBufferOffset = 0;
 
@@ -136,6 +136,7 @@ namespace Cowboy.Sockets
                     finally
                     {
                         _configuration.BufferManager.ReturnBuffer(_receiveBuffer);
+                        _receiveBuffer = default(ArraySegment<byte>);
                         _receiveBufferOffset = 0;
                     }
 

@@ -23,7 +23,7 @@ namespace Cowboy.Sockets.Experimental
         private RioSocket _socket;
         private Stream _stream;
         private string _sessionKey;
-        private ArraySegment<byte> _receiveBuffer;
+        private ArraySegment<byte> _receiveBuffer = default(ArraySegment<byte>);
         private int _receiveBufferOffset = 0;
 
         private int _state;
@@ -63,7 +63,7 @@ namespace Cowboy.Sockets.Experimental
             _sessionKey = Guid.NewGuid().ToString();
             this.StartTime = DateTime.UtcNow;
 
-            if (_receiveBuffer == null)
+            if (_receiveBuffer == default(ArraySegment<byte>))
                 _receiveBuffer = _bufferManager.BorrowBuffer();
             _receiveBufferOffset = 0;
 
@@ -122,7 +122,7 @@ namespace Cowboy.Sockets.Experimental
 
             try
             {
-                if (_receiveBuffer == null)
+                if (_receiveBuffer == default(ArraySegment<byte>))
                     _receiveBuffer = _bufferManager.BorrowBuffer();
                 _receiveBufferOffset = 0;
 
@@ -247,8 +247,9 @@ namespace Cowboy.Sockets.Experimental
             }
             catch (Exception) { }
 
-            if (_receiveBuffer != null)
+            if (_receiveBuffer != default(ArraySegment<byte>))
                 _bufferManager.ReturnBuffer(_receiveBuffer);
+            _receiveBuffer = default(ArraySegment<byte>);
             _receiveBufferOffset = 0;
 
             _log.DebugFormat("Session closed on [{0}] in dispatcher [{1}] with session count [{2}].",
