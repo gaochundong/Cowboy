@@ -232,25 +232,7 @@ namespace Cowboy.Sockets.Experimental
                 return;
             }
 
-            try
-            {
-                if (_stream != null)
-                {
-                    _stream.Dispose();
-                    _stream = null;
-                }
-                if (_socket != null)
-                {
-                    _socket.Dispose();
-                    _socket = null;
-                }
-            }
-            catch (Exception) { }
-
-            if (_receiveBuffer != default(ArraySegment<byte>))
-                _bufferManager.ReturnBuffer(_receiveBuffer);
-            _receiveBuffer = default(ArraySegment<byte>);
-            _receiveBufferOffset = 0;
+            Clean();
 
             _log.DebugFormat("Session closed on [{0}] in dispatcher [{1}] with session count [{2}].",
                 DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"),
@@ -264,6 +246,40 @@ namespace Cowboy.Sockets.Experimental
             {
                 HandleUserSideError(ex);
             }
+        }
+
+        private void Clean()
+        {
+            try
+            {
+                try
+                {
+                    if (_stream != null)
+                    {
+                        _stream.Dispose();
+                    }
+                }
+                catch { }
+                try
+                {
+                    if (_socket != null)
+                    {
+                        _socket.Dispose();
+                    }
+                }
+                catch { }
+            }
+            catch { }
+            finally
+            {
+                _stream = null;
+                _socket = null;
+            }
+
+            if (_receiveBuffer != default(ArraySegment<byte>))
+                _configuration.BufferManager.ReturnBuffer(_receiveBuffer);
+            _receiveBuffer = default(ArraySegment<byte>);
+            _receiveBufferOffset = 0;
         }
 
         #endregion

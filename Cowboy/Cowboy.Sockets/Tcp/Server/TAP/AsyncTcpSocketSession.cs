@@ -345,25 +345,7 @@ namespace Cowboy.Sockets
                 return;
             }
 
-            try
-            {
-                if (_stream != null)
-                {
-                    _stream.Dispose();
-                    _stream = null;
-                }
-                if (_tcpClient != null && _tcpClient.Connected)
-                {
-                    _tcpClient.Dispose();
-                    _tcpClient = null;
-                }
-            }
-            catch (Exception) { }
-
-            if (_receiveBuffer != default(ArraySegment<byte>))
-                _bufferManager.ReturnBuffer(_receiveBuffer);
-            _receiveBuffer = default(ArraySegment<byte>);
-            _receiveBufferOffset = 0;
+            Clean();
 
             _log.DebugFormat("Session closed for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
                 this.RemoteEndPoint,
@@ -378,6 +360,40 @@ namespace Cowboy.Sockets
             {
                 HandleUserSideError(ex);
             }
+        }
+
+        private void Clean()
+        {
+            try
+            {
+                try
+                {
+                    if (_stream != null)
+                    {
+                        _stream.Dispose();
+                    }
+                }
+                catch { }
+                try
+                {
+                    if (_tcpClient != null)
+                    {
+                        _tcpClient.Dispose();
+                    }
+                }
+                catch { }
+            }
+            catch { }
+            finally
+            {
+                _stream = null;
+                _tcpClient = null;
+            }
+
+            if (_receiveBuffer != default(ArraySegment<byte>))
+                _configuration.BufferManager.ReturnBuffer(_receiveBuffer);
+            _receiveBuffer = default(ArraySegment<byte>);
+            _receiveBufferOffset = 0;
         }
 
         #endregion

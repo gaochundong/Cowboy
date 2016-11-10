@@ -191,6 +191,8 @@ namespace Cowboy.Sockets
 
             try
             {
+                Clean();
+
                 _tcpClient = _localEndPoint != null ? new TcpClient(_localEndPoint) : new TcpClient(_remoteEndPoint.Address.AddressFamily);
 
                 var awaiter = _tcpClient.ConnectAsync(_remoteEndPoint.Address, _remoteEndPoint.Port);
@@ -411,25 +413,7 @@ namespace Cowboy.Sockets
                 return;
             }
 
-            try
-            {
-                if (_stream != null)
-                {
-                    _stream.Dispose();
-                    _stream = null;
-                }
-                if (_tcpClient != null && _tcpClient.Connected)
-                {
-                    _tcpClient.Dispose();
-                    _tcpClient = null;
-                }
-            }
-            catch (Exception) { }
-
-            if (_receiveBuffer != default(ArraySegment<byte>))
-                _configuration.BufferManager.ReturnBuffer(_receiveBuffer);
-            _receiveBuffer = default(ArraySegment<byte>);
-            _receiveBufferOffset = 0;
+            Clean();
 
             if (shallNotifyUserSide)
             {
@@ -446,6 +430,40 @@ namespace Cowboy.Sockets
                     HandleUserSideError(ex);
                 }
             }
+        }
+
+        private void Clean()
+        {
+            try
+            {
+                try
+                {
+                    if (_stream != null)
+                    {
+                        _stream.Dispose();
+                    }
+                }
+                catch { }
+                try
+                {
+                    if (_tcpClient != null)
+                    {
+                        _tcpClient.Dispose();
+                    }
+                }
+                catch { }
+            }
+            catch { }
+            finally
+            {
+                _stream = null;
+                _tcpClient = null;
+            }
+
+            if (_receiveBuffer != default(ArraySegment<byte>))
+                _configuration.BufferManager.ReturnBuffer(_receiveBuffer);
+            _receiveBuffer = default(ArraySegment<byte>);
+            _receiveBufferOffset = 0;
         }
 
         #endregion

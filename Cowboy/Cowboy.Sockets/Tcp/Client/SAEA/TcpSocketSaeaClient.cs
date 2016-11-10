@@ -200,6 +200,8 @@ namespace Cowboy.Sockets
 
             try
             {
+                Clean();
+
                 _socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
                 if (_localEndPoint != null)
                 {
@@ -359,20 +361,7 @@ namespace Cowboy.Sockets
                 return;
             }
 
-            try
-            {
-                if (_socket != null && _socket.Connected)
-                {
-                    _socket.Dispose();
-                    _socket = null;
-                }
-            }
-            catch (Exception) { }
-
-            if (_receiveBuffer != default(ArraySegment<byte>))
-                _configuration.BufferManager.ReturnBuffer(_receiveBuffer);
-            _receiveBuffer = default(ArraySegment<byte>);
-            _receiveBufferOffset = 0;
+            Clean();
 
             if (shallNotifyUserSide)
             {
@@ -389,6 +378,27 @@ namespace Cowboy.Sockets
                     HandleUserSideError(ex);
                 }
             }
+        }
+
+        private void Clean()
+        {
+            try
+            {
+                if (_socket != null)
+                {
+                    _socket.Dispose();
+                }
+            }
+            catch { }
+            finally
+            {
+                _socket = null;
+            }
+
+            if (_receiveBuffer != default(ArraySegment<byte>))
+                _configuration.BufferManager.ReturnBuffer(_receiveBuffer);
+            _receiveBuffer = default(ArraySegment<byte>);
+            _receiveBufferOffset = 0;
         }
 
         #endregion

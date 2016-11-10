@@ -137,29 +137,7 @@ namespace Cowboy.Sockets
                 {
                     _closed = true;
 
-                    try
-                    {
-                        if (_stream != null)
-                        {
-                            _stream.Close();
-                            _stream = null;
-                        }
-                        if (_tcpClient != null && _tcpClient.Connected)
-                        {
-                            _tcpClient.Close();
-                            _tcpClient = null;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
-                    }
-                    finally
-                    {
-                        _bufferManager.ReturnBuffer(_receiveBuffer);
-                        _receiveBuffer = default(ArraySegment<byte>);
-                        _receiveBufferOffset = 0;
-                    }
+                    Clean();
 
                     try
                     {
@@ -171,6 +149,40 @@ namespace Cowboy.Sockets
                     }
                 }
             }
+        }
+
+        private void Clean()
+        {
+            try
+            {
+                try
+                {
+                    if (_stream != null)
+                    {
+                        _stream.Dispose();
+                    }
+                }
+                catch { }
+                try
+                {
+                    if (_tcpClient != null)
+                    {
+                        _tcpClient.Dispose();
+                    }
+                }
+                catch { }
+            }
+            catch { }
+            finally
+            {
+                _stream = null;
+                _tcpClient = null;
+            }
+
+            if (_receiveBuffer != default(ArraySegment<byte>))
+                _configuration.BufferManager.ReturnBuffer(_receiveBuffer);
+            _receiveBuffer = default(ArraySegment<byte>);
+            _receiveBufferOffset = 0;
         }
 
         private void ConfigureClient()

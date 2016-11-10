@@ -85,6 +85,7 @@ namespace Cowboy.Sockets
             {
                 if (!Connected)
                 {
+                    Clean();
                     _closed = false;
 
                     _tcpClient = _localEndPoint != null ? new TcpClient(_localEndPoint) : new TcpClient(_remoteEndPoint.Address.AddressFamily);
@@ -120,25 +121,7 @@ namespace Cowboy.Sockets
                 {
                     _closed = true;
 
-                    try
-                    {
-                        if (_stream != null)
-                        {
-                            _stream.Dispose();
-                            _stream = null;
-                        }
-                        if (_tcpClient != null && _tcpClient.Connected)
-                        {
-                            _tcpClient.Dispose();
-                            _tcpClient = null;
-                        }
-                    }
-                    finally
-                    {
-                        _configuration.BufferManager.ReturnBuffer(_receiveBuffer);
-                        _receiveBuffer = default(ArraySegment<byte>);
-                        _receiveBufferOffset = 0;
-                    }
+                    Clean();
 
                     if (shallNotifyUserSide)
                     {
@@ -153,6 +136,40 @@ namespace Cowboy.Sockets
                     }
                 }
             }
+        }
+
+        private void Clean()
+        {
+            try
+            {
+                try
+                {
+                    if (_stream != null)
+                    {
+                        _stream.Dispose();
+                    }
+                }
+                catch { }
+                try
+                {
+                    if (_tcpClient != null)
+                    {
+                        _tcpClient.Dispose();
+                    }
+                }
+                catch { }
+            }
+            catch { }
+            finally
+            {
+                _stream = null;
+                _tcpClient = null;
+            }
+
+            if (_receiveBuffer != default(ArraySegment<byte>))
+                _configuration.BufferManager.ReturnBuffer(_receiveBuffer);
+            _receiveBuffer = default(ArraySegment<byte>);
+            _receiveBufferOffset = 0;
         }
 
         #endregion
