@@ -347,7 +347,7 @@ namespace Cowboy.Sockets
 
         private void HandleDataReceived(IAsyncResult ar)
         {
-            if (!Connected)
+            if (this.State != TcpSocketConnectionState.Connected)
                 return;
 
             try
@@ -507,7 +507,7 @@ namespace Cowboy.Sockets
         {
             BufferValidator.ValidateBuffer(data, offset, count, "data");
 
-            if (!Connected)
+            if (this.State != TcpSocketConnectionState.Connected)
             {
                 throw new InvalidProgramException("This client has not connected to server.");
             }
@@ -547,7 +547,7 @@ namespace Cowboy.Sockets
         {
             BufferValidator.ValidateBuffer(data, offset, count, "data");
 
-            if (!Connected)
+            if (this.State != TcpSocketConnectionState.Connected)
             {
                 throw new InvalidProgramException("This client has not connected to server.");
             }
@@ -600,7 +600,7 @@ namespace Cowboy.Sockets
         {
             BufferValidator.ValidateBuffer(data, offset, count, "data");
 
-            if (!Connected)
+            if (this.State != TcpSocketConnectionState.Connected)
             {
                 throw new InvalidProgramException("This client has not connected to server.");
             }

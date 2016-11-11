@@ -322,7 +322,7 @@ namespace Cowboy.Sockets
 
         private void HandleDataReceived(IAsyncResult ar)
         {
-            if (!Connected)
+            if (State != TcpSocketConnectionState.Connected)
                 return;
 
             try
@@ -484,7 +484,7 @@ namespace Cowboy.Sockets
         {
             BufferValidator.ValidateBuffer(data, offset, count, "data");
 
-            if (!Connected)
+            if (State != TcpSocketConnectionState.Connected)
             {
                 throw new InvalidProgramException("This session has been closed.");
             }
@@ -524,7 +524,7 @@ namespace Cowboy.Sockets
         {
             BufferValidator.ValidateBuffer(data, offset, count, "data");
 
-            if (!Connected)
+            if (State != TcpSocketConnectionState.Connected)
             {
                 throw new InvalidProgramException("This session has been closed.");
             }
@@ -577,7 +577,7 @@ namespace Cowboy.Sockets
         {
             BufferValidator.ValidateBuffer(data, offset, count, "data");
 
-            if (!Connected)
+            if (State != TcpSocketConnectionState.Connected)
             {
                 throw new InvalidProgramException("This session has been closed.");
             }
