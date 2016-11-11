@@ -18,6 +18,8 @@ namespace Cowboy.Sockets
             SendTimeout = TimeSpan.Zero;
             NoDelay = true;
             LingerState = new LingerOption(false, 0); // The socket will linger for x seconds after Socket.Close is called.
+            KeepAlive = true;
+            KeepAliveInterval = TimeSpan.FromSeconds(5);
 
             PendingConnectionBacklog = 200;
             AllowNatTraversal = true;
@@ -41,6 +43,8 @@ namespace Cowboy.Sockets
         public TimeSpan SendTimeout { get; set; }
         public bool NoDelay { get; set; }
         public LingerOption LingerState { get; set; }
+        public bool KeepAlive { get; set; }
+        public TimeSpan KeepAliveInterval { get; set; }
 
         public int PendingConnectionBacklog { get; set; }
         public bool AllowNatTraversal { get; set; }

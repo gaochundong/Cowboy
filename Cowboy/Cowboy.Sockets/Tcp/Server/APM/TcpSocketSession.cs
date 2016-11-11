@@ -59,7 +59,7 @@ namespace Cowboy.Sockets
             _sessionKey = Guid.NewGuid().ToString();
             this.StartTime = DateTime.UtcNow;
 
-            ConfigureClient();
+            SetSocketOptions();
 
             _remoteEndPoint = this.RemoteEndPoint;
             _localEndPoint = this.LocalEndPoint;
@@ -217,7 +217,7 @@ namespace Cowboy.Sockets
             _receiveBufferOffset = 0;
         }
 
-        private void ConfigureClient()
+        private void SetSocketOptions()
         {
             _tcpClient.ReceiveBufferSize = _configuration.ReceiveBufferSize;
             _tcpClient.SendBufferSize = _configuration.SendBufferSize;
@@ -225,6 +225,14 @@ namespace Cowboy.Sockets
             _tcpClient.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
             _tcpClient.NoDelay = _configuration.NoDelay;
             _tcpClient.LingerState = _configuration.LingerState;
+
+            if (_configuration.KeepAlive)
+            {
+                _tcpClient.Client.SetSocketOption(
+                    SocketOptionLevel.Socket,
+                    SocketOptionName.KeepAlive,
+                    (int)_configuration.KeepAliveInterval.TotalMilliseconds);
+            }
         }
 
         private Stream NegotiateStream(Stream stream)

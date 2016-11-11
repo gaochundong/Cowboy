@@ -209,7 +209,7 @@ namespace Cowboy.Sockets
         {
             try
             {
-                ConfigureClient();
+                SetSocketOptions();
 
                 _stream = NegotiateStream(_tcpClient.GetStream());
 
@@ -240,7 +240,7 @@ namespace Cowboy.Sockets
             }
         }
 
-        private void ConfigureClient()
+        private void SetSocketOptions()
         {
             _tcpClient.ReceiveBufferSize = _configuration.ReceiveBufferSize;
             _tcpClient.SendBufferSize = _configuration.SendBufferSize;
@@ -248,6 +248,14 @@ namespace Cowboy.Sockets
             _tcpClient.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
             _tcpClient.NoDelay = _configuration.NoDelay;
             _tcpClient.LingerState = _configuration.LingerState;
+
+            if (_configuration.KeepAlive)
+            {
+                _tcpClient.Client.SetSocketOption(
+                    SocketOptionLevel.Socket,
+                    SocketOptionName.KeepAlive,
+                    (int)_configuration.KeepAliveInterval.TotalMilliseconds);
+            }
         }
 
         private Stream NegotiateStream(Stream stream)

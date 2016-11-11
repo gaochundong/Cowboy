@@ -215,7 +215,7 @@ namespace Cowboy.Sockets
                     throw new SocketException((int)socketError);
                 }
 
-                ConfigureSocket();
+                SetSocketOptions();
 
                 if (_receiveBuffer == default(ArraySegment<byte>))
                     _receiveBuffer = _configuration.BufferManager.BorrowBuffer();
@@ -333,7 +333,7 @@ namespace Cowboy.Sockets
             }
         }
 
-        private void ConfigureSocket()
+        private void SetSocketOptions()
         {
             _socket.ReceiveBufferSize = _configuration.ReceiveBufferSize;
             _socket.SendBufferSize = _configuration.SendBufferSize;
@@ -341,6 +341,14 @@ namespace Cowboy.Sockets
             _socket.SendTimeout = (int)_configuration.SendTimeout.TotalMilliseconds;
             _socket.NoDelay = _configuration.NoDelay;
             _socket.LingerState = _configuration.LingerState;
+
+            if (_configuration.KeepAlive)
+            {
+                _socket.SetSocketOption(
+                    SocketOptionLevel.Socket,
+                    SocketOptionName.KeepAlive,
+                    (int)_configuration.KeepAliveInterval.TotalMilliseconds);
+            }
         }
 
         #endregion
