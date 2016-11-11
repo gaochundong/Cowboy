@@ -116,11 +116,11 @@ namespace Cowboy.Sockets.Experimental
             int origin = Interlocked.CompareExchange(ref _state, _connecting, _none);
             if (origin == _disposed)
             {
-                throw new ObjectDisposedException(GetType().FullName);
+                throw new ObjectDisposedException("This tcp socket session has been disposed when connecting.");
             }
             else if (origin != _none)
             {
-                throw new InvalidOperationException("This tcp socket session has already started.");
+                throw new InvalidOperationException("This tcp socket session is in invalid state when connecting.");
             }
 
             try
@@ -131,7 +131,8 @@ namespace Cowboy.Sockets.Experimental
 
                 if (Interlocked.CompareExchange(ref _state, _connected, _connecting) != _connecting)
                 {
-                    throw new ObjectDisposedException(GetType().FullName);
+                    await Close();
+                    throw new ObjectDisposedException("This tcp socket session has been disposed after connected.");
                 }
 
                 _log.DebugFormat("Session started on [{0}] in dispatcher [{1}] with session count [{2}].",

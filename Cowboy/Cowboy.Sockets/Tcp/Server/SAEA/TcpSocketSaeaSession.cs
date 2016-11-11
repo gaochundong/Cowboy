@@ -161,18 +161,19 @@ namespace Cowboy.Sockets
             int origin = Interlocked.CompareExchange(ref _state, _connecting, _none);
             if (origin == _disposed)
             {
-                throw new ObjectDisposedException(GetType().FullName);
+                throw new ObjectDisposedException("This tcp socket session has been disposed when connecting.");
             }
             else if (origin != _none)
             {
-                throw new InvalidOperationException("This tcp socket session has already started.");
+                throw new InvalidOperationException("This tcp socket session is in invalid state when connecting.");
             }
 
             try
             {
                 if (Interlocked.CompareExchange(ref _state, _connected, _connecting) != _connecting)
                 {
-                    throw new ObjectDisposedException(GetType().FullName);
+                    await Close();
+                    throw new ObjectDisposedException("This tcp socket session has been disposed after connected.");
                 }
 
                 _log.DebugFormat("Session started for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
