@@ -192,7 +192,7 @@ namespace Cowboy.Sockets
             int origin = Interlocked.Exchange(ref _state, _connecting);
             if (!(origin == _none || origin == _closed))
             {
-                Close(false);
+                await Close(false);
                 throw new InvalidOperationException("This tcp socket client is in invalid state when connecting.");
             }
 
