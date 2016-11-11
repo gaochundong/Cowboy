@@ -141,14 +141,16 @@ namespace Cowboy.Sockets
 
         private void HandleTcpClientAccepted(IAsyncResult ar)
         {
-            if (!_isListening) return;
+            if (!_isListening)
+                return;
 
             try
             {
                 TcpListener listener = (TcpListener)ar.AsyncState;
 
                 TcpClient tcpClient = listener.EndAcceptTcpClient(ar);
-                if (!tcpClient.Connected) return;
+                if (!tcpClient.Connected)
+                    return;
 
                 var session = new TcpSocketSession(tcpClient, _configuration, _configuration.BufferManager, this);
                 bool isSessionStarted = false;
