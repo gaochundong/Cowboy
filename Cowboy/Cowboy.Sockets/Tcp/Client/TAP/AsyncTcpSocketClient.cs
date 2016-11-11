@@ -130,22 +130,9 @@ namespace Cowboy.Sockets
 
         public TimeSpan ConnectTimeout { get { return _configuration.ConnectTimeout; } }
 
-        public IPEndPoint RemoteEndPoint
-        {
-            get
-            {
-                return (_tcpClient != null && _tcpClient.Client.Connected) ?
-                    (IPEndPoint)_tcpClient.Client.RemoteEndPoint : _remoteEndPoint;
-            }
-        }
-        public IPEndPoint LocalEndPoint
-        {
-            get
-            {
-                return (_tcpClient != null && _tcpClient.Client.Connected) ?
-                    (IPEndPoint)_tcpClient.Client.LocalEndPoint : null;
-            }
-        }
+        private bool Connected { get { return _tcpClient != null && _tcpClient.Client.Connected; } }
+        public IPEndPoint RemoteEndPoint { get { return Connected ? (IPEndPoint)_tcpClient.Client.RemoteEndPoint : _remoteEndPoint; } }
+        public IPEndPoint LocalEndPoint { get { return Connected ? (IPEndPoint)_tcpClient.Client.LocalEndPoint : _localEndPoint; } }
 
         public TcpSocketConnectionState State
         {
@@ -270,7 +257,10 @@ namespace Cowboy.Sockets
 
                 while (State == TcpSocketConnectionState.Connected)
                 {
-                    int receiveCount = await _stream.ReadAsync(_receiveBuffer.Array, _receiveBuffer.Offset + _receiveBufferOffset, _receiveBuffer.Count - _receiveBufferOffset);
+                    int receiveCount = await _stream.ReadAsync(
+                        _receiveBuffer.Array, 
+                        _receiveBuffer.Offset + _receiveBufferOffset, 
+                        _receiveBuffer.Count - _receiveBufferOffset);
                     if (receiveCount == 0)
                         break;
 
@@ -284,7 +274,10 @@ namespace Cowboy.Sockets
                         payloadOffset = 0;
                         payloadCount = 0;
 
-                        if (_configuration.FrameBuilder.Decoder.TryDecodeFrame(_receiveBuffer.Array, _receiveBuffer.Offset + consumedLength, _receiveBufferOffset - consumedLength,
+                        if (_configuration.FrameBuilder.Decoder.TryDecodeFrame(
+                            _receiveBuffer.Array, 
+                            _receiveBuffer.Offset + consumedLength, 
+                            _receiveBufferOffset - consumedLength,
                             out frameLength, out payload, out payloadOffset, out payloadCount))
                         {
                             try

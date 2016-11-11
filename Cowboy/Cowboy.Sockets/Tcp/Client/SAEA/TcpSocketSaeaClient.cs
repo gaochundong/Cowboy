@@ -153,8 +153,9 @@ namespace Cowboy.Sockets
 
         #region Properties
 
-        public IPEndPoint RemoteEndPoint { get { return (_socket != null && _socket.Connected) ? (IPEndPoint)_socket.RemoteEndPoint : _remoteEndPoint; } }
-        public IPEndPoint LocalEndPoint { get { return (_socket != null && _socket.Connected) ? (IPEndPoint)_socket.LocalEndPoint : null; } }
+        private bool Connected { get { return _socket != null && _socket.Connected; } }
+        public IPEndPoint RemoteEndPoint { get { return Connected ? (IPEndPoint)_socket.RemoteEndPoint : _remoteEndPoint; } }
+        public IPEndPoint LocalEndPoint { get { return Connected ? (IPEndPoint)_socket.LocalEndPoint : _localEndPoint; } }
 
         public TcpSocketConnectionState State
         {

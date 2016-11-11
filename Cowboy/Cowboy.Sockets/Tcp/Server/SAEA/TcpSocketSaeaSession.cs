@@ -72,9 +72,11 @@ namespace Cowboy.Sockets
 
         public string SessionKey { get { return _sessionKey; } }
         public DateTime StartTime { get; private set; }
-        public bool Connected { get { return _socket != null && _socket.Connected; } }
+
+        private bool Connected { get { return _socket != null && _socket.Connected; } }
         public IPEndPoint RemoteEndPoint { get { return Connected ? (IPEndPoint)_socket.RemoteEndPoint : _remoteEndPoint; } }
         public IPEndPoint LocalEndPoint { get { return Connected ? (IPEndPoint)_socket.LocalEndPoint : _localEndPoint; } }
+
         public Socket Socket { get { return _socket; } }
         public TcpSocketSaeaServer Server { get { return _server; } }
 
@@ -241,7 +243,10 @@ namespace Cowboy.Sockets
                         payloadOffset = 0;
                         payloadCount = 0;
 
-                        if (_configuration.FrameBuilder.Decoder.TryDecodeFrame(_receiveBuffer.Array, _receiveBuffer.Offset + consumedLength, _receiveBufferOffset - consumedLength,
+                        if (_configuration.FrameBuilder.Decoder.TryDecodeFrame(
+                            _receiveBuffer.Array, 
+                            _receiveBuffer.Offset + consumedLength, 
+                            _receiveBufferOffset - consumedLength,
                             out frameLength, out payload, out payloadOffset, out payloadCount))
                         {
                             try

@@ -76,6 +76,9 @@ namespace Cowboy.Sockets.Experimental
 
         public string SessionKey { get { return _sessionKey; } }
         public DateTime StartTime { get; private set; }
+
+        public RioSocket Socket { get { return _socket; } }
+        public Stream Stream { get { return _stream; } }
         public TcpSocketRioServer Server { get { return _server; } }
 
         public TcpSocketConnectionState State
@@ -189,7 +192,10 @@ namespace Cowboy.Sockets.Experimental
                         payloadOffset = 0;
                         payloadCount = 0;
 
-                        if (_configuration.FrameBuilder.Decoder.TryDecodeFrame(_receiveBuffer.Array, _receiveBuffer.Offset + consumedLength, _receiveBufferOffset - consumedLength,
+                        if (_configuration.FrameBuilder.Decoder.TryDecodeFrame(
+                            _receiveBuffer.Array, 
+                            _receiveBuffer.Offset + consumedLength, 
+                            _receiveBufferOffset - consumedLength,
                             out frameLength, out payload, out payloadOffset, out payloadCount))
                         {
                             try

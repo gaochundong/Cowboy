@@ -56,8 +56,8 @@ namespace Cowboy.Sockets
 
             ConfigureClient();
 
-            _remoteEndPoint = Active ? (IPEndPoint)_tcpClient.Client.RemoteEndPoint : null;
-            _localEndPoint = Active ? (IPEndPoint)_tcpClient.Client.LocalEndPoint : null;
+            _remoteEndPoint = this.RemoteEndPoint;
+            _localEndPoint = this.LocalEndPoint;
         }
 
         #endregion
@@ -66,13 +66,15 @@ namespace Cowboy.Sockets
 
         public string SessionKey { get { return _sessionKey; } }
         public DateTime StartTime { get; private set; }
-        public bool Active { get { return _tcpClient != null && _tcpClient.Connected; } }
-        public IPEndPoint RemoteEndPoint { get { return Active ? (IPEndPoint)_tcpClient.Client.RemoteEndPoint : _remoteEndPoint; } }
-        public IPEndPoint LocalEndPoint { get { return Active ? (IPEndPoint)_tcpClient.Client.LocalEndPoint : _localEndPoint; } }
-        public Socket Socket { get { return _tcpClient.Client; } }
+        public TimeSpan ConnectTimeout { get { return _configuration.ConnectTimeout; } }
+
+        private bool Connected { get { return _tcpClient != null && _tcpClient.Connected; } }
+        public IPEndPoint RemoteEndPoint { get { return Connected ? (IPEndPoint)_tcpClient.Client.RemoteEndPoint : _remoteEndPoint; } }
+        public IPEndPoint LocalEndPoint { get { return Connected ? (IPEndPoint)_tcpClient.Client.LocalEndPoint : _localEndPoint; } }
+
+        public Socket Socket { get { return Connected ? _tcpClient.Client : null; } }
         public Stream Stream { get { return _stream; } }
         public TcpSocketServer Server { get { return _server; } }
-        public TimeSpan ConnectTimeout { get { return _configuration.ConnectTimeout; } }
 
         public override string ToString()
         {
@@ -90,35 +92,34 @@ namespace Cowboy.Sockets
             {
                 try
                 {
-                    if (Active)
+                    if (!Connected)
+                        return;
+
+                    _stream = NegotiateStream(_tcpClient.GetStream());
+
+                    if (_receiveBuffer == default(ArraySegment<byte>))
+                        _receiveBuffer = _bufferManager.BorrowBuffer();
+                    _receiveBufferOffset = 0;
+
+                    bool isErrorOccurredInUserSide = false;
+                    try
+                    {
+                        _server.RaiseClientConnected(this);
+                    }
+                    catch (Exception ex)
+                    {
+                        isErrorOccurredInUserSide = true;
+                        HandleUserSideError(ex);
+                    }
+
+                    if (!isErrorOccurredInUserSide)
                     {
                         _closed = false;
-
-                        _stream = NegotiateStream(_tcpClient.GetStream());
-
-                        if (_receiveBuffer == default(ArraySegment<byte>))
-                            _receiveBuffer = _bufferManager.BorrowBuffer();
-                        _receiveBufferOffset = 0;
-
-                        bool isErrorOccurredInUserSide = false;
-                        try
-                        {
-                            _server.RaiseClientConnected(this);
-                        }
-                        catch (Exception ex)
-                        {
-                            isErrorOccurredInUserSide = true;
-                            HandleUserSideError(ex);
-                        }
-
-                        if (!isErrorOccurredInUserSide)
-                        {
-                            ContinueReadBuffer();
-                        }
-                        else
-                        {
-                            Close();
-                        }
+                        ContinueReadBuffer();
+                    }
+                    else
+                    {
+                        Close();
                     }
                 }
                 catch (Exception ex)
@@ -133,26 +134,26 @@ namespace Cowboy.Sockets
         {
             lock (_opsLock)
             {
-                if (!_closed)
+                if (_closed)
+                    return;
+
+                Clean();
+
+                try
                 {
-                    _closed = true;
-
-                    Clean();
-
-                    try
-                    {
-                        _server.RaiseClientDisconnected(this);
-                    }
-                    catch (Exception ex)
-                    {
-                        HandleUserSideError(ex);
-                    }
+                    _server.RaiseClientDisconnected(this);
+                }
+                catch (Exception ex)
+                {
+                    HandleUserSideError(ex);
                 }
             }
         }
 
         private void Clean()
         {
+            _closed = true;
+
             try
             {
                 try
@@ -275,7 +276,12 @@ namespace Cowboy.Sockets
         {
             try
             {
-                _stream.BeginRead(_receiveBuffer.Array, _receiveBuffer.Offset + _receiveBufferOffset, _receiveBuffer.Count - _receiveBufferOffset, HandleDataReceived, _stream);
+                _stream.BeginRead(
+                    _receiveBuffer.Array,
+                    _receiveBuffer.Offset + _receiveBufferOffset,
+                    _receiveBuffer.Count - _receiveBufferOffset,
+                    HandleDataReceived,
+                    _stream);
             }
             catch (Exception ex)
             {
@@ -286,7 +292,7 @@ namespace Cowboy.Sockets
 
         private void HandleDataReceived(IAsyncResult ar)
         {
-            if (!Active)
+            if (!Connected)
                 return;
 
             try
@@ -362,7 +368,10 @@ namespace Cowboy.Sockets
                 payloadOffset = 0;
                 payloadCount = 0;
 
-                if (_configuration.FrameBuilder.Decoder.TryDecodeFrame(_receiveBuffer.Array, _receiveBuffer.Offset + consumedLength, _receiveBufferOffset - consumedLength,
+                if (_configuration.FrameBuilder.Decoder.TryDecodeFrame(
+                    _receiveBuffer.Array,
+                    _receiveBuffer.Offset + consumedLength,
+                    _receiveBufferOffset - consumedLength,
                     out frameLength, out payload, out payloadOffset, out payloadCount))
                 {
                     try
@@ -445,7 +454,7 @@ namespace Cowboy.Sockets
         {
             BufferValidator.ValidateBuffer(data, offset, count, "data");
 
-            if (!Active)
+            if (!Connected)
             {
                 throw new InvalidProgramException("This session has been closed.");
             }
@@ -485,7 +494,7 @@ namespace Cowboy.Sockets
         {
             BufferValidator.ValidateBuffer(data, offset, count, "data");
 
-            if (!Active)
+            if (!Connected)
             {
                 throw new InvalidProgramException("This session has been closed.");
             }
@@ -538,7 +547,7 @@ namespace Cowboy.Sockets
         {
             BufferValidator.ValidateBuffer(data, offset, count, "data");
 
-            if (!Active)
+            if (!Connected)
             {
                 throw new InvalidProgramException("This session has been closed.");
             }

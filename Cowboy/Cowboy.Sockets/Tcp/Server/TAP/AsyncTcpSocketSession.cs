@@ -65,10 +65,8 @@ namespace Cowboy.Sockets
             _sessionKey = Guid.NewGuid().ToString();
             this.StartTime = DateTime.UtcNow;
 
-            _remoteEndPoint = (_tcpClient != null && _tcpClient.Client.Connected) ?
-                    (IPEndPoint)_tcpClient.Client.RemoteEndPoint : null;
-            _localEndPoint = (_tcpClient != null && _tcpClient.Client.Connected) ?
-                    (IPEndPoint)_tcpClient.Client.LocalEndPoint : null;
+            _remoteEndPoint = this.RemoteEndPoint;
+            _localEndPoint = this.LocalEndPoint;
         }
 
         #endregion
@@ -77,26 +75,15 @@ namespace Cowboy.Sockets
 
         public string SessionKey { get { return _sessionKey; } }
         public DateTime StartTime { get; private set; }
-        public IPEndPoint RemoteEndPoint
-        {
-            get
-            {
-                return (_tcpClient != null && _tcpClient.Client.Connected) ?
-                    (IPEndPoint)_tcpClient.Client.RemoteEndPoint : _remoteEndPoint;
-            }
-        }
-        public IPEndPoint LocalEndPoint
-        {
-            get
-            {
-                return (_tcpClient != null && _tcpClient.Client.Connected) ?
-                    (IPEndPoint)_tcpClient.Client.LocalEndPoint : _localEndPoint;
-            }
-        }
-        public Socket Socket { get { return _tcpClient.Client; } }
+        public TimeSpan ConnectTimeout { get { return _configuration.ConnectTimeout; } }
+
+        private bool Connected { get { return _tcpClient != null && _tcpClient.Client.Connected; } }
+        public IPEndPoint RemoteEndPoint { get { return Connected ? (IPEndPoint)_tcpClient.Client.RemoteEndPoint : _remoteEndPoint; } }
+        public IPEndPoint LocalEndPoint { get { return Connected ? (IPEndPoint)_tcpClient.Client.LocalEndPoint : _localEndPoint; } }
+
+        public Socket Socket { get { return Connected ? _tcpClient.Client : null; } }
         public Stream Stream { get { return _stream; } }
         public AsyncTcpSocketServer Server { get { return _server; } }
-        public TimeSpan ConnectTimeout { get { return _configuration.ConnectTimeout; } }
 
         public TcpSocketConnectionState State
         {
@@ -207,7 +194,10 @@ namespace Cowboy.Sockets
 
                 while (State == TcpSocketConnectionState.Connected)
                 {
-                    int receiveCount = await _stream.ReadAsync(_receiveBuffer.Array, _receiveBuffer.Offset + _receiveBufferOffset, _receiveBuffer.Count - _receiveBufferOffset);
+                    int receiveCount = await _stream.ReadAsync(
+                        _receiveBuffer.Array,
+                        _receiveBuffer.Offset + _receiveBufferOffset,
+                        _receiveBuffer.Count - _receiveBufferOffset);
                     if (receiveCount == 0)
                         break;
 
@@ -221,7 +211,10 @@ namespace Cowboy.Sockets
                         payloadOffset = 0;
                         payloadCount = 0;
 
-                        if (_configuration.FrameBuilder.Decoder.TryDecodeFrame(_receiveBuffer.Array, _receiveBuffer.Offset + consumedLength, _receiveBufferOffset - consumedLength,
+                        if (_configuration.FrameBuilder.Decoder.TryDecodeFrame(
+                            _receiveBuffer.Array,
+                            _receiveBuffer.Offset + consumedLength,
+                            _receiveBufferOffset - consumedLength,
                             out frameLength, out payload, out payloadOffset, out payloadCount))
                         {
                             try

@@ -4,7 +4,6 @@ using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
-using System.Threading;
 using Cowboy.Buffer;
 using Logrila.Logging;
 
@@ -65,6 +64,7 @@ namespace Cowboy.Sockets
         #region Properties
 
         public TimeSpan ConnectTimeout { get { return _configuration.ConnectTimeout; } }
+
         public bool Connected { get { return _tcpClient != null && _tcpClient.Client.Connected; } }
         public IPEndPoint RemoteEndPoint { get { return Connected ? (IPEndPoint)_tcpClient.Client.RemoteEndPoint : _remoteEndPoint; } }
         public IPEndPoint LocalEndPoint { get { return Connected ? (IPEndPoint)_tcpClient.Client.LocalEndPoint : _localEndPoint; } }
@@ -83,28 +83,31 @@ namespace Cowboy.Sockets
         {
             lock (_opsLock)
             {
-                if (!Connected)
+                if (Connected)
+                    return;
+
+                Clean();
+
+                _tcpClient = _localEndPoint != null ? 
+                    new TcpClient(_localEndPoint) : 
+                    new TcpClient(_remoteEndPoint.Address.AddressFamily);
+
+                if (_receiveBuffer == default(ArraySegment<byte>))
+                    _receiveBuffer = _configuration.BufferManager.BorrowBuffer();
+                _receiveBufferOffset = 0;
+
+                var ar = _tcpClient.BeginConnect(_remoteEndPoint.Address, _remoteEndPoint.Port, null, _tcpClient);
+                if (!ar.AsyncWaitHandle.WaitOne(ConnectTimeout))
                 {
-                    Clean();
-                    _closed = false;
-
-                    _tcpClient = _localEndPoint != null ? new TcpClient(_localEndPoint) : new TcpClient(_remoteEndPoint.Address.AddressFamily);
-
-                    if (_receiveBuffer == default(ArraySegment<byte>))
-                        _receiveBuffer = _configuration.BufferManager.BorrowBuffer();
-                    _receiveBufferOffset = 0;
-
-                    var ar = _tcpClient.BeginConnect(_remoteEndPoint.Address, _remoteEndPoint.Port, null, _tcpClient);
-                    if (!ar.AsyncWaitHandle.WaitOne(ConnectTimeout))
-                    {
-                        Close(false);
-                        throw new TimeoutException(string.Format(
-                            "Connect to [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
-                    }
-                    _tcpClient.EndConnect(ar);
-
-                    HandleTcpServerConnected();
+                    Close(false);
+                    throw new TimeoutException(string.Format(
+                        "Connect to [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
                 }
+                _tcpClient.EndConnect(ar);
+
+                _closed = false;
+
+                HandleTcpServerConnected();
             }
         }
 
@@ -117,22 +120,20 @@ namespace Cowboy.Sockets
         {
             lock (_opsLock)
             {
-                if (!_closed)
+                if (_closed)
+                    return;
+
+                Clean();
+
+                if (shallNotifyUserSide)
                 {
-                    _closed = true;
-
-                    Clean();
-
-                    if (shallNotifyUserSide)
+                    try
                     {
-                        try
-                        {
-                            RaiseServerDisconnected();
-                        }
-                        catch (Exception ex)
-                        {
-                            HandleUserSideError(ex);
-                        }
+                        RaiseServerDisconnected();
+                    }
+                    catch (Exception ex)
+                    {
+                        HandleUserSideError(ex);
                     }
                 }
             }
@@ -140,6 +141,8 @@ namespace Cowboy.Sockets
 
         private void Clean()
         {
+            _closed = true;
+
             try
             {
                 try
@@ -302,7 +305,12 @@ namespace Cowboy.Sockets
         {
             try
             {
-                _stream.BeginRead(_receiveBuffer.Array, _receiveBuffer.Offset + _receiveBufferOffset, _receiveBuffer.Count - _receiveBufferOffset, HandleDataReceived, _stream);
+                _stream.BeginRead(
+                    _receiveBuffer.Array, 
+                    _receiveBuffer.Offset + _receiveBufferOffset, 
+                    _receiveBuffer.Count - _receiveBufferOffset, 
+                    HandleDataReceived, 
+                    _stream);
             }
             catch (Exception ex)
             {
@@ -389,7 +397,10 @@ namespace Cowboy.Sockets
                 payloadOffset = 0;
                 payloadCount = 0;
 
-                if (_configuration.FrameBuilder.Decoder.TryDecodeFrame(_receiveBuffer.Array, _receiveBuffer.Offset + consumedLength, _receiveBufferOffset - consumedLength,
+                if (_configuration.FrameBuilder.Decoder.TryDecodeFrame(
+                    _receiveBuffer.Array, 
+                    _receiveBuffer.Offset + consumedLength, 
+                    _receiveBufferOffset - consumedLength,
                     out frameLength, out payload, out payloadOffset, out payloadCount))
                 {
                     try
