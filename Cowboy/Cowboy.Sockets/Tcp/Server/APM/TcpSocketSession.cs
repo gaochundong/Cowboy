@@ -233,6 +233,8 @@ namespace Cowboy.Sockets
                     SocketOptionName.KeepAlive,
                     (int)_configuration.KeepAliveInterval.TotalMilliseconds);
             }
+
+            _tcpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, _configuration.ReuseAddress);
         }
 
         private Stream NegotiateStream(Stream stream)

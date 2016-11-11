@@ -201,6 +201,8 @@ namespace Cowboy.Sockets
                 Clean();
 
                 _socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                SetSocketOptions();
+
                 if (_localEndPoint != null)
                 {
                     _socket.Bind(_localEndPoint);
@@ -214,8 +216,6 @@ namespace Cowboy.Sockets
                 {
                     throw new SocketException((int)socketError);
                 }
-
-                SetSocketOptions();
 
                 if (_receiveBuffer == default(ArraySegment<byte>))
                     _receiveBuffer = _configuration.BufferManager.BorrowBuffer();
@@ -349,6 +349,8 @@ namespace Cowboy.Sockets
                     SocketOptionName.KeepAlive,
                     (int)_configuration.KeepAliveInterval.TotalMilliseconds);
             }
+
+            _socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, _configuration.ReuseAddress);
         }
 
         #endregion

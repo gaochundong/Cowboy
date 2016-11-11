@@ -177,7 +177,10 @@ namespace Cowboy.Sockets
             {
                 Clean();
 
-                _tcpClient = _localEndPoint != null ? new TcpClient(_localEndPoint) : new TcpClient(_remoteEndPoint.Address.AddressFamily);
+                _tcpClient = _localEndPoint != null ? 
+                    new TcpClient(_localEndPoint) : 
+                    new TcpClient(_remoteEndPoint.Address.AddressFamily);
+                SetSocketOptions();
 
                 var awaiter = _tcpClient.ConnectAsync(_remoteEndPoint.Address, _remoteEndPoint.Port);
                 if (!awaiter.Wait(ConnectTimeout))
@@ -187,7 +190,6 @@ namespace Cowboy.Sockets
                         "Connect to [{0}] timeout [{1}].", _remoteEndPoint, ConnectTimeout));
                 }
 
-                SetSocketOptions();
                 var negotiator = NegotiateStream(_tcpClient.GetStream());
                 if (!negotiator.Wait(ConnectTimeout))
                 {
@@ -326,6 +328,8 @@ namespace Cowboy.Sockets
                     SocketOptionName.KeepAlive,
                     (int)_configuration.KeepAliveInterval.TotalMilliseconds);
             }
+
+            _tcpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, _configuration.ReuseAddress);
         }
 
         private async Task<Stream> NegotiateStream(Stream stream)

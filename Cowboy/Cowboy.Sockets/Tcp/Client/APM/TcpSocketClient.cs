@@ -117,6 +117,7 @@ namespace Cowboy.Sockets
             _tcpClient = _localEndPoint != null ?
                 new TcpClient(_localEndPoint) :
                 new TcpClient(_remoteEndPoint.Address.AddressFamily);
+            SetSocketOptions();
 
             if (_receiveBuffer == default(ArraySegment<byte>))
                 _receiveBuffer = _configuration.BufferManager.BorrowBuffer();
@@ -209,8 +210,6 @@ namespace Cowboy.Sockets
         {
             try
             {
-                SetSocketOptions();
-
                 _stream = NegotiateStream(_tcpClient.GetStream());
 
                 bool isErrorOccurredInUserSide = false;
@@ -256,6 +255,8 @@ namespace Cowboy.Sockets
                     SocketOptionName.KeepAlive,
                     (int)_configuration.KeepAliveInterval.TotalMilliseconds);
             }
+
+            _tcpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, _configuration.ReuseAddress);
         }
 
         private Stream NegotiateStream(Stream stream)

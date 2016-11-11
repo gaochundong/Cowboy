@@ -65,6 +65,8 @@ namespace Cowboy.Sockets
             _sessionKey = Guid.NewGuid().ToString();
             this.StartTime = DateTime.UtcNow;
 
+            SetSocketOptions();
+
             _remoteEndPoint = this.RemoteEndPoint;
             _localEndPoint = this.LocalEndPoint;
         }
@@ -129,8 +131,6 @@ namespace Cowboy.Sockets
 
             try
             {
-                SetSocketOptions();
-
                 var negotiator = NegotiateStream(_tcpClient.GetStream());
                 if (!negotiator.Wait(ConnectTimeout))
                 {
@@ -267,6 +267,8 @@ namespace Cowboy.Sockets
                     SocketOptionName.KeepAlive,
                     (int)_configuration.KeepAliveInterval.TotalMilliseconds);
             }
+
+            _tcpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, _configuration.ReuseAddress);
         }
 
         private async Task<Stream> NegotiateStream(Stream stream)

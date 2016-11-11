@@ -183,9 +183,9 @@ namespace Cowboy.Sockets
             try
             {
                 _listener = new Socket(this.ListenedEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                _listener.Bind(this.ListenedEndPoint);
+                SetSocketOptions();
 
-                ConfigureListener();
+                _listener.Bind(this.ListenedEndPoint);
 
                 _listener.Listen(_configuration.PendingConnectionBacklog);
 
@@ -226,14 +226,9 @@ namespace Cowboy.Sockets
             catch (Exception ex) when (!ShouldThrow(ex)) { }
         }
 
-        private void ConfigureListener()
+        private void SetSocketOptions()
         {
-            AllowNatTraversal(_configuration.AllowNatTraversal);
-        }
-
-        private void AllowNatTraversal(bool allowed)
-        {
-            if (allowed)
+            if (_configuration.AllowNatTraversal)
             {
                 _listener.SetIPProtectionLevel(IPProtectionLevel.Unrestricted);
             }
@@ -241,6 +236,7 @@ namespace Cowboy.Sockets
             {
                 _listener.SetIPProtectionLevel(IPProtectionLevel.EdgeRestricted);
             }
+            _listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, _configuration.ReuseAddress);
         }
 
         private bool ShouldThrow(Exception ex)

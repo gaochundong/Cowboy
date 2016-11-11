@@ -115,7 +115,7 @@ namespace Cowboy.Sockets
             try
             {
                 _listener = new TcpListener(this.ListenedEndPoint);
-                ConfigureListener();
+                SetSocketOptions();
 
                 _listener.Start(_configuration.PendingConnectionBacklog);
 
@@ -156,9 +156,10 @@ namespace Cowboy.Sockets
             catch (Exception ex) when (!ShouldThrow(ex)) { }
         }
 
-        private void ConfigureListener()
+        private void SetSocketOptions()
         {
             _listener.AllowNatTraversal(_configuration.AllowNatTraversal);
+            _listener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, _configuration.ReuseAddress);
         }
 
         public bool Pending()

@@ -9,14 +9,16 @@ namespace Cowboy.Sockets
         public TcpSocketSaeaServerConfiguration()
         {
             BufferManager = new SegmentBufferManager(1024, 8192, 1, true);
+
             ReceiveBufferSize = 8192;
             SendBufferSize = 8192;
             ReceiveTimeout = TimeSpan.Zero;
             SendTimeout = TimeSpan.Zero;
             NoDelay = true;
-            LingerState = new LingerOption(false, 0); // The socket will linger for x seconds after Socket.Close is called.
-            KeepAlive = true;
+            LingerState = new LingerOption(false, 0);
+            KeepAlive = false;
             KeepAliveInterval = TimeSpan.FromSeconds(5);
+            ReuseAddress = false;
 
             PendingConnectionBacklog = 200;
             AllowNatTraversal = true;
@@ -25,6 +27,7 @@ namespace Cowboy.Sockets
         }
 
         public ISegmentBufferManager BufferManager { get; set; }
+
         public int ReceiveBufferSize { get; set; }
         public int SendBufferSize { get; set; }
         public TimeSpan ReceiveTimeout { get; set; }
@@ -33,6 +36,7 @@ namespace Cowboy.Sockets
         public LingerOption LingerState { get; set; }
         public bool KeepAlive { get; set; }
         public TimeSpan KeepAliveInterval { get; set; }
+        public bool ReuseAddress { get; set; }
 
         public int PendingConnectionBacklog { get; set; }
         public bool AllowNatTraversal { get; set; }
