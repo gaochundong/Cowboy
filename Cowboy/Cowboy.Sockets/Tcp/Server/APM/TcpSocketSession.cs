@@ -198,7 +198,7 @@ namespace Cowboy.Sockets
                 {
                     if (_tcpClient != null)
                     {
-                        _tcpClient.Dispose();
+                        _tcpClient.Close();
                     }
                 }
                 catch { }
