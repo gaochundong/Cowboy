@@ -103,7 +103,7 @@ namespace Cowboy.Sockets.TestTcpSocketServer
             //config.FrameBuilder = new LengthPrefixedFrameBuilder();
             //config.FrameBuilder = new LengthFieldBasedFrameBuilder();
 
-            _server = new TcpSocketServer(65001, config);
+            _server = new TcpSocketServer(22222, config);
             _server.ClientConnected += server_ClientConnected;
             _server.ClientDisconnected += server_ClientDisconnected;
             _server.ClientDataReceived += server_ClientDataReceived;

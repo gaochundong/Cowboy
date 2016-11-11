@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 using Cowboy.Buffer;
 using Logrila.Logging;
 
@@ -14,7 +15,6 @@ namespace Cowboy.Sockets
         #region Fields
 
         private static readonly ILog _log = Logger.Get<TcpSocketSession>();
-        private readonly object _opsLock = new object();
         private TcpClient _tcpClient;
         private readonly TcpSocketServerConfiguration _configuration;
         private readonly ISegmentBufferManager _bufferManager;
@@ -25,7 +25,12 @@ namespace Cowboy.Sockets
         private int _receiveBufferOffset = 0;
         private IPEndPoint _remoteEndPoint;
         private IPEndPoint _localEndPoint;
-        private bool _closed = false;
+
+        private int _state;
+        private const int _none = 0;
+        private const int _connecting = 1;
+        private const int _connected = 2;
+        private const int _disposed = 5;
 
         #endregion
 
@@ -76,6 +81,26 @@ namespace Cowboy.Sockets
         public Stream Stream { get { return _stream; } }
         public TcpSocketServer Server { get { return _server; } }
 
+        public TcpSocketConnectionState State
+        {
+            get
+            {
+                switch (_state)
+                {
+                    case _none:
+                        return TcpSocketConnectionState.None;
+                    case _connecting:
+                        return TcpSocketConnectionState.Connecting;
+                    case _connected:
+                        return TcpSocketConnectionState.Connected;
+                    case _disposed:
+                        return TcpSocketConnectionState.Closed;
+                    default:
+                        return TcpSocketConnectionState.Closed;
+                }
+            }
+        }
+
         public override string ToString()
         {
             return string.Format("SessionKey[{0}], RemoteEndPoint[{1}], LocalEndPoint[{2}]",
@@ -88,72 +113,77 @@ namespace Cowboy.Sockets
 
         internal void Start()
         {
-            lock (_opsLock)
+            int origin = Interlocked.CompareExchange(ref _state, _connecting, _none);
+            if (origin == _disposed)
             {
+                throw new ObjectDisposedException(GetType().FullName);
+            }
+            else if (origin != _none)
+            {
+                throw new InvalidOperationException("This tcp socket session has already started.");
+            }
+
+            try
+            {
+                _stream = NegotiateStream(_tcpClient.GetStream());
+
+                if (_receiveBuffer == default(ArraySegment<byte>))
+                    _receiveBuffer = _bufferManager.BorrowBuffer();
+                _receiveBufferOffset = 0;
+
+                if (Interlocked.CompareExchange(ref _state, _connected, _connecting) != _connecting)
+                {
+                    throw new ObjectDisposedException(GetType().FullName);
+                }
+
+                bool isErrorOccurredInUserSide = false;
                 try
                 {
-                    if (!Connected)
-                        return;
-
-                    _stream = NegotiateStream(_tcpClient.GetStream());
-
-                    if (_receiveBuffer == default(ArraySegment<byte>))
-                        _receiveBuffer = _bufferManager.BorrowBuffer();
-                    _receiveBufferOffset = 0;
-
-                    bool isErrorOccurredInUserSide = false;
-                    try
-                    {
-                        _server.RaiseClientConnected(this);
-                    }
-                    catch (Exception ex)
-                    {
-                        isErrorOccurredInUserSide = true;
-                        HandleUserSideError(ex);
-                    }
-
-                    if (!isErrorOccurredInUserSide)
-                    {
-                        _closed = false;
-                        ContinueReadBuffer();
-                    }
-                    else
-                    {
-                        Close();
-                    }
+                    _server.RaiseClientConnected(this);
                 }
                 catch (Exception ex)
                 {
-                    _log.Error(ex.Message, ex);
+                    isErrorOccurredInUserSide = true;
+                    HandleUserSideError(ex);
+                }
+
+                if (!isErrorOccurredInUserSide)
+                {
+                    ContinueReadBuffer();
+                }
+                else
+                {
                     Close();
                 }
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex.Message, ex);
+                Close();
             }
         }
 
         public void Close()
         {
-            lock (_opsLock)
+            if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
             {
-                if (_closed)
-                    return;
+                return;
+            }
 
-                Clean();
+            Clean();
 
-                try
-                {
-                    _server.RaiseClientDisconnected(this);
-                }
-                catch (Exception ex)
-                {
-                    HandleUserSideError(ex);
-                }
+            try
+            {
+                _server.RaiseClientDisconnected(this);
+            }
+            catch (Exception ex)
+            {
+                HandleUserSideError(ex);
             }
         }
 
         private void Clean()
         {
-            _closed = true;
-
             try
             {
                 try

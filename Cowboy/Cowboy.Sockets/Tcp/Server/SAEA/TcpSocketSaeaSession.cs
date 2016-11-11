@@ -123,8 +123,8 @@ namespace Cowboy.Sockets
                 _sessionKey = Guid.NewGuid().ToString();
                 this.StartTime = DateTime.UtcNow;
 
-                _remoteEndPoint = Connected ? (IPEndPoint)_socket.RemoteEndPoint : null;
-                _localEndPoint = Connected ? (IPEndPoint)_socket.LocalEndPoint : null;
+                _remoteEndPoint = this.RemoteEndPoint;
+                _localEndPoint = this.LocalEndPoint;
             }
         }
 
@@ -244,8 +244,8 @@ namespace Cowboy.Sockets
                         payloadCount = 0;
 
                         if (_configuration.FrameBuilder.Decoder.TryDecodeFrame(
-                            _receiveBuffer.Array, 
-                            _receiveBuffer.Offset + consumedLength, 
+                            _receiveBuffer.Array,
+                            _receiveBuffer.Offset + consumedLength,
                             _receiveBufferOffset - consumedLength,
                             out frameLength, out payload, out payloadOffset, out payloadCount))
                         {

@@ -106,7 +106,7 @@ namespace Cowboy.Sockets.TestTcpSocketClient
             //config.FrameBuilder = new LengthPrefixedFrameBuilder();
             //config.FrameBuilder = new LengthFieldBasedFrameBuilder();
 
-            IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 65001);
+            IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 22222);
 
             _client = new TcpSocketClient(remoteEP, config);
             _client.ServerConnected += client_ServerConnected;

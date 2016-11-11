@@ -102,7 +102,7 @@ namespace Cowboy.Sockets.TestTcpMassiveConnection
         private static TcpSocketClient OpenTcpSocketClient()
         {
             var config = new TcpSocketClientConfiguration();
-            IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 65001);
+            IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 22222);
 
             var client = new TcpSocketClient(remoteEP, config);
             client.ServerConnected += client_ServerConnected;

@@ -28,7 +28,7 @@ namespace Cowboy.Sockets
         private const int _none = 0;
         private const int _connecting = 1;
         private const int _connected = 2;
-        private const int _disposed = 5;
+        private const int _closed = 5;
 
         #endregion
 
@@ -169,7 +169,7 @@ namespace Cowboy.Sockets
                         return TcpSocketConnectionState.Connecting;
                     case _connected:
                         return TcpSocketConnectionState.Connected;
-                    case _disposed:
+                    case _closed:
                         return TcpSocketConnectionState.Closed;
                     default:
                         return TcpSocketConnectionState.Closed;
@@ -189,14 +189,11 @@ namespace Cowboy.Sockets
 
         public async Task Connect()
         {
-            int origin = Interlocked.CompareExchange(ref _state, _connecting, _none);
-            if (origin == _disposed)
+            int origin = Interlocked.Exchange(ref _state, _connecting);
+            if (!(origin == _none || origin == _closed))
             {
-                throw new ObjectDisposedException(GetType().FullName);
-            }
-            else if (origin != _none)
-            {
-                throw new InvalidOperationException("This tcp socket client has already connected to server.");
+                Close(false);
+                throw new InvalidOperationException("This tcp socket client is in invalid state when connecting.");
             }
 
             try
@@ -226,7 +223,8 @@ namespace Cowboy.Sockets
 
                 if (Interlocked.CompareExchange(ref _state, _connected, _connecting) != _connecting)
                 {
-                    throw new ObjectDisposedException(GetType().FullName);
+                    await Close(false);
+                    throw new InvalidOperationException("This tcp socket client is in invalid state when connected.");
                 }
 
                 _log.DebugFormat("Connected to server [{0}] with dispatcher [{1}] on [{2}].",
@@ -257,7 +255,6 @@ namespace Cowboy.Sockets
                     await Close();
                 }
             }
-            catch (ObjectDisposedException) { }
             catch (Exception ex)
             {
                 _log.Error(ex.Message, ex);
@@ -357,7 +354,7 @@ namespace Cowboy.Sockets
 
         private async Task Close(bool shallNotifyUserSide)
         {
-            if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
+            if (Interlocked.Exchange(ref _state, _closed) == _closed)
             {
                 return;
             }
