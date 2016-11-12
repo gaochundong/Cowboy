@@ -378,7 +378,7 @@ namespace Cowboy.Sockets
                 catch (Exception)
                 {
                     // unable to read data from transport connection, 
-                    // the existing connection was forcibly closes by remote host
+                    // the existing connection was forcibly closed by remote host
                     numberOfReadBytes = 0;
                 }
 

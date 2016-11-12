@@ -49,7 +49,7 @@ namespace Cowboy.Sockets
             {
                 item.Dispose();
             }
-            catch (Exception) { }
+            catch { }
         }
 
         protected override SaeaAwaitable Create()
