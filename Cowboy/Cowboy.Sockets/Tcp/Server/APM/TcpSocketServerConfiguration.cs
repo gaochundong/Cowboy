@@ -10,8 +10,13 @@ namespace Cowboy.Sockets
     public sealed class TcpSocketServerConfiguration
     {
         public TcpSocketServerConfiguration()
+            : this(new SegmentBufferManager(1024, 8192, 1, true))
         {
-            BufferManager = new SegmentBufferManager(1024, 8192, 1, true);
+        }
+
+        public TcpSocketServerConfiguration(ISegmentBufferManager bufferManager)
+        {
+            BufferManager = bufferManager;
 
             ReceiveBufferSize = 8192;
             SendBufferSize = 8192;

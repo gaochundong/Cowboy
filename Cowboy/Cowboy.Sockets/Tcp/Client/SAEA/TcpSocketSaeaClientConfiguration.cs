@@ -7,8 +7,13 @@ namespace Cowboy.Sockets
     public sealed class TcpSocketSaeaClientConfiguration
     {
         public TcpSocketSaeaClientConfiguration()
+            : this(new SegmentBufferManager(100, 8192, 1, true))
         {
-            BufferManager = new SegmentBufferManager(100, 8192, 1, true);
+        }
+
+        public TcpSocketSaeaClientConfiguration(ISegmentBufferManager bufferManager)
+        {
+            BufferManager = bufferManager;
 
             ReceiveBufferSize = 8192;                   // Specifies the total per-socket buffer space reserved for receives. This is unrelated to the maximum message size or the size of a TCP window.
             SendBufferSize = 8192;                      // Specifies the total per-socket buffer space reserved for sends. This is unrelated to the maximum message size or the size of a TCP window.

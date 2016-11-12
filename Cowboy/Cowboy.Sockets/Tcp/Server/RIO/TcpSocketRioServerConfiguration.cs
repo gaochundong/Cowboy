@@ -5,8 +5,13 @@ namespace Cowboy.Sockets.Experimental
     public sealed class TcpSocketRioServerConfiguration
     {
         public TcpSocketRioServerConfiguration()
+            : this(new SegmentBufferManager(1024, 8192, 1, true))
         {
-            BufferManager = new SegmentBufferManager(1024, 8192, 1, true);
+        }
+
+        public TcpSocketRioServerConfiguration(ISegmentBufferManager bufferManager)
+        {
+            BufferManager = bufferManager;
 
             ReceiveBufferSize = 8192;
 
