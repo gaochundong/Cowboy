@@ -64,9 +64,9 @@
     <Compile Include="Tcp\Framing\LengthFieldBasedFrameBuilder.cs" />
     <Compile Include="Tcp\Framing\RawBufferFrameBuilder.cs" />
     <Compile Include="Tcp\Framing\FixedLengthFrameBuilder.cs" />
-    <Compile Include="Tcp\Framing\FrameBuilder.cs" />
-    <Compile Include="Tcp\Framing\IFrameDecoder.cs" />
-    <Compile Include="Tcp\Framing\IFrameEncoder.cs" />
+    <Compile Include="Tcp\Framing\Base\FrameBuilder.cs" />
+    <Compile Include="Tcp\Framing\Base\IFrameDecoder.cs" />
+    <Compile Include="Tcp\Framing\Base\IFrameEncoder.cs" />
     <Compile Include="Tcp\Server\RIO\InternalTcpSocketRioServerMessageDispatcherImplementation.cs" />
     <Compile Include="Tcp\Server\RIO\ITcpSocketRioServerMessageDispatcher.cs" />
     <Compile Include="Tcp\Server\RIO\RioSharp\Kernel32.cs" />
@@ -98,7 +98,7 @@
     <Compile Include="Tcp\Server\SAEA\TcpSocketSaeaSession.cs" />
     <Compile Include="Tcp\Client\TAP\AsyncTcpSocketClientConfiguration.cs" />
     <Compile Include="Tcp\Client\APM\TcpSocketClientConfiguration.cs" />
-    <Compile Include="Tcp\Framing\IFrameBuilder.cs" />
+    <Compile Include="Tcp\Framing\Base\IFrameBuilder.cs" />
     <Compile Include="Tcp\Framing\LineBasedFrameBuilder.cs" />
     <Compile Include="Tcp\Framing\LengthPrefixedFrameBuilder.cs" />
     <Compile Include="Tcp\Server\TAP\AsyncTcpSocketServerConfiguration.cs" />
