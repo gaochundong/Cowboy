@@ -13,9 +13,6 @@ namespace Cowboy.TcpLika
         public static readonly ReadOnlyCollection<string> SendBufferSizeOptions;
         public static readonly ReadOnlyCollection<string> ConnectionsOptions;
         public static readonly ReadOnlyCollection<string> ConnectionLifetimeOptions;
-        public static readonly ReadOnlyCollection<string> WebSocketOptions;
-        public static readonly ReadOnlyCollection<string> WebSocketPathOptions;
-        public static readonly ReadOnlyCollection<string> WebSocketProtocolOptions;
 
         public static readonly ReadOnlyCollection<string> SslOptions;
         public static readonly ReadOnlyCollection<string> SslTargetHostOptions;
@@ -36,9 +33,6 @@ namespace Cowboy.TcpLika
             SendBufferSizeOptions = new ReadOnlyCollection<string>(new string[] { "sndbuf", "send-buffer-size" });
             ConnectionsOptions = new ReadOnlyCollection<string>(new string[] { "c", "connections" });
             ConnectionLifetimeOptions = new ReadOnlyCollection<string>(new string[] { "l", "connection-lifetime" });
-            WebSocketOptions = new ReadOnlyCollection<string>(new string[] { "ws", "websocket" });
-            WebSocketPathOptions = new ReadOnlyCollection<string>(new string[] { "ws-path", "websocket-path" });
-            WebSocketProtocolOptions = new ReadOnlyCollection<string>(new string[] { "ws-protocol", "websocket-protocol" });
 
             SslOptions = new ReadOnlyCollection<string>(new string[] { "ssl" });
             SslTargetHostOptions = new ReadOnlyCollection<string>(new string[] { "ssl-target-host" });
@@ -56,9 +50,6 @@ namespace Cowboy.TcpLika
             Options.Add(TcpLikaOptionType.SendBufferSize, SendBufferSizeOptions);
             Options.Add(TcpLikaOptionType.Connections, ConnectionsOptions);
             Options.Add(TcpLikaOptionType.ConnectionLifetime, ConnectionLifetimeOptions);
-            Options.Add(TcpLikaOptionType.WebSocket, WebSocketOptions);
-            Options.Add(TcpLikaOptionType.WebSocketPath, WebSocketPathOptions);
-            Options.Add(TcpLikaOptionType.WebSocketProtocol, WebSocketProtocolOptions);
 
             Options.Add(TcpLikaOptionType.Ssl, SslOptions);
             Options.Add(TcpLikaOptionType.SslTargetHost, SslTargetHostOptions);
@@ -72,8 +63,6 @@ namespace Cowboy.TcpLika
         public static List<string> GetSingleOptions()
         {
             var singleOptionList = new List<string>();
-
-            singleOptionList.AddRange(TcpLikaOptions.WebSocketOptions);
 
             singleOptionList.AddRange(TcpLikaOptions.SslOptions);
             singleOptionList.AddRange(TcpLikaOptions.SslBypassedErrorsOptions);
@@ -132,12 +121,6 @@ OPTIONS
     {0}{0}Connections to keep open to the destinations.
     -l, --connection-lifetime
     {0}{0}Shut down each connection after time milliseconds.
-    -ws, --websocket
-    {0}{0}Use RFC6455 WebSocket transport.
-    -ws-path, --websocket-path
-    {0}{0}Specify the WebSocket request-line path.
-    -ws-protocol, --websocket-protocol
-    {0}{0}Specify the WebSocket sub-protocol.
     -ssl
     {0}{0}Use Ssl/Tls channel.
     -ssl-target-host
@@ -153,28 +136,16 @@ OPTIONS
 
 EXAMPLES
 
-    tcplika 127.0.0.1:9001
-    Create 1 TCP connection to <127.0.0.1:9001>, then close immediately.
+    tcplika 127.0.0.1:22222
+    Create 1 TCP connection to <127.0.0.1:22222>, then close immediately.
 
-    tcplika 127.0.0.1:9001 -w 2 -c 10
-    Create 10 TCP connections to <127.0.0.1:9001> in 2 threads parallel, 
+    tcplika 127.0.0.1:22222 -w 2 -c 10
+    Create 10 TCP connections to <127.0.0.1:22222> in 2 threads parallel, 
     then close all connections immediately.
 
-    tcplika 127.0.0.1:9001 -w 2 -c 10 -l 10000
-    Create 10 TCP connections to <127.0.0.1:9001> in 2 threads parallel, 
+    tcplika 127.0.0.1:22222 -w 2 -c 10 -l 10000
+    Create 10 TCP connections to <127.0.0.1:22222> in 2 threads parallel, 
     then close all connections after 10 seconds.
-
-    tcplika 127.0.0.1:3202 -w 2 -c 10 -l 10000 -ws -ws-path 'test'
-    Create 10 WebSocket connections to URI <ws://127.0.0.1:3202/test> 
-    in 2 threads parallel, then close all connections after 10 seconds.
-
-    tcplika 127.0.0.1:80 -w 8 -c 10000 -l 30000 -ws \
-      -ssl -ssl-bypass-errors \
-      -ssl-target-host 'WebSocketServer' \
-      -ssl-client-cert-file 'D:\\Client.cer'
-    Create 10000 WebSocket connections to <127.0.0.1:80> in 8 threads parallel,
-    enable the SSL/TSL transport with the given host and certificate file,
-    then close all connections after 30 seconds.
 
 AUTHOR
 

@@ -16,10 +16,6 @@ namespace Cowboy.TcpLika
         Connections,        // Connections to keep open to the destinations
         ConnectionLifetime, // Shut down each connection after time milliseconds
 
-        WebSocket,          // Use RFC6455 WebSocket transport
-        WebSocketPath,
-        WebSocketProtocol,
-
         Ssl,
         SslTargetHost,
         SslClientCertificateFilePath,
