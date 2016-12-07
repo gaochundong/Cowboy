@@ -226,10 +226,11 @@ namespace Cowboy.Sockets
 
                 if (!isErrorOccurredInUserSide)
                 {
-                    Task.Run(async () =>
+                    Task.Factory.StartNew(async () =>
                     {
                         await Process();
-                    })
+                    },
+                    TaskCreationOptions.LongRunning)
                     .Forget();
                 }
                 else

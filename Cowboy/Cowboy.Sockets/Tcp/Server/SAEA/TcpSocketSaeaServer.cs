@@ -189,10 +189,11 @@ namespace Cowboy.Sockets
 
                 _listener.Listen(_configuration.PendingConnectionBacklog);
 
-                Task.Run(async () =>
+                Task.Factory.StartNew(async () =>
                 {
                     await Accept();
-                })
+                },
+                TaskCreationOptions.LongRunning)
                 .Forget();
             }
             catch (Exception ex) when (!ShouldThrow(ex)) { }
@@ -210,7 +211,7 @@ namespace Cowboy.Sockets
                 _listener.Close(0);
                 _listener = null;
 
-                Task.Run(async () =>
+                Task.Factory.StartNew(async () =>
                 {
                     try
                     {
@@ -220,7 +221,8 @@ namespace Cowboy.Sockets
                         }
                     }
                     catch (Exception ex) when (!ShouldThrow(ex)) { }
-                })
+                },
+                TaskCreationOptions.PreferFairness)
                 .Wait();
             }
             catch (Exception ex) when (!ShouldThrow(ex)) { }
@@ -263,10 +265,11 @@ namespace Cowboy.Sockets
                     if (socketError == SocketError.Success)
                     {
                         var acceptedSocket = saea.Saea.AcceptSocket;
-                        Task.Run(async () =>
+                        Task.Factory.StartNew(async () =>
                         {
                             await Process(acceptedSocket);
-                        })
+                        },
+                        TaskCreationOptions.LongRunning)
                         .Forget();
                     }
                     else

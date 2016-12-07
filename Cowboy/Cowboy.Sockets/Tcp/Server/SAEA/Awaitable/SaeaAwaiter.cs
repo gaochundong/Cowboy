@@ -26,7 +26,9 @@ namespace Cowboy.Sockets
                     Complete();
 
                     if (continuation != SENTINEL)
-                        Task.Run(continuation);
+                    {
+                        Task.Factory.StartNew(continuation, TaskCreationOptions.PreferFairness);
+                    }
                 }
             };
         }
@@ -48,7 +50,7 @@ namespace Cowboy.Sockets
             {
                 Complete();
 
-                Task.Run(continuation);
+                Task.Factory.StartNew(continuation, TaskCreationOptions.PreferFairness);
             }
         }
 

@@ -108,10 +108,11 @@ namespace Cowboy.Sockets.Experimental
 
             _listener.OnAccepted = (acceptedSocket) =>
             {
-                Task.Run(async () =>
+                Task.Factory.StartNew(async () =>
                 {
                     await Process(acceptedSocket);
-                })
+                },
+                TaskCreationOptions.LongRunning)
                 .Forget();
             };
         }
@@ -159,7 +160,7 @@ namespace Cowboy.Sockets.Experimental
                 _listener.Dispose();
                 _listener = null;
 
-                Task.Run(async () =>
+                Task.Factory.StartNew(async () =>
                 {
                     try
                     {
@@ -169,7 +170,8 @@ namespace Cowboy.Sockets.Experimental
                         }
                     }
                     catch (Exception ex) when (!ShouldThrow(ex)) { }
-                })
+                },
+                TaskCreationOptions.PreferFairness)
                 .Wait();
 
                 _sendPool.Dispose();
