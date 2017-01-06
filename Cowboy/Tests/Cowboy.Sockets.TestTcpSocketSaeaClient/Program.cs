@@ -49,27 +49,45 @@ namespace Cowboy.Sockets.TestTcpSocketSaeaClient
                                     Console.WriteLine("Client [{0}] send text -> [{1}].", _client.LocalEndPoint, text);
                                 }
                             }
-                            else if (text == "big1")
+                            else if (text == "big1k")
+                            {
+                                text = new string('x', 1024 * 1);
+                                await _client.SendAsync(Encoding.UTF8.GetBytes(text));
+                                Console.WriteLine("Client [{0}] send text -> [{1} Bytes].", _client.LocalEndPoint, text.Length);
+                            }
+                            else if (text == "big10k")
+                            {
+                                text = new string('x', 1024 * 10);
+                                await _client.SendAsync(Encoding.UTF8.GetBytes(text));
+                                Console.WriteLine("Client [{0}] send text -> [{1} Bytes].", _client.LocalEndPoint, text.Length);
+                            }
+                            else if (text == "big100k")
+                            {
+                                text = new string('x', 1024 * 100);
+                                await _client.SendAsync(Encoding.UTF8.GetBytes(text));
+                                Console.WriteLine("Client [{0}] send text -> [{1} Bytes].", _client.LocalEndPoint, text.Length);
+                            }
+                            else if (text == "big1m")
                             {
                                 text = new string('x', 1024 * 1024 * 1);
                                 await _client.SendAsync(Encoding.UTF8.GetBytes(text));
                                 Console.WriteLine("Client [{0}] send text -> [{1} Bytes].", _client.LocalEndPoint, text.Length);
                             }
-                            else if (text == "big10")
+                            else if (text == "big10m")
                             {
                                 text = new string('x', 1024 * 1024 * 10);
                                 await _client.SendAsync(Encoding.UTF8.GetBytes(text));
                                 Console.WriteLine("Client [{0}] send text -> [{1} Bytes].", _client.LocalEndPoint, text.Length);
                             }
-                            else if (text == "big100")
+                            else if (text == "big100m")
                             {
                                 text = new string('x', 1024 * 1024 * 100);
                                 await _client.SendAsync(Encoding.UTF8.GetBytes(text));
                                 Console.WriteLine("Client [{0}] send text -> [{1} Bytes].", _client.LocalEndPoint, text.Length);
                             }
-                            else if (text == "big1000")
+                            else if (text == "big1g")
                             {
-                                text = new string('x', 1024 * 1024 * 1000);
+                                text = new string('x', 1024 * 1024 * 1024);
                                 await _client.SendAsync(Encoding.UTF8.GetBytes(text));
                                 Console.WriteLine("Client [{0}] send text -> [{1} Bytes].", _client.LocalEndPoint, text.Length);
                             }

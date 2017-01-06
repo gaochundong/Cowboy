@@ -48,27 +48,45 @@ namespace Cowboy.Sockets.TestTcpSocketRioServer
                                     Console.WriteLine("Server [{0}] broadcasts text -> [{1}].", _server.ListenedEndPoint, text);
                                 }
                             }
-                            else if (text == "big1")
+                            else if (text == "big1k")
+                            {
+                                text = new string('x', 1024 * 1);
+                                await _server.BroadcastAsync(Encoding.UTF8.GetBytes(text));
+                                Console.WriteLine("Server [{0}] broadcasts text -> [{1} Bytes].", _server.ListenedEndPoint, text.Length);
+                            }
+                            else if (text == "big10k")
+                            {
+                                text = new string('x', 1024 * 10);
+                                await _server.BroadcastAsync(Encoding.UTF8.GetBytes(text));
+                                Console.WriteLine("Server [{0}] broadcasts text -> [{1} Bytes].", _server.ListenedEndPoint, text.Length);
+                            }
+                            else if (text == "big100k")
+                            {
+                                text = new string('x', 1024 * 100);
+                                await _server.BroadcastAsync(Encoding.UTF8.GetBytes(text));
+                                Console.WriteLine("Server [{0}] broadcasts text -> [{1} Bytes].", _server.ListenedEndPoint, text.Length);
+                            }
+                            else if (text == "big1m")
                             {
                                 text = new string('x', 1024 * 1024 * 1);
                                 await _server.BroadcastAsync(Encoding.UTF8.GetBytes(text));
                                 Console.WriteLine("Server [{0}] broadcasts text -> [{1} Bytes].", _server.ListenedEndPoint, text.Length);
                             }
-                            else if (text == "big10")
+                            else if (text == "big10m")
                             {
                                 text = new string('x', 1024 * 1024 * 10);
                                 await _server.BroadcastAsync(Encoding.UTF8.GetBytes(text));
                                 Console.WriteLine("Server [{0}] broadcasts text -> [{1} Bytes].", _server.ListenedEndPoint, text.Length);
                             }
-                            else if (text == "big100")
+                            else if (text == "big100m")
                             {
                                 text = new string('x', 1024 * 1024 * 100);
                                 await _server.BroadcastAsync(Encoding.UTF8.GetBytes(text));
                                 Console.WriteLine("Server [{0}] broadcasts text -> [{1} Bytes].", _server.ListenedEndPoint, text.Length);
                             }
-                            else if (text == "big1000")
+                            else if (text == "big1g")
                             {
-                                text = new string('x', 1024 * 1024 * 1000);
+                                text = new string('x', 1024 * 1024 * 1024);
                                 await _server.BroadcastAsync(Encoding.UTF8.GetBytes(text));
                                 Console.WriteLine("Server [{0}] broadcasts text -> [{1} Bytes].", _server.ListenedEndPoint, text.Length);
                             }

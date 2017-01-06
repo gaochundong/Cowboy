@@ -33,44 +33,59 @@ namespace Cowboy.Sockets.TestTcpSocketServer
                             _server.Broadcast(Encoding.UTF8.GetBytes(text));
                         }
                     }
-                    else if (text == "big1")
+                    else if (text == "big1k")
+                    {
+                        text = new string('x', 1024 * 1);
+                        _server.Broadcast(Encoding.UTF8.GetBytes(text));
+                    }
+                    else if (text == "big10k")
+                    {
+                        text = new string('x', 1024 * 10);
+                        _server.Broadcast(Encoding.UTF8.GetBytes(text));
+                    }
+                    else if (text == "big100k")
+                    {
+                        text = new string('x', 1024 * 100);
+                        _server.Broadcast(Encoding.UTF8.GetBytes(text));
+                    }
+                    else if (text == "big1m")
                     {
                         text = new string('x', 1024 * 1024 * 1);
                         _server.Broadcast(Encoding.UTF8.GetBytes(text));
                     }
-                    else if (text == "big2")
+                    else if (text == "big2m")
                     {
                         text = new string('x', 1024 * 1024 * 2);
                         _server.Broadcast(Encoding.UTF8.GetBytes(text));
                     }
-                    else if (text == "big5")
+                    else if (text == "big5m")
                     {
                         text = new string('x', 1024 * 1024 * 5);
                         _server.Broadcast(Encoding.UTF8.GetBytes(text));
                     }
-                    else if (text == "big10")
+                    else if (text == "big10m")
                     {
                         text = new string('x', 1024 * 1024 * 10);
                         _server.Broadcast(Encoding.UTF8.GetBytes(text));
                     }
-                    else if (text == "big20")
+                    else if (text == "big20m")
                     {
                         text = new string('x', 1024 * 1024 * 20);
                         _server.Broadcast(Encoding.UTF8.GetBytes(text));
                     }
-                    else if (text == "big50")
+                    else if (text == "big50m")
                     {
                         text = new string('x', 1024 * 1024 * 50);
                         _server.Broadcast(Encoding.UTF8.GetBytes(text));
                     }
-                    else if (text == "big100")
+                    else if (text == "big100m")
                     {
                         text = new string('x', 1024 * 1024 * 100);
                         _server.Broadcast(Encoding.UTF8.GetBytes(text));
                     }
-                    else if (text == "big1000")
+                    else if (text == "big1g")
                     {
-                        text = new string('x', 1024 * 1024 * 1000);
+                        text = new string('x', 1024 * 1024 * 1024);
                         _server.Broadcast(Encoding.UTF8.GetBytes(text));
                     }
                     else
