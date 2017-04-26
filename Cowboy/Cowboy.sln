@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.26403.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{0E04BEDA-90F9-4E44-91B9-FAE42EF01498}"
 EndProject
@@ -51,6 +51,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Performance", "Performance", "{15FC914C-DCD3-4968-B1BB-8B53A4C30C2C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Sockets.TestTcpMassiveConnection", "Tests\Cowboy.Sockets.TestTcpMassiveConnection\Cowboy.Sockets.TestTcpMassiveConnection.csproj", "{7741520B-9C12-46F9-980F-6551DC4046C9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cowboy.Sockets.Experimental", "Cowboy.Sockets.Experimental\Cowboy.Sockets.Experimental.csproj", "{0D6991EF-2781-4185-8B36-80995C9800F3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -102,6 +104,10 @@ Global
 		{7741520B-9C12-46F9-980F-6551DC4046C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7741520B-9C12-46F9-980F-6551DC4046C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7741520B-9C12-46F9-980F-6551DC4046C9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0D6991EF-2781-4185-8B36-80995C9800F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D6991EF-2781-4185-8B36-80995C9800F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D6991EF-2781-4185-8B36-80995C9800F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D6991EF-2781-4185-8B36-80995C9800F3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

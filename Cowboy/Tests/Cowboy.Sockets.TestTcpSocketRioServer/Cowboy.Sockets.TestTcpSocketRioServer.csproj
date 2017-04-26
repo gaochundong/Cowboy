@@ -64,9 +64,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Cowboy.Sockets\Cowboy.Sockets.csproj">
-      <Project>{39d916fe-2c09-47ab-a5a2-1a23787f20ba}</Project>
-      <Name>Cowboy.Sockets</Name>
+    <ProjectReference Include="..\..\Cowboy.Sockets.Experimental\Cowboy.Sockets.Experimental.csproj">
+      <Project>{0d6991ef-2781-4185-8b36-80995c9800f3}</Project>
+      <Name>Cowboy.Sockets.Experimental</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
