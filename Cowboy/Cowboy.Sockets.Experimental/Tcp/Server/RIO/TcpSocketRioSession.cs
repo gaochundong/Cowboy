@@ -194,8 +194,8 @@ namespace Cowboy.Sockets.Experimental
                         payloadCount = 0;
 
                         if (_configuration.FrameBuilder.Decoder.TryDecodeFrame(
-                            _receiveBuffer.Array, 
-                            _receiveBuffer.Offset + consumedLength, 
+                            _receiveBuffer.Array,
+                            _receiveBuffer.Offset + consumedLength,
                             _receiveBufferOffset - consumedLength,
                             out frameLength, out payload, out payloadOffset, out payloadCount))
                         {
@@ -218,11 +218,7 @@ namespace Cowboy.Sockets.Experimental
                         }
                     }
 
-                    try
-                    {
-                        SegmentBufferDeflector.ShiftBuffer(_bufferManager, consumedLength, ref _receiveBuffer, ref _receiveBufferOffset);
-                    }
-                    catch (ArgumentOutOfRangeException) { }
+                    SegmentBufferDeflector.ShiftBuffer(_bufferManager, consumedLength, ref _receiveBuffer, ref _receiveBufferOffset);
                 }
             }
             catch (Exception ex) when (!ShouldThrow(ex)) { }
@@ -314,6 +310,7 @@ namespace Cowboy.Sockets.Experimental
                 || ex is SocketException
                 || ex is IOException
                 || ex is NullReferenceException
+                || ex is ArgumentException // buffer array operation
                 )
             {
                 if (ex is SocketException)

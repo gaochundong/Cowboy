@@ -320,11 +320,7 @@ namespace Cowboy.Sockets
                         }
                     }
 
-                    try
-                    {
-                        SegmentBufferDeflector.ShiftBuffer(_configuration.BufferManager, consumedLength, ref _receiveBuffer, ref _receiveBufferOffset);
-                    }
-                    catch (ArgumentOutOfRangeException) { }
+                    SegmentBufferDeflector.ShiftBuffer(_configuration.BufferManager, consumedLength, ref _receiveBuffer, ref _receiveBufferOffset);
                 }
             }
             catch (Exception ex) when (!ShouldThrow(ex)) { }
@@ -435,6 +431,7 @@ namespace Cowboy.Sockets
                 || ex is SocketException
                 || ex is IOException
                 || ex is NullReferenceException
+                || ex is ArgumentException // buffer array operation
                 )
             {
                 if (ex is SocketException)
