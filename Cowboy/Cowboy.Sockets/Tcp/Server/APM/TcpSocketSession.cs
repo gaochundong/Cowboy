@@ -564,7 +564,10 @@ namespace Cowboy.Sockets
         {
             try
             {
-                _stream.EndWrite(ar);
+                if (_stream != null)
+                {
+                    _stream.EndWrite(ar);
+                }
             }
             catch (Exception ex)
             {
