@@ -349,8 +349,8 @@ namespace Cowboy.Sockets
             }
             catch (Exception ex)
             {
-                if (!CloseIfShould(ex))
-                    throw;
+                HandleReceiveOperationException(ex);
+                throw;
             }
         }
 
@@ -395,8 +395,8 @@ namespace Cowboy.Sockets
             }
             catch (Exception ex)
             {
-                if (!CloseIfShould(ex))
-                    throw;
+                HandleReceiveOperationException(ex);
+                throw;
             }
         }
 
@@ -464,6 +464,26 @@ namespace Cowboy.Sockets
 
         #region Exception Handler
 
+        private void HandleSendOperationException(Exception ex)
+        {
+            if (IsSocketTimeOut(ex))
+            {
+                _log.Error(ex.Message, ex);
+                throw new TcpSocketException(ex.Message, new TimeoutException(ex.Message, ex));
+            }
+            else
+            {
+                if (!CloseIfShould(ex))
+                    throw new TcpSocketException(ex.Message, ex);
+            }
+        }
+
+        private void HandleReceiveOperationException(Exception ex)
+        {
+            if (!CloseIfShould(ex))
+                throw new TcpSocketException(ex.Message, ex);
+        }
+
         private bool IsSocketTimeOut(Exception ex)
         {
             return ex is IOException
@@ -478,13 +498,13 @@ namespace Cowboy.Sockets
                 || ex is InvalidOperationException
                 || ex is SocketException
                 || ex is IOException
-                || ex is NullReferenceException
-                || ex is ArgumentException // buffer array operation
+                || ex is NullReferenceException // buffer array operation
+                || ex is ArgumentException      // buffer array operation
                 )
             {
                 _log.Error(ex.Message, ex);
 
-                Close();
+                Close(); // intend to close the session
 
                 return true;
             }
@@ -529,15 +549,8 @@ namespace Cowboy.Sockets
             }
             catch (Exception ex)
             {
-                if (IsSocketTimeOut(ex))
-                {
-                    _log.Error(ex.Message, ex);
-                }
-                else
-                {
-                    if (!CloseIfShould(ex))
-                        throw;
-                }
+                HandleSendOperationException(ex);
+                throw;
             }
         }
 
@@ -569,15 +582,8 @@ namespace Cowboy.Sockets
             }
             catch (Exception ex)
             {
-                if (IsSocketTimeOut(ex))
-                {
-                    _log.Error(ex.Message, ex);
-                }
-                else
-                {
-                    if (!CloseIfShould(ex))
-                        throw;
-                }
+                HandleSendOperationException(ex);
+                throw;
             }
         }
 
@@ -592,8 +598,8 @@ namespace Cowboy.Sockets
             }
             catch (Exception ex)
             {
-                if (!CloseIfShould(ex))
-                    throw;
+                HandleSendOperationException(ex);
+                throw;
             }
         }
 
@@ -625,16 +631,7 @@ namespace Cowboy.Sockets
             }
             catch (Exception ex)
             {
-                if (IsSocketTimeOut(ex))
-                {
-                    _log.Error(ex.Message, ex);
-                }
-                else
-                {
-                    if (!CloseIfShould(ex))
-                        throw;
-                }
-
+                HandleSendOperationException(ex);
                 throw;
             }
         }
