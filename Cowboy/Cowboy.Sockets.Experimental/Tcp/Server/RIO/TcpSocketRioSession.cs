@@ -309,8 +309,8 @@ namespace Cowboy.Sockets.Experimental
                 || ex is InvalidOperationException
                 || ex is SocketException
                 || ex is IOException
-                || ex is NullReferenceException
-                || ex is ArgumentException // buffer array operation
+                || ex is NullReferenceException // buffer array operation
+                || ex is ArgumentException      // buffer array operation
                 )
             {
                 if (ex is SocketException)

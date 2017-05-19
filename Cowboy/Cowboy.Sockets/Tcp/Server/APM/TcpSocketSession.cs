@@ -445,20 +445,24 @@ namespace Cowboy.Sockets
         {
             if (IsSocketTimeOut(ex))
             {
-                _log.Error(ex.Message, ex);
+                CloseIfShould(ex);
                 throw new TcpSocketException(ex.Message, new TimeoutException(ex.Message, ex));
             }
-            else
-            {
-                if (!CloseIfShould(ex))
-                    throw new TcpSocketException(ex.Message, ex);
-            }
+
+            CloseIfShould(ex);
+            throw new TcpSocketException(ex.Message, ex);
         }
 
         private void HandleReceiveOperationException(Exception ex)
         {
-            if (!CloseIfShould(ex))
-                throw new TcpSocketException(ex.Message, ex);
+            if (IsSocketTimeOut(ex))
+            {
+                CloseIfShould(ex);
+                throw new TcpSocketException(ex.Message, new TimeoutException(ex.Message, ex));
+            }
+
+            CloseIfShould(ex);
+            throw new TcpSocketException(ex.Message, ex);
         }
 
         private bool IsSocketTimeOut(Exception ex)
