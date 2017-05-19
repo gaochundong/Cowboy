@@ -163,7 +163,7 @@ namespace Cowboy.Sockets
                 catch (Exception ex)
                 {
                     isErrorOccurredInUserSide = true;
-                    HandleUserSideError(ex);
+                    await HandleUserSideError(ex);
                 }
 
                 if (!isErrorOccurredInUserSide)
@@ -224,7 +224,7 @@ namespace Cowboy.Sockets
                             }
                             catch (Exception ex)
                             {
-                                HandleUserSideError(ex);
+                                await HandleUserSideError(ex);
                             }
                             finally
                             {
@@ -240,7 +240,10 @@ namespace Cowboy.Sockets
                     SegmentBufferDeflector.ShiftBuffer(_bufferManager, consumedLength, ref _receiveBuffer, ref _receiveBufferOffset);
                 }
             }
-            catch (Exception ex) when (!ShouldThrow(ex)) { }
+            catch (Exception ex)
+            {
+                await HandleReceiveOperationException(ex);
+            }
             finally
             {
                 await Close();
@@ -358,7 +361,7 @@ namespace Cowboy.Sockets
             }
             catch (Exception ex)
             {
-                HandleUserSideError(ex);
+                await HandleUserSideError(ex);
             }
         }
 
@@ -400,6 +403,30 @@ namespace Cowboy.Sockets
 
         #region Exception Handler
 
+        private async Task HandleSendOperationException(Exception ex)
+        {
+            if (IsSocketTimeOut(ex))
+            {
+                await CloseIfShould(ex);
+                throw new TcpSocketException(ex.Message, new TimeoutException(ex.Message, ex));
+            }
+
+            await CloseIfShould(ex);
+            throw new TcpSocketException(ex.Message, ex);
+        }
+
+        private async Task HandleReceiveOperationException(Exception ex)
+        {
+            if (IsSocketTimeOut(ex))
+            {
+                await CloseIfShould(ex);
+                throw new TcpSocketException(ex.Message, new TimeoutException(ex.Message, ex));
+            }
+
+            await CloseIfShould(ex);
+            throw new TcpSocketException(ex.Message, ex);
+        }
+
         private bool IsSocketTimeOut(Exception ex)
         {
             return ex is IOException
@@ -408,14 +435,8 @@ namespace Cowboy.Sockets
                 && (ex.InnerException as SocketException).SocketErrorCode == SocketError.TimedOut;
         }
 
-        private bool ShouldThrow(Exception ex)
+        private async Task<bool> CloseIfShould(Exception ex)
         {
-            if (IsSocketTimeOut(ex))
-            {
-                _log.Error(ex.Message, ex);
-                return false;
-            }
-
             if (ex is ObjectDisposedException
                 || ex is InvalidOperationException
                 || ex is SocketException
@@ -424,19 +445,20 @@ namespace Cowboy.Sockets
                 || ex is ArgumentException      // buffer array operation
                 )
             {
-                if (ex is SocketException)
-                    _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
+                _log.Error(ex.Message, ex);
 
-                return false;
+                await Close(); // intend to close the session
+
+                return true;
             }
 
-            _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
-            return true;
+            return false;
         }
 
-        private void HandleUserSideError(Exception ex)
+        private async Task HandleUserSideError(Exception ex)
         {
             _log.Error(string.Format("Session [{0}] error occurred in user side [{1}].", this, ex.Message), ex);
+            await Task.CompletedTask;
         }
 
         #endregion
@@ -466,7 +488,10 @@ namespace Cowboy.Sockets
 
                 await _stream.WriteAsync(frameBuffer, frameBufferOffset, frameBufferLength);
             }
-            catch (Exception ex) when (!ShouldThrow(ex)) { }
+            catch (Exception ex)
+            {
+                await HandleSendOperationException(ex);
+            }
         }
 
         #endregion
