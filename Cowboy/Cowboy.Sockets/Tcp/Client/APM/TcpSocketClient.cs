@@ -602,8 +602,14 @@ namespace Cowboy.Sockets
             }
             catch (Exception ex)
             {
-                HandleSendOperationException(ex);
-                throw;
+                try
+                {
+                    HandleSendOperationException(ex);
+                }
+                catch (Exception innnerException)
+                {
+                    _log.Error(innnerException.Message, innnerException);
+                }
             }
         }
 
