@@ -372,8 +372,14 @@ namespace Cowboy.Sockets
             }
             catch (Exception ex)
             {
-                HandleReceiveOperationException(ex);
-                throw;
+                try
+                {
+                    HandleReceiveOperationException(ex);
+                }
+                catch (Exception innnerException)
+                {
+                    _log.Error(innnerException.Message, innnerException);
+                }
             }
         }
 
