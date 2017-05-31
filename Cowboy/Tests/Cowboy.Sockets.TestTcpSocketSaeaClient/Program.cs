@@ -104,7 +104,7 @@ namespace Cowboy.Sockets.TestTcpSocketSaeaClient
                     }
                 }
 
-                _client.Close().Wait();
+                _client.Shutdown();
                 Console.WriteLine("TCP client has disconnected from server [{0}].", remoteEP);
             }
             catch (Exception ex)

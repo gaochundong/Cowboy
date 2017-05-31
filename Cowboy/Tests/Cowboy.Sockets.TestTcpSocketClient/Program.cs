@@ -100,7 +100,7 @@ namespace Cowboy.Sockets.TestTcpSocketClient
                 }
             }
 
-            _client.Close();
+            _client.Shutdown();
             Console.WriteLine("TCP client has disconnected from server.");
 
             Console.ReadKey();

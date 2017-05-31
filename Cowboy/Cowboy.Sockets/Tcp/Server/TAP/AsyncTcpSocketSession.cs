@@ -245,7 +245,8 @@ namespace Cowboy.Sockets
             }
             catch (ObjectDisposedException)
             {
-                // looking forward to a graceful quit from the ReadAsync, but the EndRead doesn't make it happen
+                // looking forward to a graceful quit from the ReadAsync but the inside EndRead will raise the ObjectDisposedException,
+                // so a gracefully close for the socket should be a Shutdown, but we cannot avoid the Close triggers this happen.
             }
             catch (Exception ex)
             {
@@ -382,17 +383,16 @@ namespace Cowboy.Sockets
             Clean();
         }
 
-        private void Shutdown()
+        public void Shutdown()
         {
-            try
+            // The correct way to shut down the connection (especially if you are in a full-duplex conversation) 
+            // is to call socket.Shutdown(SocketShutdown.Send) and give the remote party some time to close 
+            // their send channel. This ensures that you receive any pending data instead of slamming the 
+            // connection shut. ObjectDisposedException should never be part of the normal application flow.
+            if (_tcpClient != null && _tcpClient.Connected)
             {
-                // The correct way to shut down the connection (especially if you are in a full-duplex conversation) 
-                // is to call socket.Shutdown(SocketShutdown.Send) and give the remote party some time to close 
-                // their send channel. This ensures that you receive any pending data instead of slamming the 
-                // connection shut. ObjectDisposedException should never be part of the normal application flow.
                 _tcpClient.Client.Shutdown(SocketShutdown.Send);
             }
-            catch { }
         }
 
         private void Clean()

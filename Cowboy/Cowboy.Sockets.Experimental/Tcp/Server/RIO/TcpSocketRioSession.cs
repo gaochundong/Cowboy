@@ -229,7 +229,8 @@ namespace Cowboy.Sockets.Experimental
             }
             catch (ObjectDisposedException)
             {
-                // looking forward to a graceful quit from the ReadAsync, but the EndRead doesn't make it happen
+                // looking forward to a graceful quit from the ReadAsync but the inside EndRead will raise the ObjectDisposedException,
+                // so a gracefully close for the socket should be a Shutdown, but we cannot avoid the Close triggers this happen.
             }
             catch (Exception ex)
             {
