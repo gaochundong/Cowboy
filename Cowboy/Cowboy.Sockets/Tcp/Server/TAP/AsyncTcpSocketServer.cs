@@ -147,7 +147,7 @@ namespace Cowboy.Sockets
                     {
                         foreach (var session in _sessions.Values)
                         {
-                            await session.Close();
+                            await session.Close(); // parent server close session when shutdown
                         }
                     }
                     catch (Exception ex) when (!ShouldThrow(ex)) { }
@@ -307,7 +307,7 @@ namespace Cowboy.Sockets
             AsyncTcpSocketSession session = null;
             if (_sessions.TryGetValue(sessionKey, out session))
             {
-                await session.Close();
+                await session.Close(); // parent server close session by session-key
             }
         }
 

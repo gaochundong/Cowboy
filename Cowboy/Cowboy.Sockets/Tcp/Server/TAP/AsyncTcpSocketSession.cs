@@ -134,7 +134,7 @@ namespace Cowboy.Sockets
                 var negotiator = NegotiateStream(_tcpClient.GetStream());
                 if (!negotiator.Wait(ConnectTimeout))
                 {
-                    await Close();
+                    await Close(false); // ssl negotiation timeout
                     throw new TimeoutException(string.Format(
                         "Negotiate SSL/TSL with remote [{0}] timeout [{1}].", this.RemoteEndPoint, ConnectTimeout));
                 }
@@ -146,7 +146,7 @@ namespace Cowboy.Sockets
 
                 if (Interlocked.CompareExchange(ref _state, _connected, _connecting) != _connecting)
                 {
-                    await Close();
+                    await Close(false); // connected with wrong state
                     throw new ObjectDisposedException("This tcp socket session has been disposed after connected.");
                 }
 
@@ -172,14 +172,13 @@ namespace Cowboy.Sockets
                 }
                 else
                 {
-                    await Close();
+                    await Close(true); // user side handle tcp connection error occurred
                 }
             }
             catch (Exception ex)
-            when (ex is TimeoutException)
             {
                 _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
-                await Close();
+                await Close(true); // handle tcp connection error occurred
             }
         }
 
@@ -243,14 +242,17 @@ namespace Cowboy.Sockets
                     }
                 }
             }
+            catch (ObjectDisposedException)
+            {
+                // looking forward to a graceful quit from the ReadAsync, but the EndRead doesn't make it happed.
+            }
             catch (Exception ex)
             {
                 await HandleReceiveOperationException(ex);
             }
             finally
             {
-                await Close();
-                Clean();
+                await Close(true); // read async buffer returned, remote notifies closed
             }
         }
 
@@ -347,11 +349,40 @@ namespace Cowboy.Sockets
 
         public async Task Close()
         {
+            await Close(true); // close by external
+        }
+
+        private async Task Close(bool shallNotifyUserSide)
+        {
             if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
             {
                 return;
             }
 
+            Shutdown();
+
+            if (shallNotifyUserSide)
+            {
+                _log.DebugFormat("Session closed for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
+                    this.RemoteEndPoint,
+                    DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"),
+                    _dispatcher.GetType().Name,
+                    this.Server.SessionCount - 1);
+                try
+                {
+                    await _dispatcher.OnSessionClosed(this);
+                }
+                catch (Exception ex)
+                {
+                    await HandleUserSideError(ex);
+                }
+            }
+
+            Clean();
+        }
+
+        private void Shutdown()
+        {
             try
             {
                 // The correct way to shut down the connection (especially if you are in a full-duplex conversation) 
@@ -361,20 +392,6 @@ namespace Cowboy.Sockets
                 _tcpClient.Client.Shutdown(SocketShutdown.Send);
             }
             catch { }
-
-            _log.DebugFormat("Session closed for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
-                this.RemoteEndPoint,
-                DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"),
-                _dispatcher.GetType().Name,
-                this.Server.SessionCount - 1);
-            try
-            {
-                await _dispatcher.OnSessionClosed(this);
-            }
-            catch (Exception ex)
-            {
-                await HandleUserSideError(ex);
-            }
         }
 
         private void Clean()
@@ -459,7 +476,7 @@ namespace Cowboy.Sockets
             {
                 _log.Error(ex.Message, ex);
 
-                await Close(); // intend to close the session
+                await Close(true); // catch specified exception then intend to close the session
 
                 return true;
             }

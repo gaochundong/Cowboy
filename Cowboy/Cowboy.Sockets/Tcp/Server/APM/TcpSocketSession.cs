@@ -166,7 +166,7 @@ namespace Cowboy.Sockets
 
         public void Close()
         {
-            Close(true);
+            Close(true); // close by external
         }
 
         private void Close(bool shallNotifyUserSide)
@@ -178,13 +178,16 @@ namespace Cowboy.Sockets
 
             Shutdown();
 
-            try
+            if (shallNotifyUserSide)
             {
-                _server.RaiseClientDisconnected(this);
-            }
-            catch (Exception ex)
-            {
-                HandleUserSideError(ex);
+                try
+                {
+                    _server.RaiseClientDisconnected(this);
+                }
+                catch (Exception ex)
+                {
+                    HandleUserSideError(ex);
+                }
             }
 
             Clean();
@@ -356,7 +359,7 @@ namespace Cowboy.Sockets
             if (State != TcpSocketConnectionState.Connected
                 || _stream == null)
             {
-                Close(false);
+                Close(false); // receive callback
                 return;
             }
 
