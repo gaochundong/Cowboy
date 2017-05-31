@@ -192,13 +192,13 @@ namespace Cowboy.Sockets
             int origin = Interlocked.Exchange(ref _state, _connecting);
             if (!(origin == _none || origin == _closed))
             {
-                await Close(false);
+                await Close(false); // connecting with wrong state
                 throw new InvalidOperationException("This tcp socket client is in invalid state when connecting.");
             }
 
             try
             {
-                Clean();
+                Clean(); // forcefully clean all things
 
                 _socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
                 SetSocketOptions();
@@ -223,7 +223,7 @@ namespace Cowboy.Sockets
 
                 if (Interlocked.CompareExchange(ref _state, _connected, _connecting) != _connecting)
                 {
-                    await Close(false);
+                    await Close(false); // connected with wrong state
                     throw new InvalidOperationException("This tcp socket client is in invalid state when connected.");
                 }
 
@@ -253,7 +253,7 @@ namespace Cowboy.Sockets
                 }
                 else
                 {
-                    await Close();
+                    await Close(true); // user side handle tcp connection error occurred
                 }
             }
             catch (Exception ex)
@@ -332,8 +332,7 @@ namespace Cowboy.Sockets
             }
             finally
             {
-                await Close();
-                Clean();
+                await Close(true); // read async buffer returned, remote notifies closed
             }
         }
 
@@ -363,7 +362,7 @@ namespace Cowboy.Sockets
 
         public async Task Close()
         {
-            await Close(true);
+            await Close(true); // close by external
         }
 
         private async Task Close(bool shallNotifyUserSide)
@@ -373,15 +372,7 @@ namespace Cowboy.Sockets
                 return;
             }
 
-            try
-            {
-                // The correct way to shut down the connection (especially if you are in a full-duplex conversation) 
-                // is to call socket.Shutdown(SocketShutdown.Send) and give the remote party some time to close 
-                // their send channel. This ensures that you receive any pending data instead of slamming the 
-                // connection shut. ObjectDisposedException should never be part of the normal application flow.
-                _socket.Shutdown(SocketShutdown.Send);
-            }
-            catch { }
+            Shutdown();
 
             if (shallNotifyUserSide)
             {
@@ -398,6 +389,21 @@ namespace Cowboy.Sockets
                     await HandleUserSideError(ex);
                 }
             }
+
+            Clean();
+        }
+
+        private void Shutdown()
+        {
+            try
+            {
+                // The correct way to shut down the connection (especially if you are in a full-duplex conversation) 
+                // is to call socket.Shutdown(SocketShutdown.Send) and give the remote party some time to close 
+                // their send channel. This ensures that you receive any pending data instead of slamming the 
+                // connection shut. ObjectDisposedException should never be part of the normal application flow.
+                _socket.Shutdown(SocketShutdown.Send);
+            }
+            catch { }
         }
 
         private void Clean()
