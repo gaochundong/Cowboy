@@ -131,7 +131,7 @@ namespace Cowboy.Sockets.Experimental
 
                 if (Interlocked.CompareExchange(ref _state, _connected, _connecting) != _connecting)
                 {
-                    await Close();
+                    await Close(); // connected with wrong state
                     throw new ObjectDisposedException("This tcp socket session has been disposed after connected.");
                 }
 
@@ -144,7 +144,7 @@ namespace Cowboy.Sockets.Experimental
                 {
                     await _dispatcher.OnSessionStarted(this);
                 }
-                catch (Exception ex)
+                catch (Exception ex) // catch all exceptions from out-side
                 {
                     isErrorOccurredInUserSide = true;
                     await HandleUserSideError(ex);
@@ -156,14 +156,14 @@ namespace Cowboy.Sockets.Experimental
                 }
                 else
                 {
-                    await Close();
+                    await Close(); // user side handle tcp connection error occurred
                 }
             }
-            catch (Exception ex)
-            when (ex is TimeoutException)
+            catch (Exception ex) // catch exceptions then log then re-throw
             {
                 _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
-                await Close();
+                await Close(); // handle tcp connection error occurred
+                throw;
             }
         }
 
@@ -180,8 +180,8 @@ namespace Cowboy.Sockets.Experimental
                 while (State == TcpSocketConnectionState.Connected)
                 {
                     int receiveCount = await _stream.ReadAsync(
-                        _receiveBuffer.Array, 
-                        _receiveBuffer.Offset + _receiveBufferOffset, 
+                        _receiveBuffer.Array,
+                        _receiveBuffer.Offset + _receiveBufferOffset,
                         _receiveBuffer.Count - _receiveBufferOffset);
                     if (receiveCount == 0)
                         break;
@@ -206,7 +206,7 @@ namespace Cowboy.Sockets.Experimental
                             {
                                 await _dispatcher.OnSessionDataReceived(this, payload, payloadOffset, payloadCount);
                             }
-                            catch (Exception ex)
+                            catch (Exception ex) // catch all exceptions from out-side
                             {
                                 await HandleUserSideError(ex);
                             }
@@ -227,14 +227,17 @@ namespace Cowboy.Sockets.Experimental
                     }
                 }
             }
-            catch (ObjectDisposedException) { } // ReadAsync will throw exception when stream disposed during closing
+            catch (ObjectDisposedException)
+            {
+                // looking forward to a graceful quit from the ReadAsync, but the EndRead doesn't make it happen
+            }
             catch (Exception ex)
             {
                 await HandleReceiveOperationException(ex);
             }
             finally
             {
-                await Close();
+                await Close(); // read async buffer returned, remote notifies closed
             }
         }
 
@@ -244,8 +247,6 @@ namespace Cowboy.Sockets.Experimental
             {
                 return;
             }
-
-            Clean();
 
             _log.DebugFormat("Session closed on [{0}] in dispatcher [{1}] with session count [{2}].",
                 DateTime.UtcNow.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"),
@@ -259,6 +260,8 @@ namespace Cowboy.Sockets.Experimental
             {
                 await HandleUserSideError(ex);
             }
+
+            Clean();
         }
 
         private void Clean()
@@ -343,7 +346,7 @@ namespace Cowboy.Sockets.Experimental
             {
                 _log.Error(ex.Message, ex);
 
-                await Close(); // intend to close the session
+                await Close(); // catch specified exception then intend to close the session
 
                 return true;
             }
@@ -407,7 +410,7 @@ namespace Cowboy.Sockets.Experimental
             {
                 try
                 {
-                    Close().Wait();
+                    Close().Wait(); // disposing
                 }
                 catch (Exception ex)
                 {
