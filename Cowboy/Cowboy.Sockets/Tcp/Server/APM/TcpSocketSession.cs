@@ -440,7 +440,10 @@ namespace Cowboy.Sockets
                 }
             }
 
-            SegmentBufferDeflector.ShiftBuffer(_bufferManager, consumedLength, ref _receiveBuffer, ref _receiveBufferOffset);
+            if (_receiveBuffer != null && _receiveBuffer.Array != null)
+            {
+                SegmentBufferDeflector.ShiftBuffer(_bufferManager, consumedLength, ref _receiveBuffer, ref _receiveBufferOffset);
+            }
         }
 
         #endregion

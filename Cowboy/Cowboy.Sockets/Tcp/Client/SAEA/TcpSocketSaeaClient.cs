@@ -320,7 +320,10 @@ namespace Cowboy.Sockets
                         }
                     }
 
-                    SegmentBufferDeflector.ShiftBuffer(_configuration.BufferManager, consumedLength, ref _receiveBuffer, ref _receiveBufferOffset);
+                    if (_receiveBuffer != null && _receiveBuffer.Array != null)
+                    {
+                        SegmentBufferDeflector.ShiftBuffer(_configuration.BufferManager, consumedLength, ref _receiveBuffer, ref _receiveBufferOffset);
+                    }
                 }
             }
             catch (ObjectDisposedException) { } // ReadAsync will throw exception when stream disposed during closing
