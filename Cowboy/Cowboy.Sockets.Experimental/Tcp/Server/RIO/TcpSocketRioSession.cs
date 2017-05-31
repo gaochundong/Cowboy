@@ -179,7 +179,10 @@ namespace Cowboy.Sockets.Experimental
 
                 while (State == TcpSocketConnectionState.Connected)
                 {
-                    int receiveCount = await _stream.ReadAsync(_receiveBuffer.Array, _receiveBuffer.Offset + _receiveBufferOffset, _receiveBuffer.Count - _receiveBufferOffset);
+                    int receiveCount = await _stream.ReadAsync(
+                        _receiveBuffer.Array, 
+                        _receiveBuffer.Offset + _receiveBufferOffset, 
+                        _receiveBuffer.Count - _receiveBufferOffset);
                     if (receiveCount == 0)
                         break;
 

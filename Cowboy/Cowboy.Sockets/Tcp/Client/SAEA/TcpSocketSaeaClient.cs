@@ -326,7 +326,6 @@ namespace Cowboy.Sockets
                     }
                 }
             }
-            catch (ObjectDisposedException) { } // ReadAsync will throw exception when stream disposed during closing
             catch (Exception ex)
             {
                 await HandleReceiveOperationException(ex);
