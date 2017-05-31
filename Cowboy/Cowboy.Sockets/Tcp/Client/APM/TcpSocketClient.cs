@@ -247,6 +247,12 @@ namespace Cowboy.Sockets
                     Close(true); // user side handle tcp connection error occurred
                 }
             }
+            catch (TimeoutException ex)
+            {
+                _log.Error(ex.Message, ex);
+                Close(false); // timeout exception
+                throw;
+            }
             catch (Exception ex)
             {
                 _log.Error(ex.Message, ex);
@@ -374,7 +380,7 @@ namespace Cowboy.Sockets
             if (this.State != TcpSocketConnectionState.Connected
                 || _stream == null)
             {
-                Close(false);
+                Close(false); // receive buffer callback
                 return;
             }
 
