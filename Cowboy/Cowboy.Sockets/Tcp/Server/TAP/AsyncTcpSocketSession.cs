@@ -160,7 +160,7 @@ namespace Cowboy.Sockets
                 {
                     await _dispatcher.OnSessionStarted(this);
                 }
-                catch (Exception ex)
+                catch (Exception ex) // catch all exceptions from out-side
                 {
                     isErrorOccurredInUserSide = true;
                     await HandleUserSideError(ex);
@@ -175,10 +175,11 @@ namespace Cowboy.Sockets
                     await Close(true); // user side handle tcp connection error occurred
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) // catch exceptions then log then re-throw
             {
                 _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
                 await Close(true); // handle tcp connection error occurred
+                throw;
             }
         }
 
@@ -221,7 +222,7 @@ namespace Cowboy.Sockets
                             {
                                 await _dispatcher.OnSessionDataReceived(this, payload, payloadOffset, payloadCount);
                             }
-                            catch (Exception ex)
+                            catch (Exception ex) // catch all exceptions from out-side
                             {
                                 await HandleUserSideError(ex);
                             }
@@ -372,7 +373,7 @@ namespace Cowboy.Sockets
                 {
                     await _dispatcher.OnSessionClosed(this);
                 }
-                catch (Exception ex)
+                catch (Exception ex) // catch all exceptions from out-side
                 {
                     await HandleUserSideError(ex);
                 }

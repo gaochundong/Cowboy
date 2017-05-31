@@ -142,7 +142,7 @@ namespace Cowboy.Sockets
                 {
                     _server.RaiseClientConnected(this);
                 }
-                catch (Exception ex)
+                catch (Exception ex) // catch all exceptions from out-side
                 {
                     isErrorOccurredInUserSide = true;
                     HandleUserSideError(ex);
@@ -157,10 +157,11 @@ namespace Cowboy.Sockets
                     Close(true); // user side handle tcp connection error occurred
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) // catch exceptions then log then re-throw
             {
                 _log.Error(ex.Message, ex);
                 Close(true); // handle tcp connection error occurred
+                throw;
             }
         }
 
@@ -184,7 +185,7 @@ namespace Cowboy.Sockets
                 {
                     _server.RaiseClientDisconnected(this);
                 }
-                catch (Exception ex)
+                catch (Exception ex) // catch all exceptions from out-side
                 {
                     HandleUserSideError(ex);
                 }
@@ -347,7 +348,7 @@ namespace Cowboy.Sockets
                     HandleDataReceived,
                     _stream);
             }
-            catch (Exception ex)
+            catch (Exception ex) // catch exceptions then log then re-throw
             {
                 HandleReceiveOperationException(ex);
                 throw;
@@ -447,7 +448,7 @@ namespace Cowboy.Sockets
                     {
                         _server.RaiseClientDataReceived(this, payload, payloadOffset, payloadCount);
                     }
-                    catch (Exception ex)
+                    catch (Exception ex) // catch all exceptions from out-side
                     {
                         HandleUserSideError(ex);
                     }
@@ -560,7 +561,7 @@ namespace Cowboy.Sockets
 
                 _stream.Write(frameBuffer, frameBufferOffset, frameBufferLength);
             }
-            catch (Exception ex)
+            catch (Exception ex) // catch exceptions then log then re-throw
             {
                 HandleSendOperationException(ex);
                 throw;
@@ -593,7 +594,7 @@ namespace Cowboy.Sockets
 
                 _stream.BeginWrite(frameBuffer, frameBufferOffset, frameBufferLength, HandleDataWritten, _stream);
             }
-            catch (Exception ex)
+            catch (Exception ex) // catch exceptions then log then re-throw
             {
                 HandleSendOperationException(ex);
                 throw;
@@ -648,7 +649,7 @@ namespace Cowboy.Sockets
 
                 return _stream.BeginWrite(frameBuffer, frameBufferOffset, frameBufferLength, callback, state);
             }
-            catch (Exception ex)
+            catch (Exception ex) // catch exceptions then log then re-throw
             {
                 HandleSendOperationException(ex);
                 throw;

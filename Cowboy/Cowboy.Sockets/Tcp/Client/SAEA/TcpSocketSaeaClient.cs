@@ -142,7 +142,7 @@ namespace Cowboy.Sockets
                         saea.Saea.RemoteEndPoint = null;
                         saea.Saea.SocketFlags = SocketFlags.None;
                     }
-                    catch (Exception ex)
+                    catch (Exception ex) // initialize SAEA error occurred
                     {
                         _log.Error(ex.Message, ex);
                     }
@@ -236,7 +236,7 @@ namespace Cowboy.Sockets
                 {
                     await _dispatcher.OnServerConnected(this);
                 }
-                catch (Exception ex)
+                catch (Exception ex) // catch all exceptions from out-side
                 {
                     isErrorOccurredInUserSide = true;
                     await HandleUserSideError(ex);
@@ -256,9 +256,10 @@ namespace Cowboy.Sockets
                     await Close(true); // user side handle tcp connection error occurred
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) // catch exceptions then log then re-throw
             {
                 _log.Error(ex.Message, ex);
+                await Close(true); // user side handle tcp connection error occurred
                 throw;
             }
         }
@@ -305,7 +306,7 @@ namespace Cowboy.Sockets
                             {
                                 await _dispatcher.OnServerDataReceived(this, payload, payloadOffset, payloadCount);
                             }
-                            catch (Exception ex)
+                            catch (Exception ex) // catch all exceptions from out-side
                             {
                                 await HandleUserSideError(ex);
                             }
@@ -384,7 +385,7 @@ namespace Cowboy.Sockets
                 {
                     await _dispatcher.OnServerDisconnected(this);
                 }
-                catch (Exception ex)
+                catch (Exception ex) // catch all exceptions from out-side
                 {
                     await HandleUserSideError(ex);
                 }
