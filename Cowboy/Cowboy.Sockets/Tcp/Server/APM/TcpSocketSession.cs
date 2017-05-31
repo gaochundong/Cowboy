@@ -133,7 +133,7 @@ namespace Cowboy.Sockets
 
                 if (Interlocked.CompareExchange(ref _state, _connected, _connecting) != _connecting)
                 {
-                    Close();
+                    Close(false); // connecting with wrong state
                     throw new ObjectDisposedException("This tcp socket session has been disposed after connected.");
                 }
 
@@ -154,24 +154,29 @@ namespace Cowboy.Sockets
                 }
                 else
                 {
-                    Close();
+                    Close(true); // user side handle tcp connection error occurred
                 }
             }
             catch (Exception ex)
             {
                 _log.Error(ex.Message, ex);
-                Close();
+                Close(true); // handle tcp connection error occurred
             }
         }
 
         public void Close()
+        {
+            Close(true);
+        }
+
+        private void Close(bool shallNotifyUserSide)
         {
             if (Interlocked.Exchange(ref _state, _disposed) == _disposed)
             {
                 return;
             }
 
-            Clean();
+            Shutdown();
 
             try
             {
@@ -181,6 +186,21 @@ namespace Cowboy.Sockets
             {
                 HandleUserSideError(ex);
             }
+
+            Clean();
+        }
+
+        private void Shutdown()
+        {
+            try
+            {
+                // The correct way to shut down the connection (especially if you are in a full-duplex conversation) 
+                // is to call socket.Shutdown(SocketShutdown.Send) and give the remote party some time to close 
+                // their send channel. This ensures that you receive any pending data instead of slamming the 
+                // connection shut. ObjectDisposedException should never be part of the normal application flow.
+                _tcpClient.Client.Shutdown(SocketShutdown.Send);
+            }
+            catch { }
         }
 
         private void Clean()
@@ -286,7 +306,7 @@ namespace Cowboy.Sockets
             }
             if (!ar.AsyncWaitHandle.WaitOne(ConnectTimeout))
             {
-                Close();
+                Close(false); // ssl negotiation timeout
                 throw new TimeoutException(string.Format(
                     "Negotiate SSL/TSL with remote [{0}] timeout [{1}].", this.RemoteEndPoint, ConnectTimeout));
             }
@@ -333,15 +353,15 @@ namespace Cowboy.Sockets
 
         private void HandleDataReceived(IAsyncResult ar)
         {
-            if (State != TcpSocketConnectionState.Connected)
+            if (State != TcpSocketConnectionState.Connected
+                || _stream == null)
+            {
+                Close(false);
                 return;
+            }
 
             try
             {
-                // when callback to here the stream may have been closed
-                if (_stream == null)
-                    return;
-
                 int numberOfReadBytes = 0;
                 try
                 {
@@ -361,8 +381,7 @@ namespace Cowboy.Sockets
 
                 if (numberOfReadBytes == 0)
                 {
-                    // connection has been closed
-                    Close();
+                    Close(true); // receive 0-byte means connection has been closed
                     return;
                 }
 
@@ -495,7 +514,7 @@ namespace Cowboy.Sockets
                 if (ex is SocketException)
                     _log.Error(string.Format("Session [{0}] exception occurred, [{1}].", this, ex.Message), ex);
 
-                Close(); // intend to close the session
+                Close(true); // catch specified exception then intend to close the session
 
                 return true;
             }

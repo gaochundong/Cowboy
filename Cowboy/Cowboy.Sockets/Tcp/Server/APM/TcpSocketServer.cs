@@ -90,7 +90,7 @@ namespace Cowboy.Sockets
 
                     foreach (var session in _sessions.Values)
                     {
-                        CloseSession(session);
+                        CloseSession(session); // server shutdown
                     }
                     _sessions.Clear();
                     _listener = null;
@@ -172,7 +172,7 @@ namespace Cowboy.Sockets
                 }
                 else
                 {
-                    CloseSession(session);
+                    CloseSession(session); // session was not started
                 }
             }
             catch (Exception ex)
@@ -192,7 +192,7 @@ namespace Cowboy.Sockets
 
             if (session != null)
             {
-                session.Close();
+                session.Close(); // parent server close session
             }
         }
 
@@ -516,7 +516,7 @@ namespace Cowboy.Sockets
             TcpSocketSession session = null;
             if (_sessions.TryGetValue(sessionKey, out session))
             {
-                session.Close();
+                session.Close(); // parent server close session by session-key
             }
         }
 
