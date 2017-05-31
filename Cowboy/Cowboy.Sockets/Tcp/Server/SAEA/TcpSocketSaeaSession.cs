@@ -292,6 +292,7 @@ namespace Cowboy.Sockets
             finally
             {
                 await Close();
+                Clean();
             }
         }
 
@@ -302,7 +303,15 @@ namespace Cowboy.Sockets
                 return;
             }
 
-            Clean();
+            try
+            {
+                // The correct way to shut down the connection (especially if you are in a full-duplex conversation) 
+                // is to call socket.Shutdown(SocketShutdown.Send) and give the remote party some time to close 
+                // their send channel. This ensures that you receive any pending data instead of slamming the 
+                // connection shut. ObjectDisposedException should never be part of the normal application flow.
+                _socket.Shutdown(SocketShutdown.Send);
+            }
+            catch { }
 
             _log.DebugFormat("Session closed for [{0}] on [{1}] in dispatcher [{2}] with session count [{3}].",
                 this.RemoteEndPoint,
