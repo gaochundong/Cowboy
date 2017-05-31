@@ -308,7 +308,7 @@ namespace Cowboy.Sockets
             }
             catch (ObjectDisposedException)
             {
-                // looking forward to a graceful quit from the ReadAsync, but the EndRead doesn't make it happed.
+                // looking forward to a graceful quit from the ReadAsync, but the EndRead doesn't make it happen
             }
             catch (Exception ex)
             {
