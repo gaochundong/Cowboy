@@ -241,7 +241,7 @@ namespace Cowboy.Sockets
             catch (Exception ex) // catch exceptions then log then re-throw
             {
                 _log.Error(ex.Message, ex);
-                await Close(true); // user side handle tcp connection error occurred
+                await Close(true); // handle tcp connection error occurred
                 throw;
             }
         }
