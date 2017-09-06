@@ -198,7 +198,7 @@ namespace Cowboy.Sockets
 
             try
             {
-                Clean(); // forcefully clean all things
+                Clean(); // force to clean
 
                 _socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
                 SetSocketOptions();

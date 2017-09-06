@@ -175,7 +175,7 @@ namespace Cowboy.Sockets
 
             try
             {
-                Clean(); // forcefully clean all things
+                Clean(); // force to clean
 
                 _tcpClient = _localEndPoint != null ?
                     new TcpClient(_localEndPoint) :

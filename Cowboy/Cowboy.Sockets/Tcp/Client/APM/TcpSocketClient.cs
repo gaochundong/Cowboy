@@ -112,7 +112,7 @@ namespace Cowboy.Sockets
                 throw new InvalidOperationException("This tcp socket client is in invalid state when connecting.");
             }
 
-            Clean(); // forcefully clean all things
+            Clean(); // force to clean
 
             _tcpClient = _localEndPoint != null ?
                 new TcpClient(_localEndPoint) :
