@@ -26,7 +26,7 @@ namespace Cowboy.Sockets.TestTcpSocketSaeaClient
                 //config.FrameBuilder = new LengthFieldBasedFrameBuilder();
 
                 IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 22222);
-                _client = new TcpSocketSaeaClient(remoteEP, new SimpleMessageDispatcher(), config);
+                _client = new TcpSocketSaeaClient(remoteEP, new SimpleEventDispatcher(), config);
                 _client.Connect().Wait();
 
                 Console.WriteLine("TCP client has connected to server [{0}].", remoteEP);

@@ -2,7 +2,7 @@
 
 namespace Cowboy.Sockets
 {
-    public interface ITcpSocketSaeaServerMessageDispatcher
+    public interface ITcpSocketSaeaServerEventDispatcher
     {
         Task OnSessionStarted(TcpSocketSaeaSession session);
         Task OnSessionDataReceived(TcpSocketSaeaSession session, byte[] data, int offset, int count);

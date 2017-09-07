@@ -3,17 +3,17 @@ using System.Threading.Tasks;
 
 namespace Cowboy.Sockets
 {
-    internal class InternalAsyncTcpSocketServerMessageDispatcherImplementation : IAsyncTcpSocketServerMessageDispatcher
+    internal class DefaultAsyncTcpSocketServerEventDispatcher : IAsyncTcpSocketServerEventDispatcher
     {
         private Func<AsyncTcpSocketSession, byte[], int, int, Task> _onSessionDataReceived;
         private Func<AsyncTcpSocketSession, Task> _onSessionStarted;
         private Func<AsyncTcpSocketSession, Task> _onSessionClosed;
 
-        public InternalAsyncTcpSocketServerMessageDispatcherImplementation()
+        public DefaultAsyncTcpSocketServerEventDispatcher()
         {
         }
 
-        public InternalAsyncTcpSocketServerMessageDispatcherImplementation(
+        public DefaultAsyncTcpSocketServerEventDispatcher(
             Func<AsyncTcpSocketSession, byte[], int, int, Task> onSessionDataReceived,
             Func<AsyncTcpSocketSession, Task> onSessionStarted,
             Func<AsyncTcpSocketSession, Task> onSessionClosed)

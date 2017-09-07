@@ -5,7 +5,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using Cowboy.Buffer;
 using Logrila.Logging;
 
 namespace Cowboy.Sockets
@@ -17,7 +16,7 @@ namespace Cowboy.Sockets
         private static readonly ILog _log = Logger.Get<AsyncTcpSocketServer>();
         private TcpListener _listener;
         private readonly ConcurrentDictionary<string, AsyncTcpSocketSession> _sessions = new ConcurrentDictionary<string, AsyncTcpSocketSession>();
-        private readonly IAsyncTcpSocketServerMessageDispatcher _dispatcher;
+        private readonly IAsyncTcpSocketServerEventDispatcher _dispatcher;
         private readonly AsyncTcpSocketServerConfiguration _configuration;
 
         private int _state;
@@ -29,17 +28,17 @@ namespace Cowboy.Sockets
 
         #region Constructors
 
-        public AsyncTcpSocketServer(int listenedPort, IAsyncTcpSocketServerMessageDispatcher dispatcher, AsyncTcpSocketServerConfiguration configuration = null)
+        public AsyncTcpSocketServer(int listenedPort, IAsyncTcpSocketServerEventDispatcher dispatcher, AsyncTcpSocketServerConfiguration configuration = null)
             : this(IPAddress.Any, listenedPort, dispatcher, configuration)
         {
         }
 
-        public AsyncTcpSocketServer(IPAddress listenedAddress, int listenedPort, IAsyncTcpSocketServerMessageDispatcher dispatcher, AsyncTcpSocketServerConfiguration configuration = null)
+        public AsyncTcpSocketServer(IPAddress listenedAddress, int listenedPort, IAsyncTcpSocketServerEventDispatcher dispatcher, AsyncTcpSocketServerConfiguration configuration = null)
             : this(new IPEndPoint(listenedAddress, listenedPort), dispatcher, configuration)
         {
         }
 
-        public AsyncTcpSocketServer(IPEndPoint listenedEndPoint, IAsyncTcpSocketServerMessageDispatcher dispatcher, AsyncTcpSocketServerConfiguration configuration = null)
+        public AsyncTcpSocketServer(IPEndPoint listenedEndPoint, IAsyncTcpSocketServerEventDispatcher dispatcher, AsyncTcpSocketServerConfiguration configuration = null)
         {
             if (listenedEndPoint == null)
                 throw new ArgumentNullException("listenedEndPoint");
@@ -83,7 +82,7 @@ namespace Cowboy.Sockets
             Func<AsyncTcpSocketSession, Task> onSessionClosed = null,
             AsyncTcpSocketServerConfiguration configuration = null)
             : this(listenedEndPoint,
-                  new InternalAsyncTcpSocketServerMessageDispatcherImplementation(onSessionDataReceived, onSessionStarted, onSessionClosed),
+                  new DefaultAsyncTcpSocketServerEventDispatcher(onSessionDataReceived, onSessionStarted, onSessionClosed),
                   configuration)
         {
         }

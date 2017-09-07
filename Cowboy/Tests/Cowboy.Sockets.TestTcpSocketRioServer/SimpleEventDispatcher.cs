@@ -5,7 +5,7 @@ using Cowboy.Sockets.Experimental;
 
 namespace Cowboy.Sockets.TestTcpSocketRioServer
 {
-    public class SimpleMessageDispatcher : ITcpSocketRioServerMessageDispatcher
+    public class SimpleEventDispatcher : ITcpSocketRioServerEventDispatcher
     {
         public async Task OnSessionStarted(TcpSocketRioSession session)
         {

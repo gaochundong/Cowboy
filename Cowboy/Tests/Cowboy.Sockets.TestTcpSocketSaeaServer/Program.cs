@@ -24,7 +24,7 @@ namespace Cowboy.Sockets.TestTcpSocketSaeaServer
                 //config.FrameBuilder = new LengthPrefixedFrameBuilder();
                 //config.FrameBuilder = new LengthFieldBasedFrameBuilder();
 
-                _server = new TcpSocketSaeaServer(22222, new SimpleMessageDispatcher(), config);
+                _server = new TcpSocketSaeaServer(22222, new SimpleEventDispatcher(), config);
                 _server.Listen();
 
                 Console.WriteLine("TCP server has been started on [{0}].", _server.ListenedEndPoint);

@@ -9,7 +9,7 @@
     <licenseUrl>https://github.com/gaochundong/Cowboy/blob/master/LICENSE</licenseUrl>
     <projectUrl>https://github.com/gaochundong/Cowboy</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>Cowboy is a C# library for building sockets based services.</description>
+    <description>Cowboy.Sockets is a C# library for building sockets based services.</description>
     <copyright>Copyright © 2015-2017 Dennis Gao.</copyright>
     <dependencies>
       <dependency id="Logrila.Logging" version="1.0.3" />

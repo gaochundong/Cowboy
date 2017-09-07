@@ -8,6 +8,7 @@ namespace Cowboy.Sockets
         private readonly object _sync = new object();
         private readonly SocketAsyncEventArgs _saea = new SocketAsyncEventArgs();
         private readonly SaeaAwaiter _awaiter;
+        private bool _shouldCaptureContext;
         private bool _isDisposed;
 
         public SaeaAwaitable()
@@ -28,6 +29,25 @@ namespace Cowboy.Sockets
         public SaeaAwaiter GetAwaiter()
         {
             return _awaiter;
+        }
+
+        public bool ShouldCaptureContext
+        {
+            get
+            {
+                return _shouldCaptureContext;
+            }
+            set
+            {
+                lock (_awaiter.SyncRoot)
+                {
+                    if (_awaiter.IsCompleted)
+                        _shouldCaptureContext = value;
+                    else
+                        throw new InvalidOperationException(
+                            "A socket operation is already in progress using the same awaitable SAEA.");
+                }
+            }
         }
 
         public bool IsDisposed

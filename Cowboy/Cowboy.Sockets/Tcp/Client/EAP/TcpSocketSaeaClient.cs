@@ -15,7 +15,7 @@ namespace Cowboy.Sockets
 
         private static readonly ILog _log = Logger.Get<TcpSocketSaeaClient>();
         private static readonly byte[] EmptyArray = new byte[0];
-        private readonly ITcpSocketSaeaClientMessageDispatcher _dispatcher;
+        private readonly ITcpSocketSaeaClientEventDispatcher _dispatcher;
         private readonly TcpSocketSaeaClientConfiguration _configuration;
         private readonly IPEndPoint _remoteEndPoint;
         private readonly IPEndPoint _localEndPoint;
@@ -34,27 +34,27 @@ namespace Cowboy.Sockets
 
         #region Constructors
 
-        public TcpSocketSaeaClient(IPAddress remoteAddress, int remotePort, IPAddress localAddress, int localPort, ITcpSocketSaeaClientMessageDispatcher dispatcher, TcpSocketSaeaClientConfiguration configuration = null)
+        public TcpSocketSaeaClient(IPAddress remoteAddress, int remotePort, IPAddress localAddress, int localPort, ITcpSocketSaeaClientEventDispatcher dispatcher, TcpSocketSaeaClientConfiguration configuration = null)
             : this(new IPEndPoint(remoteAddress, remotePort), new IPEndPoint(localAddress, localPort), dispatcher, configuration)
         {
         }
 
-        public TcpSocketSaeaClient(IPAddress remoteAddress, int remotePort, IPEndPoint localEP, ITcpSocketSaeaClientMessageDispatcher dispatcher, TcpSocketSaeaClientConfiguration configuration = null)
+        public TcpSocketSaeaClient(IPAddress remoteAddress, int remotePort, IPEndPoint localEP, ITcpSocketSaeaClientEventDispatcher dispatcher, TcpSocketSaeaClientConfiguration configuration = null)
             : this(new IPEndPoint(remoteAddress, remotePort), localEP, dispatcher, configuration)
         {
         }
 
-        public TcpSocketSaeaClient(IPAddress remoteAddress, int remotePort, ITcpSocketSaeaClientMessageDispatcher dispatcher, TcpSocketSaeaClientConfiguration configuration = null)
+        public TcpSocketSaeaClient(IPAddress remoteAddress, int remotePort, ITcpSocketSaeaClientEventDispatcher dispatcher, TcpSocketSaeaClientConfiguration configuration = null)
             : this(new IPEndPoint(remoteAddress, remotePort), dispatcher, configuration)
         {
         }
 
-        public TcpSocketSaeaClient(IPEndPoint remoteEP, ITcpSocketSaeaClientMessageDispatcher dispatcher, TcpSocketSaeaClientConfiguration configuration = null)
+        public TcpSocketSaeaClient(IPEndPoint remoteEP, ITcpSocketSaeaClientEventDispatcher dispatcher, TcpSocketSaeaClientConfiguration configuration = null)
             : this(remoteEP, null, dispatcher, configuration)
         {
         }
 
-        public TcpSocketSaeaClient(IPEndPoint remoteEP, IPEndPoint localEP, ITcpSocketSaeaClientMessageDispatcher dispatcher, TcpSocketSaeaClientConfiguration configuration = null)
+        public TcpSocketSaeaClient(IPEndPoint remoteEP, IPEndPoint localEP, ITcpSocketSaeaClientEventDispatcher dispatcher, TcpSocketSaeaClientConfiguration configuration = null)
         {
             if (remoteEP == null)
                 throw new ArgumentNullException("remoteEP");
@@ -120,7 +120,7 @@ namespace Cowboy.Sockets
             Func<TcpSocketSaeaClient, Task> onServerDisconnected = null,
             TcpSocketSaeaClientConfiguration configuration = null)
             : this(remoteEP, localEP,
-                 new InternalTcpSocketSaeaClientMessageDispatcherImplementation(onServerDataReceived, onServerConnected, onServerDisconnected),
+                 new DefaultTcpSocketSaeaClientEventDispatcher(onServerDataReceived, onServerConnected, onServerDisconnected),
                  configuration)
         {
         }

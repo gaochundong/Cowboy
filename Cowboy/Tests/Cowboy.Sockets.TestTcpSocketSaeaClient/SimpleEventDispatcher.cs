@@ -2,17 +2,17 @@
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Cowboy.Sockets.TestAsyncTcpSocketClient
+namespace Cowboy.Sockets.TestTcpSocketSaeaClient
 {
-    public class SimpleMessageDispatcher : IAsyncTcpSocketClientMessageDispatcher
+    public class SimpleEventDispatcher : ITcpSocketSaeaClientEventDispatcher
     {
-        public async Task OnServerConnected(AsyncTcpSocketClient client)
+        public async Task OnServerConnected(TcpSocketSaeaClient client)
         {
             Console.WriteLine(string.Format("TCP server {0} has connected.", client.RemoteEndPoint));
             await Task.CompletedTask;
         }
 
-        public async Task OnServerDataReceived(AsyncTcpSocketClient client, byte[] data, int offset, int count)
+        public async Task OnServerDataReceived(TcpSocketSaeaClient client, byte[] data, int offset, int count)
         {
             var text = Encoding.UTF8.GetString(data, offset, count);
             Console.Write(string.Format("Server : {0} --> ", client.RemoteEndPoint));
@@ -28,7 +28,7 @@ namespace Cowboy.Sockets.TestAsyncTcpSocketClient
             await Task.CompletedTask;
         }
 
-        public async Task OnServerDisconnected(AsyncTcpSocketClient client)
+        public async Task OnServerDisconnected(TcpSocketSaeaClient client)
         {
             Console.WriteLine(string.Format("TCP server {0} has disconnected.", client.RemoteEndPoint));
             await Task.CompletedTask;

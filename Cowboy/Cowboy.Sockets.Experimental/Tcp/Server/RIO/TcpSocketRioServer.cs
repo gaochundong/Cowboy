@@ -6,7 +6,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using Cowboy.Buffer;
 using Logrila.Logging;
 using RioSharp;
 
@@ -20,7 +19,7 @@ namespace Cowboy.Sockets.Experimental
         private static readonly byte[] EmptyArray = new byte[0];
         private readonly ConcurrentDictionary<string, TcpSocketRioSession> _sessions = new ConcurrentDictionary<string, TcpSocketRioSession>();
         private readonly TcpSocketRioServerConfiguration _configuration;
-        private readonly ITcpSocketRioServerMessageDispatcher _dispatcher;
+        private readonly ITcpSocketRioServerEventDispatcher _dispatcher;
 
         private int _state;
         private const int _none = 0;
@@ -35,17 +34,17 @@ namespace Cowboy.Sockets.Experimental
 
         #region Constructors
 
-        public TcpSocketRioServer(int listenedPort, ITcpSocketRioServerMessageDispatcher dispatcher, TcpSocketRioServerConfiguration configuration = null)
+        public TcpSocketRioServer(int listenedPort, ITcpSocketRioServerEventDispatcher dispatcher, TcpSocketRioServerConfiguration configuration = null)
             : this(IPAddress.Any, listenedPort, dispatcher, configuration)
         {
         }
 
-        public TcpSocketRioServer(IPAddress listenedAddress, int listenedPort, ITcpSocketRioServerMessageDispatcher dispatcher, TcpSocketRioServerConfiguration configuration = null)
+        public TcpSocketRioServer(IPAddress listenedAddress, int listenedPort, ITcpSocketRioServerEventDispatcher dispatcher, TcpSocketRioServerConfiguration configuration = null)
             : this(new IPEndPoint(listenedAddress, listenedPort), dispatcher, configuration)
         {
         }
 
-        public TcpSocketRioServer(IPEndPoint listenedEndPoint, ITcpSocketRioServerMessageDispatcher dispatcher, TcpSocketRioServerConfiguration configuration = null)
+        public TcpSocketRioServer(IPEndPoint listenedEndPoint, ITcpSocketRioServerEventDispatcher dispatcher, TcpSocketRioServerConfiguration configuration = null)
         {
             if (listenedEndPoint == null)
                 throw new ArgumentNullException("listenedEndPoint");
@@ -91,7 +90,7 @@ namespace Cowboy.Sockets.Experimental
             Func<TcpSocketRioSession, Task> onSessionClosed = null,
             TcpSocketRioServerConfiguration configuration = null)
             : this(listenedEndPoint,
-                  new InternalTcpSocketRioServerMessageDispatcherImplementation(onSessionDataReceived, onSessionStarted, onSessionClosed),
+                  new DefaultTcpSocketRioServerEventDispatcher(onSessionDataReceived, onSessionStarted, onSessionClosed),
                   configuration)
         {
         }

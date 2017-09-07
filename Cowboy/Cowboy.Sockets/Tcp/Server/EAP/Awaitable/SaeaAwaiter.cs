@@ -10,32 +10,48 @@ namespace Cowboy.Sockets
     {
         private static readonly Action SENTINEL = delegate { };
         private readonly SaeaAwaitable _awaitable;
-        private readonly object _sync = new object();
+        private readonly object _syncRoot = new object();
+        private SynchronizationContext _syncContext;
         private Action _continuation;
         private bool _isCompleted = true;
 
         public SaeaAwaiter(SaeaAwaitable awaitable)
         {
             _awaitable = awaitable;
-            _awaitable.Saea.Completed += delegate
-            {
-                var continuation = _continuation ?? Interlocked.CompareExchange(ref _continuation, SENTINEL, null);
-
-                if (continuation != null)
-                {
-                    Complete();
-
-                    if (continuation != SENTINEL)
-                    {
-                        Task.Factory.StartNew(continuation, TaskCreationOptions.PreferFairness);
-                    }
-                }
-            };
+            _awaitable.Saea.Completed += OnSaeaCompleted;
         }
 
-        public object SyncRoot
+        private void OnSaeaCompleted(object sender, SocketAsyncEventArgs args)
         {
-            get { return _sync; }
+            var continuation = _continuation ?? Interlocked.CompareExchange(ref _continuation, SENTINEL, null);
+
+            if (continuation != null)
+            {
+                var syncContext = _awaitable.ShouldCaptureContext
+                    ? this.SyncContext
+                    : null;
+
+                this.Complete();
+
+                if (continuation != SENTINEL)
+                {
+                    if (syncContext != null)
+                        syncContext.Post(s => continuation.Invoke(), null);
+                    else
+                        continuation.Invoke();
+                }
+            }
+        }
+
+        internal object SyncRoot
+        {
+            get { return _syncRoot; }
+        }
+
+        internal SynchronizationContext SyncContext
+        {
+            get { return _syncContext; }
+            set { _syncContext = value; }
         }
 
         public SocketError GetResult()
@@ -48,9 +64,16 @@ namespace Cowboy.Sockets
             if (_continuation == SENTINEL
                 || Interlocked.CompareExchange(ref _continuation, continuation, null) == SENTINEL)
             {
-                Complete();
+                this.Complete();
 
-                Task.Factory.StartNew(continuation, TaskCreationOptions.PreferFairness);
+                if (!_awaitable.ShouldCaptureContext)
+                    Task.Run(continuation);
+                else
+                    Task.Factory.StartNew(
+                        continuation,
+                        CancellationToken.None,
+                        TaskCreationOptions.DenyChildAttach,
+                        TaskScheduler.FromCurrentSynchronizationContext());
             }
         }
 
@@ -63,6 +86,9 @@ namespace Cowboy.Sockets
         {
             if (!IsCompleted)
             {
+                if (_awaitable.ShouldCaptureContext)
+                    _syncContext = null;
+
                 _isCompleted = true;
             }
         }

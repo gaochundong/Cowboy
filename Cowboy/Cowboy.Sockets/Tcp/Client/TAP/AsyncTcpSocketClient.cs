@@ -17,7 +17,7 @@ namespace Cowboy.Sockets
 
         private static readonly ILog _log = Logger.Get<AsyncTcpSocketClient>();
         private TcpClient _tcpClient;
-        private readonly IAsyncTcpSocketClientMessageDispatcher _dispatcher;
+        private readonly IAsyncTcpSocketClientEventDispatcher _dispatcher;
         private readonly AsyncTcpSocketClientConfiguration _configuration;
         private readonly IPEndPoint _remoteEndPoint;
         private readonly IPEndPoint _localEndPoint;
@@ -35,27 +35,27 @@ namespace Cowboy.Sockets
 
         #region Constructors
 
-        public AsyncTcpSocketClient(IPAddress remoteAddress, int remotePort, IPAddress localAddress, int localPort, IAsyncTcpSocketClientMessageDispatcher dispatcher, AsyncTcpSocketClientConfiguration configuration = null)
+        public AsyncTcpSocketClient(IPAddress remoteAddress, int remotePort, IPAddress localAddress, int localPort, IAsyncTcpSocketClientEventDispatcher dispatcher, AsyncTcpSocketClientConfiguration configuration = null)
             : this(new IPEndPoint(remoteAddress, remotePort), new IPEndPoint(localAddress, localPort), dispatcher, configuration)
         {
         }
 
-        public AsyncTcpSocketClient(IPAddress remoteAddress, int remotePort, IPEndPoint localEP, IAsyncTcpSocketClientMessageDispatcher dispatcher, AsyncTcpSocketClientConfiguration configuration = null)
+        public AsyncTcpSocketClient(IPAddress remoteAddress, int remotePort, IPEndPoint localEP, IAsyncTcpSocketClientEventDispatcher dispatcher, AsyncTcpSocketClientConfiguration configuration = null)
             : this(new IPEndPoint(remoteAddress, remotePort), localEP, dispatcher, configuration)
         {
         }
 
-        public AsyncTcpSocketClient(IPAddress remoteAddress, int remotePort, IAsyncTcpSocketClientMessageDispatcher dispatcher, AsyncTcpSocketClientConfiguration configuration = null)
+        public AsyncTcpSocketClient(IPAddress remoteAddress, int remotePort, IAsyncTcpSocketClientEventDispatcher dispatcher, AsyncTcpSocketClientConfiguration configuration = null)
             : this(new IPEndPoint(remoteAddress, remotePort), dispatcher, configuration)
         {
         }
 
-        public AsyncTcpSocketClient(IPEndPoint remoteEP, IAsyncTcpSocketClientMessageDispatcher dispatcher, AsyncTcpSocketClientConfiguration configuration = null)
+        public AsyncTcpSocketClient(IPEndPoint remoteEP, IAsyncTcpSocketClientEventDispatcher dispatcher, AsyncTcpSocketClientConfiguration configuration = null)
             : this(remoteEP, null, dispatcher, configuration)
         {
         }
 
-        public AsyncTcpSocketClient(IPEndPoint remoteEP, IPEndPoint localEP, IAsyncTcpSocketClientMessageDispatcher dispatcher, AsyncTcpSocketClientConfiguration configuration = null)
+        public AsyncTcpSocketClient(IPEndPoint remoteEP, IPEndPoint localEP, IAsyncTcpSocketClientEventDispatcher dispatcher, AsyncTcpSocketClientConfiguration configuration = null)
         {
             if (remoteEP == null)
                 throw new ArgumentNullException("remoteEP");
@@ -119,7 +119,7 @@ namespace Cowboy.Sockets
             Func<AsyncTcpSocketClient, Task> onServerDisconnected = null,
             AsyncTcpSocketClientConfiguration configuration = null)
             : this(remoteEP, localEP,
-                 new InternalAsyncTcpSocketClientMessageDispatcherImplementation(onServerDataReceived, onServerConnected, onServerDisconnected),
+                 new DefaultAsyncTcpSocketClientEventDispatcher(onServerDataReceived, onServerConnected, onServerDisconnected),
                  configuration)
         {
         }

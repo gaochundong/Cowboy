@@ -44,8 +44,8 @@
       <Link>SolutionVersion.cs</Link>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Tcp\Server\RIO\InternalTcpSocketRioServerMessageDispatcherImplementation.cs" />
-    <Compile Include="Tcp\Server\RIO\ITcpSocketRioServerMessageDispatcher.cs" />
+    <Compile Include="Tcp\Server\RIO\DefaultTcpSocketRioServerEventDispatcher.cs" />
+    <Compile Include="Tcp\Server\RIO\ITcpSocketRioServerEventDispatcher.cs" />
     <Compile Include="Tcp\Server\RIO\RioSharp\Kernel32.cs" />
     <Compile Include="Tcp\Server\RIO\RioSharp\RioBufferSegment.cs" />
     <Compile Include="Tcp\Server\RIO\RioSharp\RioConnectionlessSocket.cs" />

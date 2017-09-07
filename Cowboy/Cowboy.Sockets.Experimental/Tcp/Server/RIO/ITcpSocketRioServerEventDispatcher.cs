@@ -2,7 +2,7 @@
 
 namespace Cowboy.Sockets.Experimental
 {
-    public interface ITcpSocketRioServerMessageDispatcher
+    public interface ITcpSocketRioServerEventDispatcher
     {
         Task OnSessionStarted(TcpSocketRioSession session);
         Task OnSessionDataReceived(TcpSocketRioSession session, byte[] data, int offset, int count);

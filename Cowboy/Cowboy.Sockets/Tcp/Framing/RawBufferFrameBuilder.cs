@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Cowboy.Sockets
+﻿namespace Cowboy.Sockets
 {
     public sealed class RawBufferFrameBuilder : FrameBuilder
     {

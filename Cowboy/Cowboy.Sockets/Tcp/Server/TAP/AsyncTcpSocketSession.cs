@@ -19,7 +19,7 @@ namespace Cowboy.Sockets
         private TcpClient _tcpClient;
         private readonly AsyncTcpSocketServerConfiguration _configuration;
         private readonly ISegmentBufferManager _bufferManager;
-        private readonly IAsyncTcpSocketServerMessageDispatcher _dispatcher;
+        private readonly IAsyncTcpSocketServerEventDispatcher _dispatcher;
         private readonly AsyncTcpSocketServer _server;
         private readonly string _sessionKey;
         private Stream _stream;
@@ -42,7 +42,7 @@ namespace Cowboy.Sockets
             TcpClient tcpClient,
             AsyncTcpSocketServerConfiguration configuration,
             ISegmentBufferManager bufferManager,
-            IAsyncTcpSocketServerMessageDispatcher dispatcher,
+            IAsyncTcpSocketServerEventDispatcher dispatcher,
             AsyncTcpSocketServer server)
         {
             if (tcpClient == null)

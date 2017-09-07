@@ -5,7 +5,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using Cowboy.Buffer;
 using Logrila.Logging;
 
 namespace Cowboy.Sockets
@@ -18,7 +17,7 @@ namespace Cowboy.Sockets
         private static readonly byte[] EmptyArray = new byte[0];
         private readonly ConcurrentDictionary<string, TcpSocketSaeaSession> _sessions = new ConcurrentDictionary<string, TcpSocketSaeaSession>();
         private readonly TcpSocketSaeaServerConfiguration _configuration;
-        private readonly ITcpSocketSaeaServerMessageDispatcher _dispatcher;
+        private readonly ITcpSocketSaeaServerEventDispatcher _dispatcher;
 
         private int _state;
         private const int _none = 0;
@@ -34,17 +33,17 @@ namespace Cowboy.Sockets
 
         #region Constructors
 
-        public TcpSocketSaeaServer(int listenedPort, ITcpSocketSaeaServerMessageDispatcher dispatcher, TcpSocketSaeaServerConfiguration configuration = null)
+        public TcpSocketSaeaServer(int listenedPort, ITcpSocketSaeaServerEventDispatcher dispatcher, TcpSocketSaeaServerConfiguration configuration = null)
             : this(IPAddress.Any, listenedPort, dispatcher, configuration)
         {
         }
 
-        public TcpSocketSaeaServer(IPAddress listenedAddress, int listenedPort, ITcpSocketSaeaServerMessageDispatcher dispatcher, TcpSocketSaeaServerConfiguration configuration = null)
+        public TcpSocketSaeaServer(IPAddress listenedAddress, int listenedPort, ITcpSocketSaeaServerEventDispatcher dispatcher, TcpSocketSaeaServerConfiguration configuration = null)
             : this(new IPEndPoint(listenedAddress, listenedPort), dispatcher, configuration)
         {
         }
 
-        public TcpSocketSaeaServer(IPEndPoint listenedEndPoint, ITcpSocketSaeaServerMessageDispatcher dispatcher, TcpSocketSaeaServerConfiguration configuration = null)
+        public TcpSocketSaeaServer(IPEndPoint listenedEndPoint, ITcpSocketSaeaServerEventDispatcher dispatcher, TcpSocketSaeaServerConfiguration configuration = null)
         {
             if (listenedEndPoint == null)
                 throw new ArgumentNullException("listenedEndPoint");
@@ -90,7 +89,7 @@ namespace Cowboy.Sockets
             Func<TcpSocketSaeaSession, Task> onSessionClosed = null,
             TcpSocketSaeaServerConfiguration configuration = null)
             : this(listenedEndPoint,
-                  new InternalTcpSocketSaeaServerMessageDispatcherImplementation(onSessionDataReceived, onSessionStarted, onSessionClosed),
+                  new DefaultTcpSocketSaeaServerEventDispatcher(onSessionDataReceived, onSessionStarted, onSessionClosed),
                   configuration)
         {
         }

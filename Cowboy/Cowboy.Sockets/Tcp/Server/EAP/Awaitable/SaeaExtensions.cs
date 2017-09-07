@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net.Sockets;
+using System.Threading;
 
 namespace Cowboy.Sockets
 {
@@ -50,9 +51,11 @@ namespace Cowboy.Sockets
             {
                 if (!awaiter.IsCompleted)
                     throw new InvalidOperationException(
-                        "A socket operation is already in progress using the same await-able SAEA.");
+                        "A socket operation is already in progress using the same awaitable SAEA.");
 
                 awaiter.Reset();
+                if (awaitable.ShouldCaptureContext)
+                    awaiter.SyncContext = SynchronizationContext.Current;
             }
 
             try

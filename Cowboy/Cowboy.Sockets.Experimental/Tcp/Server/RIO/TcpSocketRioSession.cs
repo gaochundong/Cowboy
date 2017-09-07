@@ -18,7 +18,7 @@ namespace Cowboy.Sockets.Experimental
         private readonly object _opsLock = new object();
         private readonly TcpSocketRioServerConfiguration _configuration;
         private readonly ISegmentBufferManager _bufferManager;
-        private readonly ITcpSocketRioServerMessageDispatcher _dispatcher;
+        private readonly ITcpSocketRioServerEventDispatcher _dispatcher;
         private readonly TcpSocketRioServer _server;
         private RioSocket _socket;
         private Stream _stream;
@@ -40,7 +40,7 @@ namespace Cowboy.Sockets.Experimental
             TcpSocketRioServerConfiguration configuration,
             ISegmentBufferManager bufferManager,
             RioSocket socket,
-            ITcpSocketRioServerMessageDispatcher dispatcher,
+            ITcpSocketRioServerEventDispatcher dispatcher,
             TcpSocketRioServer server)
         {
             if (configuration == null)

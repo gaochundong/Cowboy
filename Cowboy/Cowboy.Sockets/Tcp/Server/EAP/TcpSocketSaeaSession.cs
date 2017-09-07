@@ -18,7 +18,7 @@ namespace Cowboy.Sockets
         private readonly TcpSocketSaeaServerConfiguration _configuration;
         private readonly ISegmentBufferManager _bufferManager;
         private readonly SaeaPool _saeaPool;
-        private readonly ITcpSocketSaeaServerMessageDispatcher _dispatcher;
+        private readonly ITcpSocketSaeaServerEventDispatcher _dispatcher;
         private readonly TcpSocketSaeaServer _server;
         private Socket _socket;
         private string _sessionKey;
@@ -41,7 +41,7 @@ namespace Cowboy.Sockets
             TcpSocketSaeaServerConfiguration configuration,
             ISegmentBufferManager bufferManager,
             SaeaPool saeaPool,
-            ITcpSocketSaeaServerMessageDispatcher dispatcher,
+            ITcpSocketSaeaServerEventDispatcher dispatcher,
             TcpSocketSaeaServer server)
         {
             if (configuration == null)

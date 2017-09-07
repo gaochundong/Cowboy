@@ -25,7 +25,7 @@ namespace Cowboy.Sockets.TestTcpSocketRioServer
                 //config.FrameBuilder = new LengthPrefixedFrameBuilder();
                 //config.FrameBuilder = new LengthFieldBasedFrameBuilder();
 
-                _server = new TcpSocketRioServer(22222, new SimpleMessageDispatcher(), config);
+                _server = new TcpSocketRioServer(22222, new SimpleEventDispatcher(), config);
                 _server.Listen();
 
                 Console.WriteLine("TCP server has been started on [{0}].", _server.ListenedEndPoint);

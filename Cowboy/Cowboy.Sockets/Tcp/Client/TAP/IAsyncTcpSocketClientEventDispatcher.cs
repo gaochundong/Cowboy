@@ -2,7 +2,7 @@
 
 namespace Cowboy.Sockets
 {
-    public interface IAsyncTcpSocketClientMessageDispatcher
+    public interface IAsyncTcpSocketClientEventDispatcher
     {
         Task OnServerConnected(AsyncTcpSocketClient client);
         Task OnServerDataReceived(AsyncTcpSocketClient client, byte[] data, int offset, int count);

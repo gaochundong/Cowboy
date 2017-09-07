@@ -3,17 +3,17 @@ using System.Threading.Tasks;
 
 namespace Cowboy.Sockets.Experimental
 {
-    internal class InternalTcpSocketRioServerMessageDispatcherImplementation : ITcpSocketRioServerMessageDispatcher
+    internal class DefaultTcpSocketRioServerEventDispatcher : ITcpSocketRioServerEventDispatcher
     {
         private Func<TcpSocketRioSession, byte[], int, int, Task> _onSessionDataReceived;
         private Func<TcpSocketRioSession, Task> _onSessionStarted;
         private Func<TcpSocketRioSession, Task> _onSessionClosed;
 
-        public InternalTcpSocketRioServerMessageDispatcherImplementation()
+        public DefaultTcpSocketRioServerEventDispatcher()
         {
         }
 
-        public InternalTcpSocketRioServerMessageDispatcherImplementation(
+        public DefaultTcpSocketRioServerEventDispatcher(
             Func<TcpSocketRioSession, byte[], int, int, Task> onSessionDataReceived,
             Func<TcpSocketRioSession, Task> onSessionStarted,
             Func<TcpSocketRioSession, Task> onSessionClosed)
