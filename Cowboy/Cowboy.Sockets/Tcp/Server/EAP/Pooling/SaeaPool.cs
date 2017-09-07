@@ -29,10 +29,7 @@ namespace Cowboy.Sockets
 
         public override bool Return(SaeaAwaitable saea)
         {
-            if (_saeaCleaner != null)
-            {
-                _saeaCleaner(saea);
-            }
+            _saeaCleaner(saea);
 
             if (!base.Return(saea))
             {

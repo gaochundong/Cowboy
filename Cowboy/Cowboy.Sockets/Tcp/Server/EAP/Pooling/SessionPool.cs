@@ -29,10 +29,7 @@ namespace Cowboy.Sockets
 
         public override bool Return(TcpSocketSaeaSession session)
         {
-            if (_sessionCleaner != null)
-            {
-                _sessionCleaner(session);
-            }
+            _sessionCleaner(session);
 
             if (!base.Return(session))
             {
