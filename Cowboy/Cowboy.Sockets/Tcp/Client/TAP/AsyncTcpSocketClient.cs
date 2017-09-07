@@ -230,7 +230,7 @@ namespace Cowboy.Sockets
                     {
                         await Process();
                     },
-                    TaskCreationOptions.LongRunning)
+                    TaskCreationOptions.None)
                     .Forget();
                 }
                 else

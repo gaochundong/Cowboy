@@ -274,7 +274,7 @@ namespace Cowboy.Sockets
                         {
                             await Process(acceptedSocket);
                         },
-                        TaskCreationOptions.LongRunning)
+                        TaskCreationOptions.None)
                         .Forget();
                     }
                     else

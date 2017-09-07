@@ -111,7 +111,7 @@ namespace Cowboy.Sockets.Experimental
                 {
                     await Process(acceptedSocket);
                 },
-                TaskCreationOptions.LongRunning)
+                TaskCreationOptions.None)
                 .Forget();
             };
         }

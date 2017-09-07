@@ -183,7 +183,7 @@ namespace Cowboy.Sockets
                     {
                         await Process(tcpClient);
                     },
-                    TaskCreationOptions.LongRunning)
+                    TaskCreationOptions.None)
                     .Forget();
                 }
             }
