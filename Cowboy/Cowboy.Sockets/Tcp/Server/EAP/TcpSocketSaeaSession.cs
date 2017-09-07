@@ -221,6 +221,8 @@ namespace Cowboy.Sockets
 
         private async Task Process()
         {
+            var saea = _saeaPool.Take();
+
             try
             {
                 int frameLength;
@@ -229,7 +231,6 @@ namespace Cowboy.Sockets
                 int payloadCount;
                 int consumedLength = 0;
 
-                var saea = _saeaPool.Take();
                 saea.Saea.SetBuffer(_receiveBuffer.Array, _receiveBuffer.Offset + _receiveBufferOffset, _receiveBuffer.Count - _receiveBufferOffset);
 
                 while (State == TcpSocketConnectionState.Connected)
@@ -291,6 +292,7 @@ namespace Cowboy.Sockets
             }
             finally
             {
+                _saeaPool.Return(saea);
                 await Close(true); // read async buffer returned, remote notifies closed
             }
         }

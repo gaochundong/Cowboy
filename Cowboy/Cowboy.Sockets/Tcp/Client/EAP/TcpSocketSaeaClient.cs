@@ -127,7 +127,7 @@ namespace Cowboy.Sockets
 
         private void Initialize()
         {
-            _saeaPool = new SaeaPool(1024, int.MaxValue,
+            _saeaPool = new SaeaPool(256, int.MaxValue,
                 () =>
                 {
                     var saea = new SaeaAwaitable();
@@ -196,10 +196,12 @@ namespace Cowboy.Sockets
                 throw new InvalidOperationException("This tcp socket client is in invalid state when connecting.");
             }
 
+            Clean(); // force to clean
+
+            var saea = _saeaPool.Take();
+
             try
             {
-                Clean(); // force to clean
-
                 _socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
                 SetSocketOptions();
 
@@ -208,7 +210,6 @@ namespace Cowboy.Sockets
                     _socket.Bind(_localEndPoint);
                 }
 
-                var saea = _saeaPool.Take();
                 saea.Saea.RemoteEndPoint = _remoteEndPoint;
 
                 var socketError = await _socket.ConnectAsync(saea);
@@ -262,10 +263,16 @@ namespace Cowboy.Sockets
                 await Close(true); // handle tcp connection error occurred
                 throw;
             }
+            finally
+            {
+                _saeaPool.Return(saea);
+            }
         }
 
         private async Task Process()
         {
+            var saea = _saeaPool.Take();
+
             try
             {
                 int frameLength;
@@ -274,7 +281,6 @@ namespace Cowboy.Sockets
                 int payloadCount;
                 int consumedLength = 0;
 
-                var saea = _saeaPool.Take();
                 saea.Saea.SetBuffer(_receiveBuffer.Array, _receiveBuffer.Offset + _receiveBufferOffset, _receiveBuffer.Count - _receiveBufferOffset);
 
                 while (State == TcpSocketConnectionState.Connected)
@@ -333,7 +339,8 @@ namespace Cowboy.Sockets
             }
             finally
             {
-                await Close(true); // read async buffer returned, remote notifies closed
+                _saeaPool.Return(saea);
+                await Close(true); // read async buffer returned, remote notification closed
             }
         }
 
