@@ -29,6 +29,9 @@ namespace Cowboy.Sockets
         private SaeaPool _handleSaeaPool;
         private SessionPool _sessionPool;
 
+        private readonly object _disposeLock = new object();
+        private bool _isDisposed;
+
         #endregion
 
         #region Constructors
@@ -96,7 +99,7 @@ namespace Cowboy.Sockets
 
         private void Initialize()
         {
-            _acceptSaeaPool = new SaeaPool(16, 32,
+            _acceptSaeaPool = new SaeaPool(
                 () =>
                 {
                     var saea = new SaeaAwaitable();
@@ -115,8 +118,9 @@ namespace Cowboy.Sockets
                     {
                         _log.Error(ex.Message, ex);
                     }
-                });
-            _handleSaeaPool = new SaeaPool(1024, int.MaxValue,
+                })
+                .Initialize(16);
+            _handleSaeaPool = new SaeaPool(
                 () =>
                 {
                     var saea = new SaeaAwaitable();
@@ -135,8 +139,9 @@ namespace Cowboy.Sockets
                     {
                         _log.Error(ex.Message, ex);
                     }
-                });
-            _sessionPool = new SessionPool(1024, int.MaxValue,
+                })
+                .Initialize(1024);
+            _sessionPool = new SessionPool(
                 () =>
                 {
                     var session = new TcpSocketSaeaSession(_configuration, _configuration.BufferManager, _handleSaeaPool, _dispatcher, this);
@@ -146,13 +151,14 @@ namespace Cowboy.Sockets
                 {
                     try
                     {
-                        session.Clear();
+                        session.Detach();
                     }
                     catch (Exception ex)
                     {
                         _log.Error(ex.Message, ex);
                     }
-                });
+                })
+                .Initialize(512);
         }
 
         #endregion
@@ -401,16 +407,32 @@ namespace Cowboy.Sockets
 
         protected virtual void Dispose(bool disposing)
         {
-            if (disposing)
+            lock (_disposeLock)
             {
-                try
+                if (_isDisposed)
+                    return;
+
+                if (disposing)
                 {
-                    Shutdown();
+                    // free managed objects here
+                    try
+                    {
+                        if (_listener != null)
+                            _listener.Dispose();
+                        if (_acceptSaeaPool != null)
+                            _acceptSaeaPool.Dispose();
+                        if (_handleSaeaPool != null)
+                            _handleSaeaPool.Dispose();
+                        if (_sessionPool != null)
+                            _sessionPool.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        _log.Error(ex.Message, ex);
+                    }
                 }
-                catch (Exception ex)
-                {
-                    _log.Error(ex.Message, ex);
-                }
+
+                _isDisposed = true;
             }
         }
 

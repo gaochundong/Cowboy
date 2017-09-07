@@ -2,56 +2,48 @@
 
 namespace Cowboy.Sockets
 {
-    public class SaeaPool : QueuedObjectPool<SaeaAwaitable>
+    public class SaeaPool : ObjectPool<SaeaAwaitable>
     {
-        private Func<SaeaAwaitable> _saeaCreator;
-        private Action<SaeaAwaitable> _saeaCleaner;
+        private Func<SaeaAwaitable> _createSaea;
+        private Action<SaeaAwaitable> _cleanSaea;
 
-        public SaeaPool(int batchCount, int maxFreeCount, Func<SaeaAwaitable> saeaCreator, Action<SaeaAwaitable> saeaCleaner)
+        public SaeaPool(Func<SaeaAwaitable> createSaea, Action<SaeaAwaitable> cleanSaea)
+            : base()
         {
-            if (batchCount <= 0)
-                throw new ArgumentOutOfRangeException("batchCount");
-            if (maxFreeCount <= 0)
-                throw new ArgumentOutOfRangeException("maxFreeCount");
-            if (saeaCreator == null)
-                throw new ArgumentNullException("saeaCreator");
+            if (createSaea == null)
+                throw new ArgumentNullException("createSaea");
+            if (cleanSaea == null)
+                throw new ArgumentNullException("cleanSaea");
 
-            _saeaCreator = saeaCreator;
-            _saeaCleaner = saeaCleaner;
-
-            if (batchCount > maxFreeCount)
-            {
-                batchCount = maxFreeCount;
-            }
-
-            Initialize(batchCount, maxFreeCount);
+            _createSaea = createSaea;
+            _cleanSaea = cleanSaea;
         }
 
-        public override bool Return(SaeaAwaitable saea)
+        public SaeaPool Initialize(int initialCount = 0)
         {
-            _saeaCleaner(saea);
+            if (initialCount < 0)
+                throw new ArgumentOutOfRangeException(
+                    "initialCount",
+                    initialCount,
+                    "Initial count must not be less than zero.");
 
-            if (!base.Return(saea))
+            for (int i = 0; i < initialCount; i++)
             {
-                CleanupItem(saea);
-                return false;
+                Add(Create());
             }
 
-            return true;
-        }
-
-        protected override void CleanupItem(SaeaAwaitable item)
-        {
-            try
-            {
-                item.Dispose();
-            }
-            catch { }
+            return this;
         }
 
         protected override SaeaAwaitable Create()
         {
-            return _saeaCreator();
+            return _createSaea();
+        }
+
+        public void Return(SaeaAwaitable saea)
+        {
+            _cleanSaea(saea);
+            Add(saea);
         }
     }
 }

@@ -2,47 +2,48 @@
 
 namespace Cowboy.Sockets
 {
-    public class SessionPool : QueuedObjectPool<TcpSocketSaeaSession>
+    public class SessionPool : ObjectPool<TcpSocketSaeaSession>
     {
-        private Func<TcpSocketSaeaSession> _sessionCreator;
-        private Action<TcpSocketSaeaSession> _sessionCleaner;
+        private Func<TcpSocketSaeaSession> _createSession;
+        private Action<TcpSocketSaeaSession> _cleanSession;
 
-        public SessionPool(int batchCount, int maxFreeCount, Func<TcpSocketSaeaSession> sessionCreator, Action<TcpSocketSaeaSession> sessionCleaner)
+        public SessionPool(Func<TcpSocketSaeaSession> createSession, Action<TcpSocketSaeaSession> cleanSession)
+            : base()
         {
-            if (batchCount <= 0)
-                throw new ArgumentOutOfRangeException("batchCount");
-            if (maxFreeCount <= 0)
-                throw new ArgumentOutOfRangeException("maxFreeCount");
-            if (sessionCreator == null)
-                throw new ArgumentNullException("sessionCreator");
+            if (createSession == null)
+                throw new ArgumentNullException("createSession");
+            if (cleanSession == null)
+                throw new ArgumentNullException("cleanSession");
 
-            _sessionCreator = sessionCreator;
-            _sessionCleaner = sessionCleaner;
-
-            if (batchCount > maxFreeCount)
-            {
-                batchCount = maxFreeCount;
-            }
-
-            Initialize(batchCount, maxFreeCount);
+            _createSession = createSession;
+            _cleanSession = cleanSession;
         }
 
-        public override bool Return(TcpSocketSaeaSession session)
+        public SessionPool Initialize(int initialCount = 0)
         {
-            _sessionCleaner(session);
+            if (initialCount < 0)
+                throw new ArgumentOutOfRangeException(
+                    "initialCount",
+                    initialCount,
+                    "Initial count must not be less than zero.");
 
-            if (!base.Return(session))
+            for (int i = 0; i < initialCount; i++)
             {
-                CleanupItem(session);
-                return false;
+                Add(Create());
             }
 
-            return true;
+            return this;
         }
 
         protected override TcpSocketSaeaSession Create()
         {
-            return _sessionCreator();
+            return _createSession();
+        }
+
+        public void Return(TcpSocketSaeaSession saea)
+        {
+            _cleanSession(saea);
+            Add(saea);
         }
     }
 }

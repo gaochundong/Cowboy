@@ -128,7 +128,7 @@ namespace Cowboy.Sockets
             }
         }
 
-        internal void Clear()
+        internal void Detach()
         {
             lock (_opsLock)
             {
@@ -138,7 +138,6 @@ namespace Cowboy.Sockets
                 _remoteEndPoint = null;
                 _localEndPoint = null;
                 _state = _none;
-                _receiveBufferOffset = 0;
             }
         }
 
@@ -292,8 +291,8 @@ namespace Cowboy.Sockets
             }
             finally
             {
+                await Close(true); // read async buffer returned, remote closed
                 _saeaPool.Return(saea);
-                await Close(true); // read async buffer returned, remote notifies closed
             }
         }
 
@@ -347,14 +346,8 @@ namespace Cowboy.Sockets
         {
             try
             {
-                try
-                {
-                    if (_socket != null)
-                    {
-                        _socket.Dispose();
-                    }
-                }
-                catch { }
+                if (_socket != null)
+                    _socket.Dispose();
             }
             catch { }
             finally

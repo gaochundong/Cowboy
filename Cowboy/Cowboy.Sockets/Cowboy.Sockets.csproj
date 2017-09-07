@@ -68,7 +68,7 @@
     <Compile Include="Tcp\Server\EAP\Awaitable\SaeaExtensions.cs" />
     <Compile Include="Tcp\Server\EAP\ITcpSocketSaeaServerEventDispatcher.cs" />
     <Compile Include="Tcp\Server\EAP\DefaultTcpSocketSaeaServerEventDispatcher.cs" />
-    <Compile Include="Tcp\Server\EAP\Pooling\QueuedObjectPool.cs" />
+    <Compile Include="Tcp\Server\EAP\Pooling\ObjectPool.cs" />
     <Compile Include="Tcp\Server\EAP\Pooling\SessionPool.cs" />
     <Compile Include="Tcp\Server\EAP\Pooling\SaeaPool.cs" />
     <Compile Include="Tcp\Server\EAP\Awaitable\SaeaAwaitable.cs" />

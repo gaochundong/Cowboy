@@ -9,7 +9,7 @@ using Logrila.Logging;
 
 namespace Cowboy.Sockets
 {
-    public class TcpSocketSaeaClient
+    public class TcpSocketSaeaClient : IDisposable
     {
         #region Fields
 
@@ -29,6 +29,9 @@ namespace Cowboy.Sockets
         private const int _connecting = 1;
         private const int _connected = 2;
         private const int _closed = 5;
+
+        private readonly object _disposeLock = new object();
+        private bool _isDisposed;
 
         #endregion
 
@@ -127,7 +130,7 @@ namespace Cowboy.Sockets
 
         private void Initialize()
         {
-            _saeaPool = new SaeaPool(256, int.MaxValue,
+            _saeaPool = new SaeaPool(
                 () =>
                 {
                     var saea = new SaeaAwaitable();
@@ -146,7 +149,8 @@ namespace Cowboy.Sockets
                     {
                         _log.Error(ex.Message, ex);
                     }
-                });
+                })
+                .Initialize(256);
         }
 
         #endregion
@@ -339,8 +343,8 @@ namespace Cowboy.Sockets
             }
             finally
             {
+                await Close(true); // read async buffer returned, remote closed
                 _saeaPool.Return(saea);
-                await Close(true); // read async buffer returned, remote notification closed
             }
         }
 
@@ -418,9 +422,7 @@ namespace Cowboy.Sockets
             try
             {
                 if (_socket != null)
-                {
                     _socket.Dispose();
-                }
             }
             catch { }
             finally
@@ -531,6 +533,36 @@ namespace Cowboy.Sockets
             catch (Exception ex)
             {
                 await HandleSendOperationException(ex);
+            }
+        }
+
+        #endregion
+
+        #region IDisposable Members
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            lock (_disposeLock)
+            {
+                if (_isDisposed)
+                    return;
+
+                if (disposing)
+                {
+                    // free managed objects here
+                    if (_socket != null)
+                        _socket.Dispose();
+                    if (_saeaPool != null)
+                        _saeaPool.Dispose();
+                }
+
+                _isDisposed = true;
             }
         }
 
